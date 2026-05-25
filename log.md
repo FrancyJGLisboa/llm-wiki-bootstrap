@@ -2,6 +2,14 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 09:15 — fix: pitch HTML had outdated Copilot claim
+
+User correction: I claimed "Copilot é conversacional, não agentic" in the AI-extension tier table. Wrong — (a) GitHub Copilot CLI is a standalone agentic CLI competing with Claude Code, (b) VSCode + Copilot in Agent Mode (shipped 2025) does multi-step autonomous work.
+
+- Rewrote the AI-extension tier table in `docs/pitch-vscode.html`. New top tier (★★★★★) groups Copilot Agent Mode, Copilot CLI, and Cline as peers. Continue/Roo/Cody one step below. Copilot Chat classic (without Agent Mode) demoted to ★★★. "No AI extension" stays bottom.
+- Added project memory `ai-tool-capability-claims` to enforce: don't make blanket capability claims about AI tools from training data; verify first. Indexed in `MEMORY.md`.
+- README.md needed no change (it already listed Copilot CLI as a peer tool — I just contradicted myself in the pitch).
+
 ## 2026-05-25 09:00 — pitch artifact: docs/pitch-vscode.html
 
 User asked how I'd present the project to a VSCode-only audience. Wrote the pitch in chat, then user asked if it was persisted as HTML. It wasn't. Created `docs/pitch-vscode.html` — self-contained single-file pitch in PT (audience = self / internal reference, per follow-up clarification).

@@ -211,34 +211,45 @@
 
   <section>
     <h2>Qual extensão de AI no VSCode importa</h2>
+    <p style="color:var(--muted);font-size:0.95em;margin-top:-0.4em">Qualquer setup com loop agentic (lê arquivos, edita, executa terminal, segue regras) opera os 5 workflows. Conversacional puro também funciona, só exige que você dirija cada passo.</p>
     <table>
       <thead>
         <tr>
-          <th style="width:22%">Setup</th>
+          <th style="width:30%">Setup</th>
           <th style="width:13%">Fit</th>
           <th>Por quê</th>
         </tr>
       </thead>
       <tbody>
         <tr>
-          <td><strong>Cline</strong><br><span style="color:var(--muted);font-size:0.9em">recomendado</span></td>
+          <td><strong>VSCode + Copilot em Agent Mode</strong></td>
           <td class="stars">★★★★★</td>
-          <td>Open-source, lê <code>.clinerules</code> (já vem no projeto), executa multi-step agentic loops nativamente. Faz <code>/wiki-ingest</code> parecer mágico.</td>
+          <td>Agent Mode (shipped 2025) faz multi-step autônomo: lê arquivos, edita, executa terminal, segue regras em <code>.github/copilot-instructions.md</code> (já vem no projeto). Se você já tem assinatura Copilot, caminho de menor fricção.</td>
+        </tr>
+        <tr>
+          <td><strong>Copilot CLI</strong></td>
+          <td class="stars">★★★★★</td>
+          <td>CLI standalone agentic — alternativa direta ao Claude Code. Lê <code>AGENTS.md</code>. Bom pra quem prefere terminal em vez do editor.</td>
+        </tr>
+        <tr>
+          <td><strong>Cline</strong><br><span style="color:var(--muted);font-size:0.9em">free + open-source</span></td>
+          <td class="stars">★★★★★</td>
+          <td>Sem assinatura paga. Lê <code>.clinerules</code> (já vem no projeto). Loop agentic nativo. Caminho recomendado se quer evitar vendor lock-in.</td>
         </tr>
         <tr>
           <td><strong>Continue</strong> / <strong>Roo</strong> / <strong>Cody</strong></td>
           <td class="stars">★★★★<span class="off">☆</span></td>
-          <td>Mesmo princípio do Cline. Funciona; nuances de UX por extensão.</td>
+          <td>Mesmo princípio dos anteriores; nuances de UX e modelos suportados variam por extensão.</td>
         </tr>
         <tr>
-          <td><strong>GitHub Copilot Chat</strong></td>
-          <td class="stars">★★<span class="off">☆☆☆</span></td>
-          <td>Lê <code>.github/copilot-instructions.md</code> (também já vem). Bom pra perguntar, fraco pra ingest multi-step — Copilot é conversacional, não agentic. Você dirige cada passo.</td>
+          <td><strong>VSCode + Copilot Chat clássico</strong><br><span style="color:var(--muted);font-size:0.9em">sem Agent Mode</span></td>
+          <td class="stars">★★★<span class="off">☆☆</span></td>
+          <td>Conversacional puro — bom pra perguntar e pra single-shot edits. Pra ingest multi-step você dirige cada passo manualmente ("agora leia X", "agora escreva Y"). Funciona, dá trabalho.</td>
         </tr>
         <tr>
-          <td>Sem AI extension</td>
+          <td>Sem extensão de AI</td>
           <td class="stars off">☆☆☆☆☆</td>
-          <td>Inviável. Instale Cline (gratuito) e siga.</td>
+          <td>Inviável — precisa de um LLM pra operar a wiki. Instale qualquer um dos acima.</td>
         </tr>
       </tbody>
     </table>
