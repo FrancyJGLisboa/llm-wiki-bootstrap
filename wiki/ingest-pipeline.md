@@ -18,7 +18,7 @@ Verbatim from the video: *"What happens when you ingest a source — because thi
 
 | # | Step | What it does |
 |---|---|---|
-| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-fetch`. |
+| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-extract`. |
 | 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:55-5:00)` |
 | 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:00-5:04)` |
 | 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:04-5:11)` |

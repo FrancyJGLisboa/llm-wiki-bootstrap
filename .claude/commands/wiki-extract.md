@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, WebFetch
 argument-hint: <url-or-filepath-or-image-path>
 ---
 
-You are executing `/wiki-fetch $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one source and deposit it in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
+You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one source and deposit it in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
 
 ## Read first
 
@@ -64,7 +64,7 @@ Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug n
 End with:
 
 ```
-/wiki-fetch complete.
+/wiki-extract complete.
 
 Fetched: <source>
 Saved to: raw/<filename>

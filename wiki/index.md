@@ -38,7 +38,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 
 ## This system specifically
 
-- [[commands]] — the five slash commands (`/wiki-init`, `/wiki-fetch`, `/wiki-ingest`, `/wiki-ask`, `/wiki-lint`)
+- [[commands]] — the five slash commands (`/wiki-init`, `/wiki-extract`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`)
 - [`AGENTS.md`](../AGENTS.md) — the schema (root of the project)
 - [`README.md`](../README.md) — install + quickstart
 

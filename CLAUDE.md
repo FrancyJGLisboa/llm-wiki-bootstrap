@@ -7,9 +7,9 @@ This project's canonical schema is **`AGENTS.md`** in the same directory. Modern
 The five slash commands live at `.claude/commands/wiki-*.md`:
 
 - `/wiki-init` — scaffold structure (idempotent)
-- `/wiki-fetch <source>` — acquire URL / file / image into `raw/`
+- `/wiki-extract <source>` — acquire URL / file / image into `raw/`
 - `/wiki-ingest [<raw-file>]` — process raw → wiki via the 7-step pipeline (hash via `scripts/body-hash.sh`)
-- `/wiki-ask <question>` — answer from wiki; web-search + promote on gaps
+- `/wiki-query <question>` — answer from wiki; web-search + promote on gaps
 - `/wiki-lint [--apply]` — find issues; report or apply fixes
 
 Hard rules (full text in `AGENTS.md`):

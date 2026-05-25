@@ -92,7 +92,7 @@ The mechanism `/wiki-ingest` uses to skip raw files that haven't changed: it com
 
 ### Promote (query)
 
-`/wiki-ask`'s default behavior of writing the new knowledge from a web-searched answer into the wiki as new or updated pages. Disabled with `--no-promote`.
+`/wiki-query`'s default behavior of writing the new knowledge from a web-searched answer into the wiki as new or updated pages. Disabled with `--no-promote`.
 
 ### Notability heuristic
 
@@ -118,7 +118,7 @@ The canonical schema file. See [[layer-schema]].
 
 ### `log.md`
 
-Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation.
+Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation.
 
 ### `README.md`
 

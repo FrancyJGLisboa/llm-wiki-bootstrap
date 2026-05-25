@@ -12,20 +12,20 @@ The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itse
 
 | Layer | Path | Owned by | Mutability |
 |---|---|---|---|
-| **Raw sources** | `raw/` | User (via `/wiki-fetch` or manual drop) | Immutable after fetch (user may edit; ingest detects via hash) |
-| **Wiki** | `wiki/` | **LLM only** | Mutable, rewritten freely by `/wiki-ingest`, `/wiki-ask` (promote), `/wiki-lint` |
+| **Raw sources** | `raw/` | User (via `/wiki-extract` or manual drop) | Immutable after fetch (user may edit; ingest detects via hash) |
+| **Wiki** | `wiki/` | **LLM only** | Mutable, rewritten freely by `/wiki-ingest`, `/wiki-query` (promote), `/wiki-lint` |
 | **Schema** | `AGENTS.md` (this file), `log.md` | User + LLM (co-evolved) | User-readable; LLM may propose edits via `/wiki-lint` |
 
-**Critical:** The LLM must never edit files in `raw/` (it may only read them). The user must never edit files in `wiki/` directly — instead, edit raw sources or use `/wiki-ask` to file the new claim, then re-run `/wiki-ingest` or `/wiki-lint`.
+**Critical:** The LLM must never edit files in `raw/` (it may only read them). The user must never edit files in `wiki/` directly — instead, edit raw sources or use `/wiki-query` to file the new claim, then re-run `/wiki-ingest` or `/wiki-lint`.
 
 ## The five slash commands
 
 | Command | Purpose |
 |---|---|
 | `/wiki-init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
-| `/wiki-fetch <source>` | Acquire a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
+| `/wiki-extract <source>` | Acquire a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
-| `/wiki-ask <question>` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
+| `/wiki-query <question>` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
 | `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
 
 Full spec lives at [`wiki/commands.md`](wiki/commands.md). Implementations at `.claude/commands/wiki-*.md`.
@@ -115,7 +115,7 @@ notes: |
 - Updated: wiki/<file>
 - Contradictions flagged: none | <description>
 
-## YYYY-MM-DD HH:MM — /wiki-ask "..."
+## YYYY-MM-DD HH:MM — /wiki-query "..."
 
 - Web-searched: <urls>
 - Promoted: wiki/<file> (new)

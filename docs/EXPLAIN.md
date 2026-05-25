@@ -33,7 +33,7 @@ Read the table left-to-right. If you've ever maintained a `Makefile` or a `packa
 | `/wiki-ingest` | `npm run build` | Runs the 7-step pipeline raw → wiki. Hash-gated. |
 | `scripts/body-hash.sh` | webpack content hash | The build-cache key. "If I've built this exact bytes before, skip." |
 | `/wiki-lint` | `eslint --fix` | Catches broken links, orphans, contradictions, stale claims. |
-| `/wiki-ask "..."` | `grep` + Stack Overflow + auto-PR | Reads the wiki. On a gap, web-searches and *promotes* the answer as a new page. |
+| `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Reads the wiki. On a gap, web-searches and *promotes* the answer as a new page. |
 | `log.md` | `CHANGELOG` | Append-only record of every ingest / promote / lint. |
 
 The build-cache key is the single most important mechanical idea. Here's the entirety of how it's computed — note that it's deliberately one short shell script, not inline logic spread across the slash commands:
@@ -59,7 +59,7 @@ awk 'BEGIN{fm=0} /^---$/{fm++; next} fm>=2{print}' "$file" \
 
 The hard boundary: **the LLM is forbidden from editing anything in `raw/` except three frontmatter fields (`ingested_hash`, `ingested_at`, `ingested_pages`) as the last step of `/wiki-ingest`.** That's not stylistic — it's structural. If the LLM could rewrite raw content, the hash key would shift under its own feet and idempotence would break. Same reason `make` doesn't let recipes rewrite `src/` mid-build.
 
-Conversely, the user is forbidden from hand-editing `wiki/`. If you want to change a claim, edit the raw source (or file the new claim via `/wiki-ask`) and re-run `/wiki-ingest`. Hand-editing `wiki/` is like hand-editing `dist/` after a webpack build — the next rebuild will eat your changes, and you'll never know exactly which file the build *would* have produced.
+Conversely, the user is forbidden from hand-editing `wiki/`. If you want to change a claim, edit the raw source (or file the new claim via `/wiki-query`) and re-run `/wiki-ingest`. Hand-editing `wiki/` is like hand-editing `dist/` after a webpack build — the next rebuild will eat your changes, and you'll never know exactly which file the build *would* have produced.
 
 For the full layer treatment see [`wiki/three-layer-architecture.md`](../wiki/three-layer-architecture.md). For who-edits-what see [`wiki/division-of-labor.md`](../wiki/division-of-labor.md).
 
@@ -70,14 +70,14 @@ For the full layer treatment see [`wiki/three-layer-architecture.md`](../wiki/th
 | Command | Closest analog | What it does |
 |---|---|---|
 | `/wiki-init` | `git init` | Scaffold `raw/`, `wiki/`, `AGENTS.md`, `log.md`. Idempotent. |
-| `/wiki-fetch <src>` | `git add` (sort of) | Pull a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
+| `/wiki-extract <src>` | `git add` (sort of) | Pull a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `npm run build` | The 7-step pipeline raw → wiki. Hash-gated; idempotent on unchanged sources. |
-| `/wiki-ask "..."` | `grep` + Stack Overflow + auto-PR | Answer from the wiki. On gap → web-search → promote a new page. `--no-promote` to suppress. |
+| `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Answer from the wiki. On gap → web-search → promote a new page. `--no-promote` to suppress. |
 | `/wiki-lint [--apply]` | `eslint --fix` | Find broken links, orphans, contradictions, stale claims. Reports by default; `--apply` writes fixes. |
 
 Two of these surprise devs every time:
 
-**`/wiki-ask` is not search.** It's "read the wiki, synthesize an answer, and if there's a knowledge gap, go fetch + write a new wiki page so the gap is gone next time." The auto-promote step is what makes the wiki *compound* (see [`wiki/knowledge-compounds.md`](../wiki/knowledge-compounds.md)). It's the opposite of how a chat session works: every question leaves the knowledge base stronger instead of throwing the work away when the tab closes.
+**`/wiki-query` is not search.** It's "read the wiki, synthesize an answer, and if there's a knowledge gap, go fetch + write a new wiki page so the gap is gone next time." The auto-promote step is what makes the wiki *compound* (see [`wiki/knowledge-compounds.md`](../wiki/knowledge-compounds.md)). It's the opposite of how a chat session works: every question leaves the knowledge base stronger instead of throwing the work away when the tab closes.
 
 **A "command" is a Markdown prompt, not executable code.** Open one and you'll see this:
 
@@ -134,7 +134,7 @@ You drop a transcript into `raw/`. You run one command. 30–90 seconds later yo
 # $ sed -n '19,27p' wiki/ingest-pipeline.md
 | # | Step | What it does |
 |---|---|---|
-| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-fetch`. |
+| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-extract`. |
 | 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:55-5:00)` |
 | 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:00-5:04)` |
 | 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:04-5:11)` |

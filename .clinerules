@@ -19,9 +19,9 @@ Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cl
 | Workflow | Purpose |
 |---|---|
 | `wiki-init` | Scaffold an empty wiki structure (idempotent). |
-| `wiki-fetch <source>` | Acquire URL / file / image into `raw/`. |
+| `wiki-extract <source>` | Acquire URL / file / image into `raw/`. |
 | `wiki-ingest [<raw-file>]` | Run the 7-step pipeline. Hash via `scripts/body-hash.sh`. |
-| `wiki-ask <question>` | Answer from wiki; web-search + promote on gaps. |
+| `wiki-query <question>` | Answer from wiki; web-search + promote on gaps. |
 | `wiki-lint [--apply]` | Find issues; propose / apply fixes. |
 
 ## Hard rules

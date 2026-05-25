@@ -32,7 +32,7 @@ So a query that exceeds the wiki's coverage triggers web search → answer → *
 
 ### Output formats
 
-Queries don't have to return prose. The video mentions the LLM can produce markdown files, slideshows, matplotlib images, etc. as query outputs. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40-14:56)` In this project, the `/wiki-ask` slash command returns text by default; richer outputs are open for future versions.
+Queries don't have to return prose. The video mentions the LLM can produce markdown files, slideshows, matplotlib images, etc. as query outputs. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40-14:56)` In this project, the `/wiki-query` slash command returns text by default; richer outputs are open for future versions.
 
 ## Related
 

@@ -1,6 +1,19 @@
 # log.md
 
-Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
+Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
+
+## 2026-05-25 10:30 — verb rename: fetch→extract, ask→query
+
+User-facing mental model survey: new users naturally describe the workflow as "extract content from this file" and "query the wiki," not "fetch" and "ask." Renamed the two slash commands and updated all references across the repo. Pure mechanical rename — no behavior change.
+
+- **Renamed:** `.claude/commands/wiki-fetch.md` → `wiki-extract.md`
+- **Renamed:** `.claude/commands/wiki-ask.md` → `wiki-query.md`
+- **References updated in 22 other files** via `sed`: AGENTS.md, CLAUDE.md, GEMINI.md, .clinerules, .cursor/rules/llm-wiki.mdc, .github/copilot-instructions.md, README.md, docs/QUICKSTART.md, docs/EXPLAIN.md, docs/pitch-vscode.html, .claude/commands/wiki-init.md, .claude/commands/wiki-lint.md, wiki/commands.md, wiki/division-of-labor.md, wiki/glossary.md, wiki/index.md, wiki/ingest-pipeline.md, wiki/karpathy-llm-wiki-video-transcript-summary.md, wiki/layer-raw-sources.md, wiki/operation-query.md, wiki/query-as-write-loop.md, wiki/source-attribution.md, wiki/three-layer-architecture.md.
+- **Strategy:** hard rename. Repo is V2 and runtime-untested with no external users — aliases would be permanent bloat.
+- **Gate verified:** `grep -rEn 'wiki-(fetch|ask)\b' . --exclude-dir=.git` returns only historical references inside this log.md (the 2026-05-25 06:45 bootstrap entry, which records the original file names at creation time).
+- **What did NOT change:** the 7-step ingest pipeline, the body-hash algorithm, the three-layer model, frontmatter conventions, or the command bodies' behavior. Two prompts now carry their new names internally (`/wiki-extract $ARGUMENTS` and `/wiki-query $ARGUMENTS`); everything else is identical.
+
+Follow-up commits on this branch (`feat/extract-rename`) will (a) expand `/wiki-extract` to handle DOCX, XLSX, CSV with graceful tool-chain fallback, and (b) refresh docs prose where the rename diff isn't sufficient.
 
 ## 2026-05-25 09:35 — docs/QUICKSTART.md: per-tool first-use sequences
 

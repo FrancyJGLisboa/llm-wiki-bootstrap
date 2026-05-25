@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch, Glob, Grep
 argument-hint: <question> [--no-promote]
 ---
 
-You are executing `/wiki-ask $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
+You are executing `/wiki-query $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
 
 ## Read first
 
@@ -52,7 +52,7 @@ For each notable piece:
 - Append a `log.md` entry:
 
   ```markdown
-  ## YYYY-MM-DD HH:MM — /wiki-ask "<short question>"
+  ## YYYY-MM-DD HH:MM — /wiki-query "<short question>"
 
   - Web-searched: <urls>
   - Promoted: wiki/<file> (new) | wiki/<file> (updated)
