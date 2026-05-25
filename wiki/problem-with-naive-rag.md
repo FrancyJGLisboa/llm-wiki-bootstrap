@@ -29,6 +29,7 @@ The [[core-idea]] of the LLM-wiki pattern inverts this. Instead of retrieving at
 ## Related
 
 - [[core-idea]] — what the pattern proposes instead
+- [[knowledge-compounds]] — the property RAG lacks and the wiki pattern is built around
 - [[operation-query]] — what "asking a question" looks like when there's a wiki to read
 - [[query-as-write-loop]] — how query results in this pattern *also* compound the wiki
 

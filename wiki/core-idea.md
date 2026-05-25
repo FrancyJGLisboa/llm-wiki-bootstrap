@@ -29,6 +29,7 @@ The user's role is to be in charge of "the important stuff — finding the good 
 ## Related
 
 - [[problem-with-naive-rag]] — what this is a reaction against
+- [[knowledge-compounds]] — the engine that makes the idea pay off
 - [[three-layer-architecture]] — how the idea is structured into raw / wiki / schema
 - [[division-of-labor]] — who does what
 - [[four-principles]] — properties that make the idea durable

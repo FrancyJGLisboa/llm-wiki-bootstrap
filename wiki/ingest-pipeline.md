@@ -37,6 +37,7 @@ The slash command's prompt walks the LLM through these 7 steps explicitly, and a
 ## Related
 
 - [[operation-ingest]] — the operation this pipeline implements
+- [[knowledge-compounds]] — why step 4 (update existing pages) is what makes the pattern work
 - [[layer-wiki]] — where steps 3-6 write
 - [[operation-lint]] — what catches mistakes the pipeline makes
 - [[division-of-labor]] — why the LLM (not the user) does all 7 steps

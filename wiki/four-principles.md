@@ -52,6 +52,7 @@ Each addresses a way prior knowledge-base patterns have failed:
 ## Related
 
 - [[core-idea]] — what these principles are properties of
+- [[knowledge-compounds]] — what these principles together enable
 - [[layer-wiki]] — markdown files implement #3
 - [[layer-schema]] — `AGENTS.md` implements #2 + #3 (yours, file-over-app) by being cross-tool
 - [[implicit-constraints]] — how this project enforces these (e.g., no viewer dependency for #3)

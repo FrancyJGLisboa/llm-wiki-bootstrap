@@ -16,6 +16,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 
 - [[core-idea]] — what an LLM-wiki is, and Karpathy's central claim
 - [[problem-with-naive-rag]] — what the pattern is a reaction against
+- [[knowledge-compounds]] — the single property that makes the pattern work
 - [[four-principles]] — Explicit / Yours / File-over-app / BYO AI
 - [[use-cases]] — research, personal, business, reading, due diligence
 - [[division-of-labor]] — human curates; LLM maintains
@@ -51,7 +52,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 ## Reading orders
 
 **If you want the literal video content first:**
-[[core-idea]] → [[problem-with-naive-rag]] → [[three-layer-architecture]] → [[layer-raw-sources]] → [[layer-wiki]] → [[layer-schema]] → [[operation-ingest]] → [[operation-query]] → [[operation-lint]] → [[ingest-pipeline]] → [[division-of-labor]] → [[four-principles]] → [[query-as-write-loop]] → [[use-cases]]
+[[core-idea]] → [[problem-with-naive-rag]] → [[knowledge-compounds]] → [[three-layer-architecture]] → [[layer-raw-sources]] → [[layer-wiki]] → [[layer-schema]] → [[operation-ingest]] → [[operation-query]] → [[operation-lint]] → [[ingest-pipeline]] → [[division-of-labor]] → [[four-principles]] → [[query-as-write-loop]] → [[use-cases]]
 
 **If you want to install and use the system:**
 [`README.md`](../README.md) → [[commands]] → [[layer-schema]] → [[implicit-constraints]]

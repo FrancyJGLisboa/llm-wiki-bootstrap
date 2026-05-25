@@ -40,6 +40,7 @@ For the full step-by-step, see [[ingest-pipeline]].
 ## Related
 
 - [[ingest-pipeline]] — the 7-step procedure in detail
+- [[knowledge-compounds]] — why ingest's 10-15-pages-per-source property matters
 - [[layer-raw-sources]] — where ingest reads from
 - [[layer-wiki]] — where ingest writes to
 - [[operation-query]], [[operation-lint]] — the other two core operations

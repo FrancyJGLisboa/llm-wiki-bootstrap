@@ -2,6 +2,17 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 08:05 — follow-up: extracted "knowledge compounds" as a first-class page
+
+User observation: the compounding-of-knowledge point (LLM doesn't restart from scratch per question; cross-refs pre-built) is one of the most important arguments in the video, but it was scattered across `core-idea`, `problem-with-naive-rag`, `operation-ingest`, and `query-as-write-loop` rather than living in a dedicated page.
+
+- Created `wiki/knowledge-compounds.md` (`source: mixed`) — synthesizes the compounding thread from three angles (negative-RAG case, positive-wiki case, the per-source compounding effect) and names the two engines (ingest + query-as-write-loop). Citations to transcript timestamps 1:12-1:30, 1:36-1:55, 5:30-5:40.
+- Updated `Related` sections in: `core-idea.md`, `problem-with-naive-rag.md`, `operation-ingest.md`, `query-as-write-loop.md`, `ingest-pipeline.md`, `division-of-labor.md`, `four-principles.md` — all now link to `knowledge-compounds`.
+- Updated `wiki/index.md` under Foundations + the literal-reading-order list.
+- Updated `raw/karpathy-llm-wiki-video-transcript.md` `ingested_pages` to include the new page. Body hash unchanged (`3054546f`), so future `/wiki-ingest` runs still skip the source.
+
+This is the kind of follow-up `/wiki-lint` would surface as a "gap" — a heavily-referenced concept without its own page. The next time `/wiki-lint` runs, it should report zero such gaps for "compounding."
+
 ## 2026-05-25 07:10 — V2 multi-tool portability shims added
 
 - Created `.cursor/rules/llm-wiki.mdc` — Cursor rules pointing at `AGENTS.md` + workflows.

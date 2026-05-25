@@ -46,6 +46,7 @@ The user's job is **upstream**: be a good curator (high-quality raw sources beat
 ## Related
 
 - [[core-idea]] — the whole pattern restates this split
+- [[knowledge-compounds]] — what makes this split worth doing
 - [[operation-ingest]] — the LLM's bulk work
 - [[operation-lint]] — the LLM's antidote to rot
 - [[four-principles]] — *Yours* (you own the wiki; you also own the curation) builds on this

@@ -48,6 +48,7 @@ The LLM's reply (quoted in the video) sums it up: *"This is exactly how the wiki
 
 - [[operation-query]] — the broader operation
 - [[operation-ingest]] — the *other* engine of compounding
+- [[knowledge-compounds]] — the property that both engines feed
 - [[four-principles]] — *Explicit* underwrites this: the promoted pages are auditable
 - [[problem-with-naive-rag]] — query-as-write is what RAG never gets you
 
