@@ -1,0 +1,19 @@
+# OS noise
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor / IDE state
+.vscode/
+.idea/
+*.swp
+*~
+
+# Per-user agentic-tool state that shouldn't be shared
+.claude/cache/
+.claude/sessions/
+.claude/history/
+
+# Local environment
+.env
+.env.local

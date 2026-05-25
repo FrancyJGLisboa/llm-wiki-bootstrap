@@ -1,0 +1,39 @@
+# CHANGELOG
+
+Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
+
+## 2026-05-25 07:10 — V2 multi-tool portability shims added
+
+- Created `.cursor/rules/llm-wiki.mdc` — Cursor rules pointing at `AGENTS.md` + workflows.
+- Created `.clinerules` — Cline shim.
+- Created `.github/copilot-instructions.md` — GitHub Copilot shim.
+- Created `CLAUDE.md` — shim for older Claude Code versions that load `CLAUDE.md` instead of `AGENTS.md`.
+- Created `GEMINI.md` — shim for Gemini CLI.
+- All shims reference `AGENTS.md` as canonical; they exist to give every tool's auto-loader something to discover. The Claude Code slash commands in `.claude/commands/wiki-*.md` remain the only first-class implementations; other tools invoke the same workflows via natural language.
+- Updated `README.md` with the per-tool support matrix and revised project layout.
+
+## 2026-05-25 06:45 — bootstrap (manual ingest)
+
+Initial bootstrap of `llm-wiki-bootstrap`. The repository's first wiki was produced by an interactive design session rather than by `/wiki-ingest`, but the result honors the same conventions and the raw source is now ready for re-ingest at any time.
+
+- Processed: `raw/karpathy-llm-wiki-video-transcript.md` (hash `3054546f`)
+- Created:
+  - `wiki/index.md` (navigation)
+  - `wiki/core-idea.md`, `wiki/problem-with-naive-rag.md`, `wiki/three-layer-architecture.md` (foundations)
+  - `wiki/layer-raw-sources.md`, `wiki/layer-wiki.md`, `wiki/layer-schema.md` (architecture)
+  - `wiki/operation-ingest.md`, `wiki/operation-query.md`, `wiki/operation-lint.md`, `wiki/ingest-pipeline.md` (operations)
+  - `wiki/division-of-labor.md`, `wiki/four-principles.md`, `wiki/query-as-write-loop.md`, `wiki/use-cases.md` (foundations)
+  - `wiki/commands.md`, `wiki/implicit-constraints.md`, `wiki/open-questions.md`, `wiki/source-attribution.md`, `wiki/glossary.md` (analysis)
+- Created (system files):
+  - `AGENTS.md` (canonical schema)
+  - `README.md` (install + quickstart)
+  - `.claude/commands/wiki-init.md`, `wiki-fetch.md`, `wiki-ingest.md`, `wiki-ask.md`, `wiki-lint.md`
+- Contradictions flagged: none
+- Notes:
+  - `raw/karpathy-llm-wiki-video-transcript.md` is a third-party YouTuber's walkthrough, not Karpathy's tweet verbatim. See `wiki/source-attribution.md`.
+  - 6 pages marked `source: analysis`: 5 analytical content pages (commands, implicit-constraints, open-questions, source-attribution, glossary) plus 1 navigation page (index).
+  - 3 pages marked `source: mixed` (layer-raw-sources, layer-wiki, layer-schema — video extraction + project-specific convention details).
+  - 11 pages marked `source: video` (all literal extractions from the transcript).
+  - The raw file's frontmatter has been updated with `ingested_hash`, `ingested_at`, and `ingested_pages` so future `/wiki-ingest` runs skip it unless the body changes.
+  - `scripts/body-hash.sh` ships as the canonical hash algorithm. The recorded `ingested_hash` was computed via this script; future `/wiki-ingest` runs must use the same script (per AGENTS.md) for idempotence.
+  - **Slash command runtime is NOT yet validated.** All five `.claude/commands/wiki-*.md` files exist and are well-formed, but no command has actually been invoked. The first real-session invocation will be the smoke test. The bootstrap of the wiki itself was done by direct file writes during the planning conversation, not by `/wiki-ingest`.

@@ -1,0 +1,37 @@
+# llm-wiki-bootstrap (Cline rules)
+
+This project is an `llm-wiki-bootstrap` instance — a personal LLM-wiki knowledge base operated via five named workflows.
+
+## Read this first
+
+**`AGENTS.md`** at the project root is the canonical schema. Read it before any work. It defines the three-layer model, conventions, and the five workflows.
+
+## Three-layer model
+
+- `raw/` — immutable source material curated by the user. Read-only for you.
+- `wiki/` — LLM-owned markdown. You are the sole writer.
+- `AGENTS.md` — the schema. Co-evolved by user + you.
+
+## Five workflows
+
+Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cline, the user invokes them by natural language; you follow the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file step-by-step.
+
+| Workflow | Purpose |
+|---|---|
+| `wiki-init` | Scaffold an empty wiki structure (idempotent). |
+| `wiki-fetch <source>` | Acquire URL / file / image into `raw/`. |
+| `wiki-ingest [<raw-file>]` | Run the 7-step pipeline. Hash via `scripts/body-hash.sh`. |
+| `wiki-ask <question>` | Answer from wiki; web-search + promote on gaps. |
+| `wiki-lint [--apply]` | Find issues; propose / apply fixes. |
+
+## Hard rules
+
+1. **Never write to `raw/`** except the three `ingested_*` frontmatter fields, only as the last step of `wiki-ingest`.
+2. **`scripts/body-hash.sh`** is the canonical hash. Do not inline a different algorithm.
+3. **Pure CommonMark.** No Obsidian / Cursor / IDE-specific extensions.
+4. **Cite raw sources** inline with `(source: raw/<file>#<anchor>)`.
+5. **Append CHANGELOG entries** for every ingest / promote / lint-apply.
+
+## When in doubt
+
+Read `AGENTS.md`, then `wiki/index.md`.

@@ -1,0 +1,66 @@
+---
+description: llm-wiki-bootstrap project conventions
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# llm-wiki-bootstrap (Cursor rules)
+
+This project is an `llm-wiki-bootstrap` instance — a personal LLM-wiki knowledge base operated via five named workflows.
+
+## Read this first
+
+**`AGENTS.md`** at the project root is the canonical schema. It defines the three-layer model (raw / wiki / schema), page conventions, link convention, raw source frontmatter spec, and the five workflows. Read it before doing any work in this directory.
+
+## Three-layer model
+
+- `raw/` — immutable source material curated by the user. **You may only read it.**
+- `wiki/` — LLM-owned markdown pages. **You are the sole writer.** The user does not edit `wiki/*.md` directly.
+- `AGENTS.md` — the schema. User and you co-evolve it.
+
+## Five workflows
+
+The same five operations exist as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cursor, invoke them by natural language ("run the wiki-ingest workflow") — the prompt body of each command file is the workflow definition; follow it step-by-step.
+
+| Workflow | What it does | Trigger |
+|---|---|---|
+| `wiki-init` | Scaffold an empty wiki structure (idempotent). | User asks to "initialize the wiki." |
+| `wiki-fetch <source>` | Acquire a URL / file / image into `raw/` with frontmatter. Does not touch `wiki/`. | User asks to "fetch X into raw." |
+| `wiki-ingest [<raw-file>]` | Run the 7-step pipeline from `wiki/ingest-pipeline.md`. Use `scripts/body-hash.sh` for delta detection. | User asks to "ingest" / "process raw" / "update the wiki." |
+| `wiki-ask <question>` | Answer from `wiki/`; web-search and auto-promote new knowledge on gaps. | User asks any substantive question about the wiki's domain. |
+| `wiki-lint` | Find broken links, orphans, contradictions, stale claims, gaps. Reports by default; applies under `--apply`. | User asks to "lint" / "check the wiki" / "find issues." |
+
+## Hard rules
+
+1. **Never write to `raw/`.** You may only edit the `ingested_hash`, `ingested_at`, and `ingested_pages` fields in raw frontmatter — and only as the last step of `wiki-ingest`.
+2. **Use `scripts/body-hash.sh`** to compute the canonical body hash. Do not reinvent this with inline `sha256sum` / `shasum` — different invocations produce different hashes and break idempotence.
+3. **Pure CommonMark.** No Obsidian callouts (`> [!note]`), no dataview blocks, no Cursor-specific markdown, no embeds. The wiki must render identically in `cat`, GitHub web, VSCode preview, or anywhere else.
+4. **Always cite raw sources** with `(source: raw/<file>#<anchor>)` for any non-trivial claim in a wiki page.
+5. **Append a CHANGELOG entry** for every `wiki-ingest`, `wiki-ask` promotion, or `wiki-lint --apply` you perform.
+
+## Frontmatter spec (recap from AGENTS.md)
+
+Every wiki page:
+```yaml
+title: <Title>
+type: concept | entity | summary | analysis | navigation
+source: video | analysis | external | mixed
+updated: YYYY-MM-DD
+tags: [...]
+```
+
+Every raw source:
+```yaml
+source_url: <url|n/a>
+source_type: <video-transcript | article | image | ...>
+source_title: "..."
+source_author: "..."
+fetched_at: YYYY-MM-DD
+ingested_hash: ""
+ingested_at: never
+ingested_pages: []
+```
+
+## When in doubt
+
+Read `AGENTS.md`. Then read `wiki/index.md`.
