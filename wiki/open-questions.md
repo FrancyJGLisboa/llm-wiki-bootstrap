@@ -16,6 +16,20 @@ The video shows the LLM-wiki pattern at a high level. There are several question
 
 ## Operational questions
 
+### Are the new extraction handlers actually correct?
+
+Added 2026-05-25 (see [[commands]] and `AGENTS.md` "Supported source formats and extraction"): the DOCX (`pandoc` / `python-docx`), XLSX (`xlsx2csv` / `openpyxl`), CSV (passthrough + markdown-table preview), and PDF-LLM-vision-fallback handlers are **specified, not demonstrated**. None have been invoked end-to-end.
+
+Concrete unknowns:
+
+- Does `pandoc -f docx -t markdown` reliably preserve tables and lists across the kinds of DOCX our users actually have? Or do we hit edge cases (track-changes, embedded images, footnotes)?
+- Does the `xlsx2csv` → markdown-table pipeline produce something the LLM can actually reason over, or does the loss of cell formatting break things?
+- For CSVs with >100 rows, is "first 20 + truncated" the right cutoff? Or should we sample (header + 20 random) for better representativeness?
+- For PDF-LLM-vision fallback: does the agent actually engage vision on a PDF when `pdftotext` returns near-empty? How does it know "near-empty" — character count threshold?
+- Does the `extraction_status: failed` sidecar pattern actually surface usefully to `/wiki-ingest` later, or does ingest treat it the same as a successful extraction and pollute the wiki?
+
+First real `/wiki-extract` on each format is the smoke test. Until then, the matrix in `AGENTS.md` describes what the system *intends to do*, not what it has been observed doing.
+
 ### The most important open question: do the 7 steps actually happen?
 
 Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/wiki-ingest.md`. Demonstrated nowhere. `/wiki-ingest` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.

@@ -70,7 +70,7 @@ For the full layer treatment see [`wiki/three-layer-architecture.md`](../wiki/th
 | Command | Closest analog | What it does |
 |---|---|---|
 | `/wiki-init` | `git init` | Scaffold `raw/`, `wiki/`, `AGENTS.md`, `log.md`. Idempotent. |
-| `/wiki-extract <src>` | `git add` (sort of) | Pull a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
+| `/wiki-extract <src>` | `git add` (sort of) | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/`. Parses binary formats to markdown via a graceful tool chain (`pdftotext`/`pandoc`/`xlsx2csv` first, LLM-vision fallback). Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `npm run build` | The 7-step pipeline raw → wiki. Hash-gated; idempotent on unchanged sources. |
 | `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Answer from the wiki. On gap → web-search → promote a new page. `--no-promote` to suppress. |
 | `/wiki-lint [--apply]` | `eslint --fix` | Find broken links, orphans, contradictions, stale claims. Reports by default; `--apply` writes fixes. |

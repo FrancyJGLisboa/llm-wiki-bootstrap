@@ -38,7 +38,7 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 | Command | What it does |
 |---|---|
 | `/wiki-init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
-| `/wiki-extract <url-or-file>` | Pull a URL, file, or image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
+| `/wiki-extract <url-or-file>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Parses binary content to markdown when a handler exists. Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
 | `/wiki-query <question>` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
 | `/wiki-lint [--apply]` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |

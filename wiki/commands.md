@@ -57,15 +57,23 @@ We considered a sixth — `/wiki-promote` (manually promote a query answer to a 
 
 ### /wiki-extract <source>
 
-**Purpose.** Acquire content into `raw/` without touching `wiki/`.
+**Purpose.** Acquire content into `raw/` without touching `wiki/`. Parses binary formats to markdown when a handler exists.
 
-**Behavior.**
-- **URL:** WebFetch → markdown extraction → `raw/<slug>.md` with frontmatter (`source_url`, `source_type`, `fetched_at`, `ingested_hash: ""`).
-- **Local file:** copy (or symlink) into `raw/` with frontmatter inserted.
-- **Image:** copy to `raw/<slug>.<ext>`; vision-extract text and description into sidecar `raw/<slug>.<ext>.md` with frontmatter.
-- **PDF:** copy to `raw/<slug>.pdf`; extract text into sidecar.
+**Behavior** (per format, using a graceful tool chain — best handler first, fallback when missing, `extraction_status: failed` sidecar only as last resort):
+
+- **URL:** `WebFetch` → markdown → `raw/<slug>.md`. → `extraction_method: webfetch`.
+- **Plain text** (`.md`/`.txt`/`.html`/`.json`/`.yaml`/source code): passthrough copy. → `passthrough`.
+- **CSV:** copy + render markdown table preview (≤100 rows full, larger truncated) in sidecar. → `csv-passthrough`.
+- **Image** (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`): copy + LLM-vision extraction of text and description into sidecar. → `llm-vision`.
+- **PDF:** `pdftotext` → text in sidecar; LLM-vision fallback when `pdftotext` is missing or returns near-empty. → `pdftotext` \| `llm-vision`.
+- **DOCX:** `pandoc -f docx -t markdown` → text in sidecar; `python-docx` fallback if Python is available. → `pandoc` \| `python-docx`.
+- **XLSX:** `xlsx2csv` → markdown table per sheet in sidecar; `openpyxl` fallback. → `xlsx2csv` \| `openpyxl`.
 
 Slug is derived from the source: domain + title for URLs, filename for files.
+
+Two optional frontmatter fields document the run: `extraction_method` (which handler succeeded) and `extraction_status` (`ok` is omitted; `degraded` or `failed` is set with a one-line note in `notes:`).
+
+**Tool policy.** Every shell binary (`pdftotext`, `pandoc`, `xlsx2csv`, `python3`) is **optional with a documented fallback**. A user with none of them installed still gets a functional repo — only the formats whose only handler is the shell tool degrade. See `AGENTS.md` "Supported source formats and extraction" for the matrix.
 
 **Never modifies** `wiki/`. Run `/wiki-ingest` next to integrate.
 

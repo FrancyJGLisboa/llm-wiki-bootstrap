@@ -2,6 +2,21 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 10:45 — /wiki-extract gains DOCX / XLSX / CSV handlers + PDF LLM-vision fallback
+
+Real new behavior in the (just-renamed) `/wiki-extract` command. Previous coverage was URL, plain text, image, and PDF-via-`pdftotext`. New coverage adds DOCX (via `pandoc`), XLSX (via `xlsx2csv`), CSV (passthrough + markdown-table preview), and an LLM-vision fallback path for PDF when `pdftotext` is missing or returns near-empty output.
+
+- **`.claude/commands/wiki-extract.md`**: step 1 (format detection) and step 3 (acquisition) extended with the new formats. Step 4 (frontmatter spec) gains `extraction_method` and `extraction_status` fields. Tool-availability check (`command -v`) is now mandatory before invoking any optional binary.
+- **`AGENTS.md`**: new "Supported source formats and extraction" subsection with the format → handler matrix. File-naming rule updated to cover DOCX/XLSX (binaries → sidecar) and CSV (tabular text → sidecar). Frontmatter YAML block updated with the two new fields and the new `source_type` values.
+- **`wiki/commands.md`**: `/wiki-extract` spec rewritten to mirror the new behavior table; tool-policy paragraph added.
+- **`wiki/open-questions.md`**: new top entry under "Operational questions" — "Are the new extraction handlers actually correct?" — listing concrete unknowns per format. Same posture as the existing "do the 7 steps actually happen?" entry.
+- **`README.md`**, **`docs/EXPLAIN.md`**: one-line updates to the `/wiki-extract` row to mention multi-format support.
+- **`docs/QUICKSTART.md`**: no content update needed (the rename sed already swept it; existing examples still work).
+
+**Verification status:** all four new handlers (DOCX/XLSX/CSV/PDF-LLM-vision) are **specified, not demonstrated**. First real `/wiki-extract` on each format is the smoke test. Same as the 7-step pipeline.
+
+**Principle preservation:** every shell binary is optional with a declared fallback (`pandoc`→`python-docx`, `xlsx2csv`→`openpyxl`, `pdftotext`→`llm-vision`). A user with zero shell tools installed gets degraded but functional extraction. BYO-AI guarantee intact.
+
 ## 2026-05-25 10:30 — verb rename: fetch→extract, ask→query
 
 User-facing mental model survey: new users naturally describe the workflow as "extract content from this file" and "query the wiki," not "fetch" and "ask." Renamed the two slash commands and updated all references across the repo. Pure mechanical rename — no behavior change.
