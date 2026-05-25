@@ -11,6 +11,7 @@ ingested_pages:
   - wiki/ingest-pipeline.md
   - wiki/source-attribution.md
   - wiki/index.md
+extraction_method: llm-vision
 notes: |
   Vision-extracted sidecar for the binary at the same path with `.png` instead
   of `.png.md`. The slide was shared by the user as a screenshot from the same
