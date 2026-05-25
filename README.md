@@ -13,6 +13,8 @@ git clone <this-repo> my-wiki
 cd my-wiki
 ```
 
+Optional but recommended: run `./scripts/preflight.sh` to confirm hard requirements (`bash`/`awk`/`openssl`/`git`) are met and to see which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but the preflight tells you in advance).
+
 That's it. The structure is already there. Open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
 
 **For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md).
@@ -97,7 +99,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── EXPLAIN.md                  # mental model for devs: build-system analogy, dev-mapped verbs
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
-│   └── body-hash.sh                # canonical SHA-256 over a raw file's body
+│   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
+│   └── preflight.sh                # environment & dependency check (run before first /wiki-extract)
 ├── raw/                            # immutable source material (you curate)
 │   ├── karpathy-llm-wiki-video-transcript.md
 │   ├── karpathy-video-slide-ingest-pipeline.png

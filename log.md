@@ -2,6 +2,23 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 14:30 — scripts/preflight.sh: fail-fast tool & permissions check
+
+User-side install today is `git clone && cd` — no health check. Failures of `/wiki-extract` only surface at first invocation, sometimes silently (e.g., missing `pandoc` falls back to `python-docx`, which the user may not have either). Added a preflight script that probes the environment before the user runs any slash command.
+
+- **New `scripts/preflight.sh`**: pure bash (mirrors the style of `body-hash.sh`), TTY-aware coloring, platform-aware install hints (`brew` on Darwin, `apt`/`dnf`/`pacman` on Linux).
+- **Three check tiers:**
+  - Hard requirements (`bash`/`awk`/`openssl`/`git` + write permissions on `raw/` and `wiki/`) — fail fast with exit 1 if missing.
+  - Recommended optional tools (`pdftotext`/`pandoc`/`xlsx2csv` + `python-docx`/`openpyxl` fallbacks) — warn only.
+  - AI runtimes (`claude`/`cursor`/`code`/`copilot`/`gemini`) — informational.
+- **Summary line** classifies extraction coverage: "Ready. Full first-try: ... Partial: ... Degraded: ...". Maps directly to the `extraction_method` matrix in `AGENTS.md`.
+- **Manual-run only.** No auto-execution, no post-install hook, no agent-side invocation. The user runs it when they want a snapshot.
+- **README.md**: new optional-but-recommended line under Install pointing at the script; project-layout tree updated.
+- **AGENTS.md**: one-line mention near the `body-hash.sh` reference so the agent knows the script exists and can suggest it when users hit `extraction_status: failed`.
+- **Verification:** ran on this host (macOS, partial tool coverage). All hard reqs green, summary correctly classifies PDF as full / XLSX as partial / DOCX as degraded. Piped output drops ANSI codes correctly. Exit code 0 when hard reqs met.
+
+This PR stacks on PR #1 (`feat/extract-rename`) because the preflight references the renamed `/wiki-extract` and the new `extraction_method` matrix in `AGENTS.md`. Merge PR #1 first.
+
 ## 2026-05-25 10:45 — /wiki-extract gains DOCX / XLSX / CSV handlers + PDF LLM-vision fallback
 
 Real new behavior in the (just-renamed) `/wiki-extract` command. Previous coverage was URL, plain text, image, and PDF-via-`pdftotext`. New coverage adds DOCX (via `pandoc`), XLSX (via `xlsx2csv`), CSV (passthrough + markdown-table preview), and an LLM-vision fallback path for PDF when `pdftotext` is missing or returns near-empty output.
