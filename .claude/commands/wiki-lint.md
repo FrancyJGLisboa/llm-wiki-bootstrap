@@ -102,7 +102,7 @@ Run /wiki-lint --apply to propose fixes.
 Apply N fixes? [Y/n]
 ```
 
-After user confirms, write the fixes. Append to `CHANGELOG.md`:
+After user confirms, write the fixes. Append to `log.md`:
 
 ```markdown
 ## YYYY-MM-DD HH:MM — /wiki-lint --apply

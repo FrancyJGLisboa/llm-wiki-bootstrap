@@ -1,6 +1,21 @@
-# CHANGELOG
+# log.md
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
+
+## 2026-05-25 08:30 — second raw source (slide) + project-wide rename CHANGELOG.md → log.md
+
+User shared the "What happens when you ingest a source" slide from the same video as a screenshot. The slide is **more prescriptive** than the spoken transcript in two places: it names the index file as `index.md` and the log file as `log.md`, and it adds that step 6's index entry is "a catalog entry with link and one-line summary."
+
+- **New raw source:** `raw/karpathy-video-slide-ingest-pipeline.png` (binary) + `raw/karpathy-video-slide-ingest-pipeline.png.md` (sidecar with vision-extracted text + visual description). Hash `cfe8e91a`. Dogfoods the image-acquisition convention (binary + sidecar) for the first time.
+- **Project-wide rename:** `CHANGELOG.md` → `log.md` to honor the source video. Touched 18 files: AGENTS.md, README.md, CLAUDE.md, GEMINI.md, .clinerules, .cursor/rules/llm-wiki.mdc, .github/copilot-instructions.md, all 5 .claude/commands/wiki-*.md, and 6 wiki/*.md pages. The rename is recorded in `wiki/source-attribution.md` as a video-aligned decision (previously a project deviation).
+- **Refined `wiki/ingest-pipeline.md`** steps 6 and 7 to match the slide's exact wording: step 6 now says "catalog entry with link **and one-line summary**"; step 7 explicitly names `log.md`. Both steps now carry a second source citation pointing at the slide.
+- **Created `wiki/karpathy-video-slide-ingest-pipeline-summary.md`** (`type: summary`, `source: video`) — per-source recap of the slide per the `ingest-pipeline`'s step 3 convention.
+- **Created `wiki/karpathy-llm-wiki-video-transcript-summary.md`** (`type: summary`, `source: video`) — the missing summary page for the original transcript. Backfills a convention violation from the initial bootstrap (no summary page existed for the first source).
+- **Updated `wiki/index.md`** with a new "Source summaries" section listing both summary pages.
+- **Updated `wiki/source-attribution.md`** to add the slide as a second source and to record the `CHANGELOG.md → log.md` rename as video-aligned.
+- **Updated raw frontmatter** on both sources: transcript's `ingested_pages` adds the new summary; slide sidecar's `ingested_hash`/`ingested_at`/`ingested_pages` populated.
+
+Net: 2 raw sources, 23 wiki pages. Body hash of transcript unchanged (`3054546f`) — still skippable on next `/wiki-ingest`. Slide sidecar now has its `ingested_hash` populated.
 
 ## 2026-05-25 08:05 — follow-up: extracted "knowledge compounds" as a first-class page
 

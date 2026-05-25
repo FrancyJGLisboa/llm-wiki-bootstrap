@@ -36,7 +36,7 @@ Out-of-band conventions ("just remember to always tag like this") don't survive 
 
 ### 5. The LLM needs filesystem write + read
 
-To do [[operation-ingest]], the LLM must be able to: read arbitrary files in `raw/` and `wiki/`, create new files in `wiki/`, update files in `wiki/`, and append to `CHANGELOG.md`. Any agentic tool that gates these is unsuitable as a host.
+To do [[operation-ingest]], the LLM must be able to: read arbitrary files in `raw/` and `wiki/`, create new files in `wiki/`, update files in `wiki/`, and append to `log.md`. Any agentic tool that gates these is unsuitable as a host.
 
 ### 6. Web search is optional but enables [[query-as-write-loop]]
 

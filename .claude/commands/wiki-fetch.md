@@ -54,7 +54,7 @@ Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug n
 ## What you must NOT do
 
 - Modify any file in `wiki/`.
-- Modify `CHANGELOG.md` (acquisition is not an ingest — no log entry).
+- Modify `log.md` (acquisition is not an ingest — no log entry).
 - Set `ingested_hash` to a non-empty value (that's `/wiki-ingest`'s job).
 - Process the content into wiki pages (that's the next command).
 - Run with no argument. If `$ARGUMENTS` is empty, ask the user what to fetch.

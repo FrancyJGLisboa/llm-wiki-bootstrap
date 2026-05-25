@@ -20,6 +20,7 @@ ingested_pages:
   - wiki/ingest-pipeline.md
   - wiki/division-of-labor.md
   - wiki/four-principles.md
+  - wiki/karpathy-llm-wiki-video-transcript-summary.md
   - wiki/knowledge-compounds.md
   - wiki/query-as-write-loop.md
   - wiki/use-cases.md

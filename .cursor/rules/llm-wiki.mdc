@@ -36,7 +36,7 @@ The same five operations exist as Claude Code slash commands at `.claude/command
 2. **Use `scripts/body-hash.sh`** to compute the canonical body hash. Do not reinvent this with inline `sha256sum` / `shasum` — different invocations produce different hashes and break idempotence.
 3. **Pure CommonMark.** No Obsidian callouts (`> [!note]`), no dataview blocks, no Cursor-specific markdown, no embeds. The wiki must render identically in `cat`, GitHub web, VSCode preview, or anywhere else.
 4. **Always cite raw sources** with `(source: raw/<file>#<anchor>)` for any non-trivial claim in a wiki page.
-5. **Append a CHANGELOG entry** for every `wiki-ingest`, `wiki-ask` promotion, or `wiki-lint --apply` you perform.
+5. **Append a log.md entry** for every `wiki-ingest`, `wiki-ask` promotion, or `wiki-lint --apply` you perform.
 
 ## Frontmatter spec (recap from AGENTS.md)
 

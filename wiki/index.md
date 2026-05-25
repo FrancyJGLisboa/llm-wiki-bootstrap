@@ -42,6 +42,11 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 - [`AGENTS.md`](../AGENTS.md) — the schema (root of the project)
 - [`README.md`](../README.md) — install + quickstart
 
+## Source summaries (per-source recaps — `type: summary`)
+
+- [[karpathy-llm-wiki-video-transcript-summary]] — main YouTube transcript (primary source)
+- [[karpathy-video-slide-ingest-pipeline-summary]] — single slide on the ingest pipeline (second source, same video)
+
 ## Analysis (interpretive — `source: analysis`)
 
 - [[implicit-constraints]] — rules any faithful implementation must honor

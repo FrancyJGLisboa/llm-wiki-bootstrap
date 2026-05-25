@@ -35,7 +35,7 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 | Command | What it does |
 |---|---|
-| `/wiki-init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, CHANGELOG.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
+| `/wiki-init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
 | `/wiki-fetch <url-or-file>` | Pull a URL, file, or image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
 | `/wiki-ask <question>` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
@@ -76,7 +76,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── CLAUDE.md                       # shim → points to AGENTS.md
 ├── GEMINI.md                       # shim → points to AGENTS.md
 ├── README.md                       # this file
-├── CHANGELOG.md                    # append-only log of ingests, lints, promotes
+├── log.md                    # append-only log of ingests, lints, promotes
 ├── .claude/
 │   └── commands/                   # five Claude Code slash commands
 │       ├── wiki-init.md

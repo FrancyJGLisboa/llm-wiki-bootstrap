@@ -49,7 +49,7 @@ For each notable piece:
 - If a relevant page exists: append the new claim with a `(source: <url>)` citation. Update `updated:` in frontmatter.
 - If no page exists and the concept is non-trivial: create a new `wiki/<slug>.md` with `type: concept` or `type: entity`, `source: external`, and cite the URL.
 - Update `wiki/index.md` to list the new page(s).
-- Append a `CHANGELOG.md` entry:
+- Append a `log.md` entry:
 
   ```markdown
   ## YYYY-MM-DD HH:MM — /wiki-ask "<short question>"

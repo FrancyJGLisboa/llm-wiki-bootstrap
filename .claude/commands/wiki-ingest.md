@@ -8,7 +8,7 @@ You are executing `/wiki-ingest $ARGUMENTS` from the `llm-wiki-bootstrap` system
 
 ## Read first
 
-Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `CHANGELOG.md` (recent activity).
+Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `log.md` (recent activity).
 
 ## Determine scope
 
@@ -51,7 +51,7 @@ Read `wiki/index.md`. Add new pages to the appropriate section. Remove links to 
 
 ### Step 7 — Append to the changelog
 
-Append (newest at top) to `CHANGELOG.md`:
+Append (newest at top) to `log.md`:
 
 ```markdown
 ## YYYY-MM-DD HH:MM — /wiki-ingest

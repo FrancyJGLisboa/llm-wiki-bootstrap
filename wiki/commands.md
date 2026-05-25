@@ -50,7 +50,7 @@ We considered a sixth — `/wiki-promote` (manually promote a query answer to a 
 
 **Behavior.**
 1. Create `raw/`, `wiki/`, `.claude/commands/` if missing.
-2. Create `AGENTS.md`, `wiki/index.md`, `CHANGELOG.md`, `README.md` if missing — use the project's canonical templates.
+2. Create `AGENTS.md`, `wiki/index.md`, `log.md`, `README.md` if missing — use the project's canonical templates.
 3. **Never overwrite** existing files. If a file already exists, leave it; report which were skipped.
 
 **When used.** When the user copied just `.claude/commands/` into an existing project and wants the wiki structure scaffolded. **Not used** when the user cloned this whole repo — the structure is already there.
@@ -78,7 +78,7 @@ Slug is derived from the source: domain + title for URLs, filename for files.
 - With argument: process just that file.
 - For each file processed, run the 7 steps from [[ingest-pipeline]].
 - After success: update the raw's frontmatter (`ingested_hash`, `ingested_at`, `ingested_pages`).
-- Append a `CHANGELOG.md` entry summarizing what changed.
+- Append a `log.md` entry summarizing what changed.
 
 ### /wiki-ask <question>
 
@@ -90,7 +90,7 @@ Slug is derived from the source: domain + title for URLs, filename for files.
 3. Synthesize an answer.
 4. If the wiki is insufficient: WebSearch + WebFetch; weave in.
 5. Decide notability of the new knowledge: introduces a new term? makes a new connection? cites a new external source? If yes, **promote**: create/update wiki pages with `source: external` (web-search-derived) or `source: mixed`.
-6. Append to `CHANGELOG.md` if anything was promoted.
+6. Append to `log.md` if anything was promoted.
 
 Flag `--no-promote` skips step 5.
 

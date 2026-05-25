@@ -36,7 +36,7 @@ When the wiki is insufficient for a question, the LLM:
 2. Does a `WebSearch` + `WebFetch`
 3. Synthesizes an answer for the user
 4. Decides whether the new knowledge is **notable** (introduces a new term, makes a new connection, cites a new external source)
-5. If notable: writes / updates wiki pages and logs the promotion in `CHANGELOG.md`
+5. If notable: writes / updates wiki pages and logs the promotion in `log.md`
 
 The user can pass `--no-promote` to disable step 5 (one-off questions where the user doesn't want the wiki to drift toward the topic).
 

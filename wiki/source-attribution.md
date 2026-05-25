@@ -12,7 +12,12 @@ tags: [meta, honesty, attribution]
 
 ## Definition / TL;DR
 
-This wiki was distilled from **a single source**: a YouTube video walkthrough by a third-party creator who saw Karpathy's tweet on LLM knowledge bases and built a trading-strategies wiki in Claude Code as a demo. **Karpathy himself was not the speaker** in the source video. Anything quoted as "Karpathy" is a paraphrase or reading by the YouTuber.
+This wiki was distilled from a YouTube video walkthrough by a third-party creator who saw Karpathy's tweet on LLM knowledge bases and built a trading-strategies wiki in Claude Code as a demo. **Karpathy himself was not the speaker** in the source video. Anything quoted as "Karpathy" is a paraphrase or reading by the YouTuber.
+
+Two raw sources from that video now sit in `raw/`:
+
+1. `raw/karpathy-llm-wiki-video-transcript.md` — the full spoken transcript (primary source for 14+ wiki pages). Summarized at [[karpathy-llm-wiki-video-transcript-summary]].
+2. `raw/karpathy-video-slide-ingest-pipeline.png` (+ sidecar) — a single slide from the same video, mandating two file names (`index.md`, `log.md`) and adding "one-line summary" to the step-6 description. Summarized at [[karpathy-video-slide-ingest-pipeline-summary]].
 
 ## Why this matters
 
@@ -61,6 +66,7 @@ The YouTuber occasionally distinguishes Karpathy's claims from their own comment
 - The frontmatter spec (the video doesn't show what raw or wiki frontmatter looks like).
 - The 7-step pipeline being formally codified as a checklist (the video lists the steps but doesn't structure them as a contract).
 - Hash-based delta detection on raw files (the video doesn't say how the LLM knows what's been ingested).
+- Naming the changelog `log.md` — **was** initially `CHANGELOG.md` (developer convention); renamed on 2026-05-25 after the slide at `raw/karpathy-video-slide-ingest-pipeline.png.md` made the source video's intent explicit. This is now a video-aligned decision, not a project decision.
 
 These are reasonable extrapolations, but they're ours.
 

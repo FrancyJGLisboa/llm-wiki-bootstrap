@@ -30,7 +30,7 @@ Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cl
 2. **`scripts/body-hash.sh`** is the canonical hash. Do not inline a different algorithm.
 3. **Pure CommonMark.** No Obsidian / Cursor / IDE-specific extensions.
 4. **Cite raw sources** inline with `(source: raw/<file>#<anchor>)`.
-5. **Append CHANGELOG entries** for every ingest / promote / lint-apply.
+5. **Append log.md entries** for every ingest / promote / lint-apply.
 
 ## When in doubt
 

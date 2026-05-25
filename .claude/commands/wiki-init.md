@@ -26,7 +26,7 @@ Read `AGENTS.md` if it exists in the current directory — it tells you the proj
 3. **Create files if missing** (never overwrite existing — if a file exists, skip it and report):
    - `AGENTS.md` — the canonical schema. If you are running this in a fresh directory, write a minimal `AGENTS.md` that documents the three layers, page template, link convention, raw source convention, and the five slash commands. Reference the version in this project (the project you are running from) as the canonical template.
    - `wiki/index.md` — a navigation page with the frontmatter `type: navigation`, `source: analysis`. Body should explain how to start adding raw sources and use `/wiki-fetch` + `/wiki-ingest`.
-   - `CHANGELOG.md` — newest-at-top, with an initial entry: `## <today> <time> — /wiki-init` listing the files created.
+   - `log.md` — newest-at-top, with an initial entry: `## <today> <time> — /wiki-init` listing the files created.
    - `README.md` — a quickstart explaining: how to add sources (`/wiki-fetch`), how to ingest (`/wiki-ingest`), how to ask (`/wiki-ask`), how to maintain (`/wiki-lint`). Use plain CommonMark only (no Obsidian-specific syntax).
 
 4. **Idempotence check.** Run `/wiki-init` twice should leave the directory in the same state after the first run. Verify by re-listing.
@@ -51,7 +51,7 @@ Created:
 - .claude/commands/
 - AGENTS.md
 - wiki/index.md
-- CHANGELOG.md
+- log.md
 - README.md
 
 Skipped (already present):

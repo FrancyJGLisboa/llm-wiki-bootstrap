@@ -18,4 +18,4 @@ Hard rules (full text in `AGENTS.md`):
 2. Use `scripts/body-hash.sh` for the canonical hash — do not reinvent.
 3. Pure CommonMark. No rendering-dependent markdown.
 4. Cite raw sources inline: `(source: raw/<file>#<anchor>)`.
-5. Append a CHANGELOG entry for every ingest, promote, or lint-apply.
+5. Append a log.md entry for every ingest, promote, or lint-apply.

@@ -10,7 +10,7 @@ This repository is an `llm-wiki-bootstrap` instance — a personal LLM-wiki know
 
 - `raw/` — immutable source material the user curates. Read-only for you.
 - `wiki/` — LLM-owned markdown. **You are the sole writer.**
-- `AGENTS.md` + `CHANGELOG.md` — the schema and audit log, co-owned.
+- `AGENTS.md` + `log.md` — the schema and audit log, co-owned.
 
 ## The five workflows
 
@@ -28,7 +28,7 @@ Defined as Claude Code slash commands at `.claude/commands/wiki-*.md`. From Copi
 2. **Use `scripts/body-hash.sh`** for the canonical body hash. Do not reinvent.
 3. **Pure CommonMark only.** No Obsidian callouts, dataview, or any rendering-dependent markdown.
 4. **Cite raw sources** inline: `(source: raw/<file>#<anchor>)`.
-5. **Append a CHANGELOG entry** for every ingest, promote, or lint-apply.
+5. **Append a log.md entry** for every ingest, promote, or lint-apply.
 
 ## When in doubt
 

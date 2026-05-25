@@ -36,7 +36,7 @@ We chose `AGENTS.md` as the canonical schema name. Reasons:
 - Page template (frontmatter spec + standard sections)
 - Link convention
 - Raw source frontmatter spec
-- `CHANGELOG.md` format
+- `log.md` format
 - Hard rules ("LLM must NOT edit `raw/`", etc.)
 
 ### Co-evolution

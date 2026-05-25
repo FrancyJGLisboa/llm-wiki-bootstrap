@@ -19,7 +19,7 @@ From the video: *"You drop a new source into a raw folder and tell the LLM to pr
 ### Inputs and outputs
 
 - **Input:** one or more files in `raw/` whose `ingested_hash` is empty or stale.
-- **Output:** new or updated pages in `wiki/`; appended `CHANGELOG.md` entry; updated `ingested_*` fields in the raw frontmatter.
+- **Output:** new or updated pages in `wiki/`; appended `log.md` entry; updated `ingested_*` fields in the raw frontmatter.
 
 ### Compounding effect
 

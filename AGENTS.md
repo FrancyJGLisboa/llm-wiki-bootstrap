@@ -14,7 +14,7 @@ The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itse
 |---|---|---|---|
 | **Raw sources** | `raw/` | User (via `/wiki-fetch` or manual drop) | Immutable after fetch (user may edit; ingest detects via hash) |
 | **Wiki** | `wiki/` | **LLM only** | Mutable, rewritten freely by `/wiki-ingest`, `/wiki-ask` (promote), `/wiki-lint` |
-| **Schema** | `AGENTS.md` (this file), `CHANGELOG.md` | User + LLM (co-evolved) | User-readable; LLM may propose edits via `/wiki-lint` |
+| **Schema** | `AGENTS.md` (this file), `log.md` | User + LLM (co-evolved) | User-readable; LLM may propose edits via `/wiki-lint` |
 
 **Critical:** The LLM must never edit files in `raw/` (it may only read them). The user must never edit files in `wiki/` directly — instead, edit raw sources or use `/wiki-ask` to file the new claim, then re-run `/wiki-ingest` or `/wiki-lint`.
 
@@ -22,9 +22,9 @@ The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itse
 
 | Command | Purpose |
 |---|---|
-| `/wiki-init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, CHANGELOG.md) in the current directory. Idempotent. |
+| `/wiki-init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
 | `/wiki-fetch <source>` | Acquire a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append CHANGELOG). Detects deltas via body hash. |
+| `/wiki-ingest [<raw-file>]` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
 | `/wiki-ask <question>` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
 | `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
 
@@ -103,9 +103,9 @@ notes: |
 
 **Canonical hashing.** The ONE allowed way to compute `ingested_hash` is `scripts/body-hash.sh <file>`. Do not reinvent the hashing logic inline (different awk patterns, different newline handling, different SHA tools → different hashes → broken idempotence). The script defines "body" as everything after the closing `---` of frontmatter, hashed with SHA-256.
 
-## CHANGELOG format
+## log.md format
 
-`CHANGELOG.md` is append-only, newest at top:
+`log.md` is append-only, newest at top:
 
 ```markdown
 ## YYYY-MM-DD HH:MM — /wiki-ingest
@@ -128,7 +128,7 @@ notes: |
 2. Use Obsidian-specific extensions (callouts `> [!note]`, dataview blocks, embedded queries, etc.). Pure CommonMark only.
 3. Add backlinks blocks manually — let `/wiki-lint` compute them if requested.
 4. Modify `AGENTS.md` without surfacing the change to the user (this is shared schema).
-5. Delete wiki pages without leaving a CHANGELOG entry.
+5. Delete wiki pages without leaving a log.md entry.
 6. Add a wiki page without filling required frontmatter fields.
 
 ## When in doubt

@@ -116,7 +116,7 @@ Directory where Claude Code reads slash command definitions. Each file (e.g., `w
 
 The canonical schema file. See [[layer-schema]].
 
-### `CHANGELOG.md`
+### `log.md`
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation.
 
