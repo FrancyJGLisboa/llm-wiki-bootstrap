@@ -37,6 +37,20 @@ For the full step-by-step, see [[ingest-pipeline]].
 - [[operation-lint]] catches mistakes ingest made or didn't catch
 - [[query-as-write-loop]] does *ingest-like writes* triggered by queries instead of new raw files
 
+## Verification status (as of 2026-05-25)
+
+**Honesty note** `(source: analysis)`: the 7-step pipeline is **specified, not demonstrated**, in this project. `/wiki-ingest` has never been invoked. The wiki you are reading was produced by direct file writes during the design conversation that bootstrapped this repo, with me (the LLM in that session) playing the role of /wiki-ingest by hand. The output looks pipeline-conformant — but it is not a test that the prompt in `.claude/commands/wiki-ingest.md` actually drives a fresh LLM session through all 7 steps reliably.
+
+What's untested:
+
+- Whether an LLM following the prompt does **all 7 steps**, or skips some (e.g., quietly omitting step 5's contradiction-flagging).
+- Whether step 4 ("update existing pages") touches the right pages — not too few (loses compounding) and not too many (collateral churn).
+- Whether step 5 catches subtle contradictions or only obvious ones.
+- Whether step 3's per-source summary page actually gets created on first ingest (the original bootstrap did not — it had to be backfilled later; see `log.md` 2026-05-25 08:30).
+- How long the pipeline takes for one source of ~5,000 words (token budget, wall-clock).
+
+The first real-session invocation of `/wiki-ingest <new-source>` is the smoke test. Until then, treat the 7 steps as **what the system intends to do**, not **what it has been observed doing**.
+
 ## Related
 
 - [[ingest-pipeline]] — the 7-step procedure in detail

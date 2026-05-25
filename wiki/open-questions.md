@@ -16,6 +16,19 @@ The video shows the LLM-wiki pattern at a high level. There are several question
 
 ## Operational questions
 
+### The most important open question: do the 7 steps actually happen?
+
+Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/wiki-ingest.md`. Demonstrated nowhere. `/wiki-ingest` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.
+
+Concrete unknowns:
+
+- Will an LLM following the prompt perform **all 7 steps**, or quietly skip some? (Step 5 contradiction-flagging and step 3 summary-page creation are the most likely to be skipped — the latter was in fact skipped in the manual bootstrap and backfilled later.)
+- For step 4 ("update existing pages"), what's the right blast radius? The video says "10-15 pages per source." If the LLM only touches 2-3 the compounding effect dies; if it touches 50 the wiki churns.
+- For step 5, what counts as a contradiction subtle enough to flag? Naive string-mismatch is too narrow; deep semantic comparison may exceed the LLM's reliability.
+- Token / time budget per ingest call?
+
+The smoke test is the first invocation of `/wiki-ingest <new-source>`. Until then, the operation pages describe an intention, not a measurement. See [[operation-ingest]]'s "Verification status" section.
+
 ### Concurrency
 
 The video mentions the YouTuber's Claude Code running *two parallel ingest agents* during the initial ingestion of 8 transcripts. `(source: raw/karpathy-llm-wiki-video-transcript.md#11:50-12:05)` But it doesn't say:

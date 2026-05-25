@@ -2,6 +2,15 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 08:45 — codified verification-gap honesty
+
+User asked the sharp epistemic question: do the 7 steps actually happen, or are they just specified? Direct answer: the latter — no LLM has invoked `/wiki-ingest` in this project; the wiki was hand-written in the design conversation. To make this surface in the wiki itself rather than only in chat:
+
+- Added "Verification status (as of 2026-05-25)" subsection to `wiki/operation-ingest.md`, naming what is and isn't tested.
+- Added a new section at the top of `wiki/open-questions.md` under Operational questions, titled "The most important open question: do the 7 steps actually happen?".
+
+No body content was changed in any other page; the existing 7-step descriptions stand as specifications. The wiki is now honest about which of its claims are demonstrated and which are aspirational.
+
 ## 2026-05-25 08:30 — second raw source (slide) + project-wide rename CHANGELOG.md → log.md
 
 User shared the "What happens when you ingest a source" slide from the same video as a screenshot. The slide is **more prescriptive** than the spoken transcript in two places: it names the index file as `index.md` and the log file as `log.md`, and it adds that step 6's index entry is "a catalog entry with link and one-line summary."
