@@ -2,6 +2,15 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 17:00 — verify-extract.sh: surface extraction_status visually
+
+Gap surfaced during the prior session's smoke-test batch: the DOCX-degraded run produced a sidecar with `extraction_status: failed`, but the verifier reported "Passed. Shape checks all green." with no visual indication that extraction actually failed. Shape was fine — but the user reading the verifier output wouldn't know they need to install pandoc.
+
+- `scripts/verify-extract.sh`: new check block after `ingested_hash`. When `extraction_status` is present in the frontmatter, emit `✓` for `ok`, `⚠` for `degraded` / `failed`, `⚠` (with "unknown value" message) for anything else. Exit code unchanged on degraded/failed (shape is still fine — the warn is the signal).
+- Docstring updated to document the new behavior in the "Scope" section.
+
+Tested on 4 synthetic frontmatter values: `failed` → ⚠, `ok` → ✓, `degraded` → ⚠, `bogus` → ⚠ (unknown). Exit code 0 in all cases.
+
 ## 2026-05-25 16:50 — tests/canary/canary-csv.csv: tracked CSV fixture
 
 Smoke-tested the CSV path of `/wiki-extract` end-to-end this session. The fixture used (5-row world-cities CSV) was a one-shot file in working tree; promoting it to a tracked fixture so the smoke test is reproducible.

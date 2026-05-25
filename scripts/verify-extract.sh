@@ -13,6 +13,12 @@
 #     - Frontmatter delimiters missing or malformed
 #     - Required field absent or empty
 #     - Body content empty
+#   It also SURFACES (but does not fail on) extraction_status when present:
+#     - ok        → green ✓
+#     - degraded  → yellow ⚠ (extraction partial; check sidecar notes)
+#     - failed    → yellow ⚠ (extraction failed; check sidecar notes)
+#     - other     → yellow ⚠ (unknown value)
+#   Exit code stays 0 on degraded/failed — shape is fine, semantics signaled by ⚠.
 #   It does NOT catch:
 #     - Wrong source_type (e.g., "pdf" labeled on a .md source)
 #     - Hallucinated source_title / source_author
@@ -138,6 +144,23 @@ if echo "$frontmatter" | grep -qE '^ingested_hash:'; then
   fi
 else
   fail "field 'ingested_hash': missing (should be present, even if empty)"
+fi
+
+# extraction_status is optional. When present, surface degraded / failed states explicitly —
+# shape is fine but the user needs to see that extraction itself didn't fully succeed.
+if echo "$frontmatter" | grep -qE '^extraction_status:'; then
+  ext_status=$(get_field "extraction_status")
+  case "$ext_status" in
+    ok)
+      ok "field 'extraction_status': ok"
+      ;;
+    degraded|failed)
+      warn "field 'extraction_status': ${ext_status} — extraction did not fully succeed; check 'notes' in the sidecar for install hints"
+      ;;
+    *)
+      warn "field 'extraction_status': '${ext_status}' (unknown value — expected one of: ok, degraded, failed)"
+      ;;
+  esac
 fi
 
 # Body content (everything after the closing ---) should be non-empty.
