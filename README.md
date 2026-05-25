@@ -15,6 +15,8 @@ cd my-wiki
 
 That's it. The structure is already there. Open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
 
+**For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).**
+
 ### Tool support
 
 The project ships shim files for every major agentic tool. Whatever you use, the AI will load the schema automatically:
@@ -91,6 +93,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── .github/
 │   └── copilot-instructions.md     # GitHub Copilot shim
 ├── docs/
+│   ├── QUICKSTART.md               # per-tool first-use guide (start here after cloning)
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
 │   └── body-hash.sh                # canonical SHA-256 over a raw file's body

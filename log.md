@@ -2,6 +2,21 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 09:35 — docs/QUICKSTART.md: per-tool first-use sequences
+
+User asked: "will users get a fluid experience?" Honest answer was no, for most. Highest-leverage fix identified: a per-tool first-use guide. Built it.
+
+- New `docs/QUICKSTART.md`, English, ~260 lines.
+- Structure: prereqs (incl. what to do with the shipped meta-wiki — keep / wipe / archive) → 5-operation mental model → per-tool sequences for Claude Code, Copilot CLI, VSCode + Copilot Agent Mode, Cline, Cursor, "other tools" → expected output (with symptom→cause→fix table for partial pipeline execution) → recovery via git → cost expectations → honest caveat about untested runtime → quick reference card.
+- Each per-tool section gives the **exact natural-language phrasing** to invoke each workflow, since non-Claude-Code tools don't have slash commands. This was friction #1 from the earlier honest assessment.
+- "What success looks like" section addresses friction #3 (no expected-output gabarito) by listing concrete observable outcomes (1 summary page, 3-10 wiki pages, log.md entry, index updated).
+- README.md gains a callout to QUICKSTART right after the install command, plus the file is listed in the project layout.
+
+Still NOT addressed by this commit:
+- The `/wiki-init --replace-content` affordance for wiping the meta-wiki cleanly (friction #2). For now QUICKSTART tells the user the manual command.
+- Recovery beyond `git checkout` (no `--dry-run`, no rollback command). Documented as a caveat, not solved.
+- The actual runtime untested-ness (friction #4 + #5). Cannot be solved without someone running the system.
+
 ## 2026-05-25 09:15 — fix: pitch HTML had outdated Copilot claim
 
 User correction: I claimed "Copilot é conversacional, não agentic" in the AI-extension tier table. Wrong — (a) GitHub Copilot CLI is a standalone agentic CLI competing with Claude Code, (b) VSCode + Copilot in Agent Mode (shipped 2025) does multi-step autonomous work.
