@@ -29,6 +29,7 @@ ingested_pages:
   - wiki/open-questions.md
   - wiki/source-attribution.md
   - wiki/glossary.md
+extraction_method: passthrough
 notes: |
   Pasted by the user into the conversation that bootstrapped this project.
   Section headers (with timestamps) are preserved from the YouTube transcript export.

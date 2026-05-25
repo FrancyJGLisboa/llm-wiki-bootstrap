@@ -43,18 +43,20 @@ cd my-wiki
 
 ## Smoke test (recommended before your first real source)
 
-Verify that `/wiki-extract` produces output with the right shape in your environment before running it on a real source you care about.
+Verify that `/wiki-extract` produces output with the right shape in your environment before running it on a real source you care about. Two known-good fixtures ship with the repo — start with one or both.
 
-In your AI tool:
+### Plain-text path
 
 ```
-/wiki-extract tests/canary/canary-smoke-test.md
+/wiki-extract tests/canary/canary-smoke-test.md     # in your AI tool
+./scripts/verify-extract.sh canary-smoke-test       # in shell
 ```
 
-Then in a shell:
+### CSV path
 
-```bash
-./scripts/verify-extract.sh canary-smoke-test
+```
+/wiki-extract tests/canary/canary-csv.csv           # in your AI tool
+./scripts/verify-extract.sh canary-csv              # in shell
 ```
 
 What `verify-extract.sh` checks (shape only):

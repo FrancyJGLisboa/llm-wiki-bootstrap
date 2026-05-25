@@ -2,6 +2,43 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 17:15 — backfill extraction_method on legacy raws
+
+Gap surfaced during PR #3's smoke-test batch: the two raw files shipped before PR #1 (`karpathy-llm-wiki-video-transcript.md` and `karpathy-video-slide-ingest-pipeline.png.md`) predate the `extraction_method` frontmatter field, so running `verify-extract.sh` on them fails the "extraction_method required" check. This is a one-time human-authorized migration to bring the legacy raws up to schema_version 1.
+
+- **`raw/karpathy-llm-wiki-video-transcript.md`**: added `extraction_method: passthrough`. The transcript was pasted into the conversation that bootstrapped the project (per its own `notes:` field) — passthrough is the closest match in the enum (raw text imported as-is, no parser).
+- **`raw/karpathy-video-slide-ingest-pipeline.png.md`**: added `extraction_method: llm-vision`. The slide is a binary PNG; its sidecar was produced by vision extraction (per the 2026-05-25 08:30 entry below).
+- Both edits are in the YAML frontmatter only; **body content unchanged**. Body hashes were recomputed via `scripts/body-hash.sh` and verified identical to the recorded `ingested_hash` — idempotence preserved, `/wiki-ingest` will still skip both files.
+
+**Hard-rule note:** modifying files in `raw/` normally violates the LLM's read-only rule on that layer. This migration is treated as a one-time maintainer-authorized edit (not an autonomous LLM act). Future cases where the LLM's `/wiki-extract` writes `extraction_method` on a *new* raw file are fine and unrelated.
+
+**Follow-up gap surfaced during this commit:** the verifier's `ingested_hash` check warns "/wiki-extract should leave this empty" — accurate for fresh extract output, but noisy on files already processed by `/wiki-ingest` (the normal post-ingest state). Not fixed here to keep this PR's scope minimal. Tracked for next iteration.
+
+## 2026-05-25 17:00 — verify-extract.sh: surface extraction_status visually
+
+Gap surfaced during the prior session's smoke-test batch: the DOCX-degraded run produced a sidecar with `extraction_status: failed`, but the verifier reported "Passed. Shape checks all green." with no visual indication that extraction actually failed. Shape was fine — but the user reading the verifier output wouldn't know they need to install pandoc.
+
+- `scripts/verify-extract.sh`: new check block after `ingested_hash`. When `extraction_status` is present in the frontmatter, emit `✓` for `ok`, `⚠` for `degraded` / `failed`, `⚠` (with "unknown value" message) for anything else. Exit code unchanged on degraded/failed (shape is still fine — the warn is the signal).
+- Docstring updated to document the new behavior in the "Scope" section.
+
+Tested on 4 synthetic frontmatter values: `failed` → ⚠, `ok` → ✓, `degraded` → ⚠, `bogus` → ⚠ (unknown). Exit code 0 in all cases.
+
+## 2026-05-25 16:50 — tests/canary/canary-csv.csv: tracked CSV fixture
+
+Smoke-tested the CSV path of `/wiki-extract` end-to-end this session. The fixture used (5-row world-cities CSV) was a one-shot file in working tree; promoting it to a tracked fixture so the smoke test is reproducible.
+
+- `tests/canary/canary-csv.csv` — 5 data rows + header. Plain ASCII. Designed to exercise the ≤100-row markdown-table render branch.
+- Sibling to `tests/canary/canary-smoke-test.md` (plain-text fixture from PR #3). Same purpose: known-good input for the verifier.
+
+The smoke test flow (per `docs/QUICKSTART.md`):
+
+```
+/wiki-extract tests/canary/canary-csv.csv   # in AI tool
+./scripts/verify-extract.sh canary-csv      # in shell
+```
+
+Expected: `raw/canary-csv.csv` (copy) + `raw/canary-csv.csv.md` (sidecar with `extraction_method: csv-passthrough` and a markdown table of the 5 cities). Verifier green.
+
 ## 2026-05-25 15:30 — canary + verify-extract.sh: smoke test for first /wiki-extract
 
 "Specified, not demonstrated" was the honest status of `/wiki-extract` after PR #1. This commit ships the smallest possible **shape** test: a known-good canary source + a shell verifier. The user runs `/wiki-extract` on the canary in their AI tool, then runs the verifier in shell to get a green/red signal on whether the produced output has the expected frontmatter and body. **Shape only — not semantics.**
