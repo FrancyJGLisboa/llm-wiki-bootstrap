@@ -2,6 +2,41 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 15:30 — canary + verify-extract.sh: smoke test for first /wiki-extract
+
+"Specified, not demonstrated" was the honest status of `/wiki-extract` after PR #1. This commit ships the smallest possible **shape** test: a known-good canary source + a shell verifier. The user runs `/wiki-extract` on the canary in their AI tool, then runs the verifier in shell to get a green/red signal on whether the produced output has the expected frontmatter and body. **Shape only — not semantics.**
+
+- **New `tests/canary/canary-smoke-test.md`**: tiny plain-markdown source (~30 lines) used as the known-good input. Self-describing — explains what should happen and what shouldn't.
+- **New `scripts/verify-extract.sh <slug>`**: pure bash verifier. Locates the produced `raw/<slug>.<ext>` or sidecar `<slug>.<ext>.md`, parses the frontmatter, checks that required fields (`source_url`, `source_type`, `fetched_at`, `extraction_method`) are non-empty, that `ingested_hash` is present-but-empty, and that body content exists. TTY-aware coloring, exit 0 on pass / 1 on fail / 2 on usage error.
+- **Honest scope:** shape only. Verifier can catch: missing output file, malformed frontmatter, absent/empty required field, empty body. Verifier CANNOT catch: wrong `source_type` value, hallucinated `source_title`, `extraction_method` recorded incorrectly. Semantics need a human eye on `raw/<slug>.*`.
+- **docs/QUICKSTART.md**: new "Smoke test (recommended)" section between "Before you start" and "The 5 operations" walking the user through the canary flow.
+- **README.md**: project-layout tree updated with the new script and the `tests/canary/` directory.
+
+Also in this commit: drift cleanup. The QUICKSTART operations table (separate from the per-tool sequences below it) still used the old verb names `fetch` and `ask` — leftover from PR #1's sed which only touched `wiki-fetch`/`wiki-ask` literals. Updated to `extract`/`query` to match the rest of the doc.
+
+Verified on the working tree (without touching tracked files): 4 cases — no raw file → exit 1 with "Not ready" message; happy-path raw → exit 0 with all green; missing `extraction_method` → exit 1 with one fail line; malformed frontmatter (no closing `---`) → exit 1 with multiple failures. Cleanup confirmed `raw/` returned to its 3 tracked files.
+
+## 2026-05-25 15:15 — scripts/wipe-meta-wiki.sh: clean-slate helper
+
+Today's "start fresh" flow was three commands in QUICKSTART (`rm -rf wiki/*.md raw/* && touch wiki/index.md`) — easy to typo and easy to skip the index touch, leaving the next `/wiki-extract` confused. Added a single-command helper.
+
+- **New `scripts/wipe-meta-wiki.sh`**: pure bash, mirrors `body-hash.sh`/`preflight.sh` style. Wipes `wiki/*.md` and `raw/*`, recreates `wiki/index.md` as a minimal stub with valid frontmatter, resets `log.md` to its header line.
+- **Safety:** interactive `[y/N]` confirmation by default; `--yes` flag to skip. Inventories file counts before wiping so the user sees what's about to disappear.
+- **Idempotent:** re-running on an empty wiki shows "nothing to do" and exits 0. (Actually re-wipes the stub index and rewrites it; functionally idempotent.)
+- **Preserves:** AGENTS.md, README.md, all shims, `.claude/commands/`, `scripts/`, `docs/`, LICENSE — everything that isn't generated content.
+- **README.md + AGENTS.md + docs/QUICKSTART.md:** replaced the three hand-rolled `rm -rf` instructions with the new script. Project-layout tree in README updated.
+
+Verified on a `/tmp/` copy: before (23 wiki files, 3 raw files) → after wipe (only index.md stub remains; raw/ empty; log.md reset). Idempotence checked — second run with `--yes` produced same end state.
+
+## 2026-05-25 15:00 — AGENTS.md: schema_version = 1 declared
+
+Started declaring a schema version on `AGENTS.md` so future schema changes have a coordination marker. Today's `AGENTS.md` (as merged in PR #1, before this change) is retroactively designated as the version-1 baseline. Future bumps are reserved for breaking/behavior-changing edits.
+
+- `AGENTS.md`: added `**Schema version:** 1 (introduced 2026-05-25)` line near the top. Added a "Schema versioning" section before "When in doubt" describing the bump policy (breaking-change bumps only; additive opt-in changes don't bump; no runtime enforcement V1).
+- No code changes. Slash commands today don't read this field. It's a marker for humans reviewing diffs and for future tooling.
+
+Migration impact: none. Existing slash commands continue to work unchanged.
+
 ## 2026-05-25 14:30 — scripts/preflight.sh: fail-fast tool & permissions check
 
 User-side install today is `git clone && cd` — no health check. Failures of `/wiki-extract` only surface at first invocation, sometimes silently (e.g., missing `pandoc` falls back to `python-docx`, which the user may not have either). Added a preflight script that probes the environment before the user runs any slash command.

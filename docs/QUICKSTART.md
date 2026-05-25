@@ -34,10 +34,40 @@ cd my-wiki
 | Choice | Command | When |
 |---|---|---|
 | **Keep + add alongside** (recommended for first try) | (do nothing) | You're learning the pattern. The meta-wiki stays as a worked example. |
-| **Wipe and start fresh** | `rm -rf wiki/*.md raw/* && touch wiki/index.md` | You already understand the pattern and want a clean slate. |
+| **Wipe and start fresh** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | You already understand the pattern and want a clean slate. |
 | **Archive to a reference folder** | `mkdir -p reference && git mv wiki reference/meta-wiki && mkdir wiki` | Best of both — keep the example, isolate your stuff. |
 
 **3. Open the directory in your AI tool** of choice. Sections below cover each one.
+
+---
+
+## Smoke test (recommended before your first real source)
+
+Verify that `/wiki-extract` produces output with the right shape in your environment before running it on a real source you care about.
+
+In your AI tool:
+
+```
+/wiki-extract tests/canary/canary-smoke-test.md
+```
+
+Then in a shell:
+
+```bash
+./scripts/verify-extract.sh canary-smoke-test
+```
+
+What `verify-extract.sh` checks (shape only):
+
+- `raw/canary-smoke-test.md` exists.
+- YAML frontmatter is delimited and parseable.
+- Required fields are present and non-empty (`source_url`, `source_type`, `fetched_at`, `extraction_method`).
+- `ingested_hash` is present but empty (it's `/wiki-ingest`'s job, not `/wiki-extract`'s).
+- Body content is non-empty.
+
+It does **not** check semantics — wrong `source_type`, hallucinated `source_title`, etc. will slip past. For semantics, eyeball `raw/canary-smoke-test.md` directly.
+
+When you're done, clean up: `rm raw/canary-smoke-test.md`.
 
 ---
 
@@ -48,9 +78,9 @@ You will use the same 5 operations regardless of tool:
 | Operation | Purpose | When to run |
 |---|---|---|
 | **init** | Scaffold the directory structure (`raw/`, `wiki/`, `AGENTS.md`, `log.md`). Idempotent. | Once, only if you copied just `.claude/commands/` to a project. **Skip if you cloned this repo** — structure is already there. |
-| **fetch** `<source>` | Pull a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. | Every time you have a new source to add. |
-| **ingest** `[<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every fetch (or after manually editing a raw file). |
-| **ask** `<question>` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. | Anytime you have a question. |
+| **extract** `<source>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/` with frontmatter. Does **not** touch `wiki/`. | Every time you have a new source to add. |
+| **ingest** `[<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every extract (or after manually editing a raw file). |
+| **query** `<question>` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. | Anytime you have a question. |
 | **lint** `[--apply]` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
 
 In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition).

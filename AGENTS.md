@@ -1,12 +1,14 @@
 # AGENTS.md — `llm-wiki-bootstrap` schema
 
+**Schema version:** 1 — introduced 2026-05-25. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
+
 This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-schema.md`](wiki/layer-schema.md)). It tells any AI agent operating on this directory how the wiki is structured and how to work with it.
 
 ## What this project is
 
 A personal LLM-wiki knowledge base, operated **exclusively via slash commands** in any agentic tool (Claude Code first; others follow). The wiki layer is **owned by the LLM** — the user curates raw sources and asks questions; the LLM does all writing, cross-referencing, and maintenance.
 
-The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itself, derived from `raw/karpathy-llm-wiki-video-transcript.md`. It serves as both the system's reference documentation and as a worked example of the pattern. Users may extend it, replace it, or wipe it (`rm -rf wiki/* && /wiki-init`) to start their own.
+The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itself, derived from `raw/karpathy-llm-wiki-video-transcript.md`. It serves as both the system's reference documentation and as a worked example of the pattern. Users may extend it, replace it, or wipe it (`./scripts/wipe-meta-wiki.sh`) to start their own.
 
 ## Three-layer model
 
@@ -152,6 +154,17 @@ If every handler for a binary format fails, the binary is still saved to `raw/` 
 4. Modify `AGENTS.md` without surfacing the change to the user (this is shared schema).
 5. Delete wiki pages without leaving a log.md entry.
 6. Add a wiki page without filling required frontmatter fields.
+
+## Schema versioning
+
+The number at the top of this file (`Schema version: 1`) increments when conventions in this document change in a way that could surprise an older client. The policy:
+
+- **Bump for breaking or behavior-changing edits.** Examples: renaming a frontmatter field, changing what `/wiki-extract` writes, redefining a layer's ownership rules, restructuring `log.md`'s format.
+- **Don't bump for typo fixes, clarifications, or additions that are strictly opt-in.** Adding an optional frontmatter field with a documented default is additive, not breaking.
+- **Record the bump in `log.md`** with a rationale + a one-sentence migration note (what an older slash command might do wrong if it doesn't know about the change).
+- **No runtime enforcement (V1).** Slash commands today don't check `schema_version` and don't refuse to run against an older schema. The version is a marker for humans reviewing diffs and for future tooling — not a guard.
+
+If you fork the project, keep your own `schema_version` independent. Upstream changes that bump our version should be reviewed and merged on your own cadence.
 
 ## When in doubt
 
