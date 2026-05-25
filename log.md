@@ -2,6 +2,15 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 15:00 — AGENTS.md: schema_version = 1 declared
+
+Started declaring a schema version on `AGENTS.md` so future schema changes have a coordination marker. Today's `AGENTS.md` (as merged in PR #1, before this change) is retroactively designated as the version-1 baseline. Future bumps are reserved for breaking/behavior-changing edits.
+
+- `AGENTS.md`: added `**Schema version:** 1 (introduced 2026-05-25)` line near the top. Added a "Schema versioning" section before "When in doubt" describing the bump policy (breaking-change bumps only; additive opt-in changes don't bump; no runtime enforcement V1).
+- No code changes. Slash commands today don't read this field. It's a marker for humans reviewing diffs and for future tooling.
+
+Migration impact: none. Existing slash commands continue to work unchanged.
+
 ## 2026-05-25 14:30 — scripts/preflight.sh: fail-fast tool & permissions check
 
 User-side install today is `git clone && cd` — no health check. Failures of `/wiki-extract` only surface at first invocation, sometimes silently (e.g., missing `pandoc` falls back to `python-docx`, which the user may not have either). Added a preflight script that probes the environment before the user runs any slash command.
