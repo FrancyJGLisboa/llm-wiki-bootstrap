@@ -101,7 +101,11 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── scripts/
 │   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
 │   ├── preflight.sh                # environment & dependency check (run before first /wiki-extract)
-│   └── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
+│   ├── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
+│   └── verify-extract.sh           # check the shape of /wiki-extract output (smoke test)
+├── tests/
+│   └── canary/
+│       └── canary-smoke-test.md    # tiny known-good source for first-run verification
 ├── raw/                            # immutable source material (you curate)
 │   ├── karpathy-llm-wiki-video-transcript.md
 │   ├── karpathy-video-slide-ingest-pipeline.png

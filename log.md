@@ -2,6 +2,20 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 15:30 — canary + verify-extract.sh: smoke test for first /wiki-extract
+
+"Specified, not demonstrated" was the honest status of `/wiki-extract` after PR #1. This commit ships the smallest possible **shape** test: a known-good canary source + a shell verifier. The user runs `/wiki-extract` on the canary in their AI tool, then runs the verifier in shell to get a green/red signal on whether the produced output has the expected frontmatter and body. **Shape only — not semantics.**
+
+- **New `tests/canary/canary-smoke-test.md`**: tiny plain-markdown source (~30 lines) used as the known-good input. Self-describing — explains what should happen and what shouldn't.
+- **New `scripts/verify-extract.sh <slug>`**: pure bash verifier. Locates the produced `raw/<slug>.<ext>` or sidecar `<slug>.<ext>.md`, parses the frontmatter, checks that required fields (`source_url`, `source_type`, `fetched_at`, `extraction_method`) are non-empty, that `ingested_hash` is present-but-empty, and that body content exists. TTY-aware coloring, exit 0 on pass / 1 on fail / 2 on usage error.
+- **Honest scope:** shape only. Verifier can catch: missing output file, malformed frontmatter, absent/empty required field, empty body. Verifier CANNOT catch: wrong `source_type` value, hallucinated `source_title`, `extraction_method` recorded incorrectly. Semantics need a human eye on `raw/<slug>.*`.
+- **docs/QUICKSTART.md**: new "Smoke test (recommended)" section between "Before you start" and "The 5 operations" walking the user through the canary flow.
+- **README.md**: project-layout tree updated with the new script and the `tests/canary/` directory.
+
+Also in this commit: drift cleanup. The QUICKSTART operations table (separate from the per-tool sequences below it) still used the old verb names `fetch` and `ask` — leftover from PR #1's sed which only touched `wiki-fetch`/`wiki-ask` literals. Updated to `extract`/`query` to match the rest of the doc.
+
+Verified on the working tree (without touching tracked files): 4 cases — no raw file → exit 1 with "Not ready" message; happy-path raw → exit 0 with all green; missing `extraction_method` → exit 1 with one fail line; malformed frontmatter (no closing `---`) → exit 1 with multiple failures. Cleanup confirmed `raw/` returned to its 3 tracked files.
+
 ## 2026-05-25 15:15 — scripts/wipe-meta-wiki.sh: clean-slate helper
 
 Today's "start fresh" flow was three commands in QUICKSTART (`rm -rf wiki/*.md raw/* && touch wiki/index.md`) — easy to typo and easy to skip the index touch, leaving the next `/wiki-extract` confused. Added a single-command helper.
