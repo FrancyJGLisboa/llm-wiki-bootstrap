@@ -1,0 +1,290 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>llm-wiki-bootstrap — pitch para audiência VSCode</title>
+<style>
+  :root {
+    --bg: #fafaf8;
+    --fg: #1c1c1e;
+    --muted: #6b7280;
+    --accent: #1d4ed8;
+    --code-bg: #ececea;
+    --border: #e5e5e5;
+    --warn: #b45309;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e0e10;
+      --fg: #ececec;
+      --muted: #9aa0a6;
+      --accent: #7aa2f7;
+      --code-bg: #1a1b1e;
+      --border: #2a2b30;
+      --warn: #d97706;
+    }
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, "Inter", sans-serif;
+    font-size: 17px;
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+  }
+  main {
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 3.5em 1.5em 6em;
+  }
+  header.eyebrow {
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    font-size: 0.78em;
+    margin-bottom: 0.6em;
+  }
+  h1.hook {
+    font-size: 2.1em;
+    line-height: 1.2;
+    font-weight: 700;
+    margin: 0 0 0.4em;
+    letter-spacing: -0.01em;
+  }
+  h1.hook em {
+    color: var(--accent);
+    font-style: normal;
+    font-weight: 700;
+  }
+  p.sub {
+    color: var(--muted);
+    font-size: 1.05em;
+    margin: 0 0 3em;
+  }
+  section {
+    margin: 3em 0;
+    padding-top: 2em;
+    border-top: 1px solid var(--border);
+  }
+  section:first-of-type { border-top: none; padding-top: 0; }
+  h2 {
+    font-size: 1.35em;
+    margin: 0 0 0.6em;
+    font-weight: 600;
+    letter-spacing: -0.005em;
+  }
+  h2 .num {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    margin-right: 0.4em;
+    font-weight: 500;
+  }
+  ol, ul { padding-left: 1.4em; margin: 0.6em 0; }
+  li { margin: 0.35em 0; }
+  code, pre {
+    font-family: ui-monospace, SFMono-Regular, "JetBrains Mono", Menlo, Consolas, monospace;
+    font-size: 0.92em;
+  }
+  code {
+    background: var(--code-bg);
+    padding: 0.1em 0.4em;
+    border-radius: 4px;
+  }
+  pre {
+    background: var(--code-bg);
+    padding: 0.9em 1.1em;
+    border-radius: 6px;
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    line-height: 1.45;
+  }
+  pre code { background: none; padding: 0; }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    margin: 1em 0;
+    font-size: 0.96em;
+  }
+  th, td {
+    text-align: left;
+    padding: 0.55em 0.7em;
+    border-bottom: 1px solid var(--border);
+    vertical-align: top;
+  }
+  th {
+    font-weight: 600;
+    color: var(--muted);
+    font-size: 0.85em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .stars {
+    color: var(--accent);
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    font-weight: 500;
+  }
+  .stars.off { color: var(--muted); opacity: 0.55; }
+  blockquote {
+    margin: 1.2em 0;
+    padding: 0.4em 0 0.4em 1em;
+    border-left: 3px solid var(--accent);
+    color: var(--fg);
+    font-style: italic;
+  }
+  .caveat {
+    background: var(--code-bg);
+    border-left: 3px solid var(--warn);
+    padding: 1em 1.2em;
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95em;
+  }
+  .caveat strong { color: var(--warn); }
+  .closing {
+    text-align: center;
+    margin: 4em 0 0;
+    padding: 2.5em 1em;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--code-bg);
+  }
+  .closing p {
+    margin: 0.4em 0;
+    font-size: 1.1em;
+    font-weight: 500;
+  }
+  .closing p.action {
+    color: var(--accent);
+    font-size: 1.0em;
+    font-weight: 600;
+    margin-top: 1em;
+  }
+  footer {
+    margin-top: 5em;
+    padding-top: 1.5em;
+    border-top: 1px solid var(--border);
+    font-size: 0.85em;
+    color: var(--muted);
+  }
+  footer a { color: var(--accent); text-decoration: none; }
+  footer a:hover { text-decoration: underline; }
+
+  @media print {
+    body { background: white; color: black; font-size: 12pt; }
+    main { max-width: 100%; padding: 0; }
+    section { page-break-inside: avoid; }
+    .closing { background: none; }
+  }
+  @media (max-width: 600px) {
+    h1.hook { font-size: 1.7em; }
+    table { font-size: 0.88em; }
+    th, td { padding: 0.45em 0.4em; }
+  }
+</style>
+</head>
+<body>
+<main>
+
+  <header class="eyebrow">llm-wiki-bootstrap · pitch interno</header>
+  <h1 class="hook">Sua wiki pessoal apodreceu porque <em>manter</em> dava mais trabalho que <em>ler</em>.</h1>
+  <p class="sub">Isso muda quando o LLM é o bibliotecário. Você cura fontes e perguntas; ele faz o resto.</p>
+
+  <section>
+    <h2>A premissa em 30 segundos</h2>
+    <p>Tudo que faz wiki morrer — resumir, cross-linkar, achar contradição, atualizar índice — é exatamente onde LLM brilha e humano se cansa. Andrej Karpathy propôs inverter: o LLM mantém uma wiki persistente de markdown interlinkado, e o humano só joga fontes na pasta <code>raw/</code> e faz perguntas.</p>
+    <p>Resultado: markdown puro, versionado em <code>git</code>, que fica mais inteligente a cada fonte ingerida. Sem vendor lock-in, sem app proprietário, sem embeddings opacos. Roda dentro do VSCode com qualquer extensão de AI.</p>
+  </section>
+
+  <section>
+    <h2>O fluxo (5 passos, 5 minutos)</h2>
+    <ol>
+      <li><code>git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap meu-conhecimento</code></li>
+      <li><code>code meu-conhecimento</code></li>
+      <li>Apaga <code>wiki/*.md</code> se quer começar zerado. A wiki que vem é didática — é a <em>wiki sobre wikis</em>; serve de gabarito do que o padrão produz.</li>
+      <li>Solta uma fonte em <code>raw/</code>: um PDF, um link, transcrito de YouTube, screenshot de slide.</li>
+      <li>Abre o chat do seu AI no VSCode e diz: <em>"Read AGENTS.md, then run the wiki-ingest workflow."</em> O LLM escreve páginas em <code>wiki/</code>. A próxima pergunta — <em>"what does this say about X?"</em> — é respondida de dentro do projeto, sem reler os PDFs.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>Qual extensão de AI no VSCode importa</h2>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:22%">Setup</th>
+          <th style="width:13%">Fit</th>
+          <th>Por quê</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td><strong>Cline</strong><br><span style="color:var(--muted);font-size:0.9em">recomendado</span></td>
+          <td class="stars">★★★★★</td>
+          <td>Open-source, lê <code>.clinerules</code> (já vem no projeto), executa multi-step agentic loops nativamente. Faz <code>/wiki-ingest</code> parecer mágico.</td>
+        </tr>
+        <tr>
+          <td><strong>Continue</strong> / <strong>Roo</strong> / <strong>Cody</strong></td>
+          <td class="stars">★★★★<span class="off">☆</span></td>
+          <td>Mesmo princípio do Cline. Funciona; nuances de UX por extensão.</td>
+        </tr>
+        <tr>
+          <td><strong>GitHub Copilot Chat</strong></td>
+          <td class="stars">★★<span class="off">☆☆☆</span></td>
+          <td>Lê <code>.github/copilot-instructions.md</code> (também já vem). Bom pra perguntar, fraco pra ingest multi-step — Copilot é conversacional, não agentic. Você dirige cada passo.</td>
+        </tr>
+        <tr>
+          <td>Sem AI extension</td>
+          <td class="stars off">☆☆☆☆☆</td>
+          <td>Inviável. Instale Cline (gratuito) e siga.</td>
+        </tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2>Os 4 problemas concretos que isso resolve</h2>
+    <ol>
+      <li><strong>"Releio os mesmos PDFs."</strong> A síntese fica escrita. Releitura vira consulta.</li>
+      <li><strong>"Meu Notion / Obsidian virou cemitério."</strong> Você não mantém. O LLM mantém.</li>
+      <li><strong>"ChatGPT esquece do que falamos semana passada."</strong> Conhecimento mora em arquivos <code>.md</code>, não em sessão. Cada sessão começa lendo a wiki que já existe.</li>
+      <li><strong>"5 fontes, 5 perguntas relacionadas, 5× o esforço."</strong> Wiki é interlinkada — uma pergunta atravessa muitas fontes via cross-refs já escritos.</li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>O que NÃO prometo</h2>
+    <div class="caveat">
+      <ul style="margin:0;padding-left:1.2em">
+        <li><strong>Qualidade do output ≈ qualidade do prompt da sua extensão + qualidade das suas fontes.</strong> Lixo entra, lixo cross-linkado sai.</li>
+        <li><strong>Runtime nunca foi testado em VSCode</strong> especificamente — só desenhado pra funcionar. Primeira pessoa que rodar <code>/wiki-ingest</code> em Cline ou Copilot é o smoke test (ver <code>wiki/operation-ingest.md#verification-status</code>).</li>
+        <li>Não substitui o trabalho de <strong>curar boas fontes</strong> e fazer <strong>boas perguntas</strong>. Essas continuam sendo as únicas duas coisas que continuam sendo trabalho seu.</li>
+      </ul>
+    </div>
+  </section>
+
+  <section>
+    <h2>Os três princípios que o pitch carrega implícitos</h2>
+    <ol>
+      <li><strong>File-over-app.</strong> Tudo é markdown em disco. Funciona em <code>cat</code>, <code>grep</code>, <code>git</code>, GitHub web, VSCode preview, sem dependência de viewer (Obsidian inclusive — opcional, não requerido).</li>
+      <li><strong>Yours.</strong> Os arquivos são seus. Você troca de LLM, de tool, de máquina; a wiki vai junto. Sem SaaS no caminho crítico.</li>
+      <li><strong>Bring your own AI.</strong> Qualquer LLM com tool-use (Claude, GPT, Gemini, modelo local via Ollama) opera o sistema. O projeto não amarra modelo.</li>
+    </ol>
+  </section>
+
+  <div class="closing">
+    <p>Knowledge bases used to require either a junior PM or no maintenance.</p>
+    <p>Now they require neither.</p>
+    <p class="action">Open VSCode. Clone the repo. Drop a PDF. Ask a question.</p>
+  </div>
+
+  <footer>
+    Documento autocontido. Sem dependências externas (sem CDN, sem JS, sem fontes remotas). Tema dark/light segue preferência do sistema. Imprimível pra PDF via <code>Cmd/Ctrl+P</code>.<br>
+    Repo: <a href="https://github.com/FrancyJGLisboa/llm-wiki-bootstrap">github.com/FrancyJGLisboa/llm-wiki-bootstrap</a> · gerado 2026-05-25
+  </footer>
+
+</main>
+</body>
+</html>

@@ -90,14 +90,18 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── .clinerules                     # Cline shim
 ├── .github/
 │   └── copilot-instructions.md     # GitHub Copilot shim
+├── docs/
+│   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
 │   └── body-hash.sh                # canonical SHA-256 over a raw file's body
 ├── raw/                            # immutable source material (you curate)
-│   └── karpathy-llm-wiki-video-transcript.md
+│   ├── karpathy-llm-wiki-video-transcript.md
+│   ├── karpathy-video-slide-ingest-pipeline.png
+│   └── karpathy-video-slide-ingest-pipeline.png.md
 └── wiki/                           # the wiki itself (LLM-owned)
     ├── index.md                    # start here
     ├── core-idea.md
-    ├── ... (18 more pages)
+    ├── ... (21 more pages)
     └── glossary.md
 ```
 

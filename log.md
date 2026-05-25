@@ -2,6 +2,18 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-ask` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 09:00 — pitch artifact: docs/pitch-vscode.html
+
+User asked how I'd present the project to a VSCode-only audience. Wrote the pitch in chat, then user asked if it was persisted as HTML. It wasn't. Created `docs/pitch-vscode.html` — self-contained single-file pitch in PT (audience = self / internal reference, per follow-up clarification).
+
+- Single file, zero external dependencies (no CDN, no JS, no remote fonts).
+- Dark/light theme via `prefers-color-scheme`.
+- Print-friendly (`Cmd/Ctrl+P` → PDF).
+- Content: hook, 30s premise, 5-step flow, AI-extension tier matrix (Cline > Continue/Roo/Cody > Copilot Chat > nothing), 4 concrete problems, honest caveats, 3 implicit principles, closing slide.
+- README.md updated to list `docs/` in the project layout.
+
+This is documentation, not part of the wiki layer — it lives in `docs/` because it's a one-shot artifact for external presentation, not a knowledge page that grows via ingest/lint. No frontmatter, no link convention. Pure HTML by user choice.
+
 ## 2026-05-25 08:45 — codified verification-gap honesty
 
 User asked the sharp epistemic question: do the 7 steps actually happen, or are they just specified? Direct answer: the latter — no LLM has invoked `/wiki-ingest` in this project; the wiki was hand-written in the design conversation. To make this surface in the wiki itself rather than only in chat:
