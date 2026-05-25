@@ -2,6 +2,18 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 15:15 — scripts/wipe-meta-wiki.sh: clean-slate helper
+
+Today's "start fresh" flow was three commands in QUICKSTART (`rm -rf wiki/*.md raw/* && touch wiki/index.md`) — easy to typo and easy to skip the index touch, leaving the next `/wiki-extract` confused. Added a single-command helper.
+
+- **New `scripts/wipe-meta-wiki.sh`**: pure bash, mirrors `body-hash.sh`/`preflight.sh` style. Wipes `wiki/*.md` and `raw/*`, recreates `wiki/index.md` as a minimal stub with valid frontmatter, resets `log.md` to its header line.
+- **Safety:** interactive `[y/N]` confirmation by default; `--yes` flag to skip. Inventories file counts before wiping so the user sees what's about to disappear.
+- **Idempotent:** re-running on an empty wiki shows "nothing to do" and exits 0. (Actually re-wipes the stub index and rewrites it; functionally idempotent.)
+- **Preserves:** AGENTS.md, README.md, all shims, `.claude/commands/`, `scripts/`, `docs/`, LICENSE — everything that isn't generated content.
+- **README.md + AGENTS.md + docs/QUICKSTART.md:** replaced the three hand-rolled `rm -rf` instructions with the new script. Project-layout tree in README updated.
+
+Verified on a `/tmp/` copy: before (23 wiki files, 3 raw files) → after wipe (only index.md stub remains; raw/ empty; log.md reset). Idempotence checked — second run with `--yes` produced same end state.
+
 ## 2026-05-25 15:00 — AGENTS.md: schema_version = 1 declared
 
 Started declaring a schema version on `AGENTS.md` so future schema changes have a coordination marker. Today's `AGENTS.md` (as merged in PR #1, before this change) is retroactively designated as the version-1 baseline. Future bumps are reserved for breaking/behavior-changing edits.

@@ -34,7 +34,7 @@ cd my-wiki
 | Choice | Command | When |
 |---|---|---|
 | **Keep + add alongside** (recommended for first try) | (do nothing) | You're learning the pattern. The meta-wiki stays as a worked example. |
-| **Wipe and start fresh** | `rm -rf wiki/*.md raw/* && touch wiki/index.md` | You already understand the pattern and want a clean slate. |
+| **Wipe and start fresh** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | You already understand the pattern and want a clean slate. |
 | **Archive to a reference folder** | `mkdir -p reference && git mv wiki reference/meta-wiki && mkdir wiki` | Best of both — keep the example, isolate your stuff. |
 
 **3. Open the directory in your AI tool** of choice. Sections below cover each one.

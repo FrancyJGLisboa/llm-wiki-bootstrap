@@ -68,7 +68,7 @@ Full spec at [`wiki/commands.md`](wiki/commands.md).
 The shipped wiki content is illustrative — it's a wiki *about* the LLM-wiki pattern, derived from the YouTube transcript in `raw/karpathy-llm-wiki-video-transcript.md`. To start your own:
 
 1. **Keep it as reference and add alongside:** drop your own sources into `raw/`, run `/wiki-ingest`. Your pages live next to the meta-wiki content.
-2. **Replace it:** `rm -rf wiki/*.md raw/*` then `/wiki-init` and start fresh.
+2. **Replace it:** `./scripts/wipe-meta-wiki.sh` (prompts for confirmation; `--yes` to skip). Wipes `wiki/*.md` and `raw/*`, resets `wiki/index.md` and `log.md` to minimal stubs.
 
 The `AGENTS.md` schema is project-agnostic — it works the same whether the wiki is about LLM-wikis, trading, M&A, your team's roadmap, or anything else.
 
@@ -100,7 +100,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
 │   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
-│   └── preflight.sh                # environment & dependency check (run before first /wiki-extract)
+│   ├── preflight.sh                # environment & dependency check (run before first /wiki-extract)
+│   └── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
 ├── raw/                            # immutable source material (you curate)
 │   ├── karpathy-llm-wiki-video-transcript.md
 │   ├── karpathy-video-slide-ingest-pipeline.png
