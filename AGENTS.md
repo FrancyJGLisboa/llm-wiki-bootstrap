@@ -80,24 +80,44 @@ Pages with `source: analysis` must say so visibly in the body (e.g., "This page 
 
 ## Raw source convention
 
-File names: `raw/<slug>.<ext>` for text (`.md`, `.txt`) — or `raw/<slug>.<ext>` plus sidecar `raw/<slug>.<ext>.md` for binaries (images, PDFs).
+File names: `raw/<slug>.<ext>` for plain text (`.md`, `.txt`, `.html`, `.json`, etc.) — or `raw/<slug>.<ext>` plus sidecar `raw/<slug>.<ext>.md` for binaries (images, PDFs, DOCX, XLSX) and tabular text (CSV). The sidecar carries both the extracted markdown content and the frontmatter.
 
 Every raw file starts with frontmatter:
 
 ```yaml
 ---
 source_url: <url|n/a>
-source_type: video-transcript | tweet | article | image | pdf | chat | book-chapter | meeting-notes | ...
+source_type: video-transcript | tweet | article | image | pdf | docx | xlsx | csv | chat | book-chapter | meeting-notes | ...
 source_title: "..."
 source_author: "..."
 fetched_at: YYYY-MM-DD
 ingested_hash: <sha256 of body at last successful ingest, or "">
 ingested_at: YYYY-MM-DD HH:MM | never
 ingested_pages: [<list of wiki/*.md files this raw touched on last ingest>]
+extraction_method: <see below>            # set by /wiki-extract
+extraction_status: <ok | degraded | failed>  # optional; omit when ok
 notes: |
-  Optional context about how this source was acquired or interpreted.
+  Optional context about how this source was acquired or interpreted. If extraction was degraded or failed, name the missing tool + install hint here.
 ---
 ```
+
+### Supported source formats and extraction
+
+`/wiki-extract` handles these formats. Every shell dependency is **optional with a documented fallback** — the system never silently fails.
+
+| Format | Primary handler | Fallback | `extraction_method` value |
+|---|---|---|---|
+| URL | `WebFetch` → markdown | — | `webfetch` |
+| Plain text (`.md`, `.txt`, `.html`, `.json`, etc.) | Passthrough copy | — | `passthrough` |
+| `.csv` | Copy + render markdown table preview in sidecar | — | `csv-passthrough` |
+| Image (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`) | LLM-vision (text + description) | — | `llm-vision` |
+| `.pdf` | `pdftotext` | LLM-vision (read PDF) | `pdftotext` \| `llm-vision` |
+| `.docx` | `pandoc -f docx -t markdown` | `python-docx` | `pandoc` \| `python-docx` |
+| `.xlsx` | `xlsx2csv` → markdown table per sheet | `openpyxl` | `xlsx2csv` \| `openpyxl` |
+
+If every handler for a binary format fails, the binary is still saved to `raw/` and the sidecar `<file>.<ext>.md` carries `extraction_status: failed` plus a one-line install hint. This preserves the BYO-AI guarantee — a user with zero shell tools installed still gets a functional repo, just with degraded extraction quality on formats whose only handler is a shell tool.
+
+**Verification status:** the DOCX, XLSX, CSV, and PDF-LLM-vision handlers are **specified, not yet demonstrated**. First real `/wiki-extract` on each format is the smoke test. Same posture as the 7-step ingest pipeline (see [[operation-ingest]]).
 
 `/wiki-ingest` computes the current body hash; if it differs from `ingested_hash`, the source is processed (or re-processed). Otherwise it's skipped.
 
