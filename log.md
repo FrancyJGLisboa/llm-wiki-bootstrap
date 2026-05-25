@@ -2,6 +2,22 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-25 16:50 — tests/canary/canary-csv.csv: tracked CSV fixture
+
+Smoke-tested the CSV path of `/wiki-extract` end-to-end this session. The fixture used (5-row world-cities CSV) was a one-shot file in working tree; promoting it to a tracked fixture so the smoke test is reproducible.
+
+- `tests/canary/canary-csv.csv` — 5 data rows + header. Plain ASCII. Designed to exercise the ≤100-row markdown-table render branch.
+- Sibling to `tests/canary/canary-smoke-test.md` (plain-text fixture from PR #3). Same purpose: known-good input for the verifier.
+
+The smoke test flow (per `docs/QUICKSTART.md`):
+
+```
+/wiki-extract tests/canary/canary-csv.csv   # in AI tool
+./scripts/verify-extract.sh canary-csv      # in shell
+```
+
+Expected: `raw/canary-csv.csv` (copy) + `raw/canary-csv.csv.md` (sidecar with `extraction_method: csv-passthrough` and a markdown table of the 5 cities). Verifier green.
+
 ## 2026-05-25 15:30 — canary + verify-extract.sh: smoke test for first /wiki-extract
 
 "Specified, not demonstrated" was the honest status of `/wiki-extract` after PR #1. This commit ships the smallest possible **shape** test: a known-good canary source + a shell verifier. The user runs `/wiki-extract` on the canary in their AI tool, then runs the verifier in shell to get a green/red signal on whether the produced output has the expected frontmatter and body. **Shape only — not semantics.**
