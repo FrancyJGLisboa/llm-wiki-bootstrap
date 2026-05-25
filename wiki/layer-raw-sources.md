@@ -39,7 +39,7 @@ Every raw file starts with frontmatter capturing where it came from and when, pl
 
 Two paths to get a source into `raw/`:
 
-1. **`/wiki-fetch <source>`** — preferred. URL → markdown via WebFetch; local file → copy; image → vision + sidecar. Frontmatter populated automatically.
+1. **`/wiki-extract <source>`** — preferred. URL → markdown via WebFetch; local file → copy; image → vision + sidecar. Frontmatter populated automatically.
 2. **Manual drop** — `cp` or paste the file in. The user must add frontmatter by hand, or rely on `/wiki-ingest` to prompt for missing fields.
 
 ### What the LLM may NOT do here

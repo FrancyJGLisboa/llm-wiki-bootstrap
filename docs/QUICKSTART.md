@@ -71,9 +71,9 @@ claude          # open Claude Code in this directory
 Inside the Claude session, in order:
 
 ```
-/wiki-fetch https://example.com/some-article
+/wiki-extract https://example.com/some-article
 /wiki-ingest
-/wiki-ask "what does this article say about <topic>?"
+/wiki-query "what does this article say about <topic>?"
 ```
 
 Periodically (e.g., once a week of active use):
@@ -103,7 +103,7 @@ Inside the session:
 ```
 Read AGENTS.md to learn this project's conventions. Then fetch
 https://example.com/some-article into raw/ as described in
-.claude/commands/wiki-fetch.md.
+.claude/commands/wiki-extract.md.
 ```
 
 After fetch:
@@ -117,7 +117,7 @@ Ask:
 
 ```
 Wiki-ask: "what does the article say about <topic>?"
-Use the workflow in .claude/commands/wiki-ask.md.
+Use the workflow in .claude/commands/wiki-query.md.
 ```
 
 Lint:
@@ -149,7 +149,7 @@ Then in the chat:
 ```
 Read AGENTS.md to learn this project's conventions. Then fetch
 https://example.com/some-article into raw/ following
-.claude/commands/wiki-fetch.md.
+.claude/commands/wiki-extract.md.
 ```
 
 Next message:
@@ -162,7 +162,7 @@ Show me each step.
 Ask:
 
 ```
-Wiki-ask: <your question>. Follow .claude/commands/wiki-ask.md.
+Wiki-ask: <your question>. Follow .claude/commands/wiki-query.md.
 ```
 
 Lint:
@@ -193,7 +193,7 @@ Cline auto-reads `.clinerules` (ships in this project) at the start of every tas
 
 ```
 Fetch https://example.com/some-article into raw/ per the
-wiki-fetch workflow defined in .claude/commands/wiki-fetch.md.
+wiki-extract workflow defined in .claude/commands/wiki-extract.md.
 ```
 
 Next task:
@@ -235,7 +235,7 @@ Invocations same shape as Cline:
 
 ```
 Fetch https://example.com/some-article into raw/ following the
-wiki-fetch workflow.
+wiki-extract workflow.
 ```
 
 ```
@@ -264,17 +264,17 @@ Same pattern as Cline / Cursor:
 2. Invoke workflows by natural language, referring to the corresponding `.claude/commands/wiki-<name>.md` file.
 
 ```
-Read AGENTS.md. Then run wiki-fetch on https://example.com/foo
-following .claude/commands/wiki-fetch.md.
+Read AGENTS.md. Then run wiki-extract on https://example.com/foo
+following .claude/commands/wiki-extract.md.
 ```
 
-(Then `wiki-ingest`, `wiki-ask`, `wiki-lint` as needed.)
+(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed.)
 
 ---
 
 ## What success looks like
 
-After your **first `wiki-fetch` + `wiki-ingest`** on a ~5-page article, expect:
+After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect:
 
 - A new file in `raw/` with frontmatter populated (`source_url`, `fetched_at`, `ingested_hash` no longer empty).
 - **3 to 10 new pages in `wiki/`:**
@@ -331,9 +331,9 @@ For one source of ~5,000 words, on a modern frontier model:
 
 | Operation | Approx. tokens |
 |---|---|
-| `wiki-fetch` | 1k (mostly the source body) |
+| `wiki-extract` | 1k (mostly the source body) |
 | `wiki-ingest` (7 steps, 5-10 pages touched) | 50k - 100k |
-| `wiki-ask` (depends on wiki size + whether web search fires) | 5k - 20k |
+| `wiki-query` (depends on wiki size + whether web search fires) | 5k - 20k |
 | `wiki-lint` (depends on wiki size) | 20k - 50k |
 
 These are estimates. **Heavy users should set token / cost limits in their tool** (most agentic CLIs and IDE extensions have them). Run a single small source first to calibrate cost-per-ingest for your model + your typical source size.
@@ -354,9 +354,9 @@ The exact verification gap is documented at `wiki/operation-ingest.md#verificati
 
 ```
 clone                git clone <repo> my-wiki && cd my-wiki
-fetch                /wiki-fetch <url|file|image>
+fetch                /wiki-extract <url|file|image>
 ingest               /wiki-ingest                      (no arg = process all raw/ with new/changed hash)
-ask                  /wiki-ask "<question>"            (--no-promote to skip auto-page-creation)
+ask                  /wiki-query "<question>"            (--no-promote to skip auto-page-creation)
 lint                 /wiki-lint                        (--apply to write proposed fixes)
 recover              git checkout -- wiki/ log.md raw/<file>
 ```

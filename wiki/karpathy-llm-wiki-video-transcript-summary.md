@@ -59,4 +59,4 @@ The first ingest (a manual one, done during the design conversation rather than 
 ## Open questions on this page
 
 - The YouTuber names but does not show Karpathy's original tweet or follow-ups. Fetching them into `raw/` would let us downgrade some `source: video` claims to direct Karpathy quotes (`source: external` from his actual writing) and surface any paraphrase drift.
-- Are there other YouTubers / blog posts on the same Karpathy tweet that would triangulate? Worth a `/wiki-fetch` round.
+- Are there other YouTubers / blog posts on the same Karpathy tweet that would triangulate? Worth a `/wiki-extract` round.

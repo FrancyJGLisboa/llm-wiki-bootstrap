@@ -43,7 +43,7 @@ Scan for inline flags like `CONTRADICTION FLAGGED` left by previous `/wiki-inges
 For pages with `updated:` older than 90 days AND claims that look time-sensitive (dates, version numbers, dollar amounts, named events), surface them.
 
 - Report: `wiki/<page>.md: time-sensitive claims, last updated <date>`.
-- Fix proposal: re-run `/wiki-ingest` on the raw source if available; otherwise suggest a `/wiki-ask` to refresh.
+- Fix proposal: re-run `/wiki-ingest` on the raw source if available; otherwise suggest a `/wiki-query` to refresh.
 
 ### 5. Unresolved open questions
 

@@ -18,8 +18,8 @@ From the video: *"The basic architecture has three different layers based on wha
 
 | Layer | Path in this project | Owned by | Mutates? |
 |---|---|---|---|
-| [[layer-raw-sources]] | `raw/` | User (drops via `/wiki-fetch` or manually) | Immutable after fetch; user may edit, [[operation-ingest]] detects via hash |
-| [[layer-wiki]] | `wiki/` | LLM only | Mutated by `/wiki-ingest`, `/wiki-ask` (promote), `/wiki-lint` |
+| [[layer-raw-sources]] | `raw/` | User (drops via `/wiki-extract` or manually) | Immutable after fetch; user may edit, [[operation-ingest]] detects via hash |
+| [[layer-wiki]] | `wiki/` | LLM only | Mutated by `/wiki-ingest`, `/wiki-query` (promote), `/wiki-lint` |
 | [[layer-schema]] | `AGENTS.md` (this project) | User + LLM (co-evolved) | User edits when conventions change; LLM proposes via `/wiki-lint` |
 
 ### The video's analogy

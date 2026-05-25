@@ -29,7 +29,7 @@ From this point on, future queries about any of those three concepts read from t
 - Sources you find and decide are worth keeping (ingest)
 - Knowledge you didn't know you'd need until you asked (query-as-write)
 
-### How `/wiki-ask` implements this `(analysis)`
+### How `/wiki-query` implements this `(analysis)`
 
 When the wiki is insufficient for a question, the LLM:
 1. Notes the gap

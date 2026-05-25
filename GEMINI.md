@@ -7,9 +7,9 @@ This project's canonical schema is **`AGENTS.md`** in the same directory. Some G
 The five workflows are defined at `.claude/commands/wiki-*.md` (named for Claude Code's slash command location, but the prompt bodies are tool-agnostic — read them as workflow definitions). The user invokes them in Gemini by natural language ("ingest raw," "ask the wiki about X").
 
 - `wiki-init` — scaffold structure (idempotent)
-- `wiki-fetch <source>` — acquire URL / file / image into `raw/`
+- `wiki-extract <source>` — acquire URL / file / image into `raw/`
 - `wiki-ingest [<raw-file>]` — process raw → wiki via the 7-step pipeline (hash via `scripts/body-hash.sh`)
-- `wiki-ask <question>` — answer from wiki; web-search + promote on gaps
+- `wiki-query <question>` — answer from wiki; web-search + promote on gaps
 - `wiki-lint [--apply]` — find issues; report or apply fixes
 
 Hard rules (full text in `AGENTS.md`):

@@ -59,8 +59,8 @@ The YouTuber occasionally distinguishes Karpathy's claims from their own comment
 
 ## What the project authors decided (and is not in the video)
 
-- The five-slash-command split (`/wiki-init`, `/wiki-fetch`, `/wiki-ingest`, `/wiki-ask`, `/wiki-lint`) — see [[commands]].
-- The split into separate `/wiki-fetch` and `/wiki-ingest` (the video treats source-drop and processing as a single act).
+- The five-slash-command split (`/wiki-init`, `/wiki-extract`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`) — see [[commands]].
+- The split into separate `/wiki-extract` and `/wiki-ingest` (the video treats source-drop and processing as a single act).
 - Using `AGENTS.md` as the canonical schema name (the video says "like a CLAUDE.md").
 - The `[[wiki-link]]` syntax as a *textual-only* convention without a viewer dependency — see [[implicit-constraints]] #9.
 - The frontmatter spec (the video doesn't show what raw or wiki frontmatter looks like).

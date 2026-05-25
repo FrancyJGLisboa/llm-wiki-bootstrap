@@ -23,7 +23,7 @@ The project ships shim files for every major agentic tool. Whatever you use, the
 
 | Tool | Shim file (already in repo) | Invocation |
 |---|---|---|
-| Claude Code (modern) | `AGENTS.md` (canonical) | `/wiki-init`, `/wiki-fetch`, etc. — real slash commands |
+| Claude Code (modern) | `AGENTS.md` (canonical) | `/wiki-init`, `/wiki-extract`, etc. — real slash commands |
 | Claude Code (legacy) | `CLAUDE.md` | same as modern |
 | Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run wiki-ingest" |
 | Cline (VSCode) | `.clinerules` | natural language |
@@ -38,9 +38,9 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 | Command | What it does |
 |---|---|
 | `/wiki-init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
-| `/wiki-fetch <url-or-file>` | Pull a URL, file, or image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
+| `/wiki-extract <url-or-file>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Parses binary content to markdown when a handler exists. Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
-| `/wiki-ask <question>` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
+| `/wiki-query <question>` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
 | `/wiki-lint [--apply]` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
@@ -49,13 +49,13 @@ Full spec at [`wiki/commands.md`](wiki/commands.md).
 
 ```
 # add a source
-/wiki-fetch https://example.com/some-article
+/wiki-extract https://example.com/some-article
 
 # integrate it
 /wiki-ingest
 
 # ask the wiki something
-/wiki-ask "what does this article say about X?"
+/wiki-query "what does this article say about X?"
 
 # periodically tidy up
 /wiki-lint
@@ -82,9 +82,9 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── .claude/
 │   └── commands/                   # five Claude Code slash commands
 │       ├── wiki-init.md
-│       ├── wiki-fetch.md
+│       ├── wiki-extract.md
 │       ├── wiki-ingest.md
-│       ├── wiki-ask.md
+│       ├── wiki-query.md
 │       └── wiki-lint.md
 ├── .cursor/
 │   └── rules/

@@ -29,7 +29,7 @@ LLMs are different on exactly this axis: *"LLMs don't get bored. They don't forg
 | Activity | Owned by |
 |---|---|
 | Picking raw sources | **User** |
-| Adding a source via `/wiki-fetch` | User triggers; LLM executes |
+| Adding a source via `/wiki-extract` | User triggers; LLM executes |
 | Writing wiki pages | **LLM** (always) |
 | Updating cross-references | **LLM** |
 | Asking questions | **User** |
@@ -54,5 +54,5 @@ The user's job is **upstream**: be a good curator (high-quality raw sources beat
 ## Open questions on this page
 
 - How does the user know whether the LLM is doing a good job? (Lint reports, periodic spot-checks, occasional manual reads of wiki pages.)
-- Is there a use case for the user editing a wiki page directly? Current default: no — edit the raw source or use `/wiki-ask` to file a new claim. But there might be edge cases (typo fix, sensitive redaction) where direct edit is fine.
+- Is there a use case for the user editing a wiki page directly? Current default: no — edit the raw source or use `/wiki-query` to file a new claim. But there might be edge cases (typo fix, sensitive redaction) where direct edit is fine.
 - Does this split scale to multi-user wikis? (Two humans curating; one LLM maintaining? Conflict resolution gets harder.)
