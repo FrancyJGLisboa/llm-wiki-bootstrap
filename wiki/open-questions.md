@@ -30,6 +30,8 @@ Concrete unknowns:
 
 First real `/wiki-extract` on each format is the smoke test. Until then, the matrix in `AGENTS.md` describes what the system *intends to do*, not what it has been observed doing.
 
+**Partial status (2026-05-25):** the markdown and CSV paths are now covered by canary fixtures (`tests/canary/canary-smoke-test.md`, `tests/canary/canary-csv.csv`) and shape-checked by `scripts/verify-extract.sh`. DOCX, XLSX, and the PDF-LLM-vision fallback remain undemonstrated.
+
 ### The most important open question: do the 7 steps actually happen?
 
 Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/wiki-ingest.md`. Demonstrated nowhere. `/wiki-ingest` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.
