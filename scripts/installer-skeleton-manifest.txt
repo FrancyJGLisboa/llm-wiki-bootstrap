@@ -22,6 +22,7 @@ templates/journal-entry.md
 docs/QUICKSTART.md
 docs/EXPLAIN.md
 docs/MCP.md
+docs/VISUALIZATION.md
 tests/canary/canary-smoke-test.md
 tests/canary/canary-csv.csv
 tests/canary/canary-flashcards.md
