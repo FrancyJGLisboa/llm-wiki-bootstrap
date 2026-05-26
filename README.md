@@ -47,6 +47,16 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 
+## Verify your install
+
+Once you've cloned and have Claude Code installed, run:
+
+```bash
+./scripts/smoke-all.sh
+```
+
+It drives `claude -p` to ingest a small fictitious fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs are sub-second (idempotent via body-hash). All 9 checks green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
+
 ## MCP access (optional)
 
 Expose this wiki over the Model Context Protocol so any MCP-aware AI client — Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc. — can read it (and optionally write to it) without slash-command indirection. Uses [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault), which works on any markdown directory with no Obsidian dependency. BM25 search built in.
