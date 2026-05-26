@@ -126,11 +126,12 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 
 ```
 .
-├── AGENTS.md                       # canonical schema (read by AI tools)
+├── AGENTS.md                       # canonical schema (read by AI tools) — schema v2
 ├── CLAUDE.md                       # shim → points to AGENTS.md
 ├── GEMINI.md                       # shim → points to AGENTS.md
-├── README.md                       # this file
-├── log.md                    # append-only log of ingests, lints, promotes
+├── README.md                       # this file (dev-side)
+├── README-FRESH.md                 # template used by the installer for fresh skeletons
+├── log.md                          # append-only log of ingests, schema bumps, infra changes
 ├── .claude/
 │   └── commands/                   # five Claude Code slash commands
 │       ├── wiki-init.md
@@ -147,32 +148,57 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── docs/
 │   ├── QUICKSTART.md               # per-tool first-use guide (start here after cloning)
 │   ├── EXPLAIN.md                  # mental model for devs: build-system analogy, dev-mapped verbs
+│   ├── MCP.md                      # optional MCP read surface (Claude Desktop / Cursor / etc.)
+│   ├── VISUALIZATION.md            # graph view, slides, mermaid render, local server — no Obsidian
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
 │   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
 │   ├── preflight.sh                # environment & dependency check (run before first /wiki-extract)
 │   ├── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
-│   ├── verify-extract.sh           # check the shape of /wiki-extract output (smoke test)
+│   ├── verify-extract.sh           # shape-check /wiki-extract output
 │   ├── wiki-to-anki.sh             # export ## Flashcards sections to Anki CSV
-│   ├── verify-wiki-to-anki.sh      # smoke test for the Anki exporter
-│   └── mcp-server.sh               # launch @bitbonsai/mcpvault pointed at wiki/
+│   ├── verify-wiki-to-anki.sh      # shape-check the Anki exporter
+│   ├── mcp-server.sh               # launch @bitbonsai/mcpvault pointed at wiki/
+│   ├── smoke-build.sh              # LLM-driven build phase (drives claude -p)
+│   ├── smoke-check.sh              # pure-shell asserts C1–C5 on the smoke artifacts
+│   ├── smoke-all.sh                # umbrella: build + check + R1–R4 regression guards
+│   ├── r3-obsidian-patterns.txt    # patterns file for the no-Obsidian-syntax check
+│   ├── create-llm-wiki.sh          # manifest-driven installer for a fresh skeleton
+│   ├── verify-create-llm-wiki.sh   # oracle for the installer (I1–I5)
+│   ├── installer-skeleton-manifest.txt # single source of truth for what ships fresh
+│   └── visualize/                  # opt-in OSS visualization wrappers
+│       ├── graph.sh                # bash wrapper around graph-html.py
+│       ├── graph-html.py           # stdlib-only D3 force-graph generator
+│       ├── slides.sh               # MARP-CLI wrapper (npx)
+│       ├── mermaid.sh              # mermaid-CLI wrapper (npx)
+│       ├── serve.sh                # python3 -m http.server wrapper
+│       └── verify-visualizers.sh   # smoke harness (V1–V5)
 ├── templates/
 │   └── journal-entry.md            # template for wiki/journal/YYYY-MM-DD-*.md entries
 ├── tests/
-│   └── canary/
-│       ├── canary-smoke-test.md    # tiny known-good markdown source for first-run verification
-│       ├── canary-csv.csv          # tiny known-good CSV source for first-run verification
-│       └── canary-flashcards.md    # tiny known-good fixture for the Anki exporter
+│   ├── canary/                     # tiny known-good fixtures (shape-level smokes)
+│   │   ├── canary-smoke-test.md
+│   │   ├── canary-csv.csv
+│   │   ├── canary-flashcards.md
+│   │   ├── graph-fixture/          # 4 nodes / 4 edges flat fixture (V2 graph smoke)
+│   │   └── graph-fixture-nested/   # 2 nodes / 1 edge nested fixture (V2b recursion smoke)
+│   ├── smoke/                      # end-to-end smoke (Phase Coherence fixture + outputs)
+│   │   ├── smoke-source.md
+│   │   ├── expected-query.md
+│   │   └── output/baseline-wiki.txt
+│   └── installer-output/           # temp dirs the installer verifier writes to (gitignored)
 ├── raw/                            # immutable source material (you curate)
 │   ├── karpathy-llm-wiki-video-transcript.md
 │   ├── karpathy-video-slide-ingest-pipeline.png
-│   └── karpathy-video-slide-ingest-pipeline.png.md
+│   ├── karpathy-video-slide-ingest-pipeline.png.md
+│   └── smoke-source.md             # ingest-demonstrated smoke source
 └── wiki/                           # the wiki itself (LLM-owned)
-    ├── index.md                    # start here
+    ├── index.md                    # start here (dev meta-wiki)
+    ├── index-FRESH.md              # stub used by the installer for fresh skeletons
     ├── core-idea.md
-    ├── ... (21 more pages)
+    ├── ... (25 more pages, including the 4 smoke-derived pages: quortex-protocol, dr-alma-voss, phase-coherence-engineering, smoke-source-summary)
     ├── glossary.md
-    └── journal/                    # user-owned, time-stamped observations (exception to LLM-ownership)
+    └── journal/                    # user-owned, time-stamped observations (schema-v2 exception)
 ```
 
 ## Principles this project honors

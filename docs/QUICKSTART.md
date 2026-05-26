@@ -5,7 +5,9 @@ From `git clone` to first useful answer in 5 minutes, across the supported AI to
 ## Table of contents
 
 - [Before you start](#before-you-start)
+- [Smoke test (recommended before your first real source)](#smoke-test-recommended-before-your-first-real-source)
 - [The 5 operations (one paragraph each)](#the-5-operations)
+- [Schema v2 extras (journal, Flashcards, MCP)](#schema-v2-extras-journal-flashcards-mcp)
 - [Per-tool command sequences](#per-tool-command-sequences)
   - [Claude Code](#claude-code-first-class-slash-commands) (slash commands)
   - [Copilot CLI](#copilot-cli) (natural language + AGENTS.md auto-load)
@@ -13,10 +15,11 @@ From `git clone` to first useful answer in 5 minutes, across the supported AI to
   - [Cline](#cline-vscode-extension)
   - [Cursor](#cursor)
   - [Other tools](#other-tools-continue--roo--cody--gemini-cli--codex)
+- [Visualize your wiki](#visualize-your-wiki)
 - [What success looks like](#what-success-looks-like)
 - [Recovery from a bad ingest](#recovery-from-a-bad-ingest)
 - [Cost expectations](#cost-expectations-rough)
-- [Honest caveat](#honest-caveat)
+- [Status](#status)
 
 ---
 
@@ -29,12 +32,13 @@ git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
 cd my-wiki
 ```
 
-**2. Decide what to do with the shipped meta-wiki.** This repo ships with a wiki *about* the LLM-wiki pattern itself (in `wiki/`), derived from `raw/karpathy-llm-wiki-video-transcript.md`. Pick one:
+**2. Decide what to do with the shipped meta-wiki.** This repo ships with a wiki *about* the LLM-wiki pattern itself (in `wiki/`), derived from `raw/karpathy-llm-wiki-video-transcript.md`, plus 4 smoke-derived pages about a fictitious technical concept used to demonstrate the ingest pipeline. Pick one:
 
 | Choice | Command | When |
 |---|---|---|
-| **Keep + add alongside** (recommended for first try) | (do nothing) | You're learning the pattern. The meta-wiki stays as a worked example. |
-| **Wipe and start fresh** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | You already understand the pattern and want a clean slate. |
+| **Use the installer to generate a fresh skeleton** (recommended) | `./scripts/create-llm-wiki.sh ~/my-wiki` (manifest-driven; clean repo, no demo content) | You want to start your own wiki without doing a wipe. Cleanest path. |
+| **Keep + add alongside** | (do nothing) | You're learning the pattern. The meta-wiki + smoke stay as worked examples. |
+| **Wipe and start in-place** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | Edge case; the installer is preferable. |
 | **Archive to a reference folder** | `mkdir -p reference && git mv wiki reference/meta-wiki && mkdir wiki` | Best of both — keep the example, isolate your stuff. |
 
 **3. Open the directory in your AI tool** of choice. Sections below cover each one.
@@ -43,33 +47,31 @@ cd my-wiki
 
 ## Smoke test (recommended before your first real source)
 
-Verify that `/wiki-extract` produces output with the right shape in your environment before running it on a real source you care about. Two known-good fixtures ship with the repo — start with one or both.
+Two layers of smoke. Use the umbrella for "does the whole thing work on my machine"; use the shape-check fixtures for "does `/wiki-extract` produce the right frontmatter shape for format X."
 
-### Plain-text path
+### End-to-end umbrella (Claude Code required)
 
-```
-/wiki-extract tests/canary/canary-smoke-test.md     # in your AI tool
-./scripts/verify-extract.sh canary-smoke-test       # in shell
-```
-
-### CSV path
-
-```
-/wiki-extract tests/canary/canary-csv.csv           # in your AI tool
-./scripts/verify-extract.sh canary-csv              # in shell
+```bash
+./scripts/smoke-all.sh
 ```
 
-What `verify-extract.sh` checks (shape only):
+Runs the full pipeline: `claude -p` ingests a fictitious technical source (under `tests/smoke/`), queries it, and 9 binary checks (5 smoke + 4 regression guards) assert that ingest produced wiki pages with the right anchors, `log.md` has the entry, `/wiki-query` recalled the fact and cited the source, and no schema/script invariants regressed. First run ~30-60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 9 green = your install works end-to-end.
 
-- `raw/canary-smoke-test.md` exists.
-- YAML frontmatter is delimited and parseable.
-- Required fields are present and non-empty (`source_url`, `source_type`, `fetched_at`, `extraction_method`).
-- `ingested_hash` is present but empty (it's `/wiki-ingest`'s job, not `/wiki-extract`'s).
-- Body content is non-empty.
+### Shape-check smokes (per-format)
 
-It does **not** check semantics — wrong `source_type`, hallucinated `source_title`, etc. will slip past. For semantics, eyeball `raw/canary-smoke-test.md` directly.
+Verify that `/wiki-extract` produces output with the right shape in your environment for individual formats. Three known-good fixtures ship with the repo.
 
-When you're done, clean up: `rm raw/canary-smoke-test.md`.
+```
+/wiki-extract tests/canary/canary-smoke-test.md     # plain-text path
+./scripts/verify-extract.sh canary-smoke-test
+
+/wiki-extract tests/canary/canary-csv.csv           # CSV path
+./scripts/verify-extract.sh canary-csv
+
+./scripts/verify-wiki-to-anki.sh                    # Anki exporter shape
+```
+
+`verify-extract.sh` checks shape only — wrong `source_type`, hallucinated `source_title` etc. will slip past. For semantics, eyeball the produced `raw/` file directly.
 
 ---
 
@@ -86,6 +88,18 @@ You will use the same 5 operations regardless of tool:
 | **lint** `[--apply]` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
 
 In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition).
+
+---
+
+## Schema v2 extras (journal, Flashcards, MCP)
+
+Schema v2 (bumped 2026-05-26) added three opt-in extensions. None changes the three-layer model or the five slash commands.
+
+| Extension | What it is | How to use |
+|---|---|---|
+| **Journal entries** | A user-owned exception under `wiki/journal/<YYYY-MM-DD>-<slug>.md`. `/wiki-ingest` is forbidden from rewriting these. Template at `templates/journal-entry.md`. Cross-link to concept pages with `[[wiki-links]]`. Useful for time-stamped observations that should feed back into theory. | Copy the template, fill in body, drop into `wiki/journal/`. Use `[[]]` to link to existing concept pages. `/wiki-lint` catches broken links automatically. |
+| **Flashcards** | Any wiki page may declare a `## Flashcards` section with Q/A pairs. Exported to Anki-importable CSV by `./scripts/wiki-to-anki.sh > anki.csv`. Slug becomes the Anki tag. | Add the section to any page, run the exporter, import the CSV in Anki. |
+| **MCP read surface** | Optional. `./scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` against `wiki/` so any MCP-aware client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) can read + search the wiki without slash commands. BM25 search built in. | See [`MCP.md`](MCP.md) for per-client config snippets. |
 
 ---
 
@@ -304,6 +318,23 @@ following .claude/commands/wiki-extract.md.
 
 ---
 
+## Visualize your wiki
+
+Four opt-in, open-source visualization wrappers under `scripts/visualize/`. None requires Obsidian.
+
+```bash
+./scripts/visualize/graph.sh wiki/ > graph.html        # interactive D3 graph (pure Python; no install)
+open graph.html
+./scripts/visualize/slides.sh wiki/some-page.md        # turn a page into MARP slides (npx)
+./scripts/visualize/mermaid.sh wiki/some-page.md       # render mermaid blocks to PNG (npx)
+./scripts/visualize/serve.sh wiki                      # browse wiki + graph via http://localhost:8000
+./scripts/visualize/verify-visualizers.sh              # smoke harness (graph always runs; slides/mermaid skip-when-absent)
+```
+
+The graph generator is stdlib-only Python — runs everywhere `python3` is available. The other three wrap `npx` packages (downloaded on first run, cached after). See [`VISUALIZATION.md`](VISUALIZATION.md) for the full guide and heavier alternatives (Quartz, mdBook, SilverBullet).
+
+---
+
 ## What success looks like
 
 After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect:
@@ -372,13 +403,17 @@ These are estimates. **Heavy users should set token / cost limits in their tool*
 
 ---
 
-## Honest caveat
+## Status
 
-**None of the slash commands have been runtime-tested in this repo yet.** The wiki you see was bootstrapped by direct file writes during the design conversation, not by `/wiki-ingest`. The first time *you* run `/wiki-ingest` is the smoke test.
+**The 7-step `/wiki-ingest` pipeline is now demonstrated end-to-end** (2026-05-26). The smoke at `./scripts/smoke-all.sh` runs `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (under `tests/smoke/`); the resulting 4 wiki pages (with fictitious anchors) and the corresponding `log.md` entry are committed in the repo as empirical evidence the pipeline executes correctly on a fresh source. Per the resolution note in `wiki/open-questions.md`, this closes what was previously the project's top open question.
 
-If your output doesn't match the "What success looks like" section above, the prompt in `.claude/commands/wiki-<name>.md` likely needs refinement. File an issue at https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues, or open a PR with the prompt improvement.
+What's still untested:
 
-The exact verification gap is documented at `wiki/operation-ingest.md#verification-status` and listed as the top entry in `wiki/open-questions.md`.
+- **Per-tool slash-command parity.** Only Claude Code (via `claude -p`) drove the smoke. Cursor / Copilot CLI / VSCode + Copilot Chat / Cline / Gemini CLI / Codex paths in this guide rely on the natural-language shim approach — they likely work but haven't been observed end-to-end.
+- **DOCX / XLSX / PDF-LLM-vision** extraction handlers in `/wiki-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`) cover only plain-text and CSV. The other formats are specified, not demonstrated.
+- **Concurrency.** The video mentions parallel ingest agents; no locking or conflict resolution defined yet.
+
+If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/wiki-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues, or open a PR with the prompt improvement.
 
 ---
 

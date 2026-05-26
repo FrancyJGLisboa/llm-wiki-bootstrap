@@ -145,11 +145,41 @@ You drop a transcript into `raw/`. You run one command. 30–90 seconds later yo
 
 The payoff property is step 4: **one source touches 10–15 wiki pages, not one.** A new article about Concept X gets cross-linked into every existing page that talks about X-adjacent things. After enough sources, the wiki has more edges than nodes — that's the [compounding](../wiki/knowledge-compounds.md) the pattern is named after.
 
-### Honest caveat about this pipeline
+### Status of this pipeline (updated 2026-05-26)
 
-The 7 steps are **specified, not yet demonstrated**. `/wiki-ingest` has never been invoked end-to-end in this repo; the shipped example wiki was hand-built during the design conversation. The full verification gap is documented at [`wiki/operation-ingest.md#verification-status`](../wiki/operation-ingest.md). Your first real `/wiki-ingest` on a fresh source is the smoke test. If the LLM skips steps (most common failure mode: skipping step 5's contradiction-flagging, or step 3's summary page), [`QUICKSTART.md`](QUICKSTART.md) lists exact re-prompts to recover.
+The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 9 binary checks (5 smoke + 4 regression) gate the demonstration; passing them is what "the pipeline works" means.
+
+On a fresh real source, the most common failure modes remain step 5 (contradiction-flagging skipped) and step 3 (summary page skipped). [`QUICKSTART.md`](QUICKSTART.md) has the exact re-prompts. The per-tool parity for Cursor / Copilot / Gemini / Codex paths is **still undemonstrated** — they likely work via the natural-language shims but haven't been observed.
 
 ---
+
+## What schema v2 added (2026-05-26)
+
+Three opt-in extensions, none of which changes the three-layer model or the five slash commands:
+
+| Extension | Mental model |
+|---|---|
+| **`wiki/journal/` exception** | One narrow violation of "user must never edit `wiki/`": time-stamped observations live under `wiki/journal/<YYYY-MM-DD>-<slug>.md` and are user-owned. `/wiki-ingest` is forbidden from rewriting them. Use them when practice should feed back into theory — log a trade, an experiment, an incident, with `[[wiki-link]]` cross-references to concept pages. `/wiki-lint` catches broken links here too. |
+| **`## Flashcards` content convention** | Any wiki page may declare Q/A pairs in a `## Flashcards` section. `scripts/wiki-to-anki.sh` exports them to an Anki-importable CSV with the page slug as the card tag. Pure content convention — no schema change, no plugin needed. |
+| **MCP read surface** | A parallel programmatic door into the wiki. `scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` against `wiki/`; any MCP-aware AI client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) can then `read_note` / `search_notes` (BM25) / `list_directory` without going through the slash commands. **Read-by-convention** — writes should still flow through `/wiki-ingest` so `log.md` stays accurate. |
+
+The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a version bump; the journal exception is the rule change that bumped 1→2 (a v1 client running `/wiki-ingest` on a v2 repo could clobber a journal entry — see `log.md`'s 2026-05-26 05:30 migration note).
+
+## Three escape hatches the v2 era adds
+
+These don't replace the five commands; they sit alongside them.
+
+### The installer — `scripts/create-llm-wiki.sh <target>`
+
+A manifest-driven scaffolder. `scripts/installer-skeleton-manifest.txt` is the single source of truth for what ships in a fresh skeleton: 44 paths, no meta-wiki content, no smoke artifacts. Run the installer once and you have a clean repo ready to ingest your own sources — saves the `wipe-meta-wiki.sh` step that used to be the friction. Verified by `scripts/verify-create-llm-wiki.sh` (5 checks: skeleton present, no leakage, internally consistent target).
+
+### The smoke umbrella — `scripts/smoke-all.sh`
+
+The "does my install actually work" command. Composes the end-to-end ingest smoke (the 7-step demonstration) + the previous canary shape-checks + 4 regression guards. Idempotent: first run ~45s LLM-driven, subsequent runs sub-second pure shell. The /goal completion oracle for the iteration that proved the pipeline runs.
+
+### The visualization wrappers — `scripts/visualize/`
+
+Four opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The other three (`slides.sh`, `mermaid.sh`, `serve.sh`) wrap `npx` packages and a Python HTTP server. None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
 
 ## The four principles, with a "you'd lose this if…" for each
 
@@ -178,6 +208,14 @@ The `[[kebab-case]]` link syntax you'll see throughout `wiki/` is resolved by st
 
 ---
 
-## Honest caveat (repeat, on purpose)
+## Status, post-2026-05-26 (replaces the prior "untested" caveat)
 
-**None of the slash commands have been runtime-tested in this repo.** The example wiki was built by direct file writes, not by `/wiki-ingest`. The first time *you* run a slash command on a real source is the system's first integration test. Expect to refine the prompt files in `.claude/commands/wiki-*.md` after that first invocation. File issues / PRs accordingly. The verification gap is the top entry in [`wiki/open-questions.md`](../wiki/open-questions.md).
+The 7-step `/wiki-ingest` pipeline is **demonstrated** via `./scripts/smoke-all.sh`. The full chain — `/wiki-ingest raw/smoke-source.md` → 4 new wiki pages with the fictitious anchors → `log.md` entry → `/wiki-query` recalling the fact + citing the source — runs green on Claude Code (`claude -p`). The artifacts are committed; the smoke is reproducible.
+
+What's still observational, not proven:
+
+- **Per-tool parity.** The smoke only drove Claude Code. Cursor, Copilot CLI, VSCode + Copilot Chat, Cline, Gemini CLI, Codex — they have shims in place and *should* work via the natural-language path, but no smoke has run on those tools.
+- **DOCX / XLSX / PDF-LLM-vision** extraction handlers. Plain text and CSV are shape-verified; the others are specified.
+- **Concurrency.** Parallel ingest is mentioned in the source video but not implemented or tested here.
+
+File issues / PRs against the per-tool gap. The relevant tracking page is [`wiki/open-questions.md`](../wiki/open-questions.md) (note: the headline "do the 7 steps actually happen?" question is now marked Resolved 2026-05-26).

@@ -2,6 +2,18 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-26 10:56 — visualization toolchain landed
+
+Three-iteration build (per `.scratch/visualization-tools/GOAL.md`) shipping `scripts/visualize/` — a bespoke Python+D3 graph generator (stdlib only, no npm), plus `npx`-wrapped slides (`marp-cli`), mermaid (`mermaid-cli`), and a `python3 -m http.server` wrapper. Includes `tests/canary/graph-fixture/` (4 nodes/4 edges, flat) and `tests/canary/graph-fixture-nested/` (2 nodes/1 edge with `sub/leaf.md` — anti-gaming against non-recursive parsers). Oracle at `scripts/visualize/verify-visualizers.sh` runs 5 sub-checks; skip-when-absent semantics for the npx tools. Documented in `docs/VISUALIZATION.md`; recommended heavier alternatives (Quartz, mdBook, SilverBullet) noted but not bundled. `scripts/installer-skeleton-manifest.txt` extended (44 lines) so visualizers ship in fresh installs. First end-to-end run: all 5 smokes green on a machine with both marp-cli and mermaid-cli reachable via npx. No schema change.
+
+## 2026-05-26 09:17 — installer toolchain landed
+
+Per `.scratch/installer-fresh-skeleton/GOAL.md`. New: `scripts/create-llm-wiki.sh` (manifest-driven scaffolder generating a fresh repo at `<target-dir>`), `scripts/verify-create-llm-wiki.sh` (oracle: I3 manifest iteration + I4 tree-shape + content tripwire + frontmatter parse + I5 target preflight + I4(d) template substitution), `scripts/installer-skeleton-manifest.txt` (single source of truth, 31 lines initially, later extended), `README-FRESH.md` and `wiki/index-FRESH.md` (fresh-skeleton templates), `tests/installer-output/.gitignore`. Removes the `wipe-meta-wiki.sh` step from the new-user flow. Post-adversarial-pass revisions to the spec: I4 reformulated from negative-spot-list (gameable by wholesale cp -R) to positive-shape + content-tripwire + frontmatter-parse triple; I4(d) added to byte-match installed README.md/wiki/index.md against FRESH templates. No schema change.
+
+## 2026-05-26 08:00 — smoke infrastructure landed
+
+Per `.scratch/plug-and-play-curator-smoke/GOAL.md`. New: `scripts/smoke-build.sh` (LLM-driven, idempotent via `body-hash.sh`), `scripts/smoke-check.sh` (pure-shell asserts C1–C5), `scripts/smoke-all.sh` (umbrella: build + check + 4 regression guards), `scripts/r3-obsidian-patterns.txt` (patterns file for the no-Obsidian-syntax guard, avoids backtick quoting hazards in shell), `tests/smoke/smoke-source.md` (fictitious Phase Coherence Engineering fixture with Quortex protocol / Dr. Alma Voss / 47 phase rotations anchors), `tests/smoke/expected-query.md`, `tests/smoke/.gitignore`. Adversarial-pass introduced C5 (`ingested_hash` populated cryptographic proof) — without it, an agent could hand-author log.md + last-answer.md to satisfy 6 of 8 checks without running `claude -p`. First smoke run produced the 06:52 `/wiki-ingest` entry below — the empirical demonstration that the 7-step pipeline executes correctly. No schema change.
+
 ## 2026-05-26 06:52 — /wiki-ingest
 
 - Processed: raw/smoke-source.md (hash ba2159c8)
