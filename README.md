@@ -13,6 +13,17 @@ git clone <this-repo> my-wiki
 cd my-wiki
 ```
 
+This clone ships with demonstration content (a meta-wiki about the LLM-wiki pattern itself + a smoke fixture). To start your **own** wiki without that demo content, use the installer:
+
+```bash
+git clone <this-repo> tmp
+tmp/scripts/create-llm-wiki.sh ~/my-wiki   # fresh skeleton, no demo content
+rm -rf tmp
+cd ~/my-wiki
+```
+
+The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
+
 Optional but recommended: run `./scripts/preflight.sh` to confirm hard requirements (`bash`/`awk`/`openssl`/`git`) are met and to see which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but the preflight tells you in advance).
 
 That's it. The structure is already there. Open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
