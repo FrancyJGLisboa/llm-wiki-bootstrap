@@ -68,6 +68,15 @@ Once you've cloned and have Claude Code installed, run:
 
 It drives `claude -p` to ingest a small fictitious fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs are sub-second (idempotent via body-hash). All 9 checks green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
+## Visualize your wiki
+
+```bash
+./scripts/visualize/graph.sh wiki/ > graph.html   # interactive D3 force graph (no install)
+./scripts/visualize/serve.sh                     # browse the wiki + graph locally
+```
+
+Four opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, and `serve.sh` for MARP / mermaid-CLI / local HTTP. All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
+
 ## MCP access (optional)
 
 Expose this wiki over the Model Context Protocol so any MCP-aware AI client — Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc. — can read it (and optionally write to it) without slash-command indirection. Uses [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault), which works on any markdown directory with no Obsidian dependency. BM25 search built in.
