@@ -2,6 +2,16 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-26 05:30 — schema bump 1 → 2
+
+Three additions to the schema landed together. Each is opt-in on its own, but the journal exception introduces a new rule on `/wiki-ingest` behavior — by the bump policy in AGENTS.md, that's a behavior-changing edit and requires a version bump even though no v1 client would currently violate it in default repos.
+
+- **Journal exception (`wiki/journal/`)**: new user-owned directory. Files there are not rewritten by `/wiki-ingest`. New `type: journal` value added to the page-type enum. Template at `templates/journal-entry.md`. The directory is reserved by an empty `.gitkeep`; entries are created by the user, not the LLM.
+- **`## Flashcards` content convention**: any wiki page may declare Q/A pairs in a `## Flashcards` section. Exporter at `scripts/wiki-to-anki.sh` emits an Anki-importable CSV with the page slug as the card tag. Canary fixture at `tests/canary/canary-flashcards.md`; smoke test via `scripts/verify-wiki-to-anki.sh`.
+- **Optional MCP read surface**: `scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` pointed at `wiki/`, exposing read/search/write tools to any MCP-aware client. Setup details in `docs/MCP.md`. Pure addition; does not change the three-layer model or the slash commands. `scripts/preflight.sh` now reports whether `npx` is available.
+
+**Migration note for v1 clients.** A v1 client that scans `wiki/**/*.md` without journal awareness will see entries under `wiki/journal/` as ordinary `wiki/` files. If such a client runs `/wiki-ingest` autonomously and decides a journal entry needs rewriting (e.g., as part of step 4 "update existing pages"), it could clobber user-authored content. Mitigations until clients upgrade: (a) ingest sources from `raw/`, not from journal entries, (b) if running v1 ingest on a repo that has journal entries, snapshot `wiki/journal/` first, (c) `/wiki-lint` is unaffected — link-checking still works against journal entries.
+
 ## 2026-05-25 17:15 — backfill extraction_method on legacy raws
 
 Gap surfaced during PR #3's smoke-test batch: the two raw files shipped before PR #1 (`karpathy-llm-wiki-video-transcript.md` and `karpathy-video-slide-ingest-pipeline.png.md`) predate the `extraction_method` frontmatter field, so running `verify-extract.sh` on them fails the "extraction_method required" check. This is a one-time human-authorized migration to bring the legacy raws up to schema_version 1.

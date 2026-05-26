@@ -1,6 +1,6 @@
 # AGENTS.md — `llm-wiki-bootstrap` schema
 
-**Schema version:** 1 — introduced 2026-05-25. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
+**Schema version:** 2 — bumped 2026-05-26 (was: 1 introduced 2026-05-25). v2 adds the `wiki/journal/` user-owned exception (and the `type: journal` enum value), the `## Flashcards` content convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
 
 This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-schema.md`](wiki/layer-schema.md)). It tells any AI agent operating on this directory how the wiki is structured and how to work with it.
 
@@ -19,6 +19,18 @@ The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itse
 | **Schema** | `AGENTS.md` (this file), `log.md` | User + LLM (co-evolved) | User-readable; LLM may propose edits via `/wiki-lint` |
 
 **Critical:** The LLM must never edit files in `raw/` (it may only read them). The user must never edit files in `wiki/` directly — instead, edit raw sources or use `/wiki-query` to file the new claim, then re-run `/wiki-ingest` or `/wiki-lint`.
+
+### Exception: `wiki/journal/`
+
+Files under `wiki/journal/` are **user-owned**, not LLM-owned. They hold time-stamped observations (a trade log, a research log, daily lessons, incident notes — any domain where practice should feed back into theory). Convention:
+
+- Path: `wiki/journal/<YYYY-MM-DD>-<slug>.md` — one entry per file.
+- Template: [`templates/journal-entry.md`](templates/journal-entry.md). `type: journal`, free-form body.
+- Cross-references: entries use `[[wiki-link]]` to anchor observations to concept pages. `/wiki-lint` will flag broken links here just like anywhere else in `wiki/`.
+- `/wiki-ingest` **must not rewrite** files under `wiki/journal/`. They are inputs to thinking, not outputs of it. If the LLM wants to cite a journal entry, it may read it and reference it from a concept page — but the entry stays as the user wrote it.
+- `/wiki-query` may surface journal entries as evidence when answering a question, with the same `[[link]]` citation convention.
+
+This is the only exception to "LLM owns wiki/". The optional `wiki/journal/` directory is reserved by a `.gitkeep` on fresh clones.
 
 ## The five slash commands
 
@@ -63,7 +75,7 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 ### Frontmatter fields
 
 - `title` — Title Case display name (the file name is the slug).
-- `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages).
+- `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages), `journal` (user-owned time-stamped entry, lives only under `wiki/journal/`).
 - `source` — `video` (literal from a raw video transcript), `analysis` (LLM/user interpretation; must be honest about being interpretive), `external` (added from web search), `mixed` (both video and analysis).
 - `updated` — ISO date of last edit.
 - `tags` — array of kebab-case tags.
@@ -79,6 +91,32 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 Any claim that came from a raw source must include `(source: <raw-file>#<anchor>)` inline. Example: `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`. The anchor can be a timestamp, heading, or line range.
 
 Pages with `source: analysis` must say so visibly in the body (e.g., "This page is interpretation, not extracted from the video.").
+
+### Optional `## Flashcards` section
+
+Any wiki page may include a `## Flashcards` section to declare spaced-repetition cards drawn from that page's content. Format:
+
+```markdown
+## Flashcards
+
+- Q: <question>
+  A: <answer>
+- Q: <question>
+  A: <answer text that wraps
+     across indented continuation lines>
+```
+
+Rules:
+
+- `Q:` starts a new card on a bullet line.
+- `A:` lives on the next line, indented under the bullet.
+- An answer may span multiple indented continuation lines (each starting with whitespace, not a `-`).
+- A blank line is fine inside an answer's continuation chain *only as long as the next line is again indented* — the parser stops the continuation at the first non-indented or sub-bulleted line.
+- Another `## ` heading ends the Flashcards section.
+
+Export: `./scripts/wiki-to-anki.sh > anki.csv` scans every `.md` file under `wiki/` (or any directory you pass) and writes a CSV with columns `Front,Back,Tags`. The page slug becomes the single Anki tag, which lets you build subdecks per topic. Importing the CSV into Anki uses the default delimiter (comma).
+
+This convention is **viewer-agnostic** — `## Flashcards` reads as a plain markdown list in any renderer; only the exporter script treats it specially.
 
 ## Raw source convention
 
@@ -126,6 +164,8 @@ If every handler for a binary format fails, the binary is still saved to `raw/` 
 **Canonical hashing.** The ONE allowed way to compute `ingested_hash` is `scripts/body-hash.sh <file>`. Do not reinvent the hashing logic inline (different awk patterns, different newline handling, different SHA tools → different hashes → broken idempotence). The script defines "body" as everything after the closing `---` of frontmatter, hashed with SHA-256.
 
 **Environment check.** `scripts/preflight.sh` reports which extraction tools (`pdftotext`, `pandoc`, `xlsx2csv`, `python-docx`, `openpyxl`) are present and which `/wiki-extract` formats will run first-try vs fall back vs fail. Suggest running it if a user reports unexpected `extraction_status: failed` sidecars or asks why DOCX/XLSX produced empty content.
+
+**Optional MCP read surface.** A user may launch `./scripts/mcp-server.sh` to expose `wiki/` to any MCP-aware client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) with BM25 search over the wiki. This is **read-by-convention**, additive, and does not change the three-layer model or the slash commands. Writes should still flow through `/wiki-ingest` / `/wiki-query` so `log.md` stays accurate. Setup: [`docs/MCP.md`](docs/MCP.md).
 
 ## log.md format
 

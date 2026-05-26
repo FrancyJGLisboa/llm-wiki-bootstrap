@@ -152,7 +152,7 @@ None of this is described in the video. It's a promising path but entirely outsi
 
 ### MCP / API surface
 
-Could the wiki be exposed via MCP (Model Context Protocol) so other agents can query it without slash commands? Plausible V2. Out of scope.
+**Resolved 2026-05-26.** `scripts/mcp-server.sh` launches [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault) pointed at `wiki/`, exposing read, BM25 search, and (optionally) write tools to any MCP-aware client (Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc.). The integration is opt-in and additive — no change to the three-layer model or the five slash commands. Recommended posture is read-only via MCP; writes still flow through `/wiki-ingest` and `/wiki-query` so `log.md` stays accurate. Setup details in [`docs/MCP.md`](../docs/MCP.md). The remaining sub-question is whether out-of-band MCP writes that touch `ingested_*` fields will break ingest idempotence in practice — to be observed once real users start writing through MCP.
 
 ## Use-of-this-page
 

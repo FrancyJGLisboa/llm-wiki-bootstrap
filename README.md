@@ -47,6 +47,26 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 
+## MCP access (optional)
+
+Expose this wiki over the Model Context Protocol so any MCP-aware AI client — Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc. — can read it (and optionally write to it) without slash-command indirection. Uses [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault), which works on any markdown directory with no Obsidian dependency. BM25 search built in.
+
+```bash
+./scripts/mcp-server.sh        # foreground stdio server pointed at wiki/
+```
+
+For client config snippets (Claude Desktop, Claude Code, Cursor) and the recommended read-only posture, see [`docs/MCP.md`](docs/MCP.md).
+
+## Flashcards (optional)
+
+Any wiki page may declare a `## Flashcards` section with `Q: …` / `A: …` bullet pairs. Export to an Anki-importable CSV with:
+
+```bash
+./scripts/wiki-to-anki.sh > anki.csv
+```
+
+The page slug becomes the Anki tag for that card. See the convention notes in [`AGENTS.md`](AGENTS.md).
+
 ## A typical session
 
 ```
@@ -102,11 +122,17 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
 │   ├── preflight.sh                # environment & dependency check (run before first /wiki-extract)
 │   ├── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
-│   └── verify-extract.sh           # check the shape of /wiki-extract output (smoke test)
+│   ├── verify-extract.sh           # check the shape of /wiki-extract output (smoke test)
+│   ├── wiki-to-anki.sh             # export ## Flashcards sections to Anki CSV
+│   ├── verify-wiki-to-anki.sh      # smoke test for the Anki exporter
+│   └── mcp-server.sh               # launch @bitbonsai/mcpvault pointed at wiki/
+├── templates/
+│   └── journal-entry.md            # template for wiki/journal/YYYY-MM-DD-*.md entries
 ├── tests/
 │   └── canary/
 │       ├── canary-smoke-test.md    # tiny known-good markdown source for first-run verification
-│       └── canary-csv.csv          # tiny known-good CSV source for first-run verification
+│       ├── canary-csv.csv          # tiny known-good CSV source for first-run verification
+│       └── canary-flashcards.md    # tiny known-good fixture for the Anki exporter
 ├── raw/                            # immutable source material (you curate)
 │   ├── karpathy-llm-wiki-video-transcript.md
 │   ├── karpathy-video-slide-ingest-pipeline.png
@@ -115,7 +141,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
     ├── index.md                    # start here
     ├── core-idea.md
     ├── ... (21 more pages)
-    └── glossary.md
+    ├── glossary.md
+    └── journal/                    # user-owned, time-stamped observations (exception to LLM-ownership)
 ```
 
 ## Principles this project honors

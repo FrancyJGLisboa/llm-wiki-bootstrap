@@ -61,6 +61,7 @@ have_pandoc=no
 have_xlsx2csv=no
 have_python_docx=no
 have_python_openpyxl=no
+have_npx=no
 have_ai_tool=no
 
 # Helpers
@@ -137,6 +138,10 @@ if have python3; then
 else
   warn "python3" "missing — DOCX/XLSX fallbacks unavailable (install: ${INSTALL_CMD} python3)"
 fi
+
+# npx — only needed for the optional MCP server (scripts/mcp-server.sh).
+if have npx; then ok "npx" "present — MCP server can be launched (scripts/mcp-server.sh)"; have_npx=yes
+else warn "npx" "missing — optional, blocks scripts/mcp-server.sh only (install Node ≥18 from https://nodejs.org)"; fi
 
 echo
 echo "${DIM}AI runtimes on PATH:${RESET}"
