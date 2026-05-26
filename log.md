@@ -2,6 +2,15 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-26 06:52 — /wiki-ingest
+
+- Processed: raw/smoke-source.md (hash ba2159c8)
+- Created: wiki/smoke-source-summary.md, wiki/quortex-protocol.md, wiki/dr-alma-voss.md, wiki/phase-coherence-engineering.md
+- Updated: wiki/index.md
+- Contradictions flagged: none (smoke fixture's domain is disjoint from the existing meta-wiki about the LLM-wiki pattern; nothing to disagree with)
+
+`wiki/quortex-protocol.md` carries the literal "Quortex" and "47 phase rotations" anchors required by smoke check C2.
+
 ## 2026-05-26 05:30 — schema bump 1 → 2
 
 Three additions to the schema landed together. Each is opt-in on its own, but the journal exception introduces a new rule on `/wiki-ingest` behavior — by the bump policy in AGENTS.md, that's a behavior-changing edit and requires a version bump even though no v1 client would currently violate it in default repos.

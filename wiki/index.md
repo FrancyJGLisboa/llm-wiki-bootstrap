@@ -2,7 +2,7 @@
 title: Index
 type: navigation
 source: analysis
-updated: 2026-05-25
+updated: 2026-05-26
 tags: [navigation, index]
 ---
 
@@ -46,6 +46,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 
 - [[karpathy-llm-wiki-video-transcript-summary]] — main YouTube transcript (primary source)
 - [[karpathy-video-slide-ingest-pipeline-summary]] — single slide on the ingest pipeline (second source, same video)
+- [[smoke-source-summary]] — end-to-end smoke fixture (fictional "phase coherence engineering" primer)
 
 ## Analysis (interpretive — `source: analysis`)
 
@@ -53,6 +54,12 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 - [[open-questions]] — gaps the video doesn't address
 - [[source-attribution]] — what's Karpathy, what's the YouTuber, what's us
 - [[glossary]] — terms used throughout the wiki
+
+## Smoke fixture (derived from `raw/smoke-source.md` — fictional, do not treat as real-world knowledge)
+
+- [[phase-coherence-engineering]] — the (invented) field the fixture introduces
+- [[quortex-protocol]] — the central artifact; carries the literal "47 phase rotations" anchor for smoke C2
+- [[dr-alma-voss]] — the (invented) founder, smoke anchor
 
 ## Reading orders
 

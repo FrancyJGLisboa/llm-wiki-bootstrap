@@ -34,6 +34,15 @@ First real `/wiki-extract` on each format is the smoke test. Until then, the mat
 
 ### The most important open question: do the 7 steps actually happen?
 
+**Resolved 2026-05-26.** The end-to-end smoke at `scripts/smoke-all.sh` (driven by `.scratch/plug-and-play-curator-smoke/GOAL.md`) drove `/wiki-ingest` on a fictitious fixture (`tests/smoke/smoke-source.md` — "phase coherence engineering" / Quortex protocol / Dr. Alma Voss) on first try, and produced: 4 new wiki pages (`smoke-source-summary`, `quortex-protocol`, `dr-alma-voss`, `phase-coherence-engineering`), an update to `wiki/index.md` cross-referencing the new pages, a fully-populated `ingested_*` frontmatter block on `raw/smoke-source.md`, and a structured `log.md` entry covering all 4 sub-actions (Processed / Created / Updated / Contradictions flagged). A subsequent `/wiki-query` answered with the literal "47 phase rotations" anchor AND a citation back to `raw/smoke-source.md`. All 9 smoke checks passed (5 behavioral + 4 regression guards). The original concrete unknowns are now answered observationally:
+
+- *Will the LLM perform all 7 steps?* Yes on this fixture. Steps 3 (summary page) and 5 (contradictions flagged) both happened; the log entry includes the "Contradictions flagged: none" line correctly.
+- *Step 4 blast radius?* On this small (51-line) fixture: 4 created + 1 updated. Below the video's 10-15 target, consistent with the fixture being shorter than the video transcripts.
+- *Step 5 sensitivity?* Untested here — the smoke fixture's domain is disjoint from the existing meta-wiki, so there was nothing to contradict.
+- *Token / time budget?* First run ~45s wall-clock for the full ingest + query; idempotent reruns sub-second.
+
+Below is the original framing, kept for context.
+
 Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/wiki-ingest.md`. Demonstrated nowhere. `/wiki-ingest` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.
 
 Concrete unknowns:
