@@ -2,6 +2,44 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-27 17:45 — phase-2 kg-traversal
+
+**verdict: phase-2b-abandoned-on-gate.** baseline 7/7 (100%, >> 40% threshold). C5 gate FAILED.
+
+Implemented `.scratch/phase-2-kg-traversal/GOAL.md` Phase-2a only. New artifacts:
+
+- `tests/eval/sparse-fixture/` — 7 hand-crafted pages of fictional supply-chain entities (zerlon, quirpal, bryntex, mordax, velnar, thalox, glivex). Each page body ≤ 100 words, no body sentence states direction or position. 8 typed `## Related` lines using 7 distinct verbs (feeds, powers, produces, ships-via, terminates-at, succeeds, replaces).
+- `tests/eval/sparse-multi-hop-questions.md` — 7 multi-hop questions, all tagged `baseline-absent: true`, all `hops: 2` or `hops: 3`. Expects-tokens (`upstream`/`downstream`/`transitive`/`parallel`/`unreachable`) are NOT verb literals and are absent from the unstripped fixture prose (C4(d) + C4(e) both green).
+- `scripts/eval-multi-hop-sparse.sh` — thin variant of `eval-multi-hop.sh` pointed at the sparse fixture. Stays sidecar-less in Phase 2a; would conditionally invoke `scripts/wiki-to-kg.py` in the typed work dir (only) if Phase 2b were active.
+
+Gate result (`./scripts/eval-multi-hop-sparse.sh`):
+
+- baseline: 7/7
+- typed: 7/7
+- delta: 0
+- verdict: null-result on the eval itself; gate verdict: FAILED (baseline >> 40%)
+
+**Reading.** The LLM extracts enough signal to answer the direction questions from sources the verb-strip does not touch:
+
+1. **Connectivity survives stripping.** Stripped `## Related` lines keep slug-pair links — the baseline LLM still sees that zerlon connects to mordax, mordax connects to velnar, etc. Direction has to come from somewhere else, but only some-where else is needed.
+2. **Page semantics leak through tags.** `tags: [sparse-fixture, alloy]` on zerlon, `tags: [..., vessel]` on mordax, `tags: [..., port]` on velnar are intact in both variants. The LLM uses tag semantics + world knowledge ("ore feeds refinery feeds alloy ships to port") to recover direction even without verbs.
+3. **The question text is a teacher.** Every question names the verbs explicitly (`"Following only the forward supply edges (feeds, powers, produces, ships-via, terminates-at)"`). Even when those verbs are stripped from the markdown, the LLM reads the verb list in the prompt and applies it to the connections it sees.
+
+Conclusion: **typed relations do not provide measurable retrieval signal even on a fixture engineered to need them.** The signal the typed graph carries is already encoded — redundantly — in connectivity + tags + question framing. A parallel KG layer would record what the LLM already infers. Not justified.
+
+Decision per §7: **Phase 2b abandoned.** No `scripts/wiki-to-kg.py` written, no modifications to `.claude/commands/wiki-ingest.md` or `.claude/commands/wiki-query.md`, no `wiki/_kg.jsonl` artifact. C10 absence guards intentionally green.
+
+**Future avenues (not pursued here, recorded for phase-3 design):**
+
+- Strip tags AND verbs in the baseline (not just verbs) — would test whether tag semantics alone explain the result.
+- Make question text neutral (do not name the verbs in the prompt) — would test whether the prompt is the teacher.
+- Use questions whose answers require numerically combining attrs across hops (attrs get stripped; the LLM cannot reconstruct them from tags or world knowledge).
+- Revisit the parallel-KG idea only after one of the above produces a measurably stricter discriminator.
+
+The user-research signal recorded today — "users expect `/wiki-ingest` to create a KG" — is not addressed by this work and should not motivate building a KG on a null result. It is a phase-3 design input.
+
+C1 regression-oracle: `./scripts/smoke-all.sh` exit 0; `./scripts/eval-multi-hop.sh` on the rich-prose Brazilian-ag fixture verdict `null-result` (no regression vs. phase-1's 5/5 = 5/5).
+
 ## 2026-05-27 14:00 — phase-1 typed-relations eval
 
 **verdict: null-result** (baseline 5/5, typed 5/5, delta 0).
