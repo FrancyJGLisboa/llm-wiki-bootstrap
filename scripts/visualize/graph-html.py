@@ -3,7 +3,9 @@
 
 Walks an input directory recursively for *.md files, parses [[kebab-case]]
 references, and emits a self-contained HTML file with a D3 force-directed
-graph.
+graph. Edges carry a per-edge `verb` derived from the AGENTS.md "Typed
+relations" convention (annotated ``## Related`` lines). Verbs in body prose
+or in `index.md` and `## Open questions` blocks default to ``related-to``.
 
 Stdlib only — no external dependencies on the Python side. D3 v7 is loaded
 from CDN by default; pass --inline (with d3.v7.min.js dropped next to this
@@ -11,9 +13,13 @@ script) to embed it for offline use.
 
 The graph data is emitted as a dedicated <script id="graph-data"
 type="application/json"> block so smoke tests can parse it without regex
-heuristics over the whole HTML.
+heuristics over the whole HTML. A `<select id="verb-filter">` plus a
+`filterByVerb(...)` JS handler let users narrow the rendered edges to a
+single verb; each `<line>` carries a `data-verb` attribute so the filter
+works without a re-layout.
 
-Spec: .scratch/visualization-tools/GOAL.md §5.
+Spec: .scratch/visualization-tools/GOAL.md §5 (original) +
+.scratch/typed-wikilinks-semantic-viz/GOAL.md §5 (typed extension).
 """
 from __future__ import annotations
 
@@ -23,8 +29,14 @@ import re
 import sys
 from pathlib import Path
 
-LINK_RE = re.compile(r"\[\[([a-z0-9-]+)\]\]")
+LINK_RE = re.compile(r"\[\[([a-z][a-z0-9-]*)\]\]")
+TYPED_LINE_RE = re.compile(r"^\s*-\s+\[\[([a-z][a-z0-9-]*)\]\](.*)$")
+VERB_RE = re.compile(r"^[a-z][a-z0-9-]*$")
+RELATED_HEADING_RE = re.compile(r"^## Related\s*$")
+SECTION_RE = re.compile(r"^## ")
 D3_CDN = "https://d3js.org/d3.v7.min.js"
+EM_DASH = "—"
+IMPLICIT_VERB = "related-to"
 
 
 def collect_pages(root: Path) -> list[Path]:
@@ -32,12 +44,52 @@ def collect_pages(root: Path) -> list[Path]:
     return sorted(root.rglob("*.md"))
 
 
+def classify_related_line(line: str) -> list[tuple[str, str]] | None:
+    """Parse one ``## Related`` list line.
+
+    Returns a list of ``(target, verb)`` tuples — typically one element, but
+    multi-link lines yield one per link (all with ``related-to``). Returns
+    ``None`` if the line is not a recognised relation list item.
+    """
+    m = TYPED_LINE_RE.match(line)
+    if not m:
+        return None
+    first_target = m.group(1)
+    rest_after_first_link = m.group(2)
+    all_targets = LINK_RE.findall(line)
+
+    # Multi-link line: every link is implicit related-to, no verb attaches.
+    if len(all_targets) > 1:
+        return [(t, IMPLICIT_VERB) for t in all_targets]
+
+    # Single-target line: extract the verb token (if any).
+    rest = rest_after_first_link.lstrip()
+    for sep in (EM_DASH, "--"):
+        idx = rest.find(sep)
+        if idx >= 0:
+            rest = rest[:idx]
+            break
+    rest = rest.strip()
+    if not rest:
+        return [(first_target, IMPLICIT_VERB)]
+
+    verb = rest.split()[0]
+    if VERB_RE.fullmatch(verb):
+        return [(first_target, verb)]
+    # Malformed verb — graph degrades to implicit; lint flags it separately.
+    return [(first_target, IMPLICIT_VERB)]
+
+
 def build_graph(pages: list[Path]) -> tuple[list[dict], list[dict]]:
-    """Return (nodes, links). Drop dangling links and self-loops; dedup edges."""
+    """Return (nodes, links). Drop dangling links and self-loops; dedup edges.
+
+    Typed relations from ``## Related`` win over implicit body-prose links: if
+    the same (src, tgt) pair appears in both contexts, the typed verb is kept.
+    """
     stems = [p.stem for p in pages]
     if len(set(stems)) != len(stems):
-        seen = set()
-        dupes = []
+        seen: set[str] = set()
+        dupes: list[str] = []
         for s in stems:
             if s in seen:
                 dupes.append(s)
@@ -51,20 +103,53 @@ def build_graph(pages: list[Path]) -> tuple[list[dict], list[dict]]:
     node_set = set(stems)
     nodes = sorted(({"id": s} for s in stems), key=lambda n: n["id"])
 
-    raw_edges: set[tuple[str, str]] = set()
+    typed_edges: dict[tuple[str, str], str] = {}
+    implicit_edges: set[tuple[str, str]] = set()
+
     for page in pages:
         src = page.stem
         body = page.read_text(encoding="utf-8", errors="replace")
-        for match in LINK_RE.finditer(body):
-            tgt = match.group(1)
-            if tgt == src:
-                continue  # no self-loops
-            if tgt not in node_set:
-                continue  # drop dangling — no ghost nodes (see GOAL.md §5)
-            raw_edges.add((src, tgt))
+        in_related = False
+        for raw_line in body.splitlines():
+            if RELATED_HEADING_RE.match(raw_line):
+                in_related = True
+                continue
+            if SECTION_RE.match(raw_line) and not RELATED_HEADING_RE.match(raw_line):
+                in_related = False
+
+            consumed_as_related = False
+            if in_related:
+                classified = classify_related_line(raw_line)
+                if classified is not None:
+                    consumed_as_related = True
+                    for tgt, verb in classified:
+                        if tgt == src or tgt not in node_set:
+                            continue
+                        # Typed edge wins; if verb is implicit, only fill an empty slot.
+                        if verb != IMPLICIT_VERB:
+                            typed_edges[(src, tgt)] = verb
+                        elif (src, tgt) not in typed_edges:
+                            typed_edges.setdefault((src, tgt), IMPLICIT_VERB)
+
+            if consumed_as_related:
+                continue
+
+            # Outside ## Related, or inside it but not a recognised list line:
+            # treat every link as implicit related-to (does not overwrite typed).
+            for match in LINK_RE.finditer(raw_line):
+                tgt = match.group(1)
+                if tgt == src or tgt not in node_set:
+                    continue
+                if (src, tgt) not in typed_edges:
+                    implicit_edges.add((src, tgt))
+
+    edges: dict[tuple[str, str], str] = dict(typed_edges)
+    for pair in implicit_edges:
+        edges.setdefault(pair, IMPLICIT_VERB)
+
     links = sorted(
-        ({"source": s, "target": t} for (s, t) in raw_edges),
-        key=lambda e: (e["source"], e["target"]),
+        ({"source": s, "target": t, "verb": v} for ((s, t), v) in edges.items()),
+        key=lambda e: (e["source"], e["target"], e["verb"]),
     )
     return nodes, links
 
@@ -84,20 +169,48 @@ def render_html(nodes: list[dict], links: list[dict], *, inline_d3: str | None) 
 <title>llm-wiki graph</title>
 <style>
   body {{ font-family: -apple-system, system-ui, sans-serif; margin: 0; background: #111; color: #ddd; }}
-  svg {{ width: 100vw; height: 100vh; display: block; }}
+  svg {{ width: 100vw; height: calc(100vh - 36px); display: block; }}
+  #controls {{ padding: 8px 12px; background: #1a1a1a; border-bottom: 1px solid #333; font-size: 13px; }}
+  #controls label {{ margin-right: 8px; }}
+  #verb-filter {{ background: #222; color: #ddd; border: 1px solid #444; padding: 2px 6px; }}
   .node circle {{ fill: #69b3a2; stroke: #ddd; stroke-width: 1.5px; }}
   .node text {{ fill: #ddd; font-size: 11px; pointer-events: none; }}
-  .link {{ stroke: #555; stroke-opacity: 0.6; }}
+  .link {{ stroke-opacity: 0.7; }}
 </style>
 </head>
 <body>
+<div id="controls">
+  <label for="verb-filter">Filter by verb:</label>
+  <select id="verb-filter"><option value="all">all</option></select>
+  <span id="verb-legend" style="margin-left:16px;"></span>
+</div>
 {d3_block}
 <script id="graph-data" type="application/json">{graph_json}</script>
 <svg id="graph"></svg>
 <script>
 const data = JSON.parse(document.getElementById('graph-data').textContent);
 const svg = d3.select('#graph');
-const width = window.innerWidth, height = window.innerHeight;
+const width = window.innerWidth, height = window.innerHeight - 36;
+
+// Distinct verbs across all edges, sorted; populate the filter <select>.
+const verbs = Array.from(new Set(data.links.map(l => l.verb))).sort();
+const select = document.getElementById('verb-filter');
+for (const v of verbs) {{
+  const opt = document.createElement('option');
+  opt.value = v;
+  opt.textContent = v;
+  select.appendChild(opt);
+}}
+const verbColor = d3.scaleOrdinal(d3.schemeCategory10).domain(verbs);
+
+// Legend
+const legend = document.getElementById('verb-legend');
+for (const v of verbs) {{
+  const sw = document.createElement('span');
+  sw.style.marginRight = '10px';
+  sw.innerHTML = `<span style="display:inline-block;width:10px;height:10px;background:${{verbColor(v)}};margin-right:4px;border-radius:2px;"></span>${{v}}`;
+  legend.appendChild(sw);
+}}
 
 const simulation = d3.forceSimulation(data.nodes)
   .force('link', d3.forceLink(data.links).id(d => d.id).distance(80))
@@ -105,7 +218,10 @@ const simulation = d3.forceSimulation(data.nodes)
   .force('center', d3.forceCenter(width / 2, height / 2));
 
 const link = svg.append('g').attr('class', 'links').selectAll('line')
-  .data(data.links).enter().append('line').attr('class', 'link');
+  .data(data.links).enter().append('line')
+  .attr('class', 'link')
+  .attr('data-verb', d => d.verb)
+  .attr('stroke', d => verbColor(d.verb));
 
 const node = svg.append('g').attr('class', 'nodes').selectAll('g')
   .data(data.nodes).enter().append('g').attr('class', 'node')
@@ -116,6 +232,12 @@ const node = svg.append('g').attr('class', 'nodes').selectAll('g')
 
 node.append('circle').attr('r', 7);
 node.append('text').attr('dx', 10).attr('dy', 4).text(d => d.id);
+
+// Filter edges by verb; "all" shows everything.
+function filterByVerb(verb) {{
+  link.style('display', d => (verb === 'all' || d.verb === verb) ? null : 'none');
+}}
+select.addEventListener('change', e => filterByVerb(e.target.value));
 
 simulation.on('tick', () => {{
   link

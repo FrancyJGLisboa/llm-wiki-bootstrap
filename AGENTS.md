@@ -86,6 +86,36 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 
 `/wiki-lint` flags any `[[link]]` with no matching file.
 
+### Typed relations
+
+Inside a `## Related` section, a link can carry an optional **verb** (and one optional **attribute** token) immediately after the closing `]]`:
+
+```
+## Related
+- [[embrapa]] founded-by-government-in 1973 — Brazilian R&D agency
+- [[cerrado]] located-in — central biome where soy frontier moved
+- [[plano-real]] enabled-by 1994 — stabilization plan that withdrew subsidies
+```
+
+Parse rule (single regex, no AST):
+
+```
+- [[<target>]] <verb> [<attr>] — <prose>
+```
+
+- `<verb>` matches `[a-z][a-z0-9-]*` (lowercase kebab-case, like page slugs).
+- `<attr>` is optional: one whitespace-delimited token, free-form (year, percentage, etc.).
+- `<prose>` is everything after the em-dash (`—`) or double-hyphen (`--`).
+
+**Backward-compat (no migration required):**
+
+- A line without a verb token (the existing form `- [[other-page]] — why it relates`) is treated as implicit `related-to`. Lint passes.
+- A line containing more than one `[[…]]` token (e.g. `- [[a]], [[b]], [[c]] — …`) is always treated as implicit `related-to` for every link, regardless of what follows. Verbs only apply to single-target lines.
+
+**Vocabulary**: open. There is no controlled list. `/wiki-lint` only validates the regex shape — semantics (does the verb make sense?) is the wiki author's call. Visualization (`scripts/visualize/graph.sh`) groups edges by verb for filtering.
+
+**Where typed lines live**: only inside `## Related`. Verbs in body prose, `## Open questions`, `## Flashcards`, or `index.md` are ignored by the lint and the graph.
+
 ### Source attribution
 
 Any claim that came from a raw source must include `(source: <raw-file>#<anchor>)` inline. Example: `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`. The anchor can be a timestamp, heading, or line range.

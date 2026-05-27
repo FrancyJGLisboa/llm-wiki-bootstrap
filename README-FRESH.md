@@ -66,6 +66,8 @@ Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once t
 - **MCP server**: `./scripts/mcp-server.sh` exposes `wiki/` to any MCP-aware AI client. See [`docs/MCP.md`](docs/MCP.md).
 - **Anki flashcards**: any wiki page may declare a `## Flashcards` section; export with `./scripts/wiki-to-anki.sh > anki.csv`.
 - **Journal entries**: time-stamped observations live in `wiki/journal/`. Template: `templates/journal-entry.md`.
+- **Typed relations**: `## Related` lines can carry a verb — `- [[embrapa]] founded-by 1973 — desc`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Pure CommonMark, backward-compat with untyped lines. Spec in [`AGENTS.md`](AGENTS.md) → "Typed relations".
+- **Multi-hop eval**: `./scripts/eval-multi-hop.sh` measures whether your typed verbs actually improve `/wiki-query` recall vs. the same wiki with verbs stripped. Useful before investing in a parallel knowledge graph.
 
 ## License
 

@@ -24,6 +24,8 @@ curl -fsSL https://d3js.org/d3.v7.min.js > scripts/visualize/d3.v7.min.js
 
 **Dangling-link behavior.** If a wiki page references `[[some-page]]` that doesn't exist as a file, the link is silently dropped from the graph. No ghost nodes; the graph reflects only actual pages and the connections between them.
 
+**Typed-relation viz.** Lines inside a page's `## Related` section can carry a verb (see [`AGENTS.md`](../AGENTS.md) → "Typed relations"). The graph extracts the verb per edge, attaches it as `data-verb` on each `<line>`, colours edges via D3's `schemeCategory10` over the distinct verb set, and renders a `<select id="verb-filter">` above the SVG so you can narrow the view to one relation type at a time. Untyped and multi-link `## Related` lines collapse to `related-to`; body-prose `[[link]]`s collapse to `related-to`. The legend below the filter shows colour ↔ verb. No new dependencies — the filter is vanilla JS on the same D3 v7.
+
 ## 2. `slides.sh` — turn any wiki page into a slide deck (MARP)
 
 ```bash

@@ -2,6 +2,30 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-27 14:00 — phase-1 typed-relations eval
+
+**verdict: null-result** (baseline 5/5, typed 5/5, delta 0).
+
+Implemented `.scratch/typed-wikilinks-semantic-viz/GOAL.md` (annotated `## Related` lines with optional verb + attr; pure CommonMark; backward-compat preserved by treating untyped and multi-link lines as implicit `related-to`). New `scripts/wiki-lint-typed-relations.sh` validates the verb regex (`[a-z][a-z0-9-]*`). `scripts/visualize/graph-html.py` extended: per-edge `verb` field in the JSON, a `<select id="verb-filter">` UI + `filterByVerb()` JS handler + per-verb edge colouring via `d3.schemeCategory10`.
+
+Fixture: 6-page Brazilian-agriculture wiki built during the 2026-05-27 new-user simulation, frozen at `tests/eval/wiki-fixture/`. Typed verbs applied to 14/19 single-target Related lines (74%); 6 distinct verbs (`researches-for`, `defined-by`, `credit-for`, `complement-of`, `enables`, `summarized-in`). Verb tokens were chosen to be absent from the baseline prose (0 hits each) so stripping them removes a real signal.
+
+Eval (`scripts/eval-multi-hop.sh`, 5 multi-hop questions, 3 tagged `baseline-absent: true`):
+
+- baseline: 5/5
+- typed: 5/5
+- delta: 0
+
+**Reading:** typed verbs alone did not improve `/wiki-query` accuracy on this fixture. The LLM is smart enough to infer the typed relationship from surrounding prose context even when the verb token is stripped — on Q1-Q3 (the `baseline-absent` set), the baseline LLM still produced the exact kebab-case verb (`enables`, `credit-for`, `complement-of`) via paraphrase + format-mimicry of the question. On a Wikipedia-derived wiki with rich prose, the marginal information added by typed verbs is dominated by what the prose already encodes implicitly.
+
+**Implications for phase-2 (parallel knowledge graph):**
+
+1. Typed-verb-in-markdown is not enough on its own; the eval signal is masked by LLM inference from prose.
+2. Either the eval needs sparser-prose fixtures (so typed verbs are the only path to the answer), or phase 2 must add **explicit graph traversal** to `/wiki-query` (the LLM gets the typed-relation graph as a separate retrieved structure, not just inline markdown).
+3. The null-result is itself the answer to the original "do we need a parallel KG?" question: on rich-prose wikis, typed verbs are redundant; on sparse-prose wikis or for multi-hop queries beyond the LLM's inference horizon, they may help — but only when paired with traversal logic, not just syntax.
+
+All 9 success checks (C1–C9) green; installer regression (`verify-create-llm-wiki.sh`) and core smoke (`smoke-all.sh`) both still exit 0. `scripts/installer-skeleton-manifest.txt` extended by 13 lines so the new lint, eval harness, fixture, and canary tests ship in fresh installs.
+
 ## 2026-05-26 10:56 — visualization toolchain landed
 
 Three-iteration build (per `.scratch/visualization-tools/GOAL.md`) shipping `scripts/visualize/` — a bespoke Python+D3 graph generator (stdlib only, no npm), plus `npx`-wrapped slides (`marp-cli`), mermaid (`mermaid-cli`), and a `python3 -m http.server` wrapper. Includes `tests/canary/graph-fixture/` (4 nodes/4 edges, flat) and `tests/canary/graph-fixture-nested/` (2 nodes/1 edge with `sub/leaf.md` — anti-gaming against non-recursive parsers). Oracle at `scripts/visualize/verify-visualizers.sh` runs 5 sub-checks; skip-when-absent semantics for the npx tools. Documented in `docs/VISUALIZATION.md`; recommended heavier alternatives (Quartz, mdBook, SilverBullet) noted but not bundled. `scripts/installer-skeleton-manifest.txt` extended (44 lines) so visualizers ship in fresh installs. First end-to-end run: all 5 smokes green on a machine with both marp-cli and mermaid-cli reachable via npx. No schema change.
