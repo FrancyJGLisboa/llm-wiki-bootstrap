@@ -92,4 +92,3 @@ state.
 expects: unreachable
 baseline-absent: true
 hops: 2
-</content>

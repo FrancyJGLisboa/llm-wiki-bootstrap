@@ -23,4 +23,3 @@ This page is interpretation, not extracted from any external corpus. No sentence
 ## Open questions on this page
 
 - None. Fixture page for an experiment.
-</content>

@@ -418,4 +418,3 @@ all applied. Highlights:
   fixture/grader class" per §1.1.
 - **Cost transparency missing.** Added a §6 budget note so the agent doesn't
   burn through `claude -p` calls on reflexive retries of the gate.
-</content>
