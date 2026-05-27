@@ -14,23 +14,25 @@ Then open this directory in Claude Code (or any agentic tool that loads `.claude
 
 ## The five slash commands
 
-| Command | What it does |
-|---|---|
-| `/wiki-init` | Already done by this installer. Re-runnable if you ever delete the structure. |
-| `/wiki-extract <url-or-file>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Does not touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/`: read, summarise, cross-link existing pages, flag contradictions, update the index, append `log.md`. Detects deltas via body hash; idempotent on unchanged sources. |
-| `/wiki-query <question>` | Answer from the wiki. If a gap, web-search and auto-promote the new knowledge as wiki pages. `--no-promote` suppresses promotion. |
-| `/wiki-lint [--apply]` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
+Each command has a short form (no `wiki-` prefix) — both work identically. Use whichever feels right.
+
+| Prefixed | Short | What it does |
+|---|---|---|
+| `/wiki-init` | `/init` | Already done by this installer. Re-runnable if you ever delete the structure. |
+| `/wiki-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Pass multiple sources space- or newline-separated and they're all extracted in one pass. Does not touch `wiki/`. |
+| `/wiki-ingest [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/`: read, summarise, cross-link existing pages, flag contradictions, update the index, append `log.md`. Detects deltas via body hash; idempotent on unchanged sources. |
+| `/wiki-query <question>` | `/query` | Answer from the wiki. If a gap, web-search and auto-promote the new knowledge as wiki pages. `--no-promote` suppresses promotion. |
+| `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once that page exists.
 
 ## A typical session
 
 ```
-/wiki-extract https://example.com/some-article
-/wiki-ingest
-/wiki-query "what does this article say about X?"
-/wiki-lint                                          # periodically
+/extract https://en.wikipedia.org/wiki/X https://example.com/y.pdf /local/notes.md
+/ingest
+/query "what does the wiki say about X?"
+/lint                                          # periodically
 ```
 
 ## Layout

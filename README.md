@@ -8,6 +8,8 @@ The wiki that ships with this repo is *meta*: it's a wiki about the LLM-wiki pat
 
 ## Install
 
+**Prerequisite — install an agentic AI tool first.** The slash commands here run inside the tool, not from the shell. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude` on your `$PATH`). Other supported tools — Copilot CLI, Cursor, Cline, Gemini CLI, Codex, VSCode Copilot Chat — are documented in [`docs/QUICKSTART.md`](docs/QUICKSTART.md) with per-tool invocation patterns.
+
 ```bash
 git clone <this-repo> my-wiki
 cd my-wiki
@@ -48,13 +50,15 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 ## The five slash commands
 
-| Command | What it does |
-|---|---|
-| `/wiki-init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
-| `/wiki-extract <url-or-file>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Parses binary content to markdown when a handler exists. Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
-| `/wiki-query <question>` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
-| `/wiki-lint [--apply]` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
+Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/extract`). The short forms are the ones you'll actually type once you're inside a fresh installed repo; the prefixed form is there for global use where namespace collisions matter. Both resolve to the exact same procedure.
+
+| Prefixed | Short | What it does |
+|---|---|---|
+| `/wiki-init` | `/init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
+| `/wiki-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Bulk mode: pass multiple sources space- or newline-separated and they're all extracted in one pass with a consolidated OK/Degraded/Failed summary at the end. Parses binary content to markdown when a handler exists. Does **not** touch `wiki/`. |
+| `/wiki-ingest [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
+| `/wiki-query <question>` | `/query` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
+| `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 

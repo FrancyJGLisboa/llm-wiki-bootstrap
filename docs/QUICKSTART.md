@@ -77,17 +77,17 @@ Verify that `/wiki-extract` produces output with the right shape in your environ
 
 ## The 5 operations
 
-You will use the same 5 operations regardless of tool:
+You will use the same 5 operations regardless of tool. Each one has two interchangeable Claude-Code slash-command forms: a short alias (`/extract`) and the prefixed canonical (`/wiki-extract`). Use whichever feels natural.
 
-| Operation | Purpose | When to run |
-|---|---|---|
-| **init** | Scaffold the directory structure (`raw/`, `wiki/`, `AGENTS.md`, `log.md`). Idempotent. | Once, only if you copied just `.claude/commands/` to a project. **Skip if you cloned this repo** — structure is already there. |
-| **extract** `<source>` | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/` with frontmatter. Does **not** touch `wiki/`. | Every time you have a new source to add. |
-| **ingest** `[<raw-file>]` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every extract (or after manually editing a raw file). |
-| **query** `<question>` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. | Anytime you have a question. |
-| **lint** `[--apply]` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
+| Operation | Slash command | Purpose | When to run |
+|---|---|---|---|
+| **init** | `/init` or `/wiki-init` | Scaffold the directory structure (`raw/`, `wiki/`, `AGENTS.md`, `log.md`). Idempotent. | Once, only if you copied just `.claude/commands/` to a project. **Skip if you cloned this repo or used the installer** — structure is already there. |
+| **extract** `<sources>` | `/extract` or `/wiki-extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/` with frontmatter. Multi-source mode: paste several URLs or paths in one shot, get a consolidated OK/Degraded/Failed summary. Does **not** touch `wiki/`. | Every time you have new sources to add. Bulk mode is the realistic onboarding moment: paste 10 URLs at once. |
+| **ingest** `[<raw-file>]` | `/ingest` or `/wiki-ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every extract (or after manually editing a raw file). |
+| **query** `<question>` | `/query` or `/wiki-query` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. | Anytime you have a question. |
+| **lint** `[--apply]` | `/lint` or `/wiki-lint` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
 
-In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition).
+In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition). The short-form alias files (`.claude/commands/{init,extract,ingest,query,lint}.md`) are thin delegators that point the AI at the canonical file — both names work identically.
 
 ---
 

@@ -1,18 +1,28 @@
 ---
-description: Acquire a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
+description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
 allowed-tools: Bash, Read, Write, WebFetch
-argument-hint: <url-or-filepath-or-image-path>
+argument-hint: <url-or-filepath> [<url-or-filepath> ...]
 ---
 
-You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one source and deposit it in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
+You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one or more sources and deposit each in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
 
 ## Read first
 
 Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug naming convention.
 
-## Steps
+## Bulk-input mode (when `$ARGUMENTS` contains more than one source)
 
-1. **Identify the source type** from `$ARGUMENTS` (extension-based, lowercase comparison):
+If `$ARGUMENTS` contains multiple whitespace- or newline-separated tokens, treat each token as an independent source and run **Steps 1–4 below** for each one, in order, top-to-bottom. Do not stop the batch on a single failure: if one source fails (e.g. URL 404, missing local file, all extraction handlers absent for a binary format), log the failure with an `extraction_status: failed` sidecar (per Step 3's failure path) and move to the next source. At the end of the batch, emit one consolidated summary listing:
+
+- Sources successfully written (with slugs)
+- Sources marked `degraded` (extracted but with caveats — e.g. LLM-vision fallback used)
+- Sources marked `failed` (no usable output — sidecar still written)
+
+Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is a flat list, not a manifest file. **Quoting**: arguments containing spaces should be quoted by the user (e.g. `/wiki-extract "/path/with space/doc.pdf" https://example.com`). If you can't reliably split, ask the user once for the unambiguous list — do not guess.
+
+## Steps (run once per source)
+
+1. **Identify the source type** from the current source (extension-based, lowercase comparison):
    - Starts with `http://` or `https://` → URL
    - `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` → image
    - `.pdf` → PDF
@@ -96,7 +106,7 @@ Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug n
 
 ## Output
 
-End with:
+**Single-source mode** — end with:
 
 ```
 /wiki-extract complete.
@@ -108,3 +118,26 @@ Hash: (will be computed at first /wiki-ingest)
 
 Next: run /wiki-ingest to integrate into the wiki.
 ```
+
+**Bulk mode** (more than one source in `$ARGUMENTS`) — end with a single consolidated summary:
+
+```
+/wiki-extract complete — batch of N sources.
+
+OK (M):
+  <source-1> → raw/<slug-1>.<ext> (<source_type>)
+  <source-2> → raw/<slug-2>.<ext> (<source_type>)
+  ...
+
+Degraded (D):
+  <source-x> → raw/<slug-x>.<ext> — <reason, e.g. used llm-vision fallback>
+  ...
+
+Failed (F):
+  <source-y> → raw/<slug-y>.<ext>.md (extraction_status: failed) — <reason>
+  ...
+
+Next: run /wiki-ingest to integrate into the wiki.
+```
+
+N = M + D + F. If F > 0, also surface a one-line hint on how to remediate (install missing tool, fix path, retry URL). If M = 0, exit-state should still be "complete" — the failed-sidecars are themselves the deliverable for the next run.

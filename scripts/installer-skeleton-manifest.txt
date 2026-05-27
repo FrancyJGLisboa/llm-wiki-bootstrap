@@ -11,6 +11,11 @@ LICENSE
 .claude/commands/wiki-ingest.md
 .claude/commands/wiki-query.md
 .claude/commands/wiki-lint.md
+.claude/commands/init.md
+.claude/commands/extract.md
+.claude/commands/ingest.md
+.claude/commands/query.md
+.claude/commands/lint.md
 scripts/body-hash.sh
 scripts/preflight.sh
 scripts/verify-extract.sh
@@ -52,6 +57,7 @@ scripts/visualize/slides.sh
 scripts/visualize/mermaid.sh
 scripts/visualize/serve.sh
 scripts/visualize/verify-visualizers.sh
+raw/.gitkeep
 wiki/journal/.gitkeep
 wiki/index.md
 README.md

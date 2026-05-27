@@ -34,15 +34,17 @@ This is the only exception to "LLM owns wiki/". The optional `wiki/journal/` dir
 
 ## The five slash commands
 
-| Command | Purpose |
-|---|---|
-| `/wiki-init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
-| `/wiki-extract <source>` | Acquire a URL / local file / image into `raw/` with frontmatter. Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
-| `/wiki-query <question>` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
-| `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
+Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`). Both resolve to the same procedure — the short forms are aliases that delegate to the canonical `.claude/commands/wiki-*.md` files. Use whichever you prefer.
 
-Full spec lives at [`wiki/commands.md`](wiki/commands.md). Implementations at `.claude/commands/wiki-*.md`.
+| Prefixed | Short | Purpose |
+|---|---|---|
+| `/wiki-init` | `/init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
+| `/wiki-extract <sources>` | `/extract` | Acquire **one or many** URLs / local files / images into `raw/` with frontmatter. Bulk mode: multiple space- or newline-separated sources are extracted in a single pass with a consolidated summary. Does **not** touch `wiki/`. |
+| `/wiki-ingest [<raw-file>]` | `/ingest` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
+| `/wiki-query <question>` | `/query` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
+| `/wiki-lint` | `/lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
+
+Full spec lives at [`wiki/commands.md`](wiki/commands.md). Canonical implementations at `.claude/commands/wiki-*.md`; the short-form aliases at `.claude/commands/{init,extract,ingest,query,lint}.md` are thin delegators.
 
 ## Wiki page convention
 
