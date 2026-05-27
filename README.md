@@ -26,9 +26,20 @@ cd ~/my-wiki
 
 The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
-Optional but recommended: run `./scripts/preflight.sh` to confirm hard requirements (`bash`/`awk`/`openssl`/`git`) are met and to see which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but the preflight tells you in advance).
+### Verify your install — do this before your first real source
 
-That's it. The structure is already there. Open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
+Two checks. Treat them as a gate, not a suggestion: triaging a clean install failure is one minute; triaging a half-ingested wiki is much longer.
+
+```bash
+./scripts/preflight.sh    # hard reqs (bash/awk/openssl/git) + which extract formats work first-try
+./scripts/smoke-all.sh    # full pipeline (extract → ingest → query) on a fictitious fixture; 9 binary checks
+```
+
+`preflight.sh` tells you in advance which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but knowing in advance avoids surprises).
+
+`smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). **All 9 green = your install works end-to-end. If smoke-all does not go green, stop and triage before any real ingest.** Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
+
+Once smoke-all is green, open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
 
 **For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md).
 
@@ -36,17 +47,19 @@ That's it. The structure is already there. Open the directory in Claude Code (or
 
 The project ships shim files for every major agentic tool. Whatever you use, the AI will load the schema automatically:
 
-| Tool | Shim file (already in repo) | Invocation |
-|---|---|---|
-| Claude Code (modern) | `AGENTS.md` (canonical) | `/wiki-init`, `/wiki-extract`, etc. — real slash commands |
-| Claude Code (legacy) | `CLAUDE.md` | same as modern |
-| Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run wiki-ingest" |
-| Cline (VSCode) | `.clinerules` | natural language |
-| GitHub Copilot | `.github/copilot-instructions.md` | natural language |
-| Gemini CLI | `GEMINI.md` | natural language |
-| OpenAI Codex | `AGENTS.md` (canonical — auto-loads) | natural language |
+| Tool | Shim file (already in repo) | Invocation | Status |
+|---|---|---|---|
+| Claude Code (modern) | `AGENTS.md` (canonical) | `/wiki-init`, `/wiki-extract`, etc. — real slash commands | **e2e-verified** (driven by `scripts/smoke-all.sh`) |
+| Claude Code (legacy) | `CLAUDE.md` | same as modern | e2e-verified |
+| Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run wiki-ingest" | Documented, not yet e2e-verified |
+| Cline (VSCode) | `.clinerules` | natural language | Documented, not yet e2e-verified |
+| GitHub Copilot | `.github/copilot-instructions.md` | natural language | Documented, not yet e2e-verified |
+| Gemini CLI | `GEMINI.md` | natural language | Documented, not yet e2e-verified |
+| OpenAI Codex | `AGENTS.md` (canonical — auto-loads) | natural language | Documented, not yet e2e-verified |
 
-The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/commands/wiki-*.md` as the workflow definitions. Tools without first-class slash commands (Cursor, Cline, Copilot, Gemini) invoke the workflows by natural language; the LLM follows the prompt body of the corresponding command file step-by-step.
+The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/commands/wiki-*.md` as the workflow definitions. Tools without first-class slash commands (Cursor, Cline, Copilot, Gemini, Codex) invoke the workflows by natural language; the LLM follows the prompt body of the corresponding command file step-by-step.
+
+**"Documented, not yet e2e-verified"** means: the shim file ships, the natural-language workflow is specified, and the pattern is expected to work — but the smoke harness only drives Claude Code, so these paths have not been observed end-to-end by the project. If you use one of these tools and something does not work, that is a reportable bug — please open an issue.
 
 ## The five slash commands
 
@@ -63,16 +76,6 @@ Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/ex
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 
 **Optional: typed relations.** Inside `## Related`, you can attach a verb to a link — `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark; backward-compat with untyped lines. Verb regex: `[a-z][a-z0-9-]*`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Full spec in [`AGENTS.md`](AGENTS.md) → "Typed relations". An empirical eval (`scripts/eval-multi-hop.sh`) measures whether typed verbs improve `/wiki-query` recall over the same wiki with verbs stripped — see [`.scratch/typed-wikilinks-semantic-viz/GOAL.md`](.scratch/typed-wikilinks-semantic-viz/GOAL.md) for the methodology and current null-result on a Wikipedia-derived fixture.
-
-## Verify your install
-
-Once you've cloned and have Claude Code installed, run:
-
-```bash
-./scripts/smoke-all.sh
-```
-
-It drives `claude -p` to ingest a small fictitious fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs are sub-second (idempotent via body-hash). All 9 checks green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
 ## Visualize your wiki
 
@@ -112,12 +115,18 @@ The page slug becomes the Anki tag for that card. See the convention notes in [`
 # integrate it
 /wiki-ingest
 
+# commit before the next ingest — git is your rollback (no atomic writes inside the pipeline)
+git add wiki/ log.md raw/
+git commit -m "ingest: <source title>"
+
 # ask the wiki something
 /wiki-query "what does this article say about X?"
 
 # periodically tidy up
 /wiki-lint
 ```
+
+Commit-per-ingest is the recommended discipline: `/wiki-ingest` touches many files (a summary page, several concept pages, the index, `log.md`, raw-file frontmatter) and is not atomic. If a future ingest goes sideways, `git checkout -- wiki/ log.md raw/<file>` is your only clean recovery path. Skip the commit and the rollback also rolls back the good ingest before it.
 
 ## Make it yours
 

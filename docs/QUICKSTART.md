@@ -17,7 +17,7 @@ From `git clone` to first useful answer in 5 minutes, across the supported AI to
   - [Other tools](#other-tools-continue--roo--cody--gemini-cli--codex)
 - [Visualize your wiki](#visualize-your-wiki)
 - [What success looks like](#what-success-looks-like)
-- [Recovery from a bad ingest](#recovery-from-a-bad-ingest)
+- [Commit per ingest (and recovery)](#commit-per-ingest-and-recovery)
 - [Cost expectations](#cost-expectations-rough)
 - [Status](#status)
 
@@ -108,6 +108,8 @@ Schema v2 (bumped 2026-05-26) added three opt-in extensions. None changes the th
 
 ### Claude Code (first-class slash commands)
 
+> **Status: e2e-verified.** This path is driven by `scripts/smoke-all.sh` on every change.
+
 The most fluent setup. Slash commands appear in the autocomplete menu.
 
 ```bash
@@ -137,6 +139,8 @@ Periodically (e.g., once a week of active use):
 ---
 
 ### Copilot CLI
+
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md` + `AGENTS.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. The path below is expected to work; if it does not, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
 
 `AGENTS.md` is auto-loaded by Copilot CLI on session start. Slash commands from `.claude/commands/` are not auto-discovered (Copilot CLI is a different CLI). You invoke workflows by natural language, referring to the workflow file.
 
@@ -181,6 +185,8 @@ but don't apply fixes yet.
 ---
 
 ### VSCode + Copilot Chat (Agent Mode)
+
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
 
 Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the workflows. Classic Copilot Chat won't autonomously do multi-step ingest.
 
@@ -227,6 +233,8 @@ Run wiki-lint per .claude/commands/wiki-lint.md.
 
 ### Cline (VSCode extension)
 
+> **Status: documented, not yet e2e-verified.** The shim ships (`.clinerules`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+
 Cline is open-source, free, and agentic by default. Best fit for users who want a Claude-Code-like loop without paying for Copilot.
 
 1. Install Cline from the VSCode marketplace if you don't have it.
@@ -270,6 +278,8 @@ Run wiki-lint.
 
 ### Cursor
 
+> **Status: documented, not yet e2e-verified.** The shim ships (`.cursor/rules/llm-wiki.mdc`, `alwaysApply: true`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+
 Cursor auto-loads `.cursor/rules/llm-wiki.mdc` (ships in this project, `alwaysApply: true`) on every session.
 
 1. Open the directory:
@@ -304,6 +314,8 @@ Run wiki-lint.
 ---
 
 ### Other tools (Continue / Roo / Cody / Gemini CLI / Codex)
+
+> **Status: documented, not yet e2e-verified.** Gemini CLI reads `GEMINI.md`, Codex reads `AGENTS.md` (canonical), and the rest read the existing shims. Only Claude Code is driven by the smoke harness. If a path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
 
 Same pattern as Cline / Cursor:
 
@@ -359,9 +371,31 @@ After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect
 
 ---
 
-## Recovery from a bad ingest
+## Commit per ingest (and recovery)
 
-The pipeline is not atomic. If `/wiki-ingest` produces garbage:
+### Prevention: commit after every successful ingest
+
+`/wiki-ingest` is **not atomic**. It touches a summary page, several concept pages, the index, `log.md`, and the raw-file frontmatter. If a later ingest goes sideways, your only clean rollback path is `git`. Skip the commit and rollback also reverts the good ingest before it.
+
+Recommended discipline (already shown in the README's "A typical session"):
+
+```bash
+/wiki-ingest <raw-file-or-no-arg>
+
+# inspect briefly — does wiki/ look right? does log.md have an entry?
+git status
+git diff wiki/index.md log.md
+
+# commit before the next ingest
+git add wiki/ log.md raw/
+git commit -m "ingest: <source title>"
+```
+
+One ingest = one commit. Treat `/wiki-ingest` as the analog of `make` for the wiki: each successful run is a checkpoint worth pinning.
+
+### Recovery: when an ingest produces garbage
+
+If you have not committed yet, revert the working tree:
 
 ```bash
 git status                  # see what was created/modified
@@ -370,7 +404,7 @@ git checkout -- log.md
 git checkout -- raw/<file>  # revert ingested_hash etc. if it was set
 ```
 
-If you're partway through and want to keep some good changes:
+If you are partway through and want to keep some good changes:
 
 ```bash
 git add wiki/<good-page>.md
@@ -378,7 +412,7 @@ git stash --keep-index
 git stash drop
 ```
 
-If the wiki was already committed and now you want to roll back:
+If the bad ingest was already committed (because you ran two ingests back-to-back without committing between them — the exact failure mode the "commit per ingest" rule above prevents), roll back the commit:
 
 ```bash
 git log --oneline           # find the last good commit
