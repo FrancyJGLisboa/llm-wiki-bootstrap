@@ -231,4 +231,3 @@ EOF
 cat "$results_md"
 
 exit 0
-</content>
