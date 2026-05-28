@@ -1,7 +1,7 @@
 ---
-description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
+description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) — or pasted inline text (--text) — into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
 allowed-tools: Bash, Read, Write, WebFetch
-argument-hint: <url-or-filepath> [<url-or-filepath> ...]
+argument-hint: <url-or-filepath> [<url-or-filepath> ...]  |  --text [--title "<title>"] <pasted text>
 ---
 
 You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one or more sources and deposit each in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
@@ -10,9 +10,21 @@ You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` syste
 
 Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug naming convention.
 
+## Inline-text mode (when `$ARGUMENTS` begins with `--text`)
+
+If the first whitespace-delimited token of `$ARGUMENTS` is exactly `--text`, switch to **inline-text mode**. Skip both the bulk-split logic and the Step 1 type detection — the argument is *content*, not a path or URL.
+
+1. **Parse flags.** An optional `--title "<title>"` may immediately follow `--text`; if present, consume it. **Everything after the flag(s) is the literal source content** — never whitespace-split it, never treat its tokens as separate sources, never strip or interpret it beyond reading the `--title` value.
+2. **Title.** If `--title` was given, use it. If not, **ask the user once** for a short title (used for the slug and `source_title`); do not invent one silently from the content.
+3. **Slug.** Kebab-case the title (drop punctuation). On collision with an existing `raw/` file, append a date suffix (`-YYYY-MM-DD`), per Step 2's rule.
+4. **Write** the content verbatim (UTF-8) to `raw/<slug>.md`, then prepend the Step 4 frontmatter with: `source_url: n/a`, `source_type: note` (or a better-fitting open value if the content is obviously a tweet / chat / meeting-notes / etc.), `extraction_method: passthrough`, and `extraction_status` omitted (it is `ok`).
+5. **Verify** (Step 5) and emit the **single-source** output block.
+
+**`--text` is single-source only.** Because it consumes the rest of the line as content, it cannot be combined with URLs/files in the same invocation — run those in a separate `/wiki-extract`. That single-flag delimiter is what keeps pasted prose unambiguous against bulk multi-source input (so the paste is never shredded into tokens). No quoting of the content is required.
+
 ## Bulk-input mode (when `$ARGUMENTS` contains more than one source)
 
-If `$ARGUMENTS` contains multiple whitespace- or newline-separated tokens, treat each token as an independent source and run **Steps 1–4 below** for each one, in order, top-to-bottom. Do not stop the batch on a single failure: if one source fails (e.g. URL 404, missing local file, all extraction handlers absent for a binary format), log the failure with an `extraction_status: failed` sidecar (per Step 3's failure path) and move to the next source. At the end of the batch, emit one consolidated summary listing:
+**Unless `$ARGUMENTS` begins with `--text`** (inline-text mode, above): if `$ARGUMENTS` contains multiple whitespace- or newline-separated tokens, treat each token as an independent source and run **Steps 1–4 below** for each one, in order, top-to-bottom. Do not stop the batch on a single failure: if one source fails (e.g. URL 404, missing local file, all extraction handlers absent for a binary format), log the failure with an `extraction_status: failed` sidecar (per Step 3's failure path) and move to the next source. At the end of the batch, emit one consolidated summary listing:
 
 - Sources successfully written (with slugs)
 - Sources marked `degraded` (extracted but with caveats — e.g. LLM-vision fallback used)
@@ -22,7 +34,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
 ## Steps (run once per source)
 
-1. **Identify the source type** from the current source (extension-based, lowercase comparison):
+1. **Identify the source type** from the current source (extension-based, lowercase comparison). _(Skip this step entirely in inline-text mode — see above; the argument is content, already known to be passthrough.)_
    - Starts with `http://` or `https://` → URL
    - `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` → image
    - `.pdf` → PDF
@@ -35,6 +47,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 2. **Derive a slug** for the file name in `raw/`:
    - URL: domain + path-leaf (e.g. `karpathy-tweet-1234.md`), kebab-case, drop punctuation.
    - File: original basename, kebab-cased.
+   - Inline text (`--text`): kebab-case the `--title` value (or the title you asked the user for).
    - If the slug collides with an existing file in `raw/`, append a date suffix (`-2026-05-25`).
 
 3. **Acquire the content.** Every binary format below follows a **graceful tool chain** — try the best handler first, fall back if it's missing, and if everything fails save the binary with an `extraction_status: failed` sidecar (never silently). Record what you used in the `extraction_method` frontmatter field (see step 4).
@@ -103,6 +116,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 - Set `ingested_hash` to a non-empty value (that's `/wiki-ingest`'s job).
 - Process the content into wiki pages (that's the next command).
 - Run with no argument. If `$ARGUMENTS` is empty, ask the user what to fetch.
+- In inline-text mode, whitespace-split the content or treat its words as separate sources. The text after `--text` (and an optional `--title "..."`) is **one** source, written verbatim.
 
 ## Output
 

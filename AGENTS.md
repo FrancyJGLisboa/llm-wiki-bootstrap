@@ -39,7 +39,7 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 | Prefixed | Short | Purpose |
 |---|---|---|
 | `/wiki-init` | `/init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
-| `/wiki-extract <sources>` | `/extract` | Acquire **one or many** URLs / local files / images into `raw/` with frontmatter. Bulk mode: multiple space- or newline-separated sources are extracted in a single pass with a consolidated summary. Does **not** touch `wiki/`. |
+| `/wiki-extract <sources>` | `/extract` | Acquire **one or many** URLs / local files / images into `raw/` with frontmatter. Bulk mode: multiple space- or newline-separated sources are extracted in a single pass with a consolidated summary. Also accepts pasted inline text via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `/ingest` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
 | `/wiki-query <question>` | `/query` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
 | `/wiki-lint` | `/lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
@@ -195,6 +195,7 @@ notes: |
 |---|---|---|---|
 | URL | `WebFetch` → markdown | — | `webfetch` |
 | Plain text (`.md`, `.txt`, `.html`, `.json`, etc.) | Passthrough copy | — | `passthrough` |
+| Inline text (`--text "<content>"`) | Passthrough write to `raw/<slug>.md` | — | `passthrough` |
 | `.csv` | Copy + render markdown table preview in sidecar | — | `csv-passthrough` |
 | Image (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`) | LLM-vision (text + description) | — | `llm-vision` |
 | `.pdf` | `pdftotext` | LLM-vision (read PDF) | `pdftotext` \| `llm-vision` |

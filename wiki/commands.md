@@ -21,7 +21,7 @@ Three further **output commands** (`/wiki-visualize`, `/wiki-flashcards`, `/wiki
 | Command | Purpose | Maps to |
 |---|---|---|
 | `/wiki-init` | Scaffold an empty wiki structure in the current directory. | (bootstrap) |
-| `/wiki-extract <source>` | Acquire a URL / file / image into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
+| `/wiki-extract <source>` | Acquire a URL / file / image — or pasted inline text (`--text`) — into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
 | `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]]. | [[operation-ingest]] |
 | `/wiki-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. | [[operation-query]] + [[query-as-write-loop]] |
 | `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, gaps. | [[operation-lint]] |
@@ -65,13 +65,14 @@ We considered a sixth — `/wiki-promote` (manually promote a query answer to a 
 
 - **URL:** `WebFetch` → markdown → `raw/<slug>.md`. → `extraction_method: webfetch`.
 - **Plain text** (`.md`/`.txt`/`.html`/`.json`/`.yaml`/source code): passthrough copy. → `passthrough`.
+- **Inline text** (`--text [--title "..."] <content>`): write the content verbatim to `raw/<slug>.md`; **single source, never whitespace-split** (the flag is the delimiter, so pasted prose isn't shredded into tokens). → `passthrough`.
 - **CSV:** copy + render markdown table preview (≤100 rows full, larger truncated) in sidecar. → `csv-passthrough`.
 - **Image** (`.png`/`.jpg`/`.jpeg`/`.gif`/`.webp`): copy + LLM-vision extraction of text and description into sidecar. → `llm-vision`.
 - **PDF:** `pdftotext` → text in sidecar; LLM-vision fallback when `pdftotext` is missing or returns near-empty. → `pdftotext` \| `llm-vision`.
 - **DOCX:** `pandoc -f docx -t markdown` → text in sidecar; `python-docx` fallback if Python is available. → `pandoc` \| `python-docx`.
 - **XLSX:** `xlsx2csv` → markdown table per sheet in sidecar; `openpyxl` fallback. → `xlsx2csv` \| `openpyxl`.
 
-Slug is derived from the source: domain + title for URLs, filename for files.
+Slug is derived from the source: domain + title for URLs, filename for files, the `--title` (or a prompted title) for inline text.
 
 Two optional frontmatter fields document the run: `extraction_method` (which handler succeeded) and `extraction_status` (`ok` is omitted; `degraded` or `failed` is set with a one-line note in `notes:`).
 
