@@ -2,10 +2,30 @@
 
 From `git clone` to first useful answer in 5 minutes, across the supported AI tools.
 
+## Fastest path (Claude Code)
+
+```bash
+git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+cd my-wiki && claude
+```
+
+Then, inside Claude Code:
+
+```
+/wiki-query "what is an llm-wiki?"   # instant answer from the shipped demo wiki — no setup
+/wiki-extract <your-url>             # add your own source
+/wiki-ingest                          # integrate it
+/wiki-query "..."                    # ask about it
+```
+
+That's the loop. Everything below is depth — per-tool setup, the optional smoke test, cost, recovery. Skip to [The 5 operations](#the-5-operations) if you just want the commands.
+
+---
+
 ## Table of contents
 
 - [Before you start](#before-you-start)
-- [Smoke test (recommended before your first real source)](#smoke-test-recommended-before-your-first-real-source)
+- [Smoke test (optional)](#smoke-test-optional--confirm-your-setup)
 - [The 5 operations (one paragraph each)](#the-5-operations)
 - [Schema v2 extras (journal, Flashcards, MCP)](#schema-v2-extras-journal-flashcards-mcp)
 - [Per-tool command sequences](#per-tool-command-sequences)
@@ -32,7 +52,7 @@ git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
 cd my-wiki
 ```
 
-**2. Decide what to do with the shipped meta-wiki.** This repo ships with a wiki *about* the LLM-wiki pattern itself (in `wiki/`), derived from `raw/karpathy-llm-wiki-video-transcript.md`, plus 4 smoke-derived pages about a fictitious technical concept used to demonstrate the ingest pipeline. Pick one:
+**2. Decide what to do with the shipped meta-wiki.** This repo ships with a wiki *about* the LLM-wiki pattern itself (in `wiki/`), derived from `raw/karpathy-llm-wiki-video-transcript.md`, plus 4 smoke-derived pages about a fictitious technical concept used to demonstrate the ingest pipeline. **Just trying it? Do nothing — "keep + add alongside" (below) lets you start immediately.** When you commit to your own wiki, pick one:
 
 | Choice | Command | When |
 |---|---|---|
@@ -45,9 +65,9 @@ cd my-wiki
 
 ---
 
-## Smoke test (recommended before your first real source)
+## Smoke test (optional — confirm your setup)
 
-Two layers of smoke. Use the umbrella for "does the whole thing work on my machine"; use the shape-check fixtures for "does `/wiki-extract` produce the right frontmatter shape for format X."
+**Just trying it out? Skip to [The 5 operations](#the-5-operations).** When you want confidence the whole thing works on your machine, two layers of smoke help: the umbrella for "does the whole pipeline run here"; the shape-check fixtures for "does `/wiki-extract` produce the right frontmatter shape for format X."
 
 ### End-to-end umbrella (Claude Code required)
 
@@ -463,7 +483,7 @@ If your output for a real source doesn't match "What success looks like" above, 
 ## Quick reference card
 
 ```
-clone                git clone <repo> my-wiki && cd my-wiki
+clone                git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki && cd my-wiki
 fetch                /wiki-extract <url|file|image>
 ingest               /wiki-ingest                      (no arg = process all raw/ with new/changed hash)
 ask                  /wiki-query "<question>"            (--no-promote to skip auto-page-creation)

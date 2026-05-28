@@ -6,19 +6,39 @@ The pattern is Andrej Karpathy's: an LLM incrementally builds and maintains a pe
 
 The wiki that ships with this repo is *meta*: it's a wiki about the LLM-wiki pattern itself. Read it via [`wiki/index.md`](wiki/index.md). Keep it as living documentation, or wipe it and start your own.
 
-## Install
+## Quick start
 
-**Prerequisite — install an agentic AI tool first.** The slash commands here run inside the tool, not from the shell. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude` on your `$PATH`). Other supported tools — Copilot CLI, Cursor, Cline, Gemini CLI, Codex, VSCode Copilot Chat — are documented in [`docs/QUICKSTART.md`](docs/QUICKSTART.md) with per-tool invocation patterns.
+**Prerequisite:** an agentic AI tool. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude` on your `$PATH`); other tools work too — see [Tool support](#tool-support).
 
 ```bash
-git clone <this-repo> my-wiki
-cd my-wiki
+git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+cd my-wiki && claude          # open Claude Code in the repo
 ```
 
-This clone ships with demonstration content (a meta-wiki about the LLM-wiki pattern itself + a smoke fixture). To start your **own** wiki without that demo content, use the installer:
+The repo ships with a working demo wiki, so the very first command already returns an answer — no setup:
+
+```
+/wiki-query "what is an llm-wiki, and why not just use RAG?"   # answered from the shipped wiki
+```
+
+Then start building your own knowledge base:
+
+```
+/wiki-extract https://example.com/some-article   # pull a source into raw/
+/wiki-ingest                                       # integrate it into the wiki
+/wiki-query "what does that article say about X?"  # ask — answers now include your source
+```
+
+That's the whole loop. **Make it yours:** keep adding sources alongside the demo, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
+
+## Install details
+
+### Starting your own wiki (clean slate)
+
+The clone above keeps the demo content (a meta-wiki about the LLM-wiki pattern — a handy worked example). To generate a clean skeleton with **no demo content** instead:
 
 ```bash
-git clone <this-repo> tmp
+git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap tmp
 tmp/scripts/create-llm-wiki.sh ~/my-wiki   # fresh skeleton, no demo content
 rm -rf tmp
 cd ~/my-wiki
@@ -26,9 +46,9 @@ cd ~/my-wiki
 
 The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
-### Verify your install — do this before your first real source
+### Optional: confirm your full setup
 
-Two checks. Treat them as a gate, not a suggestion: triaging a clean install failure is one minute; triaging a half-ingested wiki is much longer.
+Just trying it out? Skip this. When you want to confirm the whole pipeline works on your machine, run:
 
 ```bash
 ./scripts/preflight.sh    # hard reqs (bash/awk/openssl/git) + which extract formats work first-try
@@ -37,9 +57,7 @@ Two checks. Treat them as a gate, not a suggestion: triaging a clean install fai
 
 `preflight.sh` tells you in advance which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but knowing in advance avoids surprises).
 
-`smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). **All 9 green = your install works end-to-end. If smoke-all does not go green, stop and triage before any real ingest.** Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
-
-Once smoke-all is green, open the directory in Claude Code (or any agentic tool that supports `.claude/commands/`) and the five slash commands are available immediately.
+`smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 9 green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
 **For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md).
 
@@ -153,6 +171,9 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 
 ## Project layout
 
+<details>
+<summary>Full repository tree (click to expand)</summary>
+
 ```
 .
 ├── AGENTS.md                       # canonical schema (read by AI tools) — schema v2
@@ -229,6 +250,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
     ├── glossary.md
     └── journal/                    # user-owned, time-stamped observations (schema-v2 exception)
 ```
+
+</details>
 
 ## Principles this project honors
 
