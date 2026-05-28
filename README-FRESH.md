@@ -26,6 +26,18 @@ Each command has a short form (no `wiki-` prefix) — both work identically. Use
 
 Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once that page exists.
 
+### Output commands
+
+Two more commands render or export an **already-built** wiki (read-only on `raw/` and `wiki/` — they only write new output files):
+
+| Prefixed | Short | What it does |
+|---|---|---|
+| `/wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Wraps `scripts/visualize/*`. |
+| `/wiki-flashcards [dir]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. |
+| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve, score the 8 archetypes, you pick, it generates a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
+
+`/wiki-visualize` renders structure that already exists (mechanical); `/wiki-diagram` composes a new poster by reasoning over a query (semantic).
+
 ## A typical session
 
 ```
@@ -66,7 +78,8 @@ Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once t
 ## Optional extras
 
 - **MCP server**: `./scripts/mcp-server.sh` exposes `wiki/` to any MCP-aware AI client. See [`docs/MCP.md`](docs/MCP.md).
-- **Anki flashcards**: any wiki page may declare a `## Flashcards` section; export with `./scripts/wiki-to-anki.sh > anki.csv`.
+- **Visualize**: run `/wiki-visualize` (or `./scripts/visualize/graph.sh wiki/ > graph.html`) for an interactive D3 graph; `slides`, `mermaid`, and `serve` backends are also available. See [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
+- **Anki flashcards**: any wiki page may declare a `## Flashcards` section; export with `/wiki-flashcards` or `./scripts/wiki-to-anki.sh > anki.csv`.
 - **Journal entries**: time-stamped observations live in `wiki/journal/`. Template: `templates/journal-entry.md`.
 - **Typed relations**: `## Related` lines can carry a verb — `- [[embrapa]] founded-by 1973 — desc`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Pure CommonMark, backward-compat with untyped lines. Spec in [`AGENTS.md`](AGENTS.md) → "Typed relations".
 - **Multi-hop eval**: `./scripts/eval-multi-hop.sh` measures whether your typed verbs actually improve `/wiki-query` recall vs. the same wiki with verbs stripped. Useful before investing in a parallel knowledge graph.

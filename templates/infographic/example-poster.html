@@ -1,0 +1,157 @@
+<!--
+  example-poster.html — STYLE REFERENCE for /wiki-diagram output.
+
+  A worked example of the generator design system (see generator-contract.md)
+  applied to ONE archetype (state_regime). Use it as the visual scaffold:
+  palette, typography, 800px vertical layout, numbered sections, navy footer
+  with pull quote. The CONTENT here (a build-status board) is illustrative —
+  real diagrams are generated fresh from the chosen handoff block.
+
+  Invariant rules this file demonstrates: single self-contained HTML, no
+  JavaScript, CSS in a <style> block, only external dependency is Google Fonts.
+-->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Example Poster — state_regime</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;900&family=Montserrat:wght@400;600;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#1B2A47; --teal:#2A8B8C; --orange:#E45A2E;
+    --cream:#F5F1EA; --white:#FFFFFF; --divider:#D9D9D9;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:#e9e6df;font-family:'Inter',sans-serif;color:var(--navy);padding:32px 0;}
+  .poster{width:800px;margin:0 auto;background:var(--white);padding:48px 52px 0;}
+  /* Header */
+  .title{font-family:'Montserrat',sans-serif;font-weight:900;text-transform:uppercase;
+    font-size:42px;line-height:1.04;color:var(--navy);letter-spacing:-0.5px;}
+  .tagline{font-family:'Inter',sans-serif;font-weight:400;font-size:16px;color:#4a5568;margin-top:12px;}
+  .rule{height:4px;background:var(--navy);width:64px;margin:20px 0 28px;}
+  /* State strip (state_regime metaphor) */
+  .states{display:flex;align-items:stretch;gap:0;margin-bottom:36px;}
+  .state{flex:1 1 0;min-width:0;border-radius:6px;padding:16px 12px;color:var(--white);text-align:center;}
+  .state .lbl{font-family:'Montserrat',sans-serif;font-weight:900;text-transform:uppercase;
+    font-size:15px;letter-spacing:0.4px;line-height:1.1;}
+  .state .sub{font-size:11px;margin-top:6px;font-weight:400;opacity:.92;}
+  .s-verified{background:var(--teal);}
+  .s-blocked{background:var(--orange);}
+  .s-planned{background:#7a8699;}
+  .arrow{flex:0 0 74px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;}
+  .ar{font-family:'Montserrat',sans-serif;font-weight:900;font-size:22px;color:var(--navy);line-height:1;}
+  .trig{font-size:8.5px;color:#6b7280;text-align:center;font-weight:600;
+    text-transform:uppercase;letter-spacing:.3px;line-height:1.2;}
+  /* Sections grid */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:26px 30px;}
+  .sec.full{grid-column:1 / -1;}
+  .sec-head{display:flex;align-items:center;gap:10px;margin-bottom:10px;}
+  .num{width:32px;height:32px;flex:0 0 32px;background:var(--navy);color:var(--white);
+    font-family:'Montserrat',sans-serif;font-weight:700;font-size:16px;
+    display:flex;align-items:center;justify-content:center;border-radius:3px;}
+  .sec-title{font-family:'Montserrat',sans-serif;font-weight:600;text-transform:uppercase;
+    font-size:13px;letter-spacing:1px;color:var(--teal);line-height:1.15;}
+  .sec-title.warn{color:var(--orange);}
+  .sec-title.plan{color:#5b6678;}
+  ul{list-style:none;}
+  li{font-size:13.5px;line-height:1.45;padding-left:18px;position:relative;margin-bottom:7px;color:#23344f;}
+  li::before{content:"";position:absolute;left:0;top:8px;width:7px;height:7px;border-radius:50%;background:var(--teal);}
+  li.warn::before{background:var(--orange);}
+  li.plan::before{background:#7a8699;}
+  .card{background:var(--cream);border-radius:6px;padding:16px 18px;}
+  /* Footer */
+  .footer{background:var(--navy);color:var(--white);margin:40px -52px 0;padding:34px 52px 30px;position:relative;}
+  .quote-mark{font-family:'Montserrat',sans-serif;font-weight:900;font-size:90px;line-height:.5;
+    color:rgba(255,255,255,.16);position:absolute;top:30px;left:40px;}
+  .quote{font-family:'Inter',sans-serif;font-style:italic;font-size:19px;line-height:1.4;
+    font-weight:400;padding-left:64px;}
+  .src{font-size:10px;color:rgba(255,255,255,.55);margin-top:18px;padding-left:64px;letter-spacing:.3px;}
+  .meta{display:flex;justify-content:space-between;font-size:10px;color:rgba(255,255,255,.45);
+    margin-top:14px;text-transform:uppercase;letter-spacing:1px;}
+</style>
+</head>
+<body>
+<div class="poster">
+
+  <div class="title">example poster.<br>state regime.</div>
+  <div class="tagline">Discrete states, transition triggers, and an action per state.</div>
+  <div class="rule"></div>
+
+  <div class="states">
+    <div class="state s-verified">
+      <div class="lbl">State A</div>
+      <div class="sub">stable / green</div>
+    </div>
+    <div class="arrow"><span class="ar">&rarr;</span><span class="trig">trigger<br>A&rarr;B</span></div>
+    <div class="state s-blocked">
+      <div class="lbl">State B</div>
+      <div class="sub">at risk / alert</div>
+    </div>
+    <div class="arrow"><span class="ar">&rarr;</span><span class="trig">trigger<br>B&rarr;C</span></div>
+    <div class="state s-planned">
+      <div class="lbl">State C</div>
+      <div class="sub">resolved / next</div>
+    </div>
+  </div>
+
+  <div class="grid">
+
+    <div class="sec">
+      <div class="sec-head"><div class="num">1</div><div class="sec-title">What defines each state</div></div>
+      <ul>
+        <li>State A: classification criterion in one line</li>
+        <li>State B: criterion in one line</li>
+        <li>State C: criterion in one line</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><div class="num">2</div><div class="sec-title warn">Transition triggers</div></div>
+      <ul>
+        <li class="warn">What moves A &rarr; B (with threshold)</li>
+        <li class="warn">What moves B &rarr; C (with threshold)</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><div class="num">3</div><div class="sec-title plan">What to do in each state</div></div>
+      <ul>
+        <li class="plan">State A: recommended action</li>
+        <li class="plan">State B: recommended action</li>
+        <li class="plan">State C: recommended action</li>
+      </ul>
+    </div>
+
+    <div class="sec">
+      <div class="sec-head"><div class="num">4</div><div class="sec-title">How to detect the change</div></div>
+      <ul>
+        <li>Leading signal of an imminent transition</li>
+        <li>Confirming signal once it has happened</li>
+      </ul>
+    </div>
+
+    <div class="sec full">
+      <div class="sec-head"><div class="num">5</div><div class="sec-title">Historical cases</div></div>
+      <div class="card">
+        <ul>
+          <li>Dated example 1 &mdash; duration and outcome</li>
+          <li>Dated example 2 &mdash; duration and outcome</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="footer">
+    <div class="quote-mark">&ldquo;</div>
+    <div class="quote">The pull quote: the cost of identifying the regime too late. One italic sentence, &le;25 words.</div>
+    <div class="src">Sources: list the wiki pages this diagram drew from</div>
+    <div class="meta"><span>generated by /wiki-diagram</span><span>example only</span></div>
+  </div>
+
+</div>
+</body>
+</html>

@@ -24,6 +24,14 @@ Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cl
 | `wiki-query <question>` | Answer from wiki; web-search + promote on gaps. |
 | `wiki-lint [--apply]` | Find issues; propose / apply fixes. |
 
+Plus two **output workflows** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):
+
+| Workflow | Purpose |
+|---|---|
+| `wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | Graph / slides / mermaid / local server. Wraps `scripts/visualize/*`. Mechanical: renders existing structure. |
+| `wiki-flashcards [dir]` | Export `## Flashcards` sections to an Anki CSV. Wraps `scripts/wiki-to-anki.sh`. |
+| `wiki-diagram "<intent>"` | Semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
+
 ## Hard rules
 
 1. **Never write to `raw/`** except the three `ingested_*` frontmatter fields, only as the last step of `wiki-ingest`.

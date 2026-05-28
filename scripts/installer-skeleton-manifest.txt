@@ -16,6 +16,12 @@ LICENSE
 .claude/commands/ingest.md
 .claude/commands/query.md
 .claude/commands/lint.md
+.claude/commands/wiki-visualize.md
+.claude/commands/visualize.md
+.claude/commands/wiki-flashcards.md
+.claude/commands/flashcards.md
+.claude/commands/wiki-diagram.md
+.claude/commands/diagram.md
 scripts/body-hash.sh
 scripts/preflight.sh
 scripts/verify-extract.sh
@@ -26,6 +32,10 @@ scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh
 scripts/eval-multi-hop.sh
 templates/journal-entry.md
+templates/infographic/archetypes.md
+templates/infographic/scoring-rubric.md
+templates/infographic/generator-contract.md
+templates/infographic/example-poster.html
 docs/QUICKSTART.md
 docs/EXPLAIN.md
 docs/MCP.md

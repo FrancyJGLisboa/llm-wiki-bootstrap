@@ -12,6 +12,12 @@ The five workflows are defined at `.claude/commands/wiki-*.md` (named for Claude
 - `wiki-query <question>` — answer from wiki; web-search + promote on gaps
 - `wiki-lint [--apply]` — find issues; report or apply fixes
 
+Plus two **output workflows** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):
+
+- `wiki-visualize [graph|mermaid|slides|serve] [target]` — graph / slides / mermaid / local server; wraps `scripts/visualize/*` (mechanical: renders existing structure)
+- `wiki-flashcards [dir]` — export `## Flashcards` sections to an Anki CSV; wraps `scripts/wiki-to-anki.sh`
+- `wiki-diagram "<intent>"` — semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`; contracts in `templates/infographic/`
+
 Hard rules (full text in `AGENTS.md`):
 
 1. Never write to `raw/` except the three `ingested_*` frontmatter fields.

@@ -2,6 +2,29 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-28 — /wiki-diagram (semantic output command)
+
+Added `/wiki-diagram` (+ alias `/diagram`), the **semantic** member of the output tier: it takes a natural-language intent, retrieves relevant wiki pages (reusing `/wiki-query` discipline), scores all 8 diagram archetypes, presents a candidate menu, and on the user's pick generates a self-contained HTML poster to `diagrams/`. Distinct from `/wiki-visualize` (mechanical render of existing structure). Wiki-read-only; no web search/promotion by default.
+
+- New: `.claude/commands/wiki-diagram.md` + alias `diagram.md`.
+- Vendored (self-containment, no external skill dep): `templates/infographic/{archetypes.md, scoring-rubric.md, generator-contract.md, example-poster.html}` — from FrancyJGLisboa/Infographic-extractor. **License pending upstream** (add MIT/Apache to that repo).
+- `.gitignore`: added `diagrams/`, `wiki-graph.html`, `anki.csv` (generated artifacts; also closes the prior litter gap from the visualize/flashcards tier).
+- Manifest: 6 new files added to `scripts/installer-skeleton-manifest.txt` (verifier I4a).
+- Docs: output-tier tables in AGENTS, README, README-FRESH, CLAUDE, GEMINI, copilot, clinerules, cursor, wiki/commands, QUICKSTART now list three commands, with the mechanical-vs-semantic boundary stated.
+
+**Schema version: unchanged (v2)** — additive, opt-in. **Untested:** the command's prompt-body (retrieval + 8-lens scoring + HTML generation) is unrun; first real `/wiki-diagram` invocation is its smoke test.
+
+## 2026-05-28 — output-command tier (/wiki-visualize, /wiki-flashcards)
+
+Added two **output commands** that render/export an already-built wiki, sitting outside the five-command lifecycle loop. Both are read-only on `raw/` and `wiki/` (they write only new output artifacts) and are thin LLM dispatchers over existing scripts — no parsing logic reimplemented.
+
+- New: `.claude/commands/wiki-visualize.md` + alias `visualize.md` — dispatch to `scripts/visualize/{graph,mermaid,slides,serve}.sh`.
+- New: `.claude/commands/wiki-flashcards.md` + alias `flashcards.md` — wrap `scripts/wiki-to-anki.sh`.
+- Manifest: added the 4 command files to `scripts/installer-skeleton-manifest.txt` so fresh installs ship them (verifier I4a).
+- Docs: AGENTS.md, README.md, README-FRESH.md, CLAUDE.md, wiki/commands.md (+ cross-tool shims) now document the output tier alongside the five; resolved the dormant `/wiki-export` open question in wiki/commands.md.
+
+**Schema version: unchanged (v2).** Per the AGENTS.md bump policy, new commands are a strictly opt-in addition (older clients simply lack them) — additive, not breaking, so no bump. Recorded here per the schema-versioning "record the change" guidance.
+
 ## 2026-05-27 17:45 — phase-2 kg-traversal
 
 **verdict: phase-2b-abandoned-on-gate.** baseline 7/7 (100%, >> 40% threshold). C5 gate FAILED.

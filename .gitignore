@@ -17,3 +17,8 @@ desktop.ini
 # Local environment
 .env
 .env.local
+
+# Generated output artifacts (regenerate via slash commands; not source)
+diagrams/
+wiki-graph.html
+anki.csv

@@ -30,6 +30,14 @@ The same five operations exist as Claude Code slash commands at `.claude/command
 | `wiki-query <question>` | Answer from `wiki/`; web-search and auto-promote new knowledge on gaps. | User asks any substantive question about the wiki's domain. |
 | `wiki-lint` | Find broken links, orphans, contradictions, stale claims, gaps. Reports by default; applies under `--apply`. | User asks to "lint" / "check the wiki" / "find issues." |
 
+Plus two **output workflows** that render/export an already-built wiki. They are read-only on `raw/` and `wiki/` (write only new output artifacts) and sit outside the five-command lifecycle loop:
+
+| Workflow | What it does | Trigger |
+|---|---|---|
+| `wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | Render the wiki as a D3 graph (default), MARP slides, or mermaid images, or serve it locally. Wraps `scripts/visualize/*`. Mechanical — renders existing structure. | User asks to "visualize" / "graph" / "show the wiki." |
+| `wiki-flashcards [dir]` | Export `## Flashcards` sections to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. | User asks to "export flashcards" / "make an Anki deck." |
+| `wiki-diagram "<intent>"` | Semantic — retrieve relevant pages, score the 8 archetypes (`templates/infographic/`), user picks, generate a self-contained HTML poster to `diagrams/`. Wiki-read-only. | User asks for "a diagram of X for <audience>" / "infographic" / "show the status of X." |
+
 ## Hard rules
 
 1. **Never write to `raw/`.** You may only edit the `ingested_hash`, `ingested_at`, and `ingested_pages` fields in raw frontmatter — and only as the last step of `wiki-ingest`.

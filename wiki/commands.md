@@ -2,7 +2,7 @@
 title: The Five Slash Commands
 type: analysis
 source: analysis
-updated: 2026-05-25
+updated: 2026-05-28
 tags: [system, commands, spec]
 ---
 
@@ -13,6 +13,8 @@ tags: [system, commands, spec]
 ## Definition / TL;DR
 
 `llm-wiki-bootstrap` exposes five slash commands that together let any user operate an LLM-wiki from any agentic tool. Three implement the video's named operations ([[operation-ingest]], [[operation-query]], [[operation-lint]]); two ([[#wiki-init]], [[#wiki-extract]]) handle bootstrap and source acquisition.
+
+Three further **output commands** (`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`) sit outside this lifecycle loop — they render, export, or synthesize from an already-built wiki rather than acquiring or maintaining it. They are documented in [Output commands](#output-commands) below.
 
 ## The five
 
@@ -118,6 +120,44 @@ Flag `--no-promote` skips step 5.
 Without `--apply`: print the report only.
 With `--apply`: write proposed fixes (create stub pages for broken links, delete orphans the user confirms, etc.).
 
+## Output commands
+
+Three commands sit **outside** the five-command lifecycle. They do not acquire, process, or maintain — they take an already-built wiki and render, export, or synthesize from it. All three are **read-only on `raw/` and `wiki/`**: they only ever write new output artifacts (`*.html`, `*.png`, `*.svg`, `anki.csv`), so the "LLM owns `wiki/`" rule from [[layer-wiki]] is never violated. Two of them (`/wiki-visualize`, `/wiki-flashcards`) are **thin dispatchers** over existing scripts — they never reimplement the scripts' parsing, the same single-source-of-truth discipline the project applies to `scripts/body-hash.sh`. The third (`/wiki-diagram`) is a **semantic synthesizer**: it reasons over a query, scores diagram archetypes, and generates a poster; its contracts are vendored in `templates/infographic/`.
+
+These commands resolve the former open question about a `/wiki-export` affordance: rather than one monolithic exporter, the output tier is split by artifact type.
+
+### /wiki-visualize [graph|mermaid|slides|serve] [target] [--out <path>]
+
+**Purpose.** Turn the wiki (or a single page) into a visual artifact by dispatching to the right script under `scripts/visualize/`.
+
+**Behavior.** The first token of the argument selects the backend; anything unrecognized is treated as a `graph` target.
+
+- **`graph [dir]`** (default; target defaults to `wiki/`) → `scripts/visualize/graph.sh` — self-contained D3 force-graph HTML. Needs `python3`. Default output `wiki-graph.html`; override with `--out`.
+- **`mermaid <page.md>`** → `scripts/visualize/mermaid.sh` — renders ```mermaid fenced blocks to PNG/SVG. Needs `npx` (Node ≥18).
+- **`slides <page.md>`** → `scripts/visualize/slides.sh` — MARP HTML slides from a page. Needs `npx`.
+- **`serve [dir] [port]`** → `scripts/visualize/serve.sh` — foreground `http.server` on `localhost` (default port 8000). Needs `python3`.
+
+Each backing script guards its own dependency and prints an install hint; the command surfaces that hint and stops rather than failing silently. After a `graph` run it offers `/wiki-visualize serve` as the follow-up.
+
+### /wiki-flashcards [dir] [--out <path>]
+
+**Purpose.** Export spaced-repetition cards declared in `## Flashcards` sections to an Anki-importable CSV.
+
+**Behavior.** Runs `scripts/wiki-to-anki.sh <dir>` (default `wiki`), writing `Front,Back,Tags` to `anki.csv` (or `--out`). Each card's Anki tag is its source page slug, enabling per-topic subdecks. "No flashcards found" exits cleanly with a header-only CSV — it is not an error. The `## Flashcards` convention itself is specified in [[layer-schema]] / `AGENTS.md`.
+
+### /wiki-diagram "<intent>"
+
+**Purpose.** Synthesize an audience-targeted diagram from a natural-language intent — the semantic counterpart to `/wiki-visualize`'s mechanical render.
+
+**Behavior.**
+1. Parse the intent + audience from the argument.
+2. Retrieve relevant pages (reusing `/wiki-query` discipline — read `index.md`, then the pages bearing on the intent). These become the diagram's cited `source_pages`.
+3. Scan **all 8 archetypes** (`templates/infographic/archetypes.md`) against the retrieved material, scoring each on the 4-dimension rubric (`templates/infographic/scoring-rubric.md`).
+4. Present a candidate menu: surface candidates scoring ≥ 3.5, list lower ones briefly, flag `archetype_gaps` (visualizable content no archetype captured).
+5. The user picks one or more. For each, apply the generation contract (`templates/infographic/generator-contract.md`; scaffold in `example-poster.html`) to produce a **single self-contained HTML poster** (no JavaScript, only Google Fonts) at `diagrams/<slug>.html`, footer citing `source_pages`.
+
+**Boundary vs `/wiki-visualize`.** Visualize is mechanical (renders structure that already exists); diagram is semantic (composes a new artifact by reasoning over a query). **Wiki-only by default** — no web search, no promotion; if the wiki can't answer the intent, it hands the user back to `/wiki-query`. Diagrams are interpretive (`source: analysis`-equivalent) — grounded in cited pages, not extracted verbatim.
+
 ## Related
 
 - [[operation-ingest]], [[operation-query]], [[operation-lint]] — the video-named operations these commands implement
@@ -128,6 +168,5 @@ With `--apply`: write proposed fixes (create stub pages for broken links, delete
 
 ## Open questions on this page
 
-- Should there be a `/wiki-export` (e.g., bundle the wiki into a static site, a single PDF, a presentation)? Defer to V2.
 - Should commands accept stdin / chained input (e.g., `/wiki-extract <url> | /wiki-ingest`)? Probably not — slash commands are not Unix pipes.
 - Versioning the schema: if `AGENTS.md` changes, do existing commands still work? Need a compatibility note.

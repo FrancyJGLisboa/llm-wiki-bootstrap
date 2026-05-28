@@ -131,8 +131,16 @@ Periodically (e.g., once a week of active use):
 /wiki-lint
 ```
 
+Render or export the wiki whenever you like (both are read-only on your wiki):
+
+```
+/wiki-visualize          # interactive D3 graph of the whole wiki
+/wiki-flashcards         # export ## Flashcards sections to anki.csv
+/wiki-diagram "status of X for management"   # synthesize an audience-targeted poster
+```
+
 **Gotchas:**
-- Type `/` and you'll see the five `wiki-*` commands in the autocomplete.
+- Type `/` and you'll see the `wiki-*` commands in the autocomplete — the five lifecycle commands plus the three output commands (`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`).
 - **Don't run `/wiki-init`** if you cloned this repo — the structure is already there.
 - First ingest may take 30-90 seconds depending on source size.
 

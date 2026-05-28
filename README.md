@@ -75,9 +75,23 @@ Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/ex
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 
+### Output commands
+
+Two more commands render or export an **already-built** wiki — they sit outside the acquire→maintain loop above and are read-only on `raw/` and `wiki/` (they only write new output files).
+
+| Prefixed | Short | What it does |
+|---|---|---|
+| `/wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Thin wrapper over `scripts/visualize/*`; checks `python3`/`npx` and prints install hints. |
+| `/wiki-flashcards [dir]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. |
+| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve relevant pages, score the 8 archetypes, you pick, it generates a self-contained HTML poster. Output to `diagrams/`. |
+
+`/wiki-visualize` is **mechanical** (renders the structure that already exists); `/wiki-diagram` is **semantic** (composes a new poster by reasoning over a query). See the diagram contracts in `templates/infographic/`.
+
 **Optional: typed relations.** Inside `## Related`, you can attach a verb to a link — `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark; backward-compat with untyped lines. Verb regex: `[a-z][a-z0-9-]*`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Full spec in [`AGENTS.md`](AGENTS.md) → "Typed relations". An empirical eval (`scripts/eval-multi-hop.sh`) measures whether typed verbs improve `/wiki-query` recall over the same wiki with verbs stripped — see [`.scratch/typed-wikilinks-semantic-viz/GOAL.md`](.scratch/typed-wikilinks-semantic-viz/GOAL.md) for the methodology and current null-result on a Wikipedia-derived fixture.
 
 ## Visualize your wiki
+
+From inside your AI tool, just run `/wiki-visualize` (alias `/visualize`) — it dispatches to the right backend and checks the required tool is installed. Or call the scripts directly:
 
 ```bash
 ./scripts/visualize/graph.sh wiki/ > graph.html   # interactive D3 force graph (no install)
@@ -98,7 +112,7 @@ For client config snippets (Claude Desktop, Claude Code, Cursor) and the recomme
 
 ## Flashcards (optional)
 
-Any wiki page may declare a `## Flashcards` section with `Q: …` / `A: …` bullet pairs. Export to an Anki-importable CSV with:
+Any wiki page may declare a `## Flashcards` section with `Q: …` / `A: …` bullet pairs. Export to an Anki-importable CSV with `/wiki-flashcards` (alias `/flashcards`) from inside your AI tool, or run the script directly:
 
 ```bash
 ./scripts/wiki-to-anki.sh > anki.csv

@@ -4,6 +4,8 @@ The bootstrap is viewer-agnostic by design (pure CommonMark, no rendering depend
 
 All four scripts are opt-in. None modifies your wiki — they read your markdown and emit derived artifacts (HTML, slide decks, diagram images, a local server).
 
+**From inside your AI tool**, you don't have to remember the script paths: run `/wiki-visualize` (alias `/visualize`) and it dispatches to the right backend — `/wiki-visualize` alone builds the graph, `/wiki-visualize slides <page>`, `/wiki-visualize mermaid <page>`, and `/wiki-visualize serve` map to the scripts below. It also checks that `python3` / `npx` are installed and surfaces the install hint if not. The scripts remain the single source of truth; the command is a thin dispatcher over them.
+
 ## 1. `graph.sh` — interactive force-directed graph (no install required)
 
 ```bash

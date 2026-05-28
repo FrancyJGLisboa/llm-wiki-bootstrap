@@ -46,6 +46,20 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 
 Full spec lives at [`wiki/commands.md`](wiki/commands.md). Canonical implementations at `.claude/commands/wiki-*.md`; the short-form aliases at `.claude/commands/{init,extract,ingest,query,lint}.md` are thin delegators.
 
+Two further **output commands** (`/wiki-visualize`, `/wiki-flashcards`) sit alongside the five — they render or export an already-built wiki rather than participating in the acquire→maintain loop. See below.
+
+### Output commands
+
+These operate on an **already-built** wiki: they are not lifecycle steps. Both are **read-only on `raw/` and `wiki/`** — they only write new output artifacts (`*.html`, `*.png`, `anki.csv`), never edit wiki pages, so the three-layer ownership model is untouched. Same prefixed/short-alias convention as the five.
+
+| Prefixed | Short | Purpose |
+|---|---|---|
+| `/wiki-visualize [graph\|mermaid\|slides\|serve] [target] [--out <path>]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Thin dispatcher over `scripts/visualize/*` — checks `python3`/`npx` presence and surfaces install hints. |
+| `/wiki-flashcards [dir] [--out <path>]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV (`Front,Back,Tags`; tag = page slug). Wraps `scripts/wiki-to-anki.sh`. |
+| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from a natural-language intent: retrieve relevant pages, score the 8 archetypes, present a candidate menu, generate a self-contained HTML poster per pick. Wiki-read-only; output to `diagrams/`. Contracts vendored in `templates/infographic/`. |
+
+**`/wiki-visualize` vs `/wiki-diagram`:** visualize is **mechanical** — it renders structure that already exists (the `[[link]]` graph, mermaid, slides). diagram is **semantic** — it composes a *new* audience-targeted poster by reasoning over a query. Use visualize to *see the wiki*; use diagram to *make a point from it*.
+
 ## Wiki page convention
 
 Every file in `wiki/` follows this template:
