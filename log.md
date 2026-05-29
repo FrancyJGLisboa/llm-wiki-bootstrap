@@ -2,6 +2,20 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-29 — multi-wiki factory (/wiki-new, /wiki-registry)
+
+Added a **factory tier**: the repo can now generate *other* domain-shaped wikis and track them in a local catalog. Built **additively** on the proven single-wiki installer — `scripts/create-llm-wiki.sh`, `scripts/installer-skeleton-manifest.txt`, and `scripts/verify-create-llm-wiki.sh` were left byte-for-byte unchanged (the installer oracle still passes).
+
+- New scripts (factory-only; **not** added to the manifest, so generated wikis remain leaves): `scripts/new-wiki.sh` (composes `create-llm-wiki.sh` with workspace placement + registry), `scripts/registry.sh` (owner of `registry.jsonl` — add/mark-seeded/list/prune over JSONL, no `jq`/`python3`), `scripts/verify-multi-wiki.sh` (oracle M1–M5).
+- New commands (factory-only): `.claude/commands/wiki-new.md` (+ alias `new.md`), `.claude/commands/wiki-registry.md` (+ alias `wikis.md`).
+- **Layout:** workspace default `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`, each wiki its own git repo, `registry.jsonl` at the workspace root; `--target <path>` escape hatch registers an out-of-workspace wiki by absolute path (`in_workspace:false`).
+- **Generate-on-demand domains:** no hand-authored domain content ships. `/wiki-new --domain "<desc>"` scaffolds deterministically, then the LLM authors a `## Domain conventions` section + navigation index + 3–5 seed pages. Seed pages are `source: analysis` with an interpretive disclaimer (no fabricated `(source: raw/...)` citations) — enforced by the M4 oracle.
+- **Verification:** `verify-multi-wiki.sh` green on M1–M3 (deterministic scaffold+register, enumerate+drift, escape-hatch+refuse-clobber) **plus a committed edge battery E1–E9** (default-workspace resolution, missing `--domain`, relative `--target` absolutization, adversarial-domain JSON-escaping/injection resistance, empty-registry listing, `mark-seeded`/`has` error paths, non-slug rejection, duplicate-name fail-fast). M4–M5 (seeded schema-validity + domain relevance) green on a real `/wiki-new` run, and the oracle correctly reds intentional defects (broken link, unlinked seed, provenance gap). A **4-domain generator battery** (medieval guild economics, kubernetes operators, competitive bouldering, grief counseling) all passed M4–M5, and the **verify-and-fix loop** was demonstrated end to end (inject broken link → red → fix → green). Both `/wiki-new` and `/wiki-registry` command bodies were exercised as real slash-command invocations.
+
+**Schema version: unchanged (v2).** The per-wiki schema is untouched; this is a new tier of factory commands that sits outside the generated wikis. Additive, opt-in — no bump per the AGENTS.md policy.
+
+**Deferred (phase 2):** `snapshot` (freeze a built wiki into a reusable static template), a remote/published registry, and recursive factories (generated wikis that can themselves generate).
+
 ## 2026-05-28 — /wiki-diagram (semantic output command)
 
 Added `/wiki-diagram` (+ alias `/diagram`), the **semantic** member of the output tier: it takes a natural-language intent, retrieves relevant wiki pages (reusing `/wiki-query` discipline), scores all 8 diagram archetypes, presents a candidate menu, and on the user's pick generates a self-contained HTML poster to `diagrams/`. Distinct from `/wiki-visualize` (mechanical render of existing structure). Wiki-read-only; no web search/promotion by default.

@@ -2,11 +2,11 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R4) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R5) into a single exit-code-
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 9 checks pass.
+# Exit 0 iff all 10 checks pass.
 
 set -euo pipefail
 
@@ -41,8 +41,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R4 ────
-section "Regression guards (R1–R4)"
+# ──── REGRESSION GUARDS R1–R5 ────
+section "Regression guards (R1–R5)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -91,10 +91,17 @@ if [ "$r4_ok" = yes ]; then
   ok "R4 schema version + type enum + core-script shebangs intact"
 fi
 
+# R5 — multi-wiki factory deterministic oracle (M1–M3) stays green
+if "$SCRIPT_DIR/verify-multi-wiki.sh" >/dev/null 2>&1; then
+  ok "R5 verify-multi-wiki.sh (factory M1–M3) exits 0"
+else
+  record_fail "R5 verify-multi-wiki.sh exits non-zero (factory regression)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 9 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 10 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"
