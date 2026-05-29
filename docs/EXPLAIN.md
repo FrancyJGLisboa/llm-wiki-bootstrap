@@ -180,7 +180,7 @@ The "does my install actually work" command. Composes the end-to-end ingest smok
 
 ### The visualization wrappers — `scripts/visualize/`
 
-Four opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The other three (`slides.sh`, `mermaid.sh`, `serve.sh`) wrap `npx` packages and a Python HTTP server. None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
+Five opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The others — `slides.sh`, `mermaid.sh`, `serve.sh` (wrapping `npx` packages and a Python HTTP server), and `render.sh` (HTML poster → PDF/PNG via a headless browser or puppeteer, with graceful HTML fallback; backs `/wiki-query --visual` and `/wiki-diagram --pdf/--png`). None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
 
 ### The factory — `/wiki-new` + `/wiki-registry`
 

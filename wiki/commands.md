@@ -23,7 +23,7 @@ Three further **output commands** (`/wiki-visualize`, `/wiki-flashcards`, `/wiki
 | `/wiki-init` | Scaffold an empty wiki structure in the current directory. | (bootstrap) |
 | `/wiki-extract <source>` | Acquire a URL / file / image — or pasted inline text (`--text`) — into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
 | `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]]. | [[operation-ingest]] |
-| `/wiki-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. | [[operation-query]] + [[query-as-write-loop]] |
+| `/wiki-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. `--visual [html\|pdf\|png]` also emits a diagram of the answer. | [[operation-query]] + [[query-as-write-loop]] |
 | `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, gaps. | [[operation-lint]] |
 
 Implementations live at `.claude/commands/wiki-*.md`.
@@ -105,6 +105,8 @@ Two optional frontmatter fields document the run: `extraction_method` (which han
 
 Flag `--no-promote` skips step 5.
 
+Flag `--visual [html|pdf|png]` (bare ⇒ `html`) adds a step 5.5: score the 8 archetypes in `templates/infographic/` against the synthesized answer, **auto-pick** the top (override with `--archetype <name>`), generate a self-contained HTML poster to `diagrams/query-<slug>.html`, and — for pdf/png — render it via `scripts/visualize/render.sh` (graceful HTML fallback if no browser/Node). The text answer is always produced; the visual is additive. Same archetype system as `/wiki-diagram`, but the diagram is of the *answer* and the archetype is auto-selected.
+
 ### /wiki-lint
 
 **Purpose.** Health-check the wiki.
@@ -155,9 +157,20 @@ Each backing script guards its own dependency and prints an install hint; the co
 2. Retrieve relevant pages (reusing `/wiki-query` discipline — read `index.md`, then the pages bearing on the intent). These become the diagram's cited `source_pages`.
 3. Scan **all 8 archetypes** (`templates/infographic/archetypes.md`) against the retrieved material, scoring each on the 4-dimension rubric (`templates/infographic/scoring-rubric.md`).
 4. Present a candidate menu: surface candidates scoring ≥ 3.5, list lower ones briefly, flag `archetype_gaps` (visualizable content no archetype captured).
-5. The user picks one or more. For each, apply the generation contract (`templates/infographic/generator-contract.md`; scaffold in `example-poster.html`) to produce a **single self-contained HTML poster** (no JavaScript, only Google Fonts) at `diagrams/<slug>.html`, footer citing `source_pages`.
+5. The user picks one or more. For each, apply the generation contract (`templates/infographic/generator-contract.md`; scaffold in `example-poster.html`) to produce a **single self-contained HTML poster** (no JavaScript, only Google Fonts) at `diagrams/<slug>.html`, footer citing `source_pages`. Flags `--pdf` / `--png` also render each poster via `scripts/visualize/render.sh`.
 
 **Boundary vs `/wiki-visualize`.** Visualize is mechanical (renders structure that already exists); diagram is semantic (composes a new artifact by reasoning over a query). **Wiki-only by default** — no web search, no promotion; if the wiki can't answer the intent, it hands the user back to `/wiki-query`. Diagrams are interpretive (`source: analysis`-equivalent) — grounded in cited pages, not extracted verbatim.
+
+## Factory commands
+
+Two commands belong to the **factory** (this `llm-wiki-bootstrap` repo) rather than to an individual wiki. They are **not** shipped into generated wikis — a produced wiki is a leaf, not itself a factory.
+
+| Command | Purpose |
+|---|---|
+| `/wiki-new <name> --domain "<description>"` | Generate a new domain-shaped wiki (scaffold via `scripts/new-wiki.sh`, which reuses `scripts/create-llm-wiki.sh`, then author a `## Domain conventions` block + navigation index + 3–5 `source: analysis` seed pages) and register it in the workspace catalog. `--target <path>` places it outside the default workspace. |
+| `/wiki-registry [prune]` | List every generated wiki (name, domain, seeded status, drift) from `registry.jsonl`; `prune --apply` drops dangling entries. Wraps `scripts/registry.sh`. |
+
+Layout: generated wikis live under `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`, each its own git repo, with `registry.jsonl` at the workspace root.
 
 ## Related
 

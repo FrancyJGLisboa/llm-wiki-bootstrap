@@ -27,7 +27,7 @@ The same five operations exist as Claude Code slash commands at `.claude/command
 | `wiki-init` | Scaffold an empty wiki structure (idempotent). | User asks to "initialize the wiki." |
 | `wiki-extract <source>` | Acquire a URL / file / image into `raw/` with frontmatter. Does not touch `wiki/`. | User asks to "fetch X into raw." |
 | `wiki-ingest [<raw-file>]` | Run the 7-step pipeline from `wiki/ingest-pipeline.md`. Use `scripts/body-hash.sh` for delta detection. | User asks to "ingest" / "process raw" / "update the wiki." |
-| `wiki-query <question>` | Answer from `wiki/`; web-search and auto-promote new knowledge on gaps. | User asks any substantive question about the wiki's domain. |
+| `wiki-query <question>` | Answer from `wiki/`; web-search and auto-promote new knowledge on gaps. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query). | User asks any substantive question about the wiki's domain. |
 | `wiki-lint` | Find broken links, orphans, contradictions, stale claims, gaps. Reports by default; applies under `--apply`. | User asks to "lint" / "check the wiki" / "find issues." |
 
 Plus two **output workflows** that render/export an already-built wiki. They are read-only on `raw/` and `wiki/` (write only new output artifacts) and sit outside the five-command lifecycle loop:

@@ -88,7 +88,7 @@ Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/ex
 | `/wiki-init` | `/init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
 | `/wiki-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Bulk mode: pass multiple sources space- or newline-separated and they're all extracted in one pass with a consolidated OK/Degraded/Failed summary at the end. Parses binary content to markdown when a handler exists. Also accepts **pasted inline text** via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
-| `/wiki-query <question>` | `/query` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. Use `--no-promote` to suppress promotion. |
+| `/wiki-query <question>` | `/query` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. `--no-promote` suppresses promotion. **`--visual [html\|pdf\|png]`** also emits a diagram of the answer, archetype auto-picked from the query (same design system as `/wiki-diagram`). |
 | `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
@@ -139,7 +139,7 @@ From inside your AI tool, just run `/wiki-visualize` (alias `/visualize`) — it
 ./scripts/visualize/serve.sh                     # browse the wiki + graph locally
 ```
 
-Four opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, and `serve.sh` for MARP / mermaid-CLI / local HTTP. All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
+Five opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, `serve.sh` (MARP / mermaid-CLI / local HTTP), and `render.sh` (HTML poster → PDF/PNG, used by `/wiki-query --visual` and `/wiki-diagram --pdf/--png`; graceful fallback to HTML when no browser/Node). All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
 
 ## MCP access (optional)
 
@@ -250,7 +250,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │       ├── slides.sh               # MARP-CLI wrapper (npx)
 │       ├── mermaid.sh              # mermaid-CLI wrapper (npx)
 │       ├── serve.sh                # python3 -m http.server wrapper
-│       └── verify-visualizers.sh   # smoke harness (V1–V5)
+│       ├── render.sh               # HTML poster → PDF/PNG (chrome/puppeteer; graceful fallback)
+│       └── verify-visualizers.sh   # smoke harness (V1–V5 + render checks)
 ├── templates/
 │   └── journal-entry.md            # template for wiki/journal/YYYY-MM-DD-*.md entries
 ├── tests/

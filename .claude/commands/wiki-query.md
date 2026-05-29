@@ -1,7 +1,7 @@
 ---
-description: Answer a question from the wiki. Web-search and auto-promote new knowledge if the wiki has gaps.
+description: Answer a question from the wiki (web-search + auto-promote on gaps). Optionally also emit a diagram of the answer with --visual html|pdf|png.
 allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch, Glob, Grep
-argument-hint: <question> [--no-promote]
+argument-hint: <question> [--no-promote] [--visual [html|pdf|png]] [--archetype <name>]
 ---
 
 You are executing `/wiki-query $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
@@ -12,7 +12,9 @@ Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
 
 ## Parse the question
 
-- Strip a trailing `--no-promote` flag if present; remember it for step 5.
+- Strip a `--no-promote` flag if present; remember it for step 5.
+- Strip a `--visual [<format>]` flag if present; remember it for step 5.5. `<format>` ∈ {`html`,`pdf`,`png`}; a bare `--visual` means `html`. Absent ⇒ no visual.
+- Strip a `--archetype <name>` flag if present; remember it for step 5.5 (forces a specific archetype instead of auto-selecting).
 - Treat the rest as the question.
 - If no question, ask the user what to ask.
 
@@ -60,6 +62,29 @@ For each notable piece:
 
 If `--no-promote` was passed: skip this entire step. Mention to the user that promotion was disabled.
 
+### Step 5.5 — Visual output (only if `--visual` was passed)
+
+Produce a diagram **of the answer you just synthesized**, using the same archetype system and design as `/wiki-diagram` (the vendored Infographic-extractor contracts). The text answer is always produced; this is **additive**. Skip this step entirely if `--visual` was not passed.
+
+1. **Read the contracts** (single source of truth — do not invent archetypes/scoring/design):
+   - `templates/infographic/archetypes.md`, `templates/infographic/scoring-rubric.md`, `templates/infographic/generator-contract.md`, `templates/infographic/example-poster.html`.
+   - If `templates/infographic/` is absent (an older generated wiki), tell the user the visual feature needs those contracts and skip — still deliver the text answer.
+
+2. **Choose the archetype from the query.** Treat the synthesized answer (its claims, structure, and relationships) as the material. Score **all 8** archetypes on the 4 dimensions in `scoring-rubric.md`.
+   - If `--archetype <name>` was given, use that one (validate it's one of the 8; if not, say so and fall back to auto).
+   - Otherwise **auto-select the highest-scoring** archetype. If none clears the ≥3.5 threshold, pick the best available and note it's a weak fit. Always **report which archetype you chose and its score**.
+
+3. **Generate the poster.** Fill the chosen candidate's `handoff_to_generator` block and apply the generation protocol in `generator-contract.md` to produce a **single self-contained HTML file** (no JavaScript; only Google Fonts external), styled per `example-poster.html`. Write it to `diagrams/query-<slug>.html`, where `<slug>` is a kebab-case slug of the question. The footer must cite the **wiki pages** used (`source_pages`) and any **web URLs** that contributed to the answer. Never invent connections the answer doesn't support.
+
+4. **Render to the requested format.** If `<format>` is `pdf` or `png`, run:
+
+   ```bash
+   scripts/visualize/render.sh diagrams/query-<slug>.html --pdf   # or --png
+   ```
+
+   - On success it writes `diagrams/query-<slug>.<pdf|png>` next to the HTML.
+   - If `render.sh` exits non-zero (no headless browser and no Node/puppeteer), it **keeps the HTML** and prints an install hint — surface that hint to the user and point them at the `.html` (degraded, not failed). `html` format never needs `render.sh`.
+
 ### Step 6 — Present the answer
 
 Give the user:
@@ -87,4 +112,5 @@ Sources:
 - Web: <urls if used>
 
 Promoted to wiki: wiki/<file> (new) | (nothing — `--no-promote` was set | wiki was sufficient)
+Visual: diagrams/query-<slug>.<html|pdf|png> (archetype: <name>, score <n>) | (none — no --visual) | (HTML only — renderer missing, see hint above)
 ```

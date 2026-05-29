@@ -139,6 +139,53 @@ else
   failures=$((failures + 1))
 fi
 
+# ─── render.sh: existence + fail-soft (always) + functional smoke (if browser) ───
+RENDER="$SCRIPT_DIR/render.sh"
+if [ -x "$RENDER" ] && head -1 "$RENDER" | grep -q '^#!/usr/bin/env bash'; then
+  ok "render.sh present, executable, shebang"
+else
+  fail "render.sh missing / not executable / no shebang"
+  failures=$((failures + 1))
+fi
+
+# Deterministic fail-soft: the RENDER_DISABLE seam forces the no-renderer path,
+# so this runs identically on every machine.
+if RENDER_DISABLE=1 "$RENDER" templates/infographic/example-poster.html --png \
+     --out "$TMP/should-not-exist.png" > "$TMP/render-failsoft.log" 2>&1; then
+  fail "render fail-soft: expected non-zero exit when no renderer is available"
+  failures=$((failures + 1))
+elif grep -q 'no renderer found' "$TMP/render-failsoft.log" && [ ! -f "$TMP/should-not-exist.png" ]; then
+  ok "render fail-soft: non-zero exit + install hint + no artifact, HTML untouched"
+else
+  fail "render fail-soft: missing hint or unexpectedly produced an artifact"
+  failures=$((failures + 1))
+fi
+
+# Functional smoke ONLY when a system browser is present (cheap, no download).
+# The puppeteer fallback is intentionally NOT auto-probed here — it would pull
+# ~150MB of Chromium into every oracle run. (It is verified manually.)
+render_browser=""
+for c in google-chrome-stable google-chrome chromium chromium-browser chrome microsoft-edge brave-browser; do
+  command -v "$c" >/dev/null 2>&1 && { render_browser="$c"; break; }
+done
+if [ -z "$render_browser" ]; then
+  for c in "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" \
+           "/Applications/Chromium.app/Contents/MacOS/Chromium"; do
+    [ -x "$c" ] && { render_browser="$c"; break; }
+  done
+fi
+if [ -n "$render_browser" ]; then
+  if "$RENDER" templates/infographic/example-poster.html --pdf --out "$TMP/render-smoke.pdf" \
+       > "$TMP/render-smoke.log" 2>&1 && [ -s "$TMP/render-smoke.pdf" ]; then
+    ok "render smoke: $(wc -c < "$TMP/render-smoke.pdf") bytes of PDF (via $(basename "$render_browser"))"
+  else
+    fail "render smoke: system browser present but render failed (see $TMP/render-smoke.log)"
+    failures=$((failures + 1))
+  fi
+else
+  skip "skipped: render.sh functional smoke (no system browser; puppeteer fallback not auto-probed). fail-soft path tested above."
+fi
+
 # ─── Summary ───
 echo
 if [ "$failures" -gt 0 ]; then

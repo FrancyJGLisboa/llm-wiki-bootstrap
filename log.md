@@ -2,6 +2,19 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-05-29 — visual answers: /wiki-query --visual (html/pdf/png)
+
+`/wiki-query` can now return a **diagram of its answer** alongside the text, in html / pdf / png, reusing the vendored Infographic-extractor archetype system (no new design system). This ships into generated wikis (it's an operating command), so any produced wiki can answer visually.
+
+- New `scripts/visualize/render.sh <html> --pdf|--png` — HTML poster → PDF/PNG. Detection: system headless browser (Chrome/Chromium/Edge/Brave, PATH or macOS app bundle) → Node+puppeteer (temp project, fetches its own Chromium) → **fail-soft** (keep HTML, print install hint, nonzero). PDF single-page (height fit to content); PNG full-page @2×. Functionally verified end-to-end via the puppeteer path (real 152 KB PDF, 1600×2048 PNG). A `RENDER_DISABLE=1` seam lets the oracle test fail-soft deterministically.
+- `.claude/commands/wiki-query.md` — added `--visual [html|pdf|png]` + `--archetype <name>` and **Step 5.5**: score all 8 archetypes against the synthesized answer, **auto-pick** the top (override with `--archetype`), generate a self-contained HTML poster to `diagrams/query-<slug>.html` per the generator-contract, then render to pdf/png via `render.sh`. Text answer is always produced; visual is additive; footer cites wiki pages + any web URLs used.
+- `.claude/commands/wiki-diagram.md` — consistency: `--pdf`/`--png` now also run `render.sh`.
+- `scripts/installer-skeleton-manifest.txt` — ships `scripts/visualize/render.sh` into generated wikis (installer oracle still green; `templates/infographic/*` + `wiki-diagram` already shipped).
+- `scripts/visualize/verify-visualizers.sh` — render.sh existence + deterministic fail-soft check always; functional PDF smoke when a system browser is present (puppeteer not auto-probed — too heavy).
+- Docs: AGENTS.md, README.md, README-FRESH.md (ships to generated wikis), docs/VISUALIZATION.md (new render.sh §), docs/QUICKSTART.md, and the 5 cross-tool shims now document `--visual` / `render.sh`.
+
+**Schema version: unchanged (v2).** Additive, opt-in — `--visual` is a new optional flag; no per-wiki schema change.
+
 ## 2026-05-29 — multi-wiki factory (/wiki-new, /wiki-registry)
 
 Added a **factory tier**: the repo can now generate *other* domain-shaped wikis and track them in a local catalog. Built **additively** on the proven single-wiki installer — `scripts/create-llm-wiki.sh`, `scripts/installer-skeleton-manifest.txt`, and `scripts/verify-create-llm-wiki.sh` were left byte-for-byte unchanged (the installer oracle still passes).

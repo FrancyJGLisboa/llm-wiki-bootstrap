@@ -9,7 +9,7 @@ The five slash commands live at `.claude/commands/wiki-*.md`:
 - `/wiki-init` — scaffold structure (idempotent)
 - `/wiki-extract <source>` — acquire URL / file / image into `raw/`
 - `/wiki-ingest [<raw-file>]` — process raw → wiki via the 7-step pipeline (hash via `scripts/body-hash.sh`)
-- `/wiki-query <question>` — answer from wiki; web-search + promote on gaps
+- `/wiki-query <question>` — answer from wiki; web-search + promote on gaps; `--visual [html|pdf|png]` also emits a diagram of the answer
 - `/wiki-lint [--apply]` — find issues; report or apply fixes
 
 Plus two **output commands** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):
