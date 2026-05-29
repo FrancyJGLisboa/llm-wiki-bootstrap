@@ -60,6 +60,21 @@ These operate on an **already-built** wiki: they are not lifecycle steps. Both a
 
 **`/wiki-visualize` vs `/wiki-diagram`:** visualize is **mechanical** — it renders structure that already exists (the `[[link]]` graph, mermaid, slides). diagram is **semantic** — it composes a *new* audience-targeted poster by reasoning over a query. Use visualize to *see the wiki*; use diagram to *make a point from it*.
 
+## Generating new wikis (the factory)
+
+This repo is also a **factory**: it can generate *other* wikis, each pre-shaped for a domain and tracked in a local catalog. These two commands are **factory-only** — they live here and do **not** ship inside the wikis they produce (a generated wiki is a leaf, not itself a factory).
+
+| Prefixed | Short | Purpose |
+|---|---|---|
+| `/wiki-new <name> --domain "<description>"` | `/new` | Generate a new wiki shaped for `<description>`: a deterministic skeleton (`scripts/new-wiki.sh`, which reuses `scripts/create-llm-wiki.sh`) plus an LLM-authored domain layer — a `## Domain conventions` section in the new wiki's `AGENTS.md`, a navigation `index.md`, and 3–5 seed pages. Registers the result in the workspace catalog. |
+| `/wiki-registry [prune]` | `/wikis` | List every generated wiki (name, domain, seeded status, drift) from the catalog. Thin wrapper over `scripts/registry.sh`. `prune --apply` drops dangling entries. |
+
+**Layout.** Generated wikis live under a **workspace** (default `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`), each its own `git`-initialized repo, with a `registry.jsonl` catalog at the workspace root. The `--target <path>` escape hatch creates an independent repo anywhere instead, registered by absolute path (`in_workspace:false`). The registry always lives at the workspace root, even for `--target` wikis.
+
+**No committed domains.** The factory ships **no** hand-authored domain content. Domain-shaping is generate-on-demand from the `--domain` description you pass.
+
+**Seed-page provenance honesty (hard rule).** Seed pages have no raw source, so they MUST be `source: analysis` and say so in the body (an interpretive disclaimer). Never write a `(source: raw/...)` citation on a seed page. The oracle `scripts/verify-multi-wiki.sh --seeded <dir>` enforces this plus frontmatter completeness, link resolution, and index coverage.
+
 ## Wiki page convention
 
 Every file in `wiki/` follows this template:
