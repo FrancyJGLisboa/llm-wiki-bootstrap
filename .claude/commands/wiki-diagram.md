@@ -1,7 +1,7 @@
 ---
 description: Synthesize an audience-targeted diagram from a natural-language intent — retrieve from the wiki, score archetype candidates, let the user pick, generate a self-contained HTML poster. Read-only on raw/ and wiki/.
 allowed-tools: Bash, Read, Glob, Grep
-argument-hint: "<what you want to show, and for whom>"
+argument-hint: "<what you want to show, and for whom>" [--pdf|--png]
 ---
 
 You are executing `/wiki-diagram $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to turn a natural-language **intent** into a visual artifact by reasoning over the wiki: retrieve the relevant knowledge, propose the best diagram archetypes, let the user pick, and generate a self-contained HTML poster.
@@ -30,7 +30,7 @@ Read the vendored contracts under `templates/infographic/` — they are the sing
 ## Procedure
 
 ### 1. Parse intent
-From `$ARGUMENTS`, extract: what to show, and the audience (default: "technical stakeholder" if unstated). If the intent is too vague to retrieve against, ask one clarifying question before proceeding.
+From `$ARGUMENTS`, extract: what to show, and the audience (default: "technical stakeholder" if unstated). Strip an optional `--pdf` or `--png` flag (remember it for step 5 — it also renders the poster to that format). If the intent is too vague to retrieve against, ask one clarifying question before proceeding.
 
 ### 2. Retrieve (reuse `/wiki-query` discipline)
 Read `wiki/index.md` to locate candidate pages, then read the relevant pages (frontmatter + body). Gather the material that bears on the intent. Note which pages you used — these become `source_pages`. Journal entries under `wiki/journal/` may be cited as evidence but never rewritten.
@@ -50,6 +50,14 @@ Then ask the user to **pick one or more**.
 
 ### 5. Generate one poster per pick
 For each chosen candidate, fill its `handoff_to_generator` block (the variables in `generator-contract.md`) and apply the generation protocol to produce a **single self-contained HTML file (no JavaScript, only Google Fonts external)**, using `example-poster.html` as the style scaffold and the archetype's content structure from `archetypes.md`. Write each to `diagrams/<slug>.html`. The footer must cite `source_pages`.
+
+If `--pdf` or `--png` was passed, also render each poster to that format:
+
+```bash
+scripts/visualize/render.sh diagrams/<slug>.html --pdf   # or --png
+```
+
+If `render.sh` exits non-zero (no headless browser and no Node/puppeteer), it keeps the HTML and prints an install hint — surface that hint and point the user at the `.html` (degraded, not failed).
 
 ### 6. Report
 Print the full path(s) written. Note that diagrams are interpretive (`source: analysis`-equivalent) — synthesized by the librarian, grounded in the cited pages, not extracted verbatim. Optionally suggest `/wiki-visualize serve diagrams` to browse them.

@@ -64,13 +64,32 @@ Wraps `python3 -m http.server`. Useful for opening a generated `graph.html` toge
 
 For automated checks: setting `VISUALIZE_DRY_RUN=1` prints what it would do and exits without binding the port. (Used by `verify-visualizers.sh`.)
 
+## 5. `render.sh` — turn an HTML poster into PDF or PNG
+
+```bash
+./scripts/visualize/render.sh diagrams/my-poster.html --pdf            # → diagrams/my-poster.pdf
+./scripts/visualize/render.sh diagrams/my-poster.html --png            # → diagrams/my-poster.png
+./scripts/visualize/render.sh diagrams/my-poster.html --pdf --out /tmp/out.pdf
+```
+
+This is what backs `/wiki-query --visual pdf|png` and `/wiki-diagram --pdf|--png` — it converts the self-contained HTML poster produced from the `templates/infographic/` generator contract into a raster/vector file. PDF is single-page (height fit to content); PNG is a full-page @2× screenshot.
+
+**Renderer detection (graceful — never silent):**
+1. a system headless browser — Google Chrome / Chromium / Edge / Brave (PATH or, on macOS, the `/Applications` bundle) — fast, no download, else
+2. Node ≥18 — `puppeteer` (with its own Chromium) is installed **once** into a persistent cache (`${XDG_CACHE_HOME:-~/.cache}/llm-wiki-render`) and reused on every later render, so the ~150MB download is a one-time cost, not per-call, else
+3. **fail-soft:** it leaves the HTML in place, prints an install hint, and exits non-zero. The HTML always opens in any browser meanwhile.
+
+So PDF/PNG are an **optional** capability: with neither a browser nor Node you still get the HTML poster. **Installing a system browser (e.g. Chrome) is the lightest option** — it skips the puppeteer Chromium download entirely.
+
+Fidelity notes: PDF is single-page (height fit to content) on both paths. PNG is tight (viewport sized to content) on the Node/puppeteer path; on the **system-browser** path PNG uses a fixed canvas (`--height`, default 2400) since headless Chrome can't auto-fit height — tune `--height`, or prefer the PDF for an exact crop. (The system-browser PNG path is not exercised by the verifier's smoke.)
+
 ## Verifying your visualization install
 
 ```bash
 ./scripts/visualize/verify-visualizers.sh
 ```
 
-Runs the graph smoke against the bundled canary fixtures (always; pure Python). For `slides.sh` and `mermaid.sh`, the verifier runs a real input through each wrapper if the underlying npm tool is reachable; otherwise it prints `skipped: ...` and proceeds. `serve.sh` is dry-run smoked via the env var above.
+Runs the graph smoke against the bundled canary fixtures (always; pure Python). For `slides.sh` and `mermaid.sh`, the verifier runs a real input through each wrapper if the underlying npm tool is reachable; otherwise it prints `skipped: ...` and proceeds. `serve.sh` is dry-run smoked via the env var above. For `render.sh`, it always checks the fail-soft path (via the `RENDER_DISABLE=1` seam) and runs a real PDF smoke only when a system browser is present (the puppeteer fallback isn't auto-probed — it would download Chromium).
 
 All exits 0 → your visualization stack is working end-to-end.
 

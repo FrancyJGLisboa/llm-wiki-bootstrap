@@ -27,7 +27,7 @@ Each command has a short form (no `wiki-` prefix) — both work identically. Use
 | `/wiki-init` | `/init` | Already done by this installer. Re-runnable if you ever delete the structure. |
 | `/wiki-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Pass multiple sources space- or newline-separated and they're all extracted in one pass. Does not touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/`: read, summarise, cross-link existing pages, flag contradictions, update the index, append `log.md`. Detects deltas via body hash; idempotent on unchanged sources. |
-| `/wiki-query <question>` | `/query` | Answer from the wiki. If a gap, web-search and auto-promote the new knowledge as wiki pages. `--no-promote` suppresses promotion. |
+| `/wiki-query <question>` | `/query` | Answer from the wiki. If a gap, web-search and auto-promote the new knowledge as wiki pages. `--no-promote` suppresses promotion. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query). |
 | `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once that page exists.
@@ -40,7 +40,7 @@ Two more commands render or export an **already-built** wiki (read-only on `raw/
 |---|---|---|
 | `/wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Wraps `scripts/visualize/*`. |
 | `/wiki-flashcards [dir]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. |
-| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve, score the 8 archetypes, you pick, it generates a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
+| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve, score the 8 archetypes, you pick, it generates a self-contained HTML poster to `diagrams/` (`--pdf`/`--png` to also render). Contracts in `templates/infographic/`. |
 
 `/wiki-visualize` renders structure that already exists (mechanical); `/wiki-diagram` composes a new poster by reasoning over a query (semantic).
 

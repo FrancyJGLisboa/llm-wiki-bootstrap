@@ -21,7 +21,7 @@ Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cl
 | `wiki-init` | Scaffold an empty wiki structure (idempotent). |
 | `wiki-extract <source>` | Acquire URL / file / image into `raw/`. |
 | `wiki-ingest [<raw-file>]` | Run the 7-step pipeline. Hash via `scripts/body-hash.sh`. |
-| `wiki-query <question>` | Answer from wiki; web-search + promote on gaps. |
+| `wiki-query <question>` | Answer from wiki; web-search + promote on gaps. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked). |
 | `wiki-lint [--apply]` | Find issues; propose / apply fixes. |
 
 Plus two **output workflows** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):

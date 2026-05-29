@@ -41,7 +41,7 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 | `/wiki-init` | `/init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
 | `/wiki-extract <sources>` | `/extract` | Acquire **one or many** URLs / local files / images into `raw/` with frontmatter. Bulk mode: multiple space- or newline-separated sources are extracted in a single pass with a consolidated summary. Also accepts pasted inline text via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
 | `/wiki-ingest [<raw-file>]` | `/ingest` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
-| `/wiki-query <question>` | `/query` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. Flag `--no-promote` to disable promotion. |
+| `/wiki-query <question>` | `/query` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. `--no-promote` disables promotion. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query; `--archetype <name>` to force one). |
 | `/wiki-lint` | `/lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
 
 Full spec lives at [`wiki/commands.md`](wiki/commands.md). Canonical implementations at `.claude/commands/wiki-*.md`; the short-form aliases at `.claude/commands/{init,extract,ingest,query,lint}.md` are thin delegators.
@@ -56,7 +56,9 @@ These operate on an **already-built** wiki: they are not lifecycle steps. Both a
 |---|---|---|
 | `/wiki-visualize [graph\|mermaid\|slides\|serve] [target] [--out <path>]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Thin dispatcher over `scripts/visualize/*` — checks `python3`/`npx` presence and surfaces install hints. |
 | `/wiki-flashcards [dir] [--out <path>]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV (`Front,Back,Tags`; tag = page slug). Wraps `scripts/wiki-to-anki.sh`. |
-| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from a natural-language intent: retrieve relevant pages, score the 8 archetypes, present a candidate menu, generate a self-contained HTML poster per pick. Wiki-read-only; output to `diagrams/`. Contracts vendored in `templates/infographic/`. |
+| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from a natural-language intent: retrieve relevant pages, score the 8 archetypes, present a candidate menu, generate a self-contained HTML poster per pick. `--pdf`/`--png` also render via `scripts/visualize/render.sh`. Wiki-read-only; output to `diagrams/`. Contracts vendored in `templates/infographic/`. |
+
+**Diagrams from answers vs. from intent:** `/wiki-query … --visual` and `/wiki-diagram` share the same vendored archetype system (`templates/infographic/`) and the same `render.sh` for pdf/png. The difference: `/wiki-query --visual` diagrams the **answer it just synthesized** (and auto-picks the archetype), while `/wiki-diagram` diagrams a standalone **intent** (and lets you pick).
 
 **`/wiki-visualize` vs `/wiki-diagram`:** visualize is **mechanical** — it renders structure that already exists (the `[[link]]` graph, mermaid, slides). diagram is **semantic** — it composes a *new* audience-targeted poster by reasoning over a query. Use visualize to *see the wiki*; use diagram to *make a point from it*.
 
