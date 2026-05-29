@@ -109,6 +109,17 @@ You will use the same 5 operations regardless of tool. Each one has two intercha
 
 In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition). The short-form alias files (`.claude/commands/{init,extract,ingest,query,lint}.md`) are thin delegators that point the AI at the canonical file — both names work identically.
 
+### Generating new wikis (the factory)
+
+The 5 operations above work *inside* one wiki. This repo can also generate **other** wikis, each shaped for a domain and tracked in a local catalog:
+
+| Command | Purpose |
+|---|---|
+| `/wiki-new <name> --domain "<description>"` (alias `/new`) | Scaffold a fresh wiki under your workspace (`~/llm-wikis/` by default), then author a domain layer (vocabulary + a navigation index + 3–5 seed pages) from your one-line description. `--target <path>` puts it anywhere instead. |
+| `/wiki-registry [prune]` (alias `/wikis`) | List every wiki you've generated, with seeded status and drift detection. |
+
+These are **factory-only** — they run from this repo and are not shipped into the wikis they create. Full spec in [`AGENTS.md`](../AGENTS.md) → "Generating new wikis (the factory)" and the "Multi-wiki factory" section of the [README](../README.md).
+
 ---
 
 ## Schema v2 extras (journal, Flashcards, MCP)

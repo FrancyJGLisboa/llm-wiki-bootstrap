@@ -32,6 +32,17 @@ Plus two **output workflows** that render/export an already-built wiki (read-onl
 | `wiki-flashcards [dir]` | Export `## Flashcards` sections to an Anki CSV. Wraps `scripts/wiki-to-anki.sh`. |
 | `wiki-diagram "<intent>"` | Semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
 
+## Factory workflows
+
+This repo can also generate *other* domain-shaped wikis and track them in a local catalog. These are factory-only (not shipped into the wikis they create); real slash commands in Claude Code, natural-language in Cline.
+
+| Workflow | Purpose |
+|---|---|
+| `wiki-new <name> --domain "<description>"` | Scaffold a new domain-shaped wiki + register it. Wraps `scripts/new-wiki.sh` (reuses `scripts/create-llm-wiki.sh`). |
+| `wiki-registry [prune]` | List / prune the workspace catalog (`registry.jsonl`). Wraps `scripts/registry.sh`. |
+
+See `AGENTS.md` → "Generating new wikis (the factory)".
+
 ## Hard rules
 
 1. **Never write to `raw/`** except the three `ingested_*` frontmatter fields, only as the last step of `wiki-ingest`.

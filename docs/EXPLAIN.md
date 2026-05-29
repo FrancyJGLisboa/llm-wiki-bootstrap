@@ -166,7 +166,7 @@ Three opt-in extensions, none of which changes the three-layer model or the five
 
 The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a version bump; the journal exception is the rule change that bumped 1→2 (a v1 client running `/wiki-ingest` on a v2 repo could clobber a journal entry — see `log.md`'s 2026-05-26 05:30 migration note).
 
-## Three escape hatches the v2 era adds
+## Four escape hatches the v2 era adds
 
 These don't replace the five commands; they sit alongside them.
 
@@ -181,6 +181,10 @@ The "does my install actually work" command. Composes the end-to-end ingest smok
 ### The visualization wrappers — `scripts/visualize/`
 
 Four opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The other three (`slides.sh`, `mermaid.sh`, `serve.sh`) wrap `npx` packages and a Python HTTP server. None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
+
+### The factory — `/wiki-new` + `/wiki-registry`
+
+Where the installer makes *one* wiki, the factory makes *many* and remembers them. `scripts/new-wiki.sh` composes the installer with a workspace (`~/llm-wikis/` by default) and a local catalog (`registry.jsonl`, owned by `scripts/registry.sh`); the `/wiki-new` command then has the LLM author a domain layer (a `## Domain conventions` block, a navigation index, and a few `source: analysis` seed pages) from a one-line `--domain` description. `/wiki-registry` lists/prunes the catalog and flags drift. Factory-only — these are not shipped into the wikis they generate. Verified by `scripts/verify-multi-wiki.sh` (M1–M5 + an E1–E9 edge battery), which also rides along as guard R5 in `smoke-all.sh`.
 
 ## The four principles, with a "you'd lose this if…" for each
 
