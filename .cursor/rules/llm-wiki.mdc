@@ -38,6 +38,17 @@ Plus two **output workflows** that render/export an already-built wiki. They are
 | `wiki-flashcards [dir]` | Export `## Flashcards` sections to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. | User asks to "export flashcards" / "make an Anki deck." |
 | `wiki-diagram "<intent>"` | Semantic — retrieve relevant pages, score the 8 archetypes (`templates/infographic/`), user picks, generate a self-contained HTML poster to `diagrams/`. Wiki-read-only. | User asks for "a diagram of X for <audience>" / "infographic" / "show the status of X." |
 
+## Factory workflows
+
+This repo can also generate *other* domain-shaped wikis and catalog them locally. Factory-only (not shipped into generated wikis); real slash commands in Claude Code, natural-language in Cursor.
+
+| Workflow | What it does | Trigger |
+|---|---|---|
+| `wiki-new <name> --domain "<description>"` | Scaffold a new domain-shaped wiki and register it in the workspace catalog. Wraps `scripts/new-wiki.sh` (reuses `scripts/create-llm-wiki.sh`); then author a `## Domain conventions` block, a navigation index, and 3–5 `source: analysis` seed pages. | User asks to "create a new wiki for X" / "spin up a wiki about Y." |
+| `wiki-registry [prune]` | List / prune the workspace catalog (`registry.jsonl`). Wraps `scripts/registry.sh`. | User asks to "list my wikis" / "show the registry." |
+
+See `AGENTS.md` → "Generating new wikis (the factory)".
+
 ## Hard rules
 
 1. **Never write to `raw/`.** You may only edit the `ingested_hash`, `ingested_at`, and `ingested_pages` fields in raw frontmatter — and only as the last step of `wiki-ingest`.
