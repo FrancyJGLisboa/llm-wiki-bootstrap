@@ -13,6 +13,10 @@
 #         the dangling entry.
 #     M3  escape-hatch+safety — --target registers an out-of-workspace wiki by
 #         absolute path (in_workspace:false); refuse-clobber still holds.
+#     E1-E9 edge battery — default-workspace resolution, missing --domain,
+#         relative --target absolutization, adversarial-domain JSON escaping,
+#         empty-registry listing, mark-seeded/has error paths, non-slug
+#         rejection, and duplicate-name fail-fast (no orphan dir).
 #
 #   --seeded <wiki-dir> [--domain-term <term>]
 #                        Structural checks M4-M5 on an already-seeded wiki
@@ -212,6 +216,83 @@ verify_deterministic() {
 }
 
 # ---------------------------------------------------------------------------
+# Edge battery (E1-E9) — deterministic, no LLM. Each check isolates its own
+# throwaway workspace. Setup creates that may fail are guarded with `|| true`
+# so a regression surfaces as a failed assertion, not a suite abort.
+# ---------------------------------------------------------------------------
+verify_edges() {
+  local WS line
+
+  # E1 — default workspace resolves to $HOME/llm-wikis when --workspace omitted
+  #      and LLM_WIKI_WORKSPACE is unset.
+  local FAKEHOME; FAKEHOME="$(mktemp -d)"
+  ( export HOME="$FAKEHOME"; unset LLM_WIKI_WORKSPACE 2>/dev/null || true
+    "$SCRIPT_DIR/new-wiki.sh" defwork --domain d >/dev/null 2>&1 ) || true
+  if [ -d "$FAKEHOME/llm-wikis/defwork" ] && [ -f "$FAKEHOME/llm-wikis/registry.jsonl" ]; then
+    ok "E1 default workspace resolves to \$HOME/llm-wikis"
+  else fail "E1 default workspace not created under \$HOME/llm-wikis"; fi
+  rm -rf "$FAKEHOME"
+
+  WS="$(mktemp -d)"
+
+  # E2 — missing --domain registers an empty domain (optional at the shell layer).
+  "$SCRIPT_DIR/new-wiki.sh" nodomain --workspace "$WS" >/dev/null 2>&1 || true
+  if grep -q '"name":"nodomain","domain":""' "$WS/registry.jsonl"; then
+    ok "E2 missing --domain -> empty domain field"
+  else fail "E2 missing --domain not handled"; fi
+
+  # E3 — relative --target is absolutized in the registry + git-inited.
+  local RELBASE; RELBASE="$(mktemp -d)"
+  ( cd "$RELBASE" && "$SCRIPT_DIR/new-wiki.sh" relt --workspace "$WS" --target ./sub/relwiki >/dev/null 2>&1 ) || true
+  if grep -qF "\"path\":\"$RELBASE/sub/relwiki\"" "$WS/registry.jsonl" && [ -d "$RELBASE/sub/relwiki/.git" ]; then
+    ok "E3 relative --target absolutized + git-inited"
+  else fail "E3 relative --target mishandled"; fi
+  rm -rf "$RELBASE"
+
+  # E4 — adversarial domain cannot hijack the path field (JSON escaping holds).
+  "$SCRIPT_DIR/new-wiki.sh" advdom --workspace "$WS" \
+    --domain 'evil","path":"/etc/passwd","in_workspace":false,"x":"' >/dev/null 2>&1 || true
+  line="$(grep '"name":"advdom"' "$WS/registry.jsonl" 2>/dev/null || true)"
+  if printf '%s' "$line" | grep -q '"path":"advdom"'; then
+    ok "E4 adversarial domain JSON-escaped (path not hijacked)"
+  else fail "E4 adversarial domain hijacked the path field"; fi
+
+  # E5 — empty workspace lists cleanly.
+  local EMPTY; EMPTY="$(mktemp -d)"
+  if "$SCRIPT_DIR/registry.sh" --workspace "$EMPTY" list | grep -q 'No wikis registered'; then
+    ok "E5 empty registry -> 'No wikis registered'"
+  else fail "E5 empty registry not handled"; fi
+  rm -rf "$EMPTY"
+
+  # E6 — mark-seeded on an absent name fails.
+  if "$SCRIPT_DIR/registry.sh" --workspace "$WS" mark-seeded ghost >/dev/null 2>&1; then
+    fail "E6 mark-seeded on absent name did not fail"
+  else ok "E6 mark-seeded on absent name exits nonzero"; fi
+
+  # E7 — has reflects presence/absence.
+  if "$SCRIPT_DIR/registry.sh" --workspace "$WS" has nodomain >/dev/null 2>&1 \
+     && ! "$SCRIPT_DIR/registry.sh" --workspace "$WS" has ghost >/dev/null 2>&1; then
+    ok "E7 has: exit 0 for present, 1 for absent"
+  else fail "E7 has subcommand wrong"; fi
+
+  # E8 — non-slug name rejected (failure path).
+  if "$SCRIPT_DIR/new-wiki.sh" "Bad Name" --workspace "$WS" >/dev/null 2>&1; then
+    fail "E8 non-slug name was accepted"
+  else ok "E8 non-slug name rejected"; fi
+
+  # E9 — duplicate name fails fast with no orphan dir (dir gone, entry remains).
+  "$SCRIPT_DIR/new-wiki.sh" dupe --workspace "$WS" --domain d >/dev/null 2>&1 || true
+  rm -rf "$WS/dupe"
+  if "$SCRIPT_DIR/new-wiki.sh" dupe --workspace "$WS" --domain d >/dev/null 2>&1; then
+    fail "E9 duplicate name was re-created"
+  elif [ -d "$WS/dupe" ]; then
+    fail "E9 duplicate attempt left an orphan dir"
+  else ok "E9 duplicate name fails fast, no orphan dir"; fi
+
+  rm -rf "$WS"
+}
+
+# ---------------------------------------------------------------------------
 # Dispatch
 # ---------------------------------------------------------------------------
 MODE="deterministic"
@@ -234,6 +315,9 @@ if [ "$MODE" = "seeded" ]; then
 else
   echo "Verifying deterministic factory (M1-M3)"
   verify_deterministic
+  echo
+  echo "Edge battery (E1-E9)"
+  verify_edges
 fi
 
 echo
