@@ -2,11 +2,11 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R5) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R6) into a single exit-code-
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 10 checks pass.
+# Exit 0 iff all 11 checks pass.
 
 set -euo pipefail
 
@@ -98,10 +98,17 @@ else
   record_fail "R5 verify-multi-wiki.sh exits non-zero (factory regression)"
 fi
 
+# R6 — body-hash.sh frontmatter validation (malformed input fails closed)
+if "$SCRIPT_DIR/verify-body-hash.sh" >/dev/null 2>&1; then
+  ok "R6 verify-body-hash.sh exits 0 (malformed frontmatter rejected)"
+else
+  record_fail "R6 verify-body-hash.sh exits non-zero (silent-data-loss guard regressed)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 10 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 11 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

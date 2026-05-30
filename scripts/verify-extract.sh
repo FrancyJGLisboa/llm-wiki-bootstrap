@@ -103,6 +103,17 @@ fi
 display="${target#$REPO_ROOT/}"
 ok "found output: ${display}"
 
+# Fail closed on malformed frontmatter (missing closing ---), which body-hash.sh
+# also now rejects. Without a closing delimiter the awk below reads to EOF and a
+# malformed file would slip through.
+delim_count=$(grep -c '^---$' "$target" || true)
+if [ "$(head -n1 "$target")" != "---" ] || [ "$delim_count" -lt 2 ]; then
+  fail "malformed frontmatter — expected opening --- on line 1 and a closing ---"
+  echo
+  printf "%sFailed.%s\n" "$RED" "$RESET"
+  exit 1
+fi
+
 # Extract frontmatter block (lines between the first two ---).
 frontmatter=$(awk 'BEGIN{c=0} /^---$/{c++; if(c==2) exit; next} c==1{print}' "$target")
 

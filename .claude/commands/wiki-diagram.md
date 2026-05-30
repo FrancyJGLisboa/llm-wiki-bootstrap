@@ -49,6 +49,12 @@ Show the user:
 Then ask the user to **pick one or more**.
 
 ### 5. Generate one poster per pick
+First ensure the output directory exists (it is git-ignored and absent in a fresh wiki — the Write tool fails on a missing parent):
+
+```bash
+mkdir -p diagrams
+```
+
 For each chosen candidate, fill its `handoff_to_generator` block (the variables in `generator-contract.md`) and apply the generation protocol to produce a **single self-contained HTML file (no JavaScript, only Google Fonts external)**, using `example-poster.html` as the style scaffold and the archetype's content structure from `archetypes.md`. Write each to `diagrams/<slug>.html`. The footer must cite `source_pages`.
 
 If `--pdf` or `--png` was passed, also render each poster to that format:

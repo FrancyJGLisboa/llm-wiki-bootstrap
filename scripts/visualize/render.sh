@@ -34,8 +34,8 @@ height=2400
 
 while [ "$#" -gt 0 ]; do
   case "$1" in
-    --pdf) fmt="pdf"; shift ;;
-    --png) fmt="png"; shift ;;
+    --pdf) [ -z "$fmt" ] || { echo "error: --pdf and --png are mutually exclusive" >&2; exit 2; }; fmt="pdf"; shift ;;
+    --png) [ -z "$fmt" ] || { echo "error: --pdf and --png are mutually exclusive" >&2; exit 2; }; fmt="png"; shift ;;
     --out) out="$2"; shift 2 ;;
     --out=*) out="${1#*=}"; shift ;;
     --width) width="$2"; shift 2 ;;

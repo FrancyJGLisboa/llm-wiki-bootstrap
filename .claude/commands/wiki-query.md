@@ -74,7 +74,13 @@ Produce a diagram **of the answer you just synthesized**, using the same archety
    - If `--archetype <name>` was given, use that one (validate it's one of the 8; if not, say so and fall back to auto).
    - Otherwise **auto-select the highest-scoring** archetype. If none clears the ≥3.5 threshold, pick the best available and note it's a weak fit. Always **report which archetype you chose and its score**.
 
-3. **Generate the poster.** Fill the chosen candidate's `handoff_to_generator` block and apply the generation protocol in `generator-contract.md` to produce a **single self-contained HTML file** (no JavaScript; only Google Fonts external), styled per `example-poster.html`. Write it to `diagrams/query-<slug>.html`, where `<slug>` is a kebab-case slug of the question. The footer must cite the **wiki pages** used (`source_pages`) and any **web URLs** that contributed to the answer. Never invent connections the answer doesn't support.
+3. **Generate the poster.** First ensure the output directory exists (it is git-ignored and absent in a fresh wiki — the Write tool fails on a missing parent):
+
+   ```bash
+   mkdir -p diagrams
+   ```
+
+   Then fill the chosen candidate's `handoff_to_generator` block and apply the generation protocol in `generator-contract.md` to produce a **single self-contained HTML file** (no JavaScript; only Google Fonts external), styled per `example-poster.html`. Write it to `diagrams/query-<slug>.html`, where `<slug>` is a kebab-case slug of the question. The footer must cite the **wiki pages** used (`source_pages`) and any **web URLs** that contributed to the answer. Never invent connections the answer doesn't support.
 
 4. **Render to the requested format.** If `<format>` is `pdf` or `png`, run:
 

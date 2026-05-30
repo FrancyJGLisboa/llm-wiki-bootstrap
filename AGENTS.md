@@ -100,10 +100,13 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 
 ## Related
 - [[other-page]] — why it relates
+- [[another-page]] — why it relates
 
 ## Open questions on this page
 - ... (consumed by /wiki-lint)
 ```
+
+**Related-section invariant:** every content page lists **≥ 2** `[[links]]` in `## Related` so it joins the web — a page with fewer than two outbound links is nearly an orphan. `navigation` pages (e.g. `index.md`) and `journal` entries are **exempt**: they join the web through their body/index structure, not a `## Related` section. `/wiki-lint` enforces exactly this (schema-drift check).
 
 ### Frontmatter fields
 
