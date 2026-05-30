@@ -237,15 +237,17 @@ verify_edges() {
 
   WS="$(mktemp -d)"
 
-  # E2 — missing --domain registers an empty domain (optional at the shell layer).
-  "$SCRIPT_DIR/new-wiki.sh" nodomain --workspace "$WS" >/dev/null 2>&1 || true
-  if grep -q '"name":"nodomain","domain":""' "$WS/registry.jsonl"; then
-    ok "E2 missing --domain -> empty domain field"
-  else fail "E2 missing --domain not handled"; fi
+  # E2 — missing --domain is rejected (required at the shell layer; the contract
+  # cannot be skipped by a direct caller). No entry should be registered.
+  if "$SCRIPT_DIR/new-wiki.sh" nodomain --workspace "$WS" >/dev/null 2>&1; then
+    fail "E2 missing --domain was accepted (should exit 2)"
+  elif [ -f "$WS/registry.jsonl" ] && grep -q '"name":"nodomain"' "$WS/registry.jsonl"; then
+    fail "E2 missing --domain registered an entry (should not)"
+  else ok "E2 missing --domain rejected (exit 2, no entry)"; fi
 
   # E3 — relative --target is absolutized in the registry + git-inited.
   local RELBASE; RELBASE="$(mktemp -d)"
-  ( cd "$RELBASE" && "$SCRIPT_DIR/new-wiki.sh" relt --workspace "$WS" --target ./sub/relwiki >/dev/null 2>&1 ) || true
+  ( cd "$RELBASE" && "$SCRIPT_DIR/new-wiki.sh" relt --workspace "$WS" --domain "relative-target test" --target ./sub/relwiki >/dev/null 2>&1 ) || true
   if grep -qF "\"path\":\"$RELBASE/sub/relwiki\"" "$WS/registry.jsonl" && [ -d "$RELBASE/sub/relwiki/.git" ]; then
     ok "E3 relative --target absolutized + git-inited"
   else fail "E3 relative --target mishandled"; fi
@@ -271,14 +273,15 @@ verify_edges() {
     fail "E6 mark-seeded on absent name did not fail"
   else ok "E6 mark-seeded on absent name exits nonzero"; fi
 
-  # E7 — has reflects presence/absence.
-  if "$SCRIPT_DIR/registry.sh" --workspace "$WS" has nodomain >/dev/null 2>&1 \
+  # E7 — has reflects presence/absence (advdom was registered in E4).
+  if "$SCRIPT_DIR/registry.sh" --workspace "$WS" has advdom >/dev/null 2>&1 \
      && ! "$SCRIPT_DIR/registry.sh" --workspace "$WS" has ghost >/dev/null 2>&1; then
     ok "E7 has: exit 0 for present, 1 for absent"
   else fail "E7 has subcommand wrong"; fi
 
-  # E8 — non-slug name rejected (failure path).
-  if "$SCRIPT_DIR/new-wiki.sh" "Bad Name" --workspace "$WS" >/dev/null 2>&1; then
+  # E8 — non-slug name rejected (failure path). --domain present so the call
+  # reaches the name-slug check rather than failing earlier on missing domain.
+  if "$SCRIPT_DIR/new-wiki.sh" "Bad Name" --workspace "$WS" --domain d >/dev/null 2>&1; then
     fail "E8 non-slug name was accepted"
   else ok "E8 non-slug name rejected"; fi
 

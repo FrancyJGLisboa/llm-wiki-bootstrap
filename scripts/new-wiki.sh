@@ -16,7 +16,7 @@
 # --target wikis, so one catalog tracks them all.
 #
 # Usage:
-#   scripts/new-wiki.sh <name> [--workspace <dir>] [--domain "<desc>"] [--target <path>]
+#   scripts/new-wiki.sh <name> --domain "<desc>" [--workspace <dir>] [--target <path>]
 #
 # <name> must be a slug: [a-z0-9][a-z0-9-]*  (it becomes a directory name and a
 # registry key). Default workspace: ${LLM_WIKI_WORKSPACE:-$HOME/llm-wikis}.
@@ -49,7 +49,12 @@ while [ "$#" -gt 0 ]; do
   esac
 done
 
-[ -n "$name" ] || { echo "usage: new-wiki.sh <name> [--workspace <dir>] [--domain \"<desc>\"] [--target <path>]" >&2; exit 2; }
+[ -n "$name" ] || { echo "usage: new-wiki.sh <name> --domain \"<desc>\" [--workspace <dir>] [--target <path>]" >&2; exit 2; }
+
+# --domain is required: it is the registry label and the seed for the LLM domain
+# layer. Enforce it here so the contract can't be skipped by a direct caller
+# (the /wiki-new prompt also asks for it, but the script is the last line).
+[ -n "$domain" ] || { echo "error: --domain \"<description>\" is required (it labels the wiki and seeds its domain layer)" >&2; exit 2; }
 
 # Validate the name: slug only (safe as a dir name and a registry key).
 if ! printf '%s' "$name" | grep -Eq '^[a-z0-9][a-z0-9-]*$'; then

@@ -8,6 +8,8 @@ You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` syste
 
 ## Read first
 
+**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `AGENTS.md` is absent, you're not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+
 Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug naming convention.
 
 ## Inline-text mode (when `$ARGUMENTS` begins with `--text`)

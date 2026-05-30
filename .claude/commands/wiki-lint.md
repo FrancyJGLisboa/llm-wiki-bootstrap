@@ -8,6 +8,8 @@ You are executing `/wiki-lint $ARGUMENTS` from the `llm-wiki-bootstrap` system. 
 
 ## Read first
 
+**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `AGENTS.md` is absent, you're not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+
 Read `AGENTS.md` (the conventions you're enforcing). Glob `wiki/` to list all pages.
 
 ## Mode
@@ -33,9 +35,15 @@ For every page in `wiki/`, check whether any other page links to it (excluding `
 
 ### 3. Contradictions
 
-Scan for inline flags like `CONTRADICTION FLAGGED` left by previous `/wiki-ingest` runs.
+Scan every page in `wiki/` for the literal token `CONTRADICTION FLAGGED` left by previous `/wiki-ingest` runs. The producer format (see `/wiki-ingest` step 5) is a blockquote line:
 
-- Report each one. Suggest a resolution path (which claim is older? which has a stronger source? does a web search help?).
+```
+> CONTRADICTION FLAGGED YYYY-MM-DD: <description>. Contradicts [[other-page]], which says <claim>.
+```
+
+Match it mechanically with `grep -rn 'CONTRADICTION FLAGGED' wiki/` (the token is the stable contract; the date and prose vary).
+
+- Report each one: file, line, the date, and the `[[other-page]]` it references. Suggest a resolution path (which claim is older? which has a stronger source? does a web search help?).
 - Do not auto-resolve. The user decides.
 
 ### 4. Stale claims

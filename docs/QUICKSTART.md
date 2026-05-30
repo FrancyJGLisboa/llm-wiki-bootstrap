@@ -217,6 +217,15 @@ Run wiki-lint per .claude/commands/wiki-lint.md. Report issues
 but don't apply fixes yet.
 ```
 
+Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+
+```
+Create a new wiki "coffee-roasting" about home espresso per
+.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
+Make a poster — "status of X for management" — per
+.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+```
+
 **Gotchas:**
 - You'll explicitly reference the `.claude/commands/wiki-*.md` files in your first invocations. After a few rounds Copilot internalizes the pattern.
 - Cost-monitor your session — agentic loops can run long.
@@ -261,6 +270,15 @@ Lint:
 
 ```
 Run wiki-lint per .claude/commands/wiki-lint.md.
+```
+
+Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+
+```
+Create a new wiki "coffee-roasting" about home espresso per
+.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
+Make a poster — "status of X for management" — per
+.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
 ```
 
 **Gotchas:**
@@ -309,6 +327,15 @@ Lint:
 Run wiki-lint.
 ```
 
+Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+
+```
+Create a new wiki "coffee-roasting" about home espresso per
+.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
+Make a poster — "status of X for management" — per
+.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+```
+
 **Gotchas:**
 - Cline is fully autonomous within a task — it keeps going until done. Watch the cost meter.
 - Each new Cline task re-reads `.clinerules` from scratch.
@@ -346,6 +373,15 @@ Wiki-ask: <your question>.
 Run wiki-lint.
 ```
 
+Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+
+```
+Create a new wiki "coffee-roasting" about home espresso per
+.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
+Make a poster — "status of X for management" — per
+.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+```
+
 **Gotchas:**
 - Cursor's built-in slash commands (if your version has them) are **not** the project's wiki-* commands. The project's "commands" are natural-language workflows here.
 - If using non-Agent / non-Composer mode, you may need to invoke step-by-step rather than expecting full autonomy.
@@ -366,7 +402,7 @@ Read AGENTS.md. Then run wiki-extract on https://example.com/foo
 following .claude/commands/wiki-extract.md.
 ```
 
-(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed.)
+(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed. The factory commands `wiki-new` / `wiki-registry` and the output commands `wiki-visualize` / `wiki-flashcards` / `wiki-diagram` follow the same pattern — name the workflow and point at its `.claude/commands/*.md`.)
 
 ---
 
