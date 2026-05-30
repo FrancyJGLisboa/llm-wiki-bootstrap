@@ -16,7 +16,10 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 if ! command -v python3 >/dev/null 2>&1; then
+  INSTALL_CMD="<your-package-manager> install"
+  [ -f "$SCRIPT_DIR/../lib/platform-hint.sh" ] && . "$SCRIPT_DIR/../lib/platform-hint.sh"
   echo "error: python3 not found on PATH (required for the graph generator)." >&2
+  echo "       install: ${INSTALL_CMD} python3" >&2
   exit 1
 fi
 

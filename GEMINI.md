@@ -23,6 +23,11 @@ Two **factory workflows** generate and catalog *other* wikis (they belong to thi
 - `wiki-new <name> --domain "<description>"` — scaffold a new domain-shaped wiki and register it; wraps `scripts/new-wiki.sh` (which reuses `scripts/create-llm-wiki.sh`)
 - `wiki-registry [prune]` — list / prune the workspace catalog (`registry.jsonl`); wraps `scripts/registry.sh`
 
+Invoking the factory in Gemini (natural language → what you do):
+
+- *"Create a new wiki called coffee-roasting about home espresso and roasting"* → run `scripts/new-wiki.sh coffee-roasting --domain "home espresso and roasting"` (`--domain` is required), then author the domain layer per `.claude/commands/wiki-new.md`.
+- *"List the wikis I've made"* → `scripts/registry.sh list`. *"Prune dangling entries"* → `scripts/registry.sh prune` (dry run), then `prune --apply` only after the user confirms.
+
 See `AGENTS.md` → "Generating new wikis (the factory)".
 
 Hard rules (full text in `AGENTS.md`):

@@ -8,6 +8,8 @@ You are executing `/wiki-query $ARGUMENTS` from the `llm-wiki-bootstrap` system.
 
 ## Read first
 
+**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `AGENTS.md` is absent, you're not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+
 Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
 
 ## Parse the question
@@ -72,7 +74,7 @@ Produce a diagram **of the answer you just synthesized**, using the same archety
 
 2. **Choose the archetype from the query.** Treat the synthesized answer (its claims, structure, and relationships) as the material. Score **all 8** archetypes on the 4 dimensions in `scoring-rubric.md`.
    - If `--archetype <name>` was given, use that one (validate it's one of the 8; if not, say so and fall back to auto).
-   - Otherwise **auto-select the highest-scoring** archetype. If none clears the ≥3.5 threshold, pick the best available and note it's a weak fit. Always **report which archetype you chose and its score**.
+   - Otherwise **auto-select the highest-scoring** archetype. If none clears the ≥3.5 threshold, pick the best available and note it's a weak fit. Always **report which archetype you chose and its score, plus one plain-English clause on why it fits** (e.g. "A5-causal-chain (4.2) — the answer is a cause→effect chain of drivers"). Then add: "Run `/wiki-diagram \"<intent>\"` to see all scored options and pick a different lens. The 8 archetypes are listed in `AGENTS.md` → Diagram archetypes."
 
 3. **Generate the poster.** First ensure the output directory exists (it is git-ignored and absent in a fresh wiki — the Write tool fails on a missing parent):
 

@@ -8,7 +8,9 @@ You are executing `/wiki-ingest $ARGUMENTS` from the `llm-wiki-bootstrap` system
 
 ## Read first
 
-Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `log.md` (recent activity).
+**Run from the wiki root** — the directory holding `raw/`, `wiki/`, `AGENTS.md`, and `log.md`. If `AGENTS.md` is absent you are not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+
+Read `wiki/index.md` (what already exists) and `log.md` (recent activity). You don't need to re-read all of `AGENTS.md` — the page template you'll write is inlined below; consult `AGENTS.md` → "Wiki page convention" only for edge cases.
 
 ## Determine scope
 
@@ -16,6 +18,37 @@ Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `log.
 - If `$ARGUMENTS` names a specific file: process only that file, regardless of hash.
 
 If nothing to process: print "No changes to ingest." and exit. If `raw/` is **empty** (no sources at all), add: "Next: run `/wiki-extract <source>` to acquire a source, then `/wiki-ingest` again."
+
+## Page template (every page you create or update in steps 3–4)
+
+Inlined so you don't have to cross-reference `AGENTS.md`. Pure CommonMark — no Obsidian callouts/dataview.
+
+```markdown
+---
+title: <Title Case>
+type: concept | entity | summary | analysis | navigation
+source: video | analysis | external | mixed
+updated: YYYY-MM-DD
+tags: [...]
+---
+
+# <Title>
+
+## Definition / TL;DR
+1-3 sentences. What this page is about.
+
+## Body
+Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-file>#<anchor>)` for any non-trivial claim.
+
+## Related
+- [[other-page]] — why it relates
+- [[another-page]] — why it relates
+
+## Open questions on this page
+- ... (consumed by /wiki-lint)
+```
+
+The `## Related` section needs **≥ 2** `[[links]]` so the page joins the web (navigation/journal pages are exempt — see `AGENTS.md`). Cite anchors by source type: `#heading-name` (markdown/article), `#L5-L10` (line range), `#2:01` (video timestamp).
 
 ## The 7-step pipeline (run per raw file)
 
@@ -43,7 +76,19 @@ For each concept and entity from step 2:
 
 ### Step 5 — Flag contradictions
 
-If a new claim from this source disagrees with an existing claim in the wiki, **flag it visibly** in both pages: add a sentence like `> CONTRADICTION FLAGGED 2026-05-25: this claim is contradicted by [[other-page]] which says: ...`. Do not silently overwrite either.
+If a new claim from this source disagrees with an existing claim in the wiki, **flag it visibly** in both pages. Do not silently overwrite either. Use this **exact** line format (a CommonMark blockquote — `/wiki-lint` matches the literal token `CONTRADICTION FLAGGED`):
+
+```markdown
+> CONTRADICTION FLAGGED YYYY-MM-DD: <one-line description>. Contradicts [[other-page]], which says <their claim>.
+```
+
+Worked example — `wiki/fluid-bed-roaster.md` gains, and `wiki/drum-roaster.md` gains the mirror:
+
+```markdown
+> CONTRADICTION FLAGGED 2026-05-30: this source says fluid-bed roasting is faster for light roasts. Contradicts [[drum-roaster]], which says drum roasting reaches first crack sooner.
+```
+
+Add the mirror flag to the page it points at so the contradiction is visible from both sides.
 
 ### Step 6 — Update the index
 

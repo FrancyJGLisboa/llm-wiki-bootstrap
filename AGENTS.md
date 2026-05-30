@@ -62,6 +62,23 @@ These operate on an **already-built** wiki: they are not lifecycle steps. Both a
 
 **`/wiki-visualize` vs `/wiki-diagram`:** visualize is **mechanical** — it renders structure that already exists (the `[[link]]` graph, mermaid, slides). diagram is **semantic** — it composes a *new* audience-targeted poster by reasoning over a query. Use visualize to *see the wiki*; use diagram to *make a point from it*.
 
+### Diagram archetypes (A1–A8)
+
+Both `/wiki-query --visual` and `/wiki-diagram` choose from these eight lenses (full definitions, lenses, and content structures in `templates/infographic/archetypes.md`; scoring in `scoring-rubric.md`). When a command reports an archetype like `A5-causal-chain (score 4.2)`, this is what it picked and why it fits:
+
+| ID | Archetype | Fits material that… |
+|----|-----------|---------------------|
+| A1 | Single-Number Metric | combines inputs into one formula/metric with high/low action states |
+| A2 | Process Flow | is a sequence of steps or a pipeline from input to output |
+| A3 | State Regime | classifies into distinct named states/modes with transitions |
+| A4 | Comparison Matrix | compares options across shared dimensions |
+| A5 | Causal Chain | is a cause→effect chain of drivers leading to an outcome |
+| A6 | Cycle / Loop | is a recurring loop or feedback cycle with no fixed end |
+| A7 | Network / Map | is a web of entities/relationships better shown spatially |
+| A8 | Taxonomy / Tree | is a hierarchy or classification that branches |
+
+The **score** is the sum of four sub-dimensions (see `scoring-rubric.md`); a candidate must clear **≥ 3.5** to be surfaced. `/wiki-diagram` shows the full scored menu and lets you pick; `/wiki-query --visual` auto-picks the top one and names it.
+
 ## Generating new wikis (the factory)
 
 This repo is also a **factory**: it can generate *other* wikis, each pre-shaped for a domain and tracked in a local catalog. These two commands are **factory-only** — they live here and do **not** ship inside the wikis they produce (a generated wiki is a leaf, not itself a factory).

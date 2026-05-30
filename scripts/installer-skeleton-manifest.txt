@@ -23,6 +23,7 @@ LICENSE
 .claude/commands/wiki-diagram.md
 .claude/commands/diagram.md
 scripts/body-hash.sh
+scripts/lib/platform-hint.sh
 scripts/preflight.sh
 scripts/verify-extract.sh
 scripts/verify-wiki-to-anki.sh

@@ -37,22 +37,10 @@ else
   RESET=
 fi
 
-# Platform-aware install command for hints.
-case "$(uname -s)" in
-  Darwin) INSTALL_CMD="brew install" ;;
-  Linux)
-    if command -v apt >/dev/null 2>&1; then
-      INSTALL_CMD="apt install"
-    elif command -v dnf >/dev/null 2>&1; then
-      INSTALL_CMD="dnf install"
-    elif command -v pacman >/dev/null 2>&1; then
-      INSTALL_CMD="pacman -S"
-    else
-      INSTALL_CMD="<your-package-manager> install"
-    fi
-    ;;
-  *) INSTALL_CMD="<your-package-manager> install" ;;
-esac
+# Platform-aware install command for hints (shared helper; default first so a
+# missing helper never breaks the script).
+INSTALL_CMD="<your-package-manager> install"
+[ -f "$SCRIPT_DIR/lib/platform-hint.sh" ] && . "$SCRIPT_DIR/lib/platform-hint.sh"
 
 # State tracking
 hard_failures=0

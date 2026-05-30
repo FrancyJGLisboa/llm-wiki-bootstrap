@@ -19,8 +19,12 @@ if [ "$#" -lt 1 ]; then
 fi
 
 if ! command -v npx >/dev/null 2>&1; then
+  INSTALL_CMD="<your-package-manager> install"
+  _here="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  [ -f "$_here/../lib/platform-hint.sh" ] && . "$_here/../lib/platform-hint.sh"
   echo "error: npx not found on PATH. Install Node.js ≥18 (https://nodejs.org)." >&2
-  echo "       Then re-run this script. mermaid-cli is downloaded on first run." >&2
+  echo "       install: ${INSTALL_CMD} node   (Debian/Ubuntu package: nodejs)" >&2
+  echo "       Then re-run this script. marp-cli is downloaded on first run." >&2
   exit 1
 fi
 
