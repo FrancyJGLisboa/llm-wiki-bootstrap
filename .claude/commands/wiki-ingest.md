@@ -15,7 +15,7 @@ Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `log.
 - If `$ARGUMENTS` is empty: walk all files in `raw/`. For each, compute the current body hash by running **`scripts/body-hash.sh <file>`** (this is the canonical algorithm — do NOT recompute the hash inline with `sha256sum`, `shasum`, or a different awk pattern, or idempotence will break). Skip files whose `ingested_hash` in frontmatter matches the current hash.
 - If `$ARGUMENTS` names a specific file: process only that file, regardless of hash.
 
-If nothing to process: print "No changes to ingest." and exit.
+If nothing to process: print "No changes to ingest." and exit. If `raw/` is **empty** (no sources at all), add: "Next: run `/wiki-extract <source>` to acquire a source, then `/wiki-ingest` again."
 
 ## The 7-step pipeline (run per raw file)
 
@@ -78,4 +78,4 @@ Update the raw file's frontmatter:
 
 ## Output
 
-End with a status report listing files processed, files skipped (and why), and pages created/updated. Suggest `/wiki-lint` if you flagged contradictions or noticed gaps.
+End with a status report listing files processed, files skipped (and why), and pages created/updated. Then point the user at the verification loop: "Next: run `/wiki-query \"what does <source> say about <topic>?\"` to verify the ingest." Suggest `/wiki-lint` if you flagged contradictions or noticed gaps.

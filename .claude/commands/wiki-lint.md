@@ -64,7 +64,7 @@ Look for concepts referenced multiple times across the wiki **without their own 
 Verify every wiki page has:
 - Valid YAML frontmatter
 - All required fields (`title`, `type`, `source`, `updated`, `tags`)
-- A `Related` section with ≥ 2 `[[wiki-links]]`
+- A `Related` section with ≥ 2 `[[wiki-links]]` (so the page joins the web) — **except** `navigation` pages (e.g. `index.md`) and `journal` entries, which join the web through their body/index structure and need no `## Related` section
 - An `Open questions on this page` section (may be empty list)
 
 Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).

@@ -23,17 +23,22 @@ Surface the table verbatim. It shows each wiki's `NAME`, `SEEDED` (yes/pending),
 
 After showing it, briefly interpret any drift:
 
-- `MISSING` rows → the wiki dir was moved or deleted. Offer: "Run `/wiki-registry prune --apply` to drop dangling entries."
+- `MISSING` rows → the wiki dir was moved or deleted. Offer: "Run `/wiki-registry prune` to see dangling entries, then `prune --apply` to drop them."
 - `UNREGISTERED` lines → a wiki dir exists but was not created through the factory. (No automatic action — just note it.)
 
 ### Prune
 
 ```bash
-scripts/registry.sh [--workspace <dir>] prune          # report only
-scripts/registry.sh [--workspace <dir>] prune --apply  # remove dangling entries
+scripts/registry.sh [--workspace <dir>] prune                # report only (dry run)
+scripts/registry.sh [--workspace <dir>] prune --apply        # remove, after a [y/N] confirm
+scripts/registry.sh [--workspace <dir>] prune --apply --yes  # remove, skipping the confirm
 ```
 
-Without `--apply`, prune only reports. Only pass `--apply` if the user explicitly asked to remove dangling entries — it edits `registry.jsonl` (it never deletes any wiki, only catalog lines).
+**Two-step gate (mirrors `/wiki-lint --apply`):**
+
+1. Always run the bare `prune` first and show the user exactly which entries are dangling.
+2. Only pass `--apply` if the user explicitly asked to remove them — it edits `registry.jsonl` irreversibly (it never deletes any wiki, only catalog lines).
+3. `--apply` alone prompts `[y/N]` before mutating. In a headless run that prompt reads EOF and **aborts unchanged** — so after the user confirms, pass `--apply --yes` to actually remove. Never pass `--yes` on the user's behalf without an explicit confirmation.
 
 ## What you must NOT do
 

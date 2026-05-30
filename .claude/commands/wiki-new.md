@@ -89,7 +89,10 @@ This page is interpretation, not extracted from a raw source. <Domain-relevant e
 
 ## Related
 - [[other-seed]] — why it relates
+- [[another-seed]] — why it relates
 ```
+
+Each seed lists **≥ 2** `[[links]]` in `## Related` so it joins the web (the `## Related` invariant in AGENTS.md). `index.md` is `navigation` and exempt.
 
 ### 2d. (optional) A `wiki/glossary.md`
 
@@ -106,7 +109,7 @@ scripts/registry.sh --workspace "$WS" mark-seeded <name>
 Append an entry to `$WIKI/log.md` (newest at top), e.g.:
 
 ```markdown
-## <today> <time> — /wiki-new
+## YYYY-MM-DD HH:MM — /wiki-new
 - Domain: <description>
 - Authored: wiki/index.md + <N> seed pages (<slugs>)
 - Appended domain conventions to AGENTS.md

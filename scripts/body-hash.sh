@@ -28,6 +28,16 @@ if [[ ! -f "$file" ]]; then
   exit 1
 fi
 
+# Frontmatter must open with --- on line 1 and have a closing --- delimiter.
+# Without this guard a missing closing --- yields the empty-string SHA (exit 0),
+# which /wiki-ingest would stamp as a valid hash and then skip forever — silent
+# data loss. Body horizontal-rule (---) lines are fine: count >= 2 still holds.
+delim_count=$(grep -c '^---$' "$file" || true)
+if [[ "$(head -n1 "$file")" != "---" ]] || (( delim_count < 2 )); then
+  echo "error: malformed frontmatter in $file (expected opening '---' on line 1 and a closing '---')" >&2
+  exit 1
+fi
+
 awk 'BEGIN{fm=0} /^---$/{fm++; next} fm>=2{print}' "$file" \
   | openssl dgst -sha256 \
   | awk '{print $NF}'

@@ -24,7 +24,9 @@
 #   mark-seeded <name>    flip an entry's seeded flag false -> true
 #   has <name>            exit 0 if an entry exists, 1 otherwise (no output)
 #   list                  render a table; flag drift (MISSING dirs, UNREGISTERED dirs)
-#   prune [--apply]       report dangling entries (dir gone); --apply removes them
+#   prune [--apply [--yes]]  report dangling entries (dir gone); --apply removes
+#                            them after a [y/N] confirm; --yes skips the confirm
+#                            (for automation — registry.jsonl edit is irreversible)
 #
 # Default workspace: ${LLM_WIKI_WORKSPACE:-$HOME/llm-wikis}
 
@@ -208,7 +210,13 @@ case "$SUB" in
 
   prune)
     apply=0
-    [ "${1:-}" = "--apply" ] && apply=1
+    assume_yes=0
+    for arg in "$@"; do
+      case "$arg" in
+        --apply)            apply=1 ;;
+        --yes|-y|--force)   assume_yes=1 ;;
+      esac
+    done
     [ -f "$REG" ] || { echo "No registry at $REG — nothing to prune."; exit 0; }
     tmp="$REG.tmp.$$"
     removed=0
@@ -230,6 +238,15 @@ case "$SUB" in
       rm -f "$tmp"
       echo "✓ no dangling entries."
     elif [ "$apply" -eq 1 ]; then
+      if [ "$assume_yes" -ne 1 ]; then
+        echo
+        printf "Remove the %d dangling entrie(s) listed above from the catalog? [y/N] " "$removed"
+        read -r reply
+        case "$reply" in
+          y|Y|yes|YES) ;;
+          *) rm -f "$tmp"; echo "Aborted — registry unchanged."; exit 1 ;;
+        esac
+      fi
       mv "$tmp" "$REG"
       echo "✓ pruned $removed dangling entrie(s) from $REG"
     else

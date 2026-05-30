@@ -192,7 +192,9 @@ verify_deterministic() {
   else fail "M2 deleted wiki not flagged"; fi
   if printf '%s' "$list_out" | grep -q 'UNREGISTERED'; then ok "M2 stray dir flagged UNREGISTERED"
   else fail "M2 stray dir not flagged"; fi
-  "$SCRIPT_DIR/registry.sh" --workspace "$WS" prune --apply >/dev/null 2>&1
+  # --yes: non-interactive oracle stands in for the explicit [y/N] confirm that
+  # prune --apply now requires (the destructive-action guardrail).
+  "$SCRIPT_DIR/registry.sh" --workspace "$WS" prune --apply --yes >/dev/null 2>&1
   if ! grep -q '"name":"demo-a"' "$reg"; then ok "M2 prune --apply removed the dangling entry"
   else fail "M2 prune did not remove dangling demo-a"; fi
 
