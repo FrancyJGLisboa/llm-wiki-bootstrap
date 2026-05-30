@@ -14,29 +14,29 @@ LLM-wikis stay valuable because they're (1) **explicit**, (2) **yours**, (3) **f
 
 ## Body
 
-From the video: *"This is why this approach wins, and there are four principles behind it that make it really compelling."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:33-6:39)`
+From the video: *"This is why this approach wins, and there are four principles behind it that make it really compelling."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)`
 
 ### 1. Explicit
 
-*"The knowledge is all visible in a navigable wiki which most of us are familiar with. You can see exactly what the AI knows and what it doesn't know. There's no hidden embeddings. There's no opaque memory system."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:39-6:53)`
+*"The knowledge is all visible in a navigable wiki which most of us are familiar with. You can see exactly what the AI knows and what it doesn't know. There's no hidden embeddings. There's no opaque memory system."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)`
 
 Implication: every claim is auditable. If the LLM says X, you can find the wiki page that says X and the raw source it cites. No vector-store mystery. No "the model just remembers."
 
 ### 2. Yours
 
-*"You can customize it yourself. These are all local files on your computer. You're not locked into any provider's system and you keep everything yourself."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:53-7:05)`
+*"You can customize it yourself. These are all local files on your computer. You're not locked into any provider's system and you keep everything yourself."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)`
 
 Implication: portability. The wiki survives if you switch LLM providers, change tools, lose internet. The user is the storage operator.
 
 ### 3. File-over-app
 
-*"Everything is in universal formats — markdown and images. This means it's interoperable with any tool, any CLI, any viewer. The entire Unix toolkit works on your data."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:05-7:16)`
+*"Everything is in universal formats — markdown and images. This means it's interoperable with any tool, any CLI, any viewer. The entire Unix toolkit works on your data."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)`
 
 Implication: tooling is decoupled from data. `grep`, `git`, `find`, any markdown viewer, any editor — all work natively. You're not negotiating with a SaaS API for access to your own notes. See [[implicit-constraints]] for how this project honors the principle (no Obsidian dependency).
 
 ### 4. Bring your own AI
 
-*"You can plug in Claude, GPT, Codex, open-source models, whatever you want. You can even fine-tune a model on your wiki so it knows your data in its weights, not just in its context."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:16-7:30)`
+*"You can plug in Claude, GPT, Codex, open-source models, whatever you want. You can even fine-tune a model on your wiki so it knows your data in its weights, not just in its context."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)`
 
 Implication: the wiki survives model churn. A new SOTA model next year? Plug it in. Self-hosting concerns? Use a local model. The pattern is model-agnostic by construction.
 

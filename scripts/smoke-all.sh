@@ -2,11 +2,11 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R8) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R9) into a single exit-code-
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 13 checks pass.
+# Exit 0 iff all 14 checks pass.
 
 set -euo pipefail
 
@@ -124,10 +124,19 @@ else
   record_fail "R8 verify-create-llm-wiki.sh exits non-zero (installer regression)"
 fi
 
+# R9 — citation-faithfulness deterministic floor (C1+C2): the audit must catch
+# broken/fabricated citations on the planted fixture (no LLM; the C3 entailment
+# judge is a separate manual tool — see scripts/eval-citation-faithfulness.sh).
+if "$SCRIPT_DIR/verify-citation-audit.sh" >/dev/null 2>&1; then
+  ok "R9 verify-citation-audit.sh exits 0 (citation floor catches fabrications)"
+else
+  record_fail "R9 verify-citation-audit.sh exits non-zero (citation-audit floor regressed)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 13 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 14 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

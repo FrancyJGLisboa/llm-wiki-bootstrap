@@ -42,3 +42,29 @@ Fixed by passing `prune --apply --yes` in the oracle.
 other scripts or slash-command prompts invoke. Mirror the existing convention:
 `--yes`/`-y`/`--force` skips the prompt; TTY/interactive gets `[y/N]`; headless
 without `--yes` aborts unchanged (see `wipe-meta-wiki.sh`).
+
+---
+
+## 2026-05-30 — an LLM-judge eval lies in BOTH directions; validate with planted cases
+
+**Rule:** When building an eval with an LLM judge, prove it on **two planted
+fixtures — one faithful, one unfaithful** — before trusting any number. The
+judge can be wrong both ways: (a) too lenient if you parse its output badly,
+(b) too harsh if you feed it the wrong evidence.
+
+**Why (both bugs hit while building `eval-citation-faithfulness.sh`):**
+1. *False FAITHFUL* — the grader echoed the instruction "FAITHFUL or
+   UNFAITHFUL?", so `grep ... | head -1` grabbed the echoed word, not the
+   verdict. Fix: demand a `VERDICT=` token, parse the LAST one, default-closed.
+   Also: never pass multi-line evidence through bash `read` via hand-rolled
+   `\n` encoding — bash double-quotes mangle it; base64 the fields instead.
+2. *False UNFAITHFUL* — the evidence window for timestamp anchors was 8 lines
+   from the heading, but the cited quote sat at line ~58 of a ~10-line section,
+   just past the window. The judge correctly said "evidence doesn't support
+   the claim" — because the evidence I extracted didn't contain it. Fix:
+   extract the whole section (heading → next heading), not a fixed window.
+
+**When to apply:** any judge-based eval. The judge is only as good as the
+evidence you feed it and the parsing of its answer. A green that can't catch a
+planted failure is theater; a red that flags a planted-faithful case is noise.
+Both waste trust. The fixture lives at `tests/eval/faithfulness-fixture/`.

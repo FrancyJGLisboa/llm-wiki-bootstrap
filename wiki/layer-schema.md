@@ -14,7 +14,7 @@ The schema is the configuration file that tells the LLM how this particular wiki
 
 ## Body
 
-From the video: *"On the right is the schema, and this is the configuration file basically like a CLAUDE.md. And this tells the LLM how the wiki is structured, what the conventions are, what workflows to follow. So you and the LLM co-evolve this over time as you figure out what works for your domain."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:18-3:50)`
+From the video: *"On the right is the schema, and this is the configuration file basically like a CLAUDE.md. And this tells the LLM how the wiki is structured, what the conventions are, what workflows to follow. So you and the LLM co-evolve this over time as you figure out what works for your domain."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32)`
 
 ### Why a separate file (not embedded in the wiki)
 

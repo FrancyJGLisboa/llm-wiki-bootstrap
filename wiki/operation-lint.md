@@ -14,7 +14,7 @@ tags: [operations, lint, maintenance]
 
 ## Body
 
-From the video: *"This is the maintenance pass. You ask the LLM to health-check the wiki — find contradictions, stale claims, orphan pages with no links, missing cross references, gaps that could be filled with a web search. So the LLM is good at suggesting new questions to investigate and this keeps the wiki healthy as it grows."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:25-4:46)`
+From the video: *"This is the maintenance pass. You ask the LLM to health-check the wiki — find contradictions, stale claims, orphan pages with no links, missing cross references, gaps that could be filled with a web search. So the LLM is good at suggesting new questions to investigate and this keeps the wiki healthy as it grows."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
 ### What lint catches
 

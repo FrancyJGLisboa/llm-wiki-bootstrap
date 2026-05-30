@@ -18,19 +18,19 @@ This is the single property that separates the LLM-wiki pattern from naive RAG. 
 
 ### Angle 1 — the negative case (RAG)
 
-*"Nothing accumulates. Every time you ask a question, the LLM is rediscovering knowledge from scratch. It's repiecing together fragments every single time. So if you ask something subtle that requires synthesizing five different documents, it has to find and connect all those pieces on every query. There's no memory, no cross references, no accumulated understanding."* `(source: raw/karpathy-llm-wiki-video-transcript.md#1:12-1:30)`
+*"Nothing accumulates. Every time you ask a question, the LLM is rediscovering knowledge from scratch. It's repiecing together fragments every single time. So if you ask something subtle that requires synthesizing five different documents, it has to find and connect all those pieces on every query. There's no memory, no cross references, no accumulated understanding."* `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 In naive RAG, the synthesis lives in the LLM's working memory during a single query and dies there. Two minutes later, the same question costs the same work.
 
 ### Angle 2 — the positive case (LLM-wiki)
 
-*"Instead of retrieving at query time, the LLM builds a persistent interlinked wiki up front. The cross references are already there. Contradictions are already flagged. The synthesis already reflects everything you've already fed it. Knowledge compounds instead of being thrown away after each conversation."* `(source: raw/karpathy-llm-wiki-video-transcript.md#1:36-1:55)`
+*"Instead of retrieving at query time, the LLM builds a persistent interlinked wiki up front. The cross references are already there. Contradictions are already flagged. The synthesis already reflects everything you've already fed it. Knowledge compounds instead of being thrown away after each conversation."* `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 The work is done once, written down, and reused. The wiki is the **memoization of synthesis.**
 
 ### Angle 3 — the compounding effect
 
-*"One source drops in and the entire wiki gets a little bit smarter. So that's the compounding effect."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:30-5:40)`
+*"One source drops in and the entire wiki gets a little bit smarter. So that's the compounding effect."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)`
 
 A new raw source doesn't just add itself. It touches 10-15 existing wiki pages (per [[ingest-pipeline]]), strengthens cross-references, may resolve previously-flagged contradictions, may reveal new ones. The wiki's value grows super-linearly with the number of sources, because each source connects to all the others through the wiki layer.
 

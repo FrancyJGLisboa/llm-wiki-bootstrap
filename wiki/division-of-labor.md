@@ -14,15 +14,15 @@ The human **curates** (chooses sources, asks questions, decides what matters). T
 
 ## Body
 
-From the video: *"The human curates questions and thinks. You pick the sources, you direct the analysis, you ask the good questions, you decide what actually matters. The LLM agent just summarizes, cross-references, and maintains. It writes all of the wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:40-6:01)`
+From the video: *"The human curates questions and thinks. You pick the sources, you direct the analysis, you ask the good questions, you decide what actually matters. The LLM agent just summarizes, cross-references, and maintains. It writes all of the wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:40)`
 
 ### Why this works
 
-The central observation, attributed to Karpathy: *"Humans abandon wikis because the maintenance burden grows faster than the value."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:07-6:14)`
+The central observation, attributed to Karpathy: *"Humans abandon wikis because the maintenance burden grows faster than the value."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:40)`
 
 It's not that people don't want knowledge bases. It's that wikis past a certain size require more bookkeeping than any single person is willing to do — updating cross-references when a concept is renamed, summarizing a new source into multiple existing pages, noticing when an old claim has gone stale. That work isn't *hard*; it's *tedious*. So it doesn't happen, and the wiki ages out.
 
-LLMs are different on exactly this axis: *"LLMs don't get bored. They don't forget to update a cross reference. They can touch 15 files in a single pass. The cost of maintenance drops to near zero."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:19-6:25)`
+LLMs are different on exactly this axis: *"LLMs don't get bored. They don't forget to update a cross reference. They can touch 15 files in a single pass. The cost of maintenance drops to near zero."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:40)`
 
 ### The split, made concrete
 
