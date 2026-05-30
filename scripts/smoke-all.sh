@@ -2,11 +2,11 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R6) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R8) into a single exit-code-
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 11 checks pass.
+# Exit 0 iff all 13 checks pass.
 
 set -euo pipefail
 
@@ -105,10 +105,29 @@ else
   record_fail "R6 verify-body-hash.sh exits non-zero (silent-data-loss guard regressed)"
 fi
 
+# R7 — typed-relations lint (was advertised + fixture-backed but never in CI).
+# Mirrors the typed-wikilinks GOAL C3/C4: good fixture passes, bad fixture
+# fails, and the meta-wiki stays backward-compatible (untyped = implicit).
+if "$SCRIPT_DIR/wiki-lint-typed-relations.sh" tests/canary/typed-related-fixture/ >/dev/null 2>&1 \
+   && ! "$SCRIPT_DIR/wiki-lint-typed-relations.sh" tests/canary/typed-related-fixture-bad/ >/dev/null 2>&1 \
+   && "$SCRIPT_DIR/wiki-lint-typed-relations.sh" wiki/ >/dev/null 2>&1; then
+  ok "R7 wiki-lint-typed-relations.sh (good=0, bad≠0, wiki/=0)"
+else
+  record_fail "R7 wiki-lint-typed-relations.sh typed-relation checks regressed"
+fi
+
+# R8 — installer oracle (single-wiki create-llm-wiki: tree shape + no dev-repo
+# string leakage + target preflight). Was a manual-only oracle; now a CI guard.
+if "$SCRIPT_DIR/verify-create-llm-wiki.sh" >/dev/null 2>&1; then
+  ok "R8 verify-create-llm-wiki.sh exits 0 (clean fresh-skeleton install)"
+else
+  record_fail "R8 verify-create-llm-wiki.sh exits non-zero (installer regression)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 11 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 13 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"
