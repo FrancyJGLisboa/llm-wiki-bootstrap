@@ -14,37 +14,37 @@ The LLM-wiki pattern applies wherever knowledge accumulates from many sources ov
 
 ## Body
 
-From the video: *"What can you build with this? This pattern applies to a lot of different domains."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35-7:42)`
+From the video: *"What can you build with this? This pattern applies to a lot of different domains."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 The five examples named in the video:
 
 ### Research
 
-*"Going deep on a topic over weeks and months, reading papers, building up a comprehensive wiki with an evolving thesis."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:42-7:49)`
+*"Going deep on a topic over weeks and months, reading papers, building up a comprehensive wiki with an evolving thesis."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 Long-horizon investigation where you read 30+ papers and need the synthesis to compound rather than re-do itself each session. Classic academic / industrial-research use.
 
 ### Personal
 
-*"You can track your goals, health, self-improvement. You can build a structured picture of yourself over time."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:49-7:55)`
+*"You can track your goals, health, self-improvement. You can build a structured picture of yourself over time."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 Raw sources: journal entries, lab results, training logs, mood notes. Wiki pages: per-goal status, evolving self-models, retrospectives. The wiki *becomes a mirror.*
 
 ### Business
 
-*"An internal wiki fed by Slack, meetings, customer calls, always current because the LLM handles maintenance."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:55-8:02)`
+*"An internal wiki fed by Slack, meetings, customer calls, always current because the LLM handles maintenance."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 The killer feature here is *always current.* Most internal wikis decay because no one wants to maintain them. With LLM maintenance, that flips. Raw sources: call transcripts, meeting notes, Slack exports, customer interviews.
 
 ### Reading
 
-*"Filling each chapter of a book, building out character and theme pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#8:02-8:08)`
+*"Filling each chapter of a book, building out character and theme pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 One raw source per chapter; entity pages for characters, locations, themes; cross-references showing how they evolve. Functions as a per-book companion knowledge base.
 
 ### Due diligence
 
-*"And due diligence — obviously."* `(source: raw/karpathy-llm-wiki-video-transcript.md#8:08-8:13)`
+*"And due diligence — obviously."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:35)`
 
 Investment, M&A, vendor evaluation — anywhere a decision rests on synthesizing many sources about a single target. Raw sources: filings, news articles, interviews, financial data, technical docs.
 

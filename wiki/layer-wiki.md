@@ -14,9 +14,9 @@ tags: [architecture, wiki, conventions]
 
 ## Body
 
-From the video: *"In the middle is the wiki itself, a directory of markdown files that the LLM owns entirely — summaries, entity pages, concept pages, comparisons. The LLM creates these, updates them when new sources come in, and maintains all the cross references, keeps everything consistent."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:59-3:18)`
+From the video: *"In the middle is the wiki itself, a directory of markdown files that the LLM owns entirely — summaries, entity pages, concept pages, comparisons. The LLM creates these, updates them when new sources come in, and maintains all the cross references, keeps everything consistent."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32)`
 
-And critically: *"The critical thing is you never write the wiki yourself. The LLM writes and maintains all of it."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:11-2:16)`
+And critically: *"The critical thing is you never write the wiki yourself. The LLM writes and maintains all of it."* `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 ### Page types `(analysis: from AGENTS.md convention)`
 

@@ -14,7 +14,7 @@ tags: [operations, ingest]
 
 ## Body
 
-From the video: *"You drop a new source into a raw folder and tell the LLM to process it. It reads the source, writes a summary page, updates the index, and cross-links it across all relevant existing pages. A single source might touch 10 to 15 wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50-4:07)`
+From the video: *"You drop a new source into a raw folder and tell the LLM to process it. It reads the source, writes a summary page, updates the index, and cross-links it across all relevant existing pages. A single source might touch 10 to 15 wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
 ### Inputs and outputs
 
@@ -23,7 +23,7 @@ From the video: *"You drop a new source into a raw folder and tell the LLM to pr
 
 ### Compounding effect
 
-The crucial property: **one new source touches many wiki pages, not one.** Ingesting a single article might create one summary page, update three concept pages (because the article's claims relate to existing ones), create two new entity pages (for people the article mentions), and add cross-links between five other pages. This is what the video calls "the entire wiki gets a little bit smarter." `(source: raw/karpathy-llm-wiki-video-transcript.md#5:30-5:45)`
+The crucial property: **one new source touches many wiki pages, not one.** Ingesting a single article might create one summary page, update three concept pages (because the article's claims relate to existing ones), create two new entity pages (for people the article mentions), and add cross-links between five other pages. This is what the video calls "the entire wiki gets a little bit smarter." `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)`
 
 For the full step-by-step, see [[ingest-pipeline]].
 

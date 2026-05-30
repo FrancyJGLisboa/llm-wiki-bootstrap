@@ -14,25 +14,25 @@ tags: [operations, query]
 
 ## Body
 
-From the video: *"You ask questions against the wiki. The LLM searches the index, reads the relevant pages, and synthesizes an answer."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:07-4:18)`
+From the video: *"You ask questions against the wiki. The LLM searches the index, reads the relevant pages, and synthesizes an answer."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
-The clever part: *"Good answers can be filed back into the wiki as new pages. So your explorations compound in the knowledge base just like ingested sources do."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:18-4:25)` See [[query-as-write-loop]] for the full mechanism.
+The clever part: *"Good answers can be filed back into the wiki as new pages. So your explorations compound in the knowledge base just like ingested sources do."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)` See [[query-as-write-loop]] for the full mechanism.
 
 ### What query looks like
 
-The video shows asking "Can you explain draw on liquidity to me?" against an already-ingested wiki. The LLM reads the relevant pages and gives a structured answer with: definition, types, qualifying/disqualifying cases, concrete examples, connections to other concepts. **No web search needed because the wiki already contains the synthesis.** `(source: raw/karpathy-llm-wiki-video-transcript.md#13:08-13:30)`
+The video shows asking "Can you explain draw on liquidity to me?" against an already-ingested wiki. The LLM reads the relevant pages and gives a structured answer with: definition, types, qualifying/disqualifying cases, concrete examples, connections to other concepts. **No web search needed because the wiki already contains the synthesis.** `(source: raw/karpathy-llm-wiki-video-transcript.md#13:08)`
 
 This is the inversion of [[problem-with-naive-rag]]: the synthesis was done at ingest time, not query time. The LLM is reading a pre-built knowledge layer, not re-piecing chunks.
 
 ### When the wiki doesn't have the answer
 
-The follow-up in the video: *"If I ask any question based on this wiki information that it doesn't have on hand, it can then do a web search and then it will go and automatically backfill the wiki with the new information that it found."* `(source: raw/karpathy-llm-wiki-video-transcript.md#13:56-14:14)`
+The follow-up in the video: *"If I ask any question based on this wiki information that it doesn't have on hand, it can then do a web search and then it will go and automatically backfill the wiki with the new information that it found."* `(source: raw/karpathy-llm-wiki-video-transcript.md#13:08)`
 
 So a query that exceeds the wiki's coverage triggers web search → answer → **promote the new knowledge** as wiki pages. The next query about the same area is fast. See [[query-as-write-loop]].
 
 ### Output formats
 
-Queries don't have to return prose. The video mentions the LLM can produce markdown files, slideshows, matplotlib images, etc. as query outputs. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40-14:56)` In this project, the `/wiki-query` slash command returns text by default; richer outputs are open for future versions.
+Queries don't have to return prose. The video mentions the LLM can produce markdown files, slideshows, matplotlib images, etc. as query outputs. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40)` In this project, the `/wiki-query` slash command returns text by default; richer outputs are open for future versions.
 
 ## Related
 

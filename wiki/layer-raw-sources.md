@@ -14,7 +14,7 @@ tags: [architecture, raw, conventions]
 
 ## Body
 
-From the video: *"Articles, papers, images, data sets, whatever you're collecting... these are your raw sources and these are immutable. The LLM reads them but never touches them. They're your source of truth."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:42-2:59)`
+From the video: *"Articles, papers, images, data sets, whatever you're collecting... these are your raw sources and these are immutable. The LLM reads them but never touches them. They're your source of truth."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32)`
 
 ### What lives here
 

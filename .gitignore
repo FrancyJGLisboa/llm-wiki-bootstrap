@@ -22,3 +22,7 @@ desktop.ini
 diagrams/
 wiki-graph.html
 anki.csv
+
+# Python bytecode
+__pycache__/
+*.pyc

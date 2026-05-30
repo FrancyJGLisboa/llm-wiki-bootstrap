@@ -14,11 +14,11 @@ When the user asks a question the wiki can't answer, the LLM web-searches for th
 
 ## Body
 
-From the video: *"If I ask any question based on this wiki information that it doesn't have on hand, it can then do a web search and then it will go and automatically backfill the wiki with the new information that it found."* `(source: raw/karpathy-llm-wiki-video-transcript.md#13:56-14:14)`
+From the video: *"If I ask any question based on this wiki information that it doesn't have on hand, it can then do a web search and then it will go and automatically backfill the wiki with the new information that it found."* `(source: raw/karpathy-llm-wiki-video-transcript.md#13:08)`
 
 ### The example
 
-In the video, the user asks: "Is there any other way to identify [draws on liquidity]? Check outside the wiki." The LLM doesn't know — the wiki doesn't have the answer. It does a web search, finds five other identification methods, gives the user an answer, and **writes new wiki pages**: `order-blocks`, `breaker-blocks`, `equal-high-lows`. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:00-14:38)`
+In the video, the user asks: "Is there any other way to identify [draws on liquidity]? Check outside the wiki." The LLM doesn't know — the wiki doesn't have the answer. It does a web search, finds five other identification methods, gives the user an answer, and **writes new wiki pages**: `order-blocks`, `breaker-blocks`, `equal-high-lows`. `(source: raw/karpathy-llm-wiki-video-transcript.md#13:08)`
 
 From this point on, future queries about any of those three concepts read from the wiki, not from web search. The cost-per-query drops; coverage grows.
 
@@ -42,7 +42,7 @@ The user can pass `--no-promote` to disable step 5 (one-off questions where the 
 
 ### The video's own framing
 
-The LLM's reply (quoted in the video) sums it up: *"This is exactly how the wiki is meant to grow. You ask a question, I researched beyond the wiki and the new knowledge got filed back as permanent pages. So every future query can now reference order blocks, breaker blocks, equal highs and lows along with the original stuff."* `(source: raw/karpathy-llm-wiki-video-transcript.md#15:25-15:46)`
+The LLM's reply (quoted in the video) sums it up: *"This is exactly how the wiki is meant to grow. You ask a question, I researched beyond the wiki and the new knowledge got filed back as permanent pages. So every future query can now reference order blocks, breaker blocks, equal highs and lows along with the original stuff."* `(source: raw/karpathy-llm-wiki-video-transcript.md#15:10)`
 
 ## Related
 

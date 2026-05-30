@@ -37,13 +37,13 @@ See [[source-attribution]] for the full provenance discussion and the gaps.
 ## Key quotes (relayed via the YouTuber, attributed to Karpathy)
 
 > "The LLM incrementally builds and maintains a persistent wiki — structured, interlinked markdown files sitting between you and your raw sources."
-> `(source: raw/karpathy-llm-wiki-video-transcript.md#2:01-2:31)`
+> `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 > "Humans abandon wikis because the maintenance burden grows faster than the value."
-> `(source: raw/karpathy-llm-wiki-video-transcript.md#6:07-6:14)`
+> `(source: raw/karpathy-llm-wiki-video-transcript.md#5:40)`
 
 > "Nothing accumulates. Every time you ask a question, the LLM is rediscovering knowledge from scratch."
-> `(source: raw/karpathy-llm-wiki-video-transcript.md#1:15-1:25)`
+> `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 ## Pages touched on first ingest
 

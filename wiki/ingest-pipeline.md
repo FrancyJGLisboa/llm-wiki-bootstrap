@@ -14,21 +14,21 @@ The seven-step procedure that [[operation-ingest]] runs for each raw source. Rea
 
 ## Body
 
-Verbatim from the video: *"What happens when you ingest a source — because this is where the real power in this is."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46-5:00)`
+Verbatim from the video: *"What happens when you ingest a source — because this is where the real power in this is."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)`
 
 | # | Step | What it does |
 |---|---|---|
 | 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-extract`. |
-| 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:55-5:00)` |
-| 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:00-5:04)` |
-| 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:04-5:11)` |
-| 5 | **Flag contradictions** | If a new claim conflicts with an existing one, the LLM marks it visibly. *"When new data conflicts with existing claims."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:11-5:18)` |
-| 6 | **Update the index** | `wiki/index.md` — the master catalog — gets a new entry for each created page. Per the source slide, each entry is "a catalog entry with link and **one-line summary**." `(source: raw/karpathy-llm-wiki-video-transcript.md#5:18-5:23)` `(source: raw/karpathy-video-slide-ingest-pipeline.png.md#step-06)` |
-| 7 | **Append to the log** | A timestamped record in `log.md`: what raw was processed, which pages created/updated, which contradictions flagged. The file name `log.md` is mandated by the source slide (the transcript only says "the log" generically). `(source: raw/karpathy-llm-wiki-video-transcript.md#5:23-5:30)` `(source: raw/karpathy-video-slide-ingest-pipeline.png.md#step-07)` |
+| 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
+| 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
+| 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
+| 5 | **Flag contradictions** | If a new claim conflicts with an existing one, the LLM marks it visibly. *"When new data conflicts with existing claims."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
+| 6 | **Update the index** | `wiki/index.md` — the master catalog — gets a new entry for each created page. Per the source slide, each entry is "a catalog entry with link and **one-line summary**." `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` `(source: raw/karpathy-video-slide-ingest-pipeline.png.md#body-verbatim-numbered-0107)` |
+| 7 | **Append to the log** | A timestamped record in `log.md`: what raw was processed, which pages created/updated, which contradictions flagged. The file name `log.md` is mandated by the source slide (the transcript only says "the log" generically). `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` `(source: raw/karpathy-video-slide-ingest-pipeline.png.md#body-verbatim-numbered-0107)` |
 
 ### The compounding outcome
 
-After all seven steps: *"one source drops in and the entire wiki gets a little bit smarter."* `(source: raw/karpathy-llm-wiki-video-transcript.md#5:30-5:40)` This is why a single ingest typically touches **10 to 15 wiki pages**, not just one. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:01-4:07)`
+After all seven steps: *"one source drops in and the entire wiki gets a little bit smarter."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` This is why a single ingest typically touches **10 to 15 wiki pages**, not just one. `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
 ### How `/wiki-ingest` implements this `(analysis)`
 

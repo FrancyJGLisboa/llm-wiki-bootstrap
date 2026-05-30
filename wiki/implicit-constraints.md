@@ -44,7 +44,7 @@ Without WebSearch, [[operation-query]] can only return what's in the wiki — no
 
 ### 7. Knowledge compounds: every write touches multiple files
 
-[[ingest-pipeline]] step 4 ("update existing entity / concept pages") means a single source typically writes to many pages, not one. If your implementation only writes a single summary page per ingest, you've lost the compounding effect. The video is explicit: *"a single source might touch 10 to 15 wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:01-4:07)`
+[[ingest-pipeline]] step 4 ("update existing entity / concept pages") means a single source typically writes to many pages, not one. If your implementation only writes a single summary page per ingest, you've lost the compounding effect. The video is explicit: *"a single source might touch 10 to 15 wiki pages."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
 ### 8. Maintenance is a first-class operation, not an afterthought
 

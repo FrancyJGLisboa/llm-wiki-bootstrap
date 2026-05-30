@@ -14,15 +14,15 @@ Naive Retrieval-Augmented Generation (RAG) — the "upload files, ask questions,
 
 ## Body
 
-In the dominant LLM-with-documents UX (ChatGPT file uploads, NotebookLM, most chat-with-your-PDF tools), each question triggers a retrieval pass: the system finds N chunks that look relevant, hands them to the LLM, and the LLM produces an answer. `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51-1:15)`
+In the dominant LLM-with-documents UX (ChatGPT file uploads, NotebookLM, most chat-with-your-PDF tools), each question triggers a retrieval pass: the system finds N chunks that look relevant, hands them to the LLM, and the LLM produces an answer. `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 This works fine for shallow questions. It fails — or at least wastes effort — when:
 
-- A question requires synthesizing claims from 5+ documents. The LLM has to find and connect those pieces *every single time you ask anything similar.* `(source: raw/karpathy-llm-wiki-video-transcript.md#1:20-1:32)`
+- A question requires synthesizing claims from 5+ documents. The LLM has to find and connect those pieces *every single time you ask anything similar.* `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 - A contradiction across sources needs to be noticed and flagged. Naive RAG doesn't compare retrieved chunks against each other for consistency.
 - Cross-references between concepts would be useful as standing knowledge. Naive RAG has nowhere to put them.
 
-In the video's framing: *"Nothing accumulates. Every time you ask a question, the LLM is rediscovering knowledge from scratch. It's repiecing together fragments every single time."* `(source: raw/karpathy-llm-wiki-video-transcript.md#1:15-1:25)`
+In the video's framing: *"Nothing accumulates. Every time you ask a question, the LLM is rediscovering knowledge from scratch. It's repiecing together fragments every single time."* `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
 The [[core-idea]] of the LLM-wiki pattern inverts this. Instead of retrieving at query time, the LLM **builds the synthesis up front** into a persistent wiki layer. Cross-refs are already there. Contradictions are already flagged. The wiki *is* the accumulated understanding. See [[operation-ingest]] for how this gets written, and [[operation-query]] for how reading the wiki replaces the retrieval pass.
 

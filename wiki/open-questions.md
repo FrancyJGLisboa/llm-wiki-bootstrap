@@ -56,7 +56,7 @@ The smoke test is the first invocation of `/wiki-ingest <new-source>`. Until the
 
 ### Concurrency
 
-The video mentions the YouTuber's Claude Code running *two parallel ingest agents* during the initial ingestion of 8 transcripts. `(source: raw/karpathy-llm-wiki-video-transcript.md#11:50-12:05)` But it doesn't say:
+The video mentions the YouTuber's Claude Code running *two parallel ingest agents* during the initial ingestion of 8 transcripts. `(source: raw/karpathy-llm-wiki-video-transcript.md#10:08)` But it doesn't say:
 
 - What happens if both agents try to update the same wiki page simultaneously?
 - Should `/wiki-ingest` run sources serially or in parallel by default?
@@ -143,7 +143,7 @@ The video shows an `index` page that's the "master catalog." But:
 
 ### Where do derived artifacts live?
 
-The video mentions the LLM can output slideshows, markdown files, matplotlib images as query results. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40-14:56)` Where do these go?
+The video mentions the LLM can output slideshows, markdown files, matplotlib images as query results. `(source: raw/karpathy-llm-wiki-video-transcript.md#14:40)` Where do these go?
 
 - In `wiki/` (mixed with knowledge pages)? Probably bad — they're outputs, not knowledge.
 - In a separate `outputs/` directory? Possibly.
@@ -151,7 +151,7 @@ The video mentions the LLM can output slideshows, markdown files, matplotlib ima
 
 ### Fine-tuning loop
 
-[[four-principles]] #4 (BYO AI) mentions you can *"fine-tune a model on your wiki so it knows your data in its weights."* `(source: raw/karpathy-llm-wiki-video-transcript.md#7:24-7:30)` This implies a workflow:
+[[four-principles]] #4 (BYO AI) mentions you can *"fine-tune a model on your wiki so it knows your data in its weights."* `(source: raw/karpathy-llm-wiki-video-transcript.md#6:25)` This implies a workflow:
 
 - Export the wiki as training data
 - Fine-tune (LoRA?) on it

@@ -14,7 +14,7 @@ The LLM-wiki pattern is structured as three layers: **raw sources** (immutable, 
 
 ## Body
 
-From the video: *"The basic architecture has three different layers based on what Karpathy was describing, and it's fairly clean."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32-2:42)`
+From the video: *"The basic architecture has three different layers based on what Karpathy was describing, and it's fairly clean."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32)`
 
 | Layer | Path in this project | Owned by | Mutates? |
 |---|---|---|---|
@@ -24,7 +24,7 @@ From the video: *"The basic architecture has three different layers based on wha
 
 ### The video's analogy
 
-The YouTuber summarizes the architecture as: *"The wiki is a codebase, Obsidian is the IDE, the LLM is the programmer, and the schema is the style guide."* `(source: raw/karpathy-llm-wiki-video-transcript.md#3:35-3:50)`
+The YouTuber summarizes the architecture as: *"The wiki is a codebase, Obsidian is the IDE, the LLM is the programmer, and the schema is the style guide."* `(source: raw/karpathy-llm-wiki-video-transcript.md#2:32)`
 
 In this project we deliberately drop the "Obsidian is the IDE" part — see [[implicit-constraints]]. The wiki is still the codebase and the LLM still the programmer, but there is **no required viewer**. Read the markdown with `cat`, a code editor's preview, GitHub web, or Obsidian if you happen to like it. The system depends on none.
 
