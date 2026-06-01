@@ -11,11 +11,13 @@ LICENSE
 .claude/commands/wiki-ingest.md
 .claude/commands/wiki-query.md
 .claude/commands/wiki-lint.md
+.claude/commands/wiki-learn.md
 .claude/commands/init.md
 .claude/commands/extract.md
 .claude/commands/ingest.md
 .claude/commands/query.md
 .claude/commands/lint.md
+.claude/commands/learn.md
 .claude/commands/wiki-visualize.md
 .claude/commands/visualize.md
 .claude/commands/wiki-flashcards.md

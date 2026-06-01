@@ -92,3 +92,30 @@ judge can be wrong both ways: (a) too lenient if you parse its output badly,
 evidence you feed it and the parsing of its answer. A green that can't catch a
 planted failure is theater; a red that flags a planted-faithful case is noise.
 Both waste trust. The fixture lives at `tests/eval/faithfulness-fixture/`.
+
+---
+
+## 2026-06-01 — any new command that emits citations must produce *resolvable* anchors (with `.md`)
+
+**Rule:** When authoring a command that writes `(source: raw/…#anchor)`
+citations (e.g. `/wiki-learn`), the citation must (a) include the **`.md`
+extension** on the raw filename — `raw/session-2026-06-01.md#turn-7`, not
+`raw/session-2026-06-01#turn-7` — and (b) point at an anchor the floor can
+resolve: a **heading slug**, a `#L<n>` line range, or a `#M:SS` timestamp. If
+the captured raw is a free-form list, give each cited item a real heading
+(`## turn-7` → slug `turn-7`) so the anchor resolves. Prove it before shipping:
+`python3 scripts/citation-audit.py <wiki> --raw <raw>` must report 0 broken.
+
+**Why:** `scripts/citation-audit.py` C1 checks `raw/<file>` exists *literally*
+(no extension = "file missing"), and C2 checks the anchor *resolves* (not just
+that the file exists). `/wiki-learn`'s first draft cited
+`raw/session-<date>#turn-N` with the fact as a prose line — so C1 failed (no
+`.md`) and, once fixed, C2 would have failed too (no heading named `turn-N`).
+Both are invisible to the `--no-build` smoke suite, which only audits the
+*committed* fixtures, never the new command's output. The bug surfaced only by
+running the loop's actual output through the audit.
+
+**When to apply:** authoring or editing any command/template that emits
+citations. Don't trust "smoke green" — that proves old fixtures resolve, not
+that your new command's citations do. Run `citation-audit.py` on a scratch wiki
+built from the new command's output. R9 enforces the floor repo-wide.

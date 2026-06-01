@@ -12,6 +12,10 @@ The five slash commands live at `.claude/commands/wiki-*.md`:
 - `/wiki-query <question>` — answer from wiki; web-search + promote on gaps; `--visual [html|pdf|png]` also emits a diagram of the answer
 - `/wiki-lint [--apply]` — find issues; report or apply fixes
 
+One further **self-updating-brain** command turns a *conversation* into wiki knowledge (where `/wiki-ingest` processes *raw files* you extracted):
+
+- `/wiki-learn [<transcript>] [--dry-run] [--scope-dir <path>]` — distill a session into durable facts, pass them through a notability gate, capture as a `raw/session-*.md` source, then ingest. The **write** half of a self-updating brain; composes `/wiki-extract` + `/wiki-ingest`. The **read** half is plain `/wiki-query`.
+
 Plus two **output commands** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):
 
 - `/wiki-visualize [graph|mermaid|slides|serve] [target]` — graph / slides / mermaid / local server; wraps `scripts/visualize/*` (mechanical: renders existing structure)
@@ -21,6 +25,7 @@ Plus two **output commands** that render/export an already-built wiki (read-only
 Two **factory commands** generate and catalog *other* wikis (they live in this repo only — they are not shipped into the wikis they create):
 
 - `/wiki-new <name> --domain "<description>"` — scaffold a new domain-shaped wiki and register it; wraps `scripts/new-wiki.sh` (which reuses `scripts/create-llm-wiki.sh`)
+- `/wiki-skill <name> --domain "<description>" [--scope per-user|shared]` — like `/wiki-new`, but also wraps the new wiki as a **self-updating agent skill**: adds a `SKILL.md` whose operating procedure is read=`/wiki-query`, write=`/wiki-learn`. Delegates wiki creation to `/wiki-new`.
 - `/wiki-registry [prune]` — list / prune the workspace catalog (`registry.jsonl`); wraps `scripts/registry.sh`
 
 See `AGENTS.md` → "Generating new wikis (the factory)".
