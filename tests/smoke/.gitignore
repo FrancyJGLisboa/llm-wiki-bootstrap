@@ -1,2 +1,3 @@
-output/last-answer.md
+# output/last-answer.md is tracked as the C4 baseline artifact (the captured
+# query answer the no-LLM CI path verifies) — like output/baseline-wiki.txt.
 output/build.log
