@@ -4,6 +4,30 @@ Project-scoped lessons. Lead with the rule, then `Why:` and `When to apply:`.
 
 ---
 
+## 2026-06-01 — shell scripts are macOS-authored but run in Ubuntu CI: force byte locale, don't trust local green
+
+**Rule:** Any awk/sed that manipulates non-ASCII bytes (em-dash, etc.) must run
+under `LC_ALL=C` so it stays byte-oriented. A passing run on macOS's BSD awk
+proves nothing about Ubuntu CI, where gawk/mawk in a UTF-8 locale treat the same
+bytes as multi-byte codepoints. Also: a `--no-build`/offline CI path can only
+verify *committed* artifacts — anything gitignored as a build product (e.g.
+`tests/smoke/output/last-answer.md`) must be tracked as a baseline or the check
+fails on a fresh checkout.
+
+**Why:** `wiki-lint-typed-relations.sh` built the em-dash via
+`sprintf("%c%c%c",226,128,148)` and matched it with `index()`. On BSD awk that
+yields the 3 raw bytes (R7 green locally); on Ubuntu CI's UTF-8 awk each `%c`
+became a 2-byte char, so `index()` never matched and verbs were miscounted (R7
+red). Separately, C4 reads the captured query answer, which was gitignored — CI
+had no file to assert on. Both were invisible until the PR's Ubuntu run; local
+macOS green was a false signal.
+
+**When to apply:** Before claiming "CI-verified" — actually push and watch the
+Ubuntu run, never infer it from a macOS pass. Any new shell check touching
+non-ASCII, or any CI assertion on a generated artifact.
+
+---
+
 ## 2026-05-30 — body-hash.sh frontmatter validation must allow body `---` rules
 
 **Rule:** When guarding `scripts/body-hash.sh` (and `verify-extract.sh`) against
