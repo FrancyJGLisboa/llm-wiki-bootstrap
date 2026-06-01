@@ -1,27 +1,29 @@
 # llm-wiki-bootstrap
 
-A starter kit for personal LLM-wiki knowledge bases. Five slash commands let you (or any user) build, ingest into, query, and maintain a wiki — operated entirely from an AI agentic tool, no UI required.
+[![CI](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-The pattern is Andrej Karpathy's: an LLM incrementally builds and maintains a persistent, interlinked markdown wiki sitting between you and your raw sources. You curate sources and ask questions; the LLM does all the writing, cross-referencing, and maintenance.
+**An LLM builds and maintains your personal wiki for you.** You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep — a persistent, interlinked markdown knowledge base that lives between you and your sources. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian. The pattern is Andrej Karpathy's.
 
-The wiki that ships with this repo is *meta*: it's a wiki about the LLM-wiki pattern itself. Read it via [`wiki/index.md`](wiki/index.md). Keep it as living documentation, or wipe it and start your own.
+![/wiki-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
-## Quick start
+> A replay of a real `/wiki-query` against the shipped demo wiki — the answer text is verbatim; terminal timing is illustrative. Reproduce it yourself with the block below (zero setup).
 
-**Prerequisite:** an agentic AI tool. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude` on your `$PATH`); other tools work too — see [Tool support](#tool-support).
+## Quick start — first answer in one block
+
+**You need one thing:** an agentic AI tool on your `$PATH`. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude`); [other tools work too](#tool-support). Then:
 
 ```bash
 git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
 cd my-wiki && claude          # open Claude Code in the repo
 ```
 
-The repo ships with a working demo wiki, so the very first command already returns an answer — no setup:
+The repo ships with a working demo wiki, so the **very first command already returns an answer — zero setup:**
 
 ```
 /wiki-query "what is an llm-wiki, and why not just use RAG?"   # answered from the shipped wiki
 ```
 
-Then start building your own knowledge base:
+That's the whole pitch: you just queried a knowledge base nobody hand-wrote. Now make it yours — start building your own:
 
 ```
 /wiki-extract https://example.com/some-article   # pull a source into raw/
@@ -29,7 +31,9 @@ Then start building your own knowledge base:
 /wiki-query "what does that article say about X?"  # ask — answers now include your source
 ```
 
-That's the whole loop. **Make it yours:** keep adding sources alongside the demo, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
+That's the whole loop. The wiki that ships here is *meta* — a wiki about the LLM-wiki pattern itself ([`wiki/index.md`](wiki/index.md)), there as a working example. **Make it yours:** keep adding sources alongside it, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
+
+> **The block above is the one and only start-here.** Not on Claude Code? [`docs/QUICKSTART.md`](docs/QUICKSTART.md) has the same loop as a command sequence for Cursor, Cline, Copilot, Gemini, and Codex.
 
 ## Install details
 
@@ -202,8 +206,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── AGENTS.md                       # canonical schema (read by AI tools) — schema v2
 ├── CLAUDE.md                       # shim → points to AGENTS.md
 ├── GEMINI.md                       # shim → points to AGENTS.md
-├── README.md                       # this file (dev-side)
-├── README-FRESH.md                 # template used by the installer for fresh skeletons
+├── README.md                       # this file (dev-side) — the one and only entry point
 ├── log.md                          # append-only log of ingests, schema bumps, infra changes
 ├── .claude/
 │   └── commands/                   # Claude Code slash commands (canonical + aliases)
@@ -253,7 +256,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │       ├── render.sh               # HTML poster → PDF/PNG (chrome/puppeteer; graceful fallback)
 │       └── verify-visualizers.sh   # smoke harness (V1–V5 + render checks)
 ├── templates/
-│   └── journal-entry.md            # template for wiki/journal/YYYY-MM-DD-*.md entries
+│   ├── journal-entry.md            # template for wiki/journal/YYYY-MM-DD-*.md entries
+│   └── README-fresh.md             # installer ships this as a fresh wiki's README.md (no demo content)
 ├── tests/
 │   ├── canary/                     # tiny known-good fixtures (shape-level smokes)
 │   │   ├── canary-smoke-test.md
@@ -297,7 +301,7 @@ V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, an
 
 The **multi-wiki factory** (`/wiki-new`, `/wiki-registry`) now exists: it generates domain-shaped wikis into a workspace and tracks them in a local `registry.jsonl`. Its deterministic half (`scripts/new-wiki.sh`, `scripts/registry.sh`) is shell-verified by `scripts/verify-multi-wiki.sh` (checks M1–M5, all green), and the existing single-wiki installer oracle (`scripts/verify-create-llm-wiki.sh`) still passes unchanged — the factory was built additively on top of it. *Remote/published* registry publishing, template snapshotting, richer outputs, and parallel-ingest concurrency are still future work.
 
-**Runtime behaviour is untested.** The wiki was bootstrapped by direct file writes during the design conversation, not by `/wiki-ingest`. Your first real invocation of any slash command is the smoke test — expect minor wording adjustments to the command prompts after the first use.
+**The Claude Code happy path is verified end-to-end.** Two harnesses guard it. `scripts/smoke-all.sh` — 14 deterministic checks (extract → ingest → query, body-hash idempotence, installer, factory) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed). `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 

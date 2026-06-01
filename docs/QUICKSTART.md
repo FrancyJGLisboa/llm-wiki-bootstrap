@@ -12,10 +12,10 @@ cd my-wiki && claude
 Then, inside Claude Code:
 
 ```
-/wiki-query "what is an llm-wiki?"   # instant answer from the shipped demo wiki — no setup
-/wiki-extract <your-url>             # add your own source
-/wiki-ingest                          # integrate it
-/wiki-query "..."                    # ask about it
+/wiki-query "what is an llm-wiki, and why not just use RAG?"   # instant answer from the shipped demo — no setup
+/wiki-extract <your-url>                              # add your own source
+/wiki-ingest                                          # integrate it
+/wiki-query "what does that article say about X?"     # ask about it
 ```
 
 That's the loop. Everything below is depth — per-tool setup, the optional smoke test, cost, recovery. Skip to [The 5 operations](#the-5-operations) if you just want the commands.

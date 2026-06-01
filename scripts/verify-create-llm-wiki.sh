@@ -41,7 +41,7 @@ find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -exec rm -rf {} 
 # Pre-flight: manifest + installer + templates must exist.
 [ -f "$MANIFEST" ] || { fail "manifest missing: $MANIFEST"; exit 1; }
 [ -x "scripts/create-llm-wiki.sh" ] || { fail "installer missing or not executable"; exit 1; }
-[ -f README-FRESH.md ] || { fail "README-FRESH.md missing"; exit 1; }
+[ -f templates/README-fresh.md ] || { fail "templates/README-fresh.md missing"; exit 1; }
 [ -f wiki/index-FRESH.md ] || { fail "wiki/index-FRESH.md missing"; exit 1; }
 
 # Create temp target.
@@ -111,9 +111,9 @@ fi
 # FRESH templates, not the dev versions (the exact leakage scenario "karpathy" in
 # I4(b) was a proxy for, now caught cryptographically).
 substitution_ok=yes
-if ! cmp -s "$TGT/README.md" "README-FRESH.md"; then
-  fail "I4(d) target README.md does not match README-FRESH.md"
-  diff "README-FRESH.md" "$TGT/README.md" | head -20 | sed 's/^/    /' >&2
+if ! cmp -s "$TGT/README.md" "templates/README-fresh.md"; then
+  fail "I4(d) target README.md does not match templates/README-fresh.md"
+  diff "templates/README-fresh.md" "$TGT/README.md" | head -20 | sed 's/^/    /' >&2
   substitution_ok=no
 fi
 if ! cmp -s "$TGT/wiki/index.md" "wiki/index-FRESH.md"; then

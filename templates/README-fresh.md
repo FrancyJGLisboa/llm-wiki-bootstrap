@@ -14,7 +14,7 @@ Open this directory in [Claude Code](https://docs.anthropic.com/claude/code) (`c
 /wiki-query "what does that article say about X?"  # ask
 ```
 
-That's the whole loop — repeat with every new source. Other tools (Cursor, Cline, Copilot, Gemini CLI, Codex) work too via natural-language invocation of the same workflows.
+That's the whole loop — repeat with every new source. **You don't need to read `AGENTS.md` to start** — the commands are self-contained; it's the deep schema, there for when you want to customise. Other tools (Cursor, Cline, Copilot, Gemini CLI, Codex) work too via natural-language invocation of the same workflows.
 
 Optional: `./scripts/preflight.sh` confirms hard requirements and which extraction formats your environment supports first-try.
 
@@ -30,7 +30,7 @@ Each command has a short form (no `wiki-` prefix) — both work identically. Use
 | `/wiki-query <question>` | `/query` | Answer from the wiki. If a gap, web-search and auto-promote the new knowledge as wiki pages. `--no-promote` suppresses promotion. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query). |
 | `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
-Full spec: read `AGENTS.md` (the canonical schema) and `wiki/commands.md` once that page exists.
+Going deeper (optional): `AGENTS.md` is the canonical schema — but you don't need it for the workflow above.
 
 ### Output commands
 
