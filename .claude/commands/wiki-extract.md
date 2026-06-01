@@ -1,7 +1,7 @@
 ---
 description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) — or pasted inline text (--text) — into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
 allowed-tools: Bash, Read, Write, WebFetch
-argument-hint: <url-or-filepath> [<url-or-filepath> ...]  |  --text [--title "<title>"] <pasted text>
+argument-hint: <url-or-filepath> [<url-or-filepath> ...]  |  --text [--title "<title>"] [--source-type <value>] <pasted text>
 ---
 
 You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one or more sources and deposit each in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
@@ -16,10 +16,10 @@ Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug n
 
 If the first whitespace-delimited token of `$ARGUMENTS` is exactly `--text`, switch to **inline-text mode**. Skip both the bulk-split logic and the Step 1 type detection — the argument is *content*, not a path or URL.
 
-1. **Parse flags.** An optional `--title "<title>"` may immediately follow `--text`; if present, consume it. **Everything after the flag(s) is the literal source content** — never whitespace-split it, never treat its tokens as separate sources, never strip or interpret it beyond reading the `--title` value.
+1. **Parse flags.** Optional `--title "<title>"` and/or `--source-type <value>` may immediately follow `--text` (in any order); if present, consume them. **Everything after the flag(s) is the literal source content** — never whitespace-split it, never treat its tokens as separate sources, never strip or interpret it beyond reading the `--title` / `--source-type` values.
 2. **Title.** If `--title` was given, use it. If not, **ask the user once** for a short title (used for the slug and `source_title`); do not invent one silently from the content.
 3. **Slug.** Kebab-case the title (drop punctuation). On collision with an existing `raw/` file, append a date suffix (`-YYYY-MM-DD`), per Step 2's rule.
-4. **Write** the content verbatim (UTF-8) to `raw/<slug>.md`, then prepend the Step 4 frontmatter with: `source_url: n/a`, `source_type: note` (or a better-fitting open value if the content is obviously a tweet / chat / meeting-notes / etc.), `extraction_method: passthrough`, and `extraction_status` omitted (it is `ok`).
+4. **Write** the content verbatim (UTF-8) to `raw/<slug>.md`, then prepend the Step 4 frontmatter with: `source_url: n/a`, `extraction_method: passthrough`, and `extraction_status` omitted (it is `ok`). For `source_type`: use the `--source-type <value>` if given (e.g. `interaction` when capturing a session for `/wiki-learn`); otherwise default to `note` (or a better-fitting open value if the content is obviously a tweet / chat / meeting-notes / etc.). The value is passed through verbatim — `source_type` is an open enum (see `AGENTS.md`).
 5. **Verify** (Step 5) and emit the **single-source** output block.
 
 **`--text` is single-source only.** Because it consumes the rest of the line as content, it cannot be combined with URLs/files in the same invocation — run those in a separate `/wiki-extract`. That single-flag delimiter is what keeps pasted prose unambiguous against bulk multi-source input (so the paste is never shredded into tokens). No quoting of the content is required.
@@ -118,7 +118,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 - Set `ingested_hash` to a non-empty value (that's `/wiki-ingest`'s job).
 - Process the content into wiki pages (that's the next command).
 - Run with no argument. If `$ARGUMENTS` is empty, ask the user what to fetch.
-- In inline-text mode, whitespace-split the content or treat its words as separate sources. The text after `--text` (and an optional `--title "..."`) is **one** source, written verbatim.
+- In inline-text mode, whitespace-split the content or treat its words as separate sources. The text after `--text` (and optional `--title "..."` / `--source-type <value>` flags) is **one** source, written verbatim.
 
 ## Output
 

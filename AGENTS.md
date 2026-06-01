@@ -46,6 +46,8 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 
 Full spec lives at [`wiki/commands.md`](wiki/commands.md). Canonical implementations at `.claude/commands/wiki-*.md`; the short-form aliases at `.claude/commands/{init,extract,ingest,query,lint}.md` are thin delegators.
 
+**Self-updating brains — `/wiki-learn` (`/learn`).** One further lifecycle command turns an **interaction** into wiki knowledge, making the wiki the live, self-updating "brain" of an agent skill. It is a thin composition of the two existing write primitives plus a notability gate: it distills a session into durable, novel facts, gates them (durable ∧ novel ∧ attributable ∧ in-scope; tagged `preference` vs `factual`, with a privacy guard), captures the kept ones as a `raw/session-*.md` source (`source_type: interaction`) via `/wiki-extract --text --source-type interaction`, then `/wiki-ingest`s them — citing the originating turn and applying **latest-wins-with-trail** for contradictions. It never writes `wiki/` directly; the three-layer ownership model is untouched (writes flow raw → wiki). `--dry-run` reports gate decisions without writing; `--scope-dir <path>` targets one brain among many (per-user layout). Canonical: `.claude/commands/wiki-learn.md`.
+
 Two further **output commands** (`/wiki-visualize`, `/wiki-flashcards`) sit alongside the five — they render or export an already-built wiki rather than participating in the acquire→maintain loop. See below.
 
 ### Output commands
@@ -81,11 +83,12 @@ The **score** is the sum of four sub-dimensions (see `scoring-rubric.md`); a can
 
 ## Generating new wikis (the factory)
 
-This repo is also a **factory**: it can generate *other* wikis, each pre-shaped for a domain and tracked in a local catalog. These two commands are **factory-only** — they live here and do **not** ship inside the wikis they produce (a generated wiki is a leaf, not itself a factory).
+This repo is also a **factory**: it can generate *other* wikis, each pre-shaped for a domain and tracked in a local catalog. These commands are **factory-only** — they live here and do **not** ship inside the wikis they produce (a generated wiki is a leaf, not itself a factory).
 
 | Prefixed | Short | Purpose |
 |---|---|---|
 | `/wiki-new <name> --domain "<description>"` | `/new` | Generate a new wiki shaped for `<description>`: a deterministic skeleton (`scripts/new-wiki.sh`, which reuses `scripts/create-llm-wiki.sh`) plus an LLM-authored domain layer — a `## Domain conventions` section in the new wiki's `AGENTS.md`, a navigation `index.md`, and 3–5 seed pages. Registers the result in the workspace catalog. |
+| `/wiki-skill <name> --domain "<description>" [--scope per-user\|shared]` | — | Like `/wiki-new`, but additionally wraps the new wiki as a **self-updating agent skill**: authors a `SKILL.md` whose operating procedure is read = `/wiki-query --no-promote`, write = `/wiki-learn`. Delegates wiki creation to `/wiki-new`; `--scope` defaults to `per-user`. |
 | `/wiki-registry [prune]` | `/wikis` | List every generated wiki (name, domain, seeded status, drift) from the catalog. Thin wrapper over `scripts/registry.sh`. `prune --apply` drops dangling entries. |
 
 **Layout.** Generated wikis live under a **workspace** (default `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`), each its own `git`-initialized repo, with a `registry.jsonl` catalog at the workspace root. The `--target <path>` escape hatch creates an independent repo anywhere instead, registered by absolute path (`in_workspace:false`). The registry always lives at the workspace root, even for `--target` wikis.
@@ -210,7 +213,7 @@ Every raw file starts with frontmatter:
 ```yaml
 ---
 source_url: <url|n/a>
-source_type: video-transcript | tweet | article | image | pdf | docx | xlsx | csv | chat | book-chapter | meeting-notes | ...
+source_type: video-transcript | tweet | article | image | pdf | docx | xlsx | csv | chat | book-chapter | meeting-notes | note | interaction | ...
 source_title: "..."
 source_author: "..."
 fetched_at: YYYY-MM-DD
