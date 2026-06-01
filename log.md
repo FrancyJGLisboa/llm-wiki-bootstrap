@@ -2,6 +2,16 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-01 — conversion pass: prove it runs, show it, one start-here, CI
+
+First-visitor → adoption polish. The decisive change: the README no longer says "Runtime behaviour is untested" — because it now *is* tested. The Claude Code happy path is proven end-to-end (`scripts/eval-onboarding.sh` drives `claude -p` as a fresh newcomer through extract→ingest→query and confirms they reach the right answer). Durable wins: C1 (pipeline reaches the correct answer) reliably green, and C2 (one unambiguous start-here) structurally fixed by the README-FRESH move. The post-change run scored 5/5; C3 (agent write-before-read) and C4 (AGENTS.md probe) have run-to-run variance, so treat 5/5 as a ceiling, not a guarantee.
+
+- **README hero rewrite** — one 10-second pitch, a real demo GIF (`assets/demo.gif`, a genuine `/wiki-query` against the shipped wiki, recorded via asciinema→agg), CI + License badges, and a single copy-paste "first answer in one block." Disclaimers and the meta-wiki keep/wipe decision moved below the fold.
+- **Removed the "untested" disclaimer**, replaced with the truth: the happy path is verified by `smoke-all.sh` (14 deterministic checks, in CI) + `eval-onboarding.sh`.
+- **One start-here** — moved `README-FRESH.md` → `templates/README-fresh.md`. There is now exactly one README at the repo root; the fresh-wiki template no longer reads as a competing entry point (this is what flipped onboarding check C2). Updated consumers: `create-llm-wiki.sh`, `verify-create-llm-wiki.sh` (R8 still green), `eval-onboarding.sh` judge path, README tree.
+- **CI** — new `.github/workflows/ci.yml` runs `scripts/smoke-all.sh --no-build` (new flag: skip the LLM build phase, verify committed artifacts + R1–R9; no API key / no `claude` needed). Badge on README line 1.
+- No schema change. Deferred (not done): launch kit, per-tool smoke expansion, `/wiki-verify`, CONTRIBUTING/issue templates, release tag.
+
 ## 2026-05-29 — visual answers: /wiki-query --visual (html/pdf/png)
 
 `/wiki-query` can now return a **diagram of its answer** alongside the text, in html / pdf / png, reusing the vendored Infographic-extractor archetype system (no new design system). This ships into generated wikis (it's an operating command), so any produced wiki can answer visually.

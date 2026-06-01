@@ -46,7 +46,11 @@ total_bad=0
 #   one BAD line per malformed verb (to stderr)
 #   one summary line per file to stdout: "<file> typed N implicit N multi N bad N"
 for file in "${files[@]}"; do
-  out=$(awk -v file="$file" '
+  # LC_ALL=C forces byte-oriented awk so sprintf("%c", 226) yields the raw
+  # em-dash byte (0xE2), not a UTF-8 codepoint. Without it, gawk/mawk under a
+  # UTF-8 locale (e.g. Ubuntu CI) emit multi-byte chars and the em-dash index()
+  # below never matches — silently miscounting typed/bad verbs.
+  out=$(LC_ALL=C awk -v file="$file" '
     BEGIN { in_related = 0; typed = 0; implicit = 0; multi = 0; bad = 0 }
 
     /^## Related[[:space:]]*$/ { in_related = 1; next }

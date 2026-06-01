@@ -7,12 +7,21 @@
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
 # Exit 0 iff all 14 checks pass.
+#
+# --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
+#   only the 14 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R9 guards). This is the CI path — the build phase is a precondition that
+#   regenerates artifacts, not one of the counted checks, so the committed-in
+#   artifacts are verified as-is.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
+
+BUILD=1
+[ "${1:-}" = "--no-build" ] && BUILD=0
 
 if [ -t 1 ]; then
   RED=$'\033[31m'; GREEN=$'\033[32m'; DIM=$'\033[2m'; RESET=$'\033[0m'
@@ -28,11 +37,15 @@ failures=0
 record_fail() { fail "$1"; failures=$((failures + 1)); }
 
 # ──── BUILD PHASE ────
-section "Build phase (LLM, idempotent)"
-if ! "$SCRIPT_DIR/smoke-build.sh"; then
-  record_fail "smoke-build.sh failed (see tests/smoke/output/build.log)"
-  printf "\n%sAborting: build phase did not complete.%s\n" "$RED" "$RESET"
-  exit 1
+if [ "$BUILD" = 1 ]; then
+  section "Build phase (LLM, idempotent)"
+  if ! "$SCRIPT_DIR/smoke-build.sh"; then
+    record_fail "smoke-build.sh failed (see tests/smoke/output/build.log)"
+    printf "\n%sAborting: build phase did not complete.%s\n" "$RED" "$RESET"
+    exit 1
+  fi
+else
+  section "Build phase (skipped: --no-build; verifying committed artifacts)"
 fi
 
 # ──── SMOKE CHECKS C1–C5 ────

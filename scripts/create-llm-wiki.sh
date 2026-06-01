@@ -5,7 +5,7 @@
 # copies every listed path from the dev repo to <target-dir>. Three target-only
 # paths are sourced from FRESH templates:
 #   wiki/index.md  ←  wiki/index-FRESH.md
-#   README.md      ←  README-FRESH.md
+#   README.md      ←  templates/README-fresh.md
 #   log.md         ←  hard-coded 3-line stub
 #
 # What ships and what doesn't is governed entirely by the manifest. No spot-lists
@@ -66,7 +66,7 @@ while IFS= read -r p; do
       source_path="$SRC/wiki/index-FRESH.md"
       ;;
     README.md)
-      source_path="$SRC/README-FRESH.md"
+      source_path="$SRC/templates/README-fresh.md"
       ;;
     log.md)
       # Hard-coded stub; write directly.
