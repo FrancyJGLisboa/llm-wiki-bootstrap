@@ -6,7 +6,7 @@
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 14 checks pass.
+# Exit 0 iff all 15 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
 #   only the 14 deterministic checks (C1–C5 asserts on the committed artifacts +
@@ -55,7 +55,7 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
 fi
 
 # ──── REGRESSION GUARDS R1–R5 ────
-section "Regression guards (R1–R5)"
+section "Regression guards (R1–R10)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -146,10 +146,23 @@ else
   record_fail "R9 verify-citation-audit.sh exits non-zero (citation-audit floor regressed)"
 fi
 
+# R10 — skill-install oracle: the /wiki-skill output must satisfy the load
+# preconditions + be self-contained once installed into a host (.claude/skills/) —
+# i.e. SKILL.md is well-formed, its `name` matches the install dir, and every
+# workflow it names is bundled inside the folder so the agent never depends on a
+# host-registered slash command. Deterministic: scaffolds + stamps + simulates the
+# install (S1-S3, S5). Note: this guards the template + manifest, not the LLM
+# stamping path — that is verified by /wiki-skill itself calling this oracle.
+if "$SCRIPT_DIR/verify-skill-install.sh" >/dev/null 2>&1; then
+  ok "R10 verify-skill-install.sh exits 0 (generated skill is self-contained)"
+else
+  record_fail "R10 verify-skill-install.sh exits non-zero (skill-install regression)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 14 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 15 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

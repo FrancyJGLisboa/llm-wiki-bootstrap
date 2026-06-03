@@ -78,6 +78,68 @@ diagram type.) Skip entirely if you're near 3 minutes — **2c is the demo**, th
 
 ---
 
+## 2+ · Optional advanced beat — build a specialized agent live (TECHNICAL rooms only)
+
+**Do not run this in a non-technical room, and never instead of 2c.** It is 6 steps
+vs. 2 and introduces four commands — it's a *stronger story* (the system encoding
+*reasoning*, not just facts) but a *riskier* live demo. Two hard prerequisites:
+
+- **Pre-build a `traders-desk` safety-net brain today** (same discipline as the
+  Meridian wiki) and rehearse the exact query — otherwise narrate this as a story
+  off the slide, don't type it. A cold `/wiki-query` against an unseeded brain
+  returns thin answers.
+- If anything stalls, fall back to the Meridian demo (Step F). No apology.
+
+**The order matters — `/wiki-skill` builds the brain FIRST (empty), then you fill
+it. You cannot ingest first and wrap after.**
+
+```
+# 1 · Create the agent's brain (empty, seeded with vocabulary only)
+/wiki-skill traders-desk --domain "futures desk decision rules"
+cd traders-desk
+```
+**Say:** "First I'm creating the *agent* — its brain starts empty, just the
+vocabulary of the desk."
+
+```
+# 2 · Hand it how a trader actually thinks — raw prose, no formatting
+/wiki-extract --text --source-type interaction
+```
+**Say:** "Now a senior trader pastes their decision-making, in plain English."
+
+```
+# 3 · Build the reasoning into the brain
+/wiki-ingest
+```
+**Say:** "It extracts the *principles* — not just facts — cross-links them, and
+flags where two traders disagree."
+
+```
+# 4 · THE MONEY SHOT — ask it a judgment question
+/wiki-query "EUR curve just steepened 15bp into a CPI print — what's our play?"
+```
+**Say:** "It reasons from the desk's *stated* principles —" *(point at the
+citation)* "— and tells me whose rule it used. Nothing invented."
+
+```
+# 5 · OPTIONAL — show it compounds
+/wiki-learn
+```
+**Say:** "And it gets sharper every session — it learns the desk's reasoning as
+it's used."
+
+**The honest line you MUST say (don't let the room over-read it):** "This reasons
+from what the traders *wrote down* — their articulated rules, every answer cited.
+It is not cloning gut feel." Overclaiming "it replicates your best trader's
+instinct" is the one thing that gets you caught.
+
+**Why this beat matters:** it moves the story from *"cited answers from a
+document"* to *"a specialized agent that reasons the way your desk does, with a
+receipt for every call."* That's the board-level pitch — but only land it if the
+room is technical and the brain is pre-built.
+
+---
+
 ## 3 · Fallback (Step F) — the pre-built LSEG demo wiki
 
 Use this if the live doc fails, the network drops, or you'd rather not risk it. It's a
@@ -143,3 +205,42 @@ actually trust this."
 | **Total (with optional)** | **~2:30** |
 
 Cut 2d first if you're running long. Never cut 2c.
+
+---
+
+## Appendix · Verify a generated skill installs & operates (pre-pitch, do once — never on stage)
+
+Only needed if you intend to claim *"`/wiki-skill` produces a skill folder you can
+drop into any agent and it just works."* Don't assert that on a call until you've
+seen it load. This is a one-time engineering check, not a demo beat.
+
+**Deterministic check (no LLM, no network — run it in CI too):**
+
+```
+# self-containment oracle: SKILL.md well-formed + every workflow it names is
+# bundled inside the folder (so the agent needs no host-registered slash command)
+scripts/verify-skill-install.sh                 # deterministic S1-S3,S5
+scripts/verify-skill-install.sh --skill <wiki>  # full S1-S5 against a real /wiki-skill output
+```
+
+Green here proves the folder is **structurally** a self-contained skill. It runs as
+**R10** inside `scripts/smoke-all.sh`.
+
+**Live check (proves it actually activates + operates in a host):**
+
+1. Scaffold a skill: `/wiki-skill demo-desk --domain "futures desk decision rules"`,
+   then seed a little knowledge (`/wiki-extract <a-doc>` → `/wiki-ingest`).
+2. Install it into a throwaway host project:
+   `mkdir -p /tmp/host/.claude/skills && cp -R <wiki-dir> /tmp/host/.claude/skills/demo-desk`
+3. `cd /tmp/host && claude`, then say a domain trigger phrase (e.g. *"what's our rule
+   on position sizing?"*).
+   - **L1 Activates** — the `demo-desk-brain` skill engages.
+   - **L2 Read works** — the answer comes back **with a citation**; on something the
+     wiki doesn't cover it says so instead of inventing.
+   - **L3 Write works** — `/wiki-learn --dry-run` shows the notability gate's
+     keep/drop decisions (a full run would write `raw/session-*.md`).
+
+If L1 fails to activate, the host isn't reading the skill's bundled
+`.claude/commands/` as slash commands — that's expected; the SKILL.md's
+**Portability** note tells the agent to follow `.claude/commands/wiki-<name>.md` by
+path. Confirm the agent does that before claiming drop-in portability.

@@ -6,7 +6,7 @@ argument-hint: <name> --domain "<description>" [--scope per-user|shared] [--work
 
 You are executing `/wiki-skill $ARGUMENTS` from the `llm-wiki-bootstrap` **factory**. Your job is to produce a **self-updating wiki skill**: a domain-shaped llm-wiki (the brain) wrapped with a `SKILL.md` operating procedure so any agent can answer *from* the wiki and learn *into* it via `/wiki-learn`.
 
-This command is **factory-only** (it lives in this repo, not in the wikis it produces). It is `/wiki-new` plus one extra artifact — the `SKILL.md`. Do not re-implement the wiki creation; reuse it.
+This command is **factory-only** (it lives in this repo, not in the wikis it produces). It is `/wiki-new` plus one extra artifact — a root `SKILL.md` that turns the wiki folder into a skill (the folder *is* the skill; its `wiki/`, `raw/`, and `scripts/` are the skill's bundled references and tooling). Do not re-implement the wiki creation; reuse it.
 
 ## Parse arguments
 
@@ -46,13 +46,20 @@ Append to `$WIKI/log.md` (newest at top):
 
 ## Step 4 — Verify and report
 
-Run the structural oracle (the wiki half must be valid):
+Run both oracles — the wiki half must be valid AND the skill wrapper must be
+loadable + self-contained:
 
 ```bash
 scripts/verify-multi-wiki.sh --seeded "$WIKI" --domain-term "<a salient word from the description>"
+scripts/verify-skill-install.sh --skill "$WIKI"
 ```
 
-Then confirm `$WIKI/SKILL.md` exists, its frontmatter `name`/`description` are non-empty, only one scope block remains, and no `{{…}}` placeholders survive. Fix and re-run until green, then report:
+The second oracle checks the skill wrapper end-to-end: `SKILL.md` exists at the
+root, its frontmatter `name`/`description` are non-empty, **its `name` equals the
+wiki's directory name** (the host loader requires this — a mismatch silently fails
+to register), only one scope block remains, no `{{…}}` placeholders survive, and
+every `/wiki-…` workflow it names is bundled inside the folder. Fix and re-run
+until **both** are green, then report:
 
 ```
 /wiki-skill complete — <name>-brain

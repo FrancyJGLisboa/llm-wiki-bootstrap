@@ -1,12 +1,12 @@
 ---
-name: {{NAME}}-brain
+name: {{NAME}}
 description: >-
   {{DOMAIN}}. A self-updating wiki brain — answers from an llm-wiki and learns
   from each interaction. Activates for questions about {{DOMAIN}}, and on
   triggers like {{TRIGGERS}}.
 ---
 
-# {{NAME}}-brain
+# {{NAME}}
 
 A **self-updating wiki skill**: your knowledge base is a live llm-wiki (`wiki/` +
 `raw/`, pure CommonMark, `[[links]]`, cited claims) that you both **answer from**
@@ -15,6 +15,13 @@ and **write back to** as you are used. The brain compounds with use.
 Scope: **{{SCOPE}}**.
 
 ## Operating procedure
+
+> **Portability:** the steps below name slash commands like `/wiki-query` and
+> `/wiki-learn`. In a host where those are not registered as commands (e.g. when
+> this folder is installed under `.claude/skills/`), follow the equivalent
+> workflow body bundled in this folder — `.claude/commands/wiki-<name>.md` — by
+> path instead. The folder is self-contained: every workflow it references ships
+> inside it.
 
 ### Read (every turn)
 Answer the user from the wiki. Run the read half of `/wiki-query` — locate

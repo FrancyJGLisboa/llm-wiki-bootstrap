@@ -25,7 +25,7 @@ Plus two **output commands** that render/export an already-built wiki (read-only
 Two **factory commands** generate and catalog *other* wikis (they live in this repo only — they are not shipped into the wikis they create):
 
 - `/wiki-new <name> --domain "<description>"` — scaffold a new domain-shaped wiki and register it; wraps `scripts/new-wiki.sh` (which reuses `scripts/create-llm-wiki.sh`)
-- `/wiki-skill <name> --domain "<description>" [--scope per-user|shared]` — like `/wiki-new`, but also wraps the new wiki as a **self-updating agent skill**: adds a `SKILL.md` whose operating procedure is read=`/wiki-query`, write=`/wiki-learn`. Delegates wiki creation to `/wiki-new`.
+- `/wiki-skill <name> --domain "<description>" [--scope per-user|shared]` — like `/wiki-new`, but also wraps the new wiki as a **self-updating agent skill**: produces a **skill folder** (the wiki directory itself) with a root `SKILL.md` entry point — operating procedure read=`/wiki-query`, write=`/wiki-learn` — over the wiki's bundled `wiki/`, `raw/`, and `scripts/` (its references and tooling). Delegates wiki creation to `/wiki-new`.
 - `/wiki-registry [prune]` — list / prune the workspace catalog (`registry.jsonl`); wraps `scripts/registry.sh`
 
 See `AGENTS.md` → "Generating new wikis (the factory)".
