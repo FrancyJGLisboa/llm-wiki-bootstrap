@@ -55,7 +55,7 @@ verify_seeded() {
   [ -d "$wdir" ] || { fail "M4 no wiki/ dir under $wiki_root"; return; }
 
   # Collect seed pages: wiki/*.md excluding index.md (journal/ is user-owned).
-  local pages page slug
+  local page slug
   local seeds=() all=()
   for page in "$wdir"/*.md; do
     [ -e "$page" ] || continue

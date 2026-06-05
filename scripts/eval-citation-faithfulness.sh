@@ -114,7 +114,7 @@ ${evidence}"
 floor_fail=0
 declare -a fail_lines=()
 # First pass: count + record floor failures (deterministic; no decode needed).
-while IFS=$'\t' read -r tag page line file anchor c1 c2 _claim_b64 _evidence_b64; do
+while IFS=$'\t' read -r tag page line file anchor c1 _c2 _claim_b64 _evidence_b64; do
   [ -n "$tag" ] || continue
   if [ "$tag" = "BAD" ]; then
     floor_fail=$((floor_fail + 1))
@@ -165,7 +165,6 @@ if [ "$judge" -eq 1 ] && [ "$judged" -gt 0 ]; then
   pct=$(python3 -c "print(f'{100*$faithful/$judged:.1f}')")
   echo "${GREEN}faithfulness rate (sampled, resolve ∧ entail):${RESET} $faithful/$judged = ${pct}%"
 fi
-floor_rate=$(python3 -c "print(f'{$floor_ok/$total:.3f}')")
 echo "${GREEN}citation-resolution rate (C1∧C2, all):${RESET} $floor_ok/$total = $(python3 -c "print(f'{100*$floor_ok/$total:.1f}')")%"
 
 if [ "${#fail_lines[@]}" -gt 0 ]; then
