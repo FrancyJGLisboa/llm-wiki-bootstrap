@@ -50,6 +50,8 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 
 The `## Related` section needs **≥ 2** `[[links]]` so the page joins the web (navigation/journal pages are exempt — see `AGENTS.md`). Cite anchors by source type: `#heading-name` (markdown/article), `#L5-L10` (line range), `#2:01` (video timestamp).
 
+**Type causal links.** When the source states a **cause→effect** relationship between two covered concepts, encode it as a typed causal edge on the single-target `## Related` line using a **canonical causal verb** (`causes`, `caused-by`, `enables`, `prevents`, `contributes-to` — see `AGENTS.md` → "Causal relations" and `templates/causal-vocab.txt`), not the implicit `related-to` form. Direction is source-page → target: on page `drought`, write `- [[yield-drop]] causes — sustained moisture deficit cuts realized yield`. Use the canonical verb, not a synonym (`leads-to`/`due-to`/etc.) — `scripts/wiki-lint-causal.sh` flags those. Do **not** build or write any knowledge-graph sidecar during ingest — the causal graph is materialized on demand by `scripts/wiki-to-kg.py` at query time, never here, so it stays out of the body-hash.
+
 ## The 7-step pipeline (run per raw file)
 
 For each raw file that needs processing:

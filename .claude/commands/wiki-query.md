@@ -26,6 +26,16 @@ Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
 
 From `wiki/index.md` and via `Grep` over `wiki/`, identify the 3-10 pages most likely to contain relevant material. Read them (frontmatter + body).
 
+### Step 1.5 — Causal traversal (when the question is causal)
+
+If the question is **causal** — "what caused X?", "what are the downstream effects of Y?", "trace the chain from A to B", "why did Z happen?" — reason over the causal graph, not just nearest-page prose:
+
+1. If `wiki/_kg.jsonl` exists, read it; otherwise materialize the causal edges on demand with `scripts/wiki-to-kg.py --causal-only wiki/` (read-only — do **not** write the sidecar into `wiki/`). Each line is a triple `{"source","verb","target"}` with `verb` ∈ {`causes`,`caused-by`,`enables`,`prevents`,`contributes-to`}.
+2. **Traverse multi-hop**, respecting direction (source→target): for "what caused X / why did X" follow edges *backward* into X (and any `caused-by` edges forward); for "downstream effects of Y" follow edges *forward* from Y. Walk transitively to assemble the **full** chain, not just the immediate neighbour.
+3. Read the pages on the chain (frontmatter + body) for supporting detail, then present the chain in causal order, citing each node as `[[page-name]]`.
+
+If the question is not causal, skip this step. The KG is a retrieval aid layered on the typed `## Related` edges — see `AGENTS.md` → "Causal relations".
+
 ### Step 2 — Try to answer from the wiki alone
 
 Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.

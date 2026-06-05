@@ -172,6 +172,8 @@ Parse rule (single regex, no AST):
 
 **Where typed lines live**: only inside `## Related`. Verbs in body prose, `## Open questions`, `## Flashcards`, or `index.md` are ignored by the lint and the graph.
 
+**Causal relations (controlled sub-vocabulary):** the general verb vocabulary stays open, but *causal* edges use a small **canonical set** so they can be validated, materialized, and traversed: **`causes`, `caused-by`, `enables`, `prevents`, `contributes-to`** — the single source of truth is `templates/causal-vocab.txt`. Direction is **source-page → target**: on page `drought`, `- [[yield-drop]] causes — …` reads *drought causes yield-drop*; the inverse verb `caused-by` reads target→source for the same edge. `scripts/wiki-lint-causal.sh` flags known non-canonical causal synonyms (e.g. `leads-to → causes`, `due-to → caused-by`) so causal phrasing stays consistent; open non-causal verbs are unaffected. `scripts/wiki-to-kg.py [--causal-only]` materializes typed edges as a JSONL graph (`source,verb,target`) that `/wiki-query` traverses for multi-hop causal questions ("what caused X?", "what are the downstream effects of Y?"). The KG is built on demand — never written into `wiki/` at ingest, so it stays out of the body-hash.
+
 ### Source attribution
 
 Any claim that came from a raw source must include `(source: <raw-file>#<anchor>)` inline. Example: `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`. The anchor can be a timestamp, heading, or line range.
