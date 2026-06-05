@@ -1,40 +1,45 @@
-# Causal multi-hop eval questions
+# Sealed causal-traversal eval questions
 
-The `scripts/eval-causal.sh` script reads this file, runs each question against
-a typed-causal variant (verbs intact + `wiki/_kg.jsonl`) and a causal-stripped
-baseline, and grades by case-insensitive substring on every `expects:` token.
-Each question is answerable only by tracing the causal chain — so the typed
-variant should beat the baseline.
+`scripts/eval-causal.sh` runs each question against a **typed** variant (causal
+verbs intact + `wiki/_kg.jsonl`) and a **baseline** (verbs stripped, no KG).
+Graded by **word-boundary numeric match** on the integer `Code`.
 
-Format per question: `### Q<n>`, the question text, then `expects:`,
-`baseline-absent:`, and `hops:`.
+The fixture nodes are pseudonyms with neutral bodies; each carries a unique
+integer `Code` (visible in BOTH variants). Every chain target has **one causal
+(`causes`) incoming edge plus one or more non-causal (`related-to`) decoy
+edges**. Stripping the verb (baseline) makes all incoming links look identical,
+so the baseline cannot tell which neighbour is the *causal* predecessor and must
+guess among the decoys. Typed reads `wiki/_kg.jsonl` (`--causal-only`), which
+keeps only the `causes` edge, and answers correctly.
+
+Per question: `### Q<n>`, text, `expects:` (the integer Code), `baseline-absent:`, `hops:`.
 
 ### Q1
-What ultimately caused the export ban?
-expects: el nino, drought, yield, price
+Several nodes link to Qorra, but exactly one of those links is causal — that node directly causes Qorra. Reply with that node's integer Code only.
+expects: 4271
 baseline-absent: true
-hops: 4
+hops: 1
 
 ### Q2
-What are the downstream effects of the drought?
-expects: yield, price, export ban
+Several nodes link to Zundle, but exactly one directly causes it (the causal edge). Reply with that node's integer Code only.
+expects: 5836
 baseline-absent: true
-hops: 3
+hops: 1
 
 ### Q3
-Trace the causal chain from El Nino to the export ban.
-expects: drought, yield, price, export ban
+Several nodes link to Morth; exactly one of them directly causes Morth. Reply with that causal predecessor's integer Code only.
+expects: 6914
 baseline-absent: true
-hops: 4
+hops: 1
 
 ### Q4
-What did the yield drop cause, directly and indirectly?
-expects: price spike, export ban
+Several nodes link to Plenk; exactly one directly causes it. Reply with that causal predecessor's integer Code only.
+expects: 3508
 baseline-absent: true
-hops: 2
+hops: 1
 
 ### Q5
-Why was the export ban imposed, tracing back to the climate driver?
-expects: price spike, yield drop, drought, el nino
+Several nodes link to Drask; exactly one directly causes it. Reply with that causal predecessor's integer Code only.
+expects: 7162
 baseline-absent: true
-hops: 4
+hops: 1

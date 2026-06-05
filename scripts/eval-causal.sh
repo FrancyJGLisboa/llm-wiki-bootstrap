@@ -7,8 +7,9 @@
 #      /wiki-query can traverse the causal graph.
 #   2. baseline variant: the same fixture with `## Related` verbs stripped and
 #      NO _kg.jsonl — the causal-blind control.
-#   3. Grades each answer by case-insensitive substring on every `expects:`
-#      token. All present ⇒ PASS.
+#   3. Grades each answer by word-boundary numeric match on every `expects:`
+#      integer Code (the fixture seals causal *direction* out of prose, so the
+#      answer Code is reachable only by traversing the typed/KG causal edges).
 #
 # Stdout: a markdown report (baseline X/N, typed Y/N, delta, verdict).
 # Verdict: typed - baseline >= 2 → improvement; <= -1 → no-improvement; else null-result.
@@ -83,7 +84,7 @@ if [ "$n_questions" -lt 1 ]; then
 fi
 
 results_md="$WORK/per-question.md"
-eval_run_questions "$tmp_q" "$WORK" "$results_md" "eval-causal" eval_grade_substring
+eval_run_questions "$tmp_q" "$WORK" "$results_md" "eval-causal" eval_grade_numeric_wordboundary
 baseline_pass=$EVAL_BASELINE_PASS
 typed_pass=$EVAL_TYPED_PASS
 
