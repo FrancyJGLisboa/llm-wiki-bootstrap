@@ -31,11 +31,14 @@ scripts/preflight.sh
 scripts/verify-extract.sh
 scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
+scripts/wiki-lint-causal.sh
+scripts/wiki-to-kg.py
 scripts/wiki-to-anki.sh
 scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh
 scripts/eval-multi-hop.sh
 templates/journal-entry.md
+templates/causal-vocab.txt
 templates/infographic/archetypes.md
 templates/infographic/scoring-rubric.md
 templates/infographic/generator-contract.md
