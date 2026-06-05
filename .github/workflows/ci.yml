@@ -30,3 +30,17 @@ jobs:
           python3 --version
       - name: Run 14 deterministic checks
         run: bash scripts/smoke-all.sh --no-build
+
+  quality:
+    name: shell + duplication quality gate
+    # fallow-equivalent gate for a shell+markdown repo (fallow itself is TS/JS-
+    # or Python-only and sees nothing here). shellcheck + jscpd; no LLM, no key.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: shellcheck (error severity)
+        uses: ludeeus/action-shellcheck@master
+        with:
+          severity: error
+      - name: Duplication + dead-script scan
+        run: bash scripts/quality.sh --ci
