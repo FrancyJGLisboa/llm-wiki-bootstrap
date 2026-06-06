@@ -2,44 +2,54 @@
 
 `scripts/eval-causal.sh` runs each question against a **typed** variant (causal
 verbs intact + `wiki/_kg.jsonl`) and a **baseline** (verbs stripped, no KG).
-Graded by **word-boundary numeric match** on the integer `Code`.
+Graded by **word-boundary numeric match** on the integer answer.
 
-The fixture nodes are pseudonyms with neutral bodies; each carries a unique
-integer `Code` (visible in BOTH variants). Every chain target has **one causal
-(`causes`) incoming edge plus one or more non-causal (`related-to`) decoy
-edges**. Stripping the verb (baseline) makes all incoming links look identical,
-so the baseline cannot tell which neighbour is the *causal* predecessor and must
-guess among the decoys. Typed reads `wiki/_kg.jsonl` (`--causal-only`), which
-keeps only the `causes` edge, and answers correctly.
+The fixture is a fully symmetric 6-node ring: every node has one causal
+(`causes`) edge plus three non-causal (`related-to`) decoy edges — uniform
+degree, identical prose, pseudonym titles, and a unique integer `Code` in each
+body (visible to BOTH variants).
 
-Per question: `### Q<n>`, text, `expects:` (the integer Code), `baseline-absent:`, `hops:`.
+**The answer to every question is a SUM of Codes along the causal chain** — a
+value that does NOT appear anywhere in the fixture. This defeats the two ways a
+blind baseline could otherwise score: it cannot *guess* the sum, and it cannot
+*hedge* by listing visible Codes (the sum is not one of them). To produce the
+sum you must identify which of each node's four links is causal and follow it —
+only the typed variant can, via `wiki/_kg.jsonl --causal-only`.
+
+Per question: `### Q<n>`, text, `expects:` (the integer sum), `baseline-absent:`, `hops:`.
 
 ### Q1
-Several nodes link to Qorra, but exactly one of those links is causal — that node directly causes Qorra. Reply with that node's integer Code only.
-expects: 4271
+Following ONLY causal edges (ignore the non-causal decoy links), start at Vexil and take two steps downstream in the direction of causation. Add the Codes of those two nodes you land on. Reply with the integer sum only.
+expects: 12750
 baseline-absent: true
-hops: 1
+hops: 2
 
 ### Q2
-Several nodes link to Zundle, but exactly one directly causes it (the causal edge). Reply with that node's integer Code only.
-expects: 5836
+Following ONLY causal edges, start at Qorra and take two steps downstream in the direction of causation. Add the Codes of those two nodes. Reply with the integer sum only.
+expects: 10422
 baseline-absent: true
-hops: 1
+hops: 2
 
 ### Q3
-Several nodes link to Morth; exactly one of them directly causes Morth. Reply with that causal predecessor's integer Code only.
-expects: 6914
+Following ONLY causal edges, start at Zundle and take two steps downstream in the direction of causation. Add the Codes of those two nodes. Reply with the integer sum only.
+expects: 10670
 baseline-absent: true
-hops: 1
+hops: 2
 
 ### Q4
-Several nodes link to Plenk; exactly one directly causes it. Reply with that causal predecessor's integer Code only.
-expects: 3508
+Following ONLY causal edges, start at Morth and take two steps downstream in the direction of causation. Add the Codes of those two nodes. Reply with the integer sum only.
+expects: 9211
 baseline-absent: true
-hops: 1
+hops: 2
 
 ### Q5
-Several nodes link to Drask; exactly one directly causes it. Reply with that causal predecessor's integer Code only.
-expects: 7162
+Following ONLY causal edges, start at Plenk and take two steps downstream in the direction of causation. Add the Codes of those two nodes. Reply with the integer sum only.
+expects: 6320
 baseline-absent: true
-hops: 1
+hops: 2
+
+### Q6
+Following ONLY causal edges, start at Drask and take two steps downstream in the direction of causation. Add the Codes of those two nodes. Reply with the integer sum only.
+expects: 10107
+baseline-absent: true
+hops: 2
