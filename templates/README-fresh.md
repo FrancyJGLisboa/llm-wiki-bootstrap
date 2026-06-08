@@ -74,12 +74,19 @@ Two more commands render or export an **already-built** wiki (read-only on `raw/
     └── journal/        # reserved for user-owned time-stamped observations
 ```
 
+## Reliability — auto-commit
+
+This wiki **auto-commits after every turn that changes `raw/`, `wiki/`, or `log.md`** (a `Stop` hook in `.claude/settings.json` running `scripts/auto-commit-wiki.sh`). You never have to remember to commit — your knowledge is never left as an unsaved working tree, and a bad ingest or `/wiki-lint --apply` is one `git revert` away.
+
+It **commits only — it never pushes.** Pushing to a remote is the irreversible/exposure step, so it stays manual and deliberate: review the diff, **scan for secrets**, then `git push`. (Commits are unsigned so the hook can't hang on a GPG prompt.) To disable auto-commit, remove the `Stop` hook from `.claude/settings.json`.
+
 ## Principles
 
 1. **Explicit.** Everything in markdown. No hidden embeddings, no opaque memory.
 2. **Yours.** Local files. Portable. You decide what stays and what goes.
 3. **File-over-app.** Pure CommonMark. Works with `cat`, `grep`, `git`, any viewer. No Obsidian dependency.
 4. **BYO AI.** Any LLM that supports file read/write and (optionally) web search.
+5. **Durable.** Auto-commit on every change; push stays manual (see Reliability above).
 
 ## Optional extras
 
