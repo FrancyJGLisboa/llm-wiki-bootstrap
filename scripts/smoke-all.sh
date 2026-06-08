@@ -6,11 +6,11 @@
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 16 checks pass.
+# Exit 0 iff all 17 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 16 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R11 guards). This is the CI path — the build phase is a precondition that
+#   only the 17 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R12 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -55,7 +55,7 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
 fi
 
 # ──── REGRESSION GUARDS R1–R5 ────
-section "Regression guards (R1–R11)"
+section "Regression guards (R1–R12)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -169,10 +169,21 @@ else
   record_fail "R11 verify-causal.sh exits non-zero (causal capability regression)"
 fi
 
+# R12 — shared-brain privacy guard: the scanner discriminates (clean/dirty),
+# auto-detects shared via SKILL.md, the pre-commit HOOK blocks a dirty commit and
+# accepts a clean one (tested-path == runtime-path), and the scaffolder ships +
+# wires the guard into generated wikis (core.hooksPath). Fail-closed at the
+# irreversible commit boundary — the one mechanical exception to soft enforcement.
+if "$SCRIPT_DIR/verify-privacy-scan.sh" >/dev/null 2>&1; then
+  ok "R12 verify-privacy-scan.sh exits 0 (shared-brain privacy guard + hook + ship)"
+else
+  record_fail "R12 verify-privacy-scan.sh exits non-zero (privacy guard regression)"
+fi
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 16 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 17 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

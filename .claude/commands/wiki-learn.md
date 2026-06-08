@@ -40,7 +40,7 @@ Tag each kept candidate:
 - **`preference`** — about the user (their choices, conventions, identity). High trust *as a preference*.
 - **`factual`** — a verifiable claim about the world. Promote with its origin marked as **user-asserted**, never as authority — the citation makes this honest.
 
-**Privacy.** Drop candidates that are sensitive personal/medical/financial details mentioned in passing unless the user clearly intends them remembered (mirrors `/wiki-query`'s promotion guard). In a **shared** brain (no `--scope-dir`, one wiki for everyone), also drop `preference`-tagged and any personally-identifying candidates — personal facts must not leak into a shared brain.
+**Privacy.** Drop candidates that are sensitive personal/medical/financial details mentioned in passing unless the user clearly intends them remembered (mirrors `/wiki-query`'s promotion guard). In a **shared** brain — one whose root `SKILL.md` declares `Scope: **shared**` (the durable marker `/wiki-skill` stamps; the per-user case is signalled by `--scope-dir`) — also drop `preference`-tagged and any personally-identifying candidates: personal facts must not leak into a shared brain. This is judgment, so it is backstopped mechanically in Step 5 — but get it right here; the backstop is the net, not the plan.
 
 If `--dry-run`: report the candidates, each with its gate verdict (kept/dropped + which criterion failed) and tag, then **stop**. Write nothing.
 
@@ -69,7 +69,15 @@ Write the kept candidates to a single raw source via the extract procedure (this
 
 ## Step 5 — Ingest into the wiki
 
-Run `/wiki-ingest raw/session-<YYYY-MM-DD>.md` to synthesize the captured facts into `wiki/` pages. The ingest pipeline already does the right thing here; hold it to these points:
+**Shared-brain privacy backstop (fail-closed).** If this is a shared brain (root `SKILL.md` declares `Scope: **shared**`), run the mechanical scan on the captured source **before** ingest:
+
+```
+scripts/privacy-scan.sh raw/session-<YYYY-MM-DD>.md --shared
+```
+
+If it exits non-zero, **do not ingest**. It has caught `preference`-tagged, email, or secret content that the gate should have dropped — the irreversible boundary is the commit, so stop here. **Re-distill** (go back to Step 3 and drop the offending facts), re-capture a fresh `raw/session-*.md`, and re-scan until clean. Never hand-edit the `raw/` file to silence the scan (hard rule #1: `raw/` is not yours to edit). The same scan runs again as a `git` pre-commit hook in shipped wikis, so a leak cannot reach a commit even if this step is skipped.
+
+Then run `/wiki-ingest raw/session-<YYYY-MM-DD>.md` to synthesize the captured facts into `wiki/` pages. The ingest pipeline already does the right thing here; hold it to these points:
 
 - Every promoted claim cites the interaction it came from: `(source: raw/session-<date>.md#turn-N)`.
 - **Contradictions** — when a new fact disagrees with an existing page, apply **latest-wins-with-trail**: update the page to the new claim **and** preserve the superseded one with the existing flag format so nothing is silently lost:
@@ -86,6 +94,7 @@ Run `/wiki-ingest raw/session-<YYYY-MM-DD>.md` to synthesize the captured facts 
 - Edit existing files in `raw/` (you only *create* a new `raw/session-*.md`; the `ingested_*` frontmatter is `/wiki-ingest`'s job).
 - Promote chatter, task-scratch, or anything that fails any one of the four gate criteria. When in doubt, drop it — a smaller true brain beats a bloated noisy one.
 - Promote sensitive personal details without clear intent, or leak `preference`/PII into a **shared** brain.
+- Ingest into a shared brain while `scripts/privacy-scan.sh` is failing — fix by re-distilling, never by hand-editing `raw/` to silence it.
 - Skip the gate to "capture everything" — the gate is the point.
 
 ## Output

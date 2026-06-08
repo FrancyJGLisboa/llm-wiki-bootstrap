@@ -33,6 +33,8 @@ scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
 scripts/wiki-to-kg.py
+scripts/privacy-scan.sh
+scripts/hooks/pre-commit
 scripts/wiki-to-anki.sh
 scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh

@@ -97,7 +97,10 @@ EOF
 done < "$MANIFEST"
 
 # Initialize a fresh git repo at the target. No initial commit — leave that to the user.
-( cd "$TARGET" && git init -q )
+# Point hooks at the tracked scripts/hooks/ dir so the shared-brain privacy
+# pre-commit guard (scripts/hooks/pre-commit) is active from the first commit.
+# It no-ops on per-user/plain wikis, so this is safe for every generated wiki.
+( cd "$TARGET" && git init -q && git config core.hooksPath scripts/hooks )
 
 cat <<EOF
 ✓ Created fresh llm-wiki-bootstrap at: $TARGET ($copies files)

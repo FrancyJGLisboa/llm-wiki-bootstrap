@@ -1,0 +1,32 @@
+#!/usr/bin/env bash
+# scripts/hooks/pre-commit — fail-closed privacy guard for SHARED wiki brains.
+#
+# Activated by `git config core.hooksPath scripts/hooks` (the scaffolder sets this
+# on every generated wiki). On a SHARED brain it runs scripts/privacy-scan.sh over
+# raw/ and wiki/ and REFUSES the commit if personal/secret content is found — the
+# one mechanical, no-LLM-cooperation chokepoint before the irreversible step
+# (commit → push → cached/indexed). On a per-user or plain wiki the scan no-ops,
+# so this hook is safe to ship everywhere.
+#
+# Deliberate override (your own data, your call): `git commit --no-verify`.
+
+set -uo pipefail
+
+ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+SCAN="$ROOT/scripts/privacy-scan.sh"
+
+# No scanner present (older wiki, or scanner removed): do not block commits.
+[ -x "$SCAN" ] || exit 0
+
+if "$SCAN" --wiki-root "$ROOT" "$ROOT/raw" "$ROOT/wiki"; then
+  exit 0
+fi
+
+cat >&2 <<'EOF'
+
+pre-commit BLOCKED: shared-brain privacy scan failed (see above).
+A shared brain leaks promoted personal/secret facts to every user, and a commit
+is irreversible. Remove the flagged content, then commit again.
+Override (deliberate, your own data): git commit --no-verify
+EOF
+exit 1
