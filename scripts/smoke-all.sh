@@ -180,6 +180,13 @@ else
   record_fail "R12 verify-privacy-scan.sh exits non-zero (privacy guard regression)"
 fi
 
+# ──── ADVISORY: log discipline (warn, does not fail the build) ────
+# The log is the keystone that makes every other soft rule auditable after the
+# fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
+# warn-not-block (legit non-logged edits exist; exempt with [skip-log]).
+section "Advisory (does not fail the build)"
+"$SCRIPT_DIR/verify-log-discipline.sh" HEAD | sed 's/^/  /' || true
+
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
