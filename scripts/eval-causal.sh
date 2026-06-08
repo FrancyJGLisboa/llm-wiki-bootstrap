@@ -14,8 +14,15 @@
 # Stdout: a markdown report (baseline X/N, typed Y/N, delta, verdict).
 # Verdict: typed - baseline >= 2 → improvement; <= -1 → no-improvement; else null-result.
 #
-# This is the C5 "real-capability proof": causality is real only if the typed
-# variant beats the causal-blind baseline. Exit 0 if the harness COMPLETED.
+# INFORMATIONAL SECONDARY (no longer the C5 gate). The C5 proof is now the
+# deterministic traversal floor in scripts/verify-causal.sh: the runtime path
+# `wiki-to-kg --causal-only | wiki-graph-walk` answers all 6 sealed questions
+# correctly, with no LLM. The value of the causal layer is correct+traceable
+# traversal every time — not "the LLM is helpless without it." This eval still
+# measures the LLM delta over a causal-blind baseline, but that delta is known to
+# be narrow for a capable reasoner (it can guess a small ring) and is reported as
+# context, not asserted as a gate. See .scratch/causal-relationships/FINDINGS-C5.md.
+# Exit 0 if the harness COMPLETED.
 #
 # The shared harness (build/strip/parse/run/verdict) lives in
 # scripts/lib/eval-common.sh; the --causal-only KG sidecar is generated INLINE

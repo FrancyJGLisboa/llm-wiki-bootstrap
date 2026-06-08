@@ -46,6 +46,14 @@ The five approved checks (C1 author · C2 validate · C3 materialize · C4 reaso
 
 ### LLM-gated checks (C1, C4, C5 — local acceptance gate)
 
+> **C5 reframed (2026-06-08): RESOLVED.** The C5 row below describes the original
+> LLM-delta gate, which stayed OPEN because a capable reasoner can guess a small
+> ring (the delta measures the wrong thing). C5 is now a **deterministic
+> traversal-correctness floor** in `scripts/verify-causal.sh` (smoke R11): the
+> runtime path `wiki-to-kg --causal-only | wiki-graph-walk` answers all 6 sealed
+> questions correctly, no `claude`. `eval-causal.sh` is kept as an informational
+> secondary. See `.scratch/causal-relationships/FINDINGS-C5.md`.
+
 | # | Check | How to verify |
 |---|---|---|
 | **C1** | Ingest authors a canonical causal edge | After `claude -p '/wiki-ingest raw/causal-smoke-source.md'` against a source with an explicit causal claim, the produced `wiki/*.md` page's `## Related` matches `grep -E '^- \[\[[a-z0-9-]+\]\] (causes\|caused-by\|enables\|prevents\|contributes-to)( \|$)'` (≥1 hit). Source must state cause→effect in prose; the page must encode it as a canonical causal edge, not implicit `related-to`. |

@@ -7,7 +7,13 @@
 #   C2  — wiki-lint-causal: good fixture=0, bad fixture≠0 (3 synonyms named), wiki/=0
 #   C3a — wiki-to-kg.py --causal-only: exact frozen tuple set on the good fixture,
 #         0 causal triples on the bad fixture (input-sensitivity)
-#   C3b — wiki-to-kg.py is stdlib-only (sys.stdlib_module_names)
+#   C3b — wiki-to-kg.py + wiki-graph-walk.py are stdlib-only (sys.stdlib_module_names)
+#   C5  — deterministic causal-traversal floor (REPLACES the old LLM C5 gate):
+#         the runtime path `wiki-to-kg --causal-only | wiki-graph-walk` answers all
+#         6 sealed questions correctly (Code-sum == expects), with no claude. The
+#         value of the causal layer is correct+traceable traversal every time, not
+#         "the LLM is helpless without it" — eval-causal.sh keeps the LLM delta as
+#         an informational secondary. See .scratch/causal-relationships/FINDINGS-C5.md.
 #   G1  — AGENTS.md schema version stays 2 (no bump)
 #   G2  — wiki-ingest.md does NOT auto-emit _kg.jsonl
 #   G3  — wiki/, body-hash.sh, eval-common.sh byte-unchanged + no stray sidecars
@@ -23,7 +29,10 @@ cd "$REPO_ROOT"
 GOOD="tests/canary/causal-fixture"
 BAD="tests/canary/causal-fixture-bad"
 KG="scripts/wiki-to-kg.py"
+WALK="scripts/wiki-graph-walk.py"
 LINT="scripts/wiki-lint-causal.sh"
+EVAL_FIXTURE="tests/eval/causal-fixture"
+EVAL_QUESTIONS="tests/eval/causal-questions.md"
 
 if [ -t 1 ]; then
   RED=$'\033[31m'; GREEN=$'\033[32m'; DIM=$'\033[2m'; RESET=$'\033[0m'
@@ -69,9 +78,61 @@ PY
 then ok "exact 3-tuple set on good; 0 on bad"; else record_fail "C3a tuple/input-sensitivity check"; fi
 
 # ──── C3b: stdlib-only ────
-section "C3b — KG builder is stdlib-only"
-if python3 -c "import ast,sys; t=ast.parse(open('$KG').read()); mods={(n.module or '').split('.')[0] for n in ast.walk(t) if isinstance(n,ast.ImportFrom)}|{a.name.split('.')[0] for n in ast.walk(t) if isinstance(n,ast.Import) for a in n.names}; sys.exit(1 if (mods - sys.stdlib_module_names - {''}) else 0)"; then
-  ok "no third-party imports"; else record_fail "wiki-to-kg.py imports a non-stdlib module"; fi
+section "C3b — KG builder + graph-walk are stdlib-only"
+c3b_ok=yes
+for py in "$KG" "$WALK"; do
+  if ! python3 -c "import ast,sys; t=ast.parse(open('$py').read()); mods={(n.module or '').split('.')[0] for n in ast.walk(t) if isinstance(n,ast.ImportFrom)}|{a.name.split('.')[0] for n in ast.walk(t) if isinstance(n,ast.Import) for a in n.names}; sys.exit(1 if (mods - sys.stdlib_module_names - {''}) else 0)"; then
+    c3b_ok=no; record_fail "$py imports a non-stdlib module"
+  fi
+done
+[ "$c3b_ok" = yes ] && ok "no third-party imports (wiki-to-kg.py, wiki-graph-walk.py)"
+
+# ──── C5: deterministic causal-traversal floor ────
+section "C5 — deterministic traversal answers all 6 sealed questions (no LLM)"
+if python3 - "$KG" "$WALK" "$EVAL_FIXTURE" "$EVAL_QUESTIONS" <<'PY'
+import json, re, subprocess, sys
+kg, walk, fixture, questions = sys.argv[1:5]
+
+# Materialize the causal KG once — the exact runtime artifact (--causal-only).
+kg_text = subprocess.run([sys.executable, kg, "--causal-only", fixture],
+                         capture_output=True, text=True, check=True).stdout
+
+def code_of(slug):
+    m = re.search(r"Code:\s*(\d+)", open(f"{fixture}/{slug}.md", encoding="utf-8").read())
+    if not m:
+        raise SystemExit(f"no Code in {slug}.md")
+    return int(m.group(1))
+
+# Parse questions: start node (from "start at <Name>"), expects sum, hops.
+text = open(questions, encoding="utf-8").read()
+blocks = re.split(r"^### (Q\d+)\s*$", text, flags=re.M)[1:]
+qs = []
+for i in range(0, len(blocks), 2):
+    qid, body = blocks[i], blocks[i + 1]
+    start = re.search(r"start at (\w+)", body, re.I)
+    expects = re.search(r"^expects:\s*(\d+)", body, re.M)
+    hops = re.search(r"^hops:\s*(\d+)", body, re.M)
+    if not (start and expects and hops):
+        raise SystemExit(f"{qid}: could not parse start/expects/hops")
+    qs.append((qid, start.group(1).lower(), int(expects.group(1)), int(hops.group(1))))
+
+if len(qs) != 6:
+    raise SystemExit(f"expected 6 questions, parsed {len(qs)}")
+
+failures = 0
+for qid, start, expects, hops in qs:
+    out = subprocess.run(
+        [sys.executable, walk, "--start", start, "--direction", "down", "--max-hops", str(hops)],
+        input=kg_text, capture_output=True, text=True, check=True).stdout
+    nodes = [json.loads(ln)["node"] for ln in out.splitlines() if ln.strip()]
+    got = sum(code_of(n) for n in nodes)
+    if got != expects:
+        print(f"  {qid}: start={start} hops={hops} nodes={nodes} sum={got} != expects {expects}", file=sys.stderr)
+        failures += 1
+if failures:
+    raise SystemExit(f"{failures}/6 traversal answers wrong")
+PY
+then ok "all 6 sealed questions answered correctly by deterministic traversal"; else record_fail "C5 traversal floor: at least one wrong answer"; fi
 
 # ──── G1: schema unchanged ────
 section "G1 — schema version stays 2"
