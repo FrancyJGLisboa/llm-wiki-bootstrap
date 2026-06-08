@@ -80,6 +80,29 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - Report violations.
 - Fix proposal: normalize.
 
+### 8. Near-duplicate pages
+
+Surface pages that say the same thing in different words — the bloat a
+self-updating brain accumulates when `/wiki-learn`'s novelty gate (a grep) misses
+a paraphrase from a later session. Run the deterministic detector:
+
+```bash
+scripts/wiki-near-duplicates.py wiki/
+```
+
+It flags pairs by lexical overlap (Jaccard of content words ≥ threshold) and by a
+structural signal (identical `[[link]]` set + identical numbers). The threshold is
+a heuristic — pass `--threshold` to tune.
+
+- Report each pair: `wiki/<a>.md <-> wiki/<b>.md (why)`.
+- Do **not** auto-merge (like contradictions, merging is a judgment call). Suggest
+  a merge path: keep the richer page, fold in unique claims from the other with
+  their citations, redirect inbound `[[links]]`, then delete the thinner page
+  (`--apply` only deletes on user confirm). The user decides.
+
+If `scripts/wiki-near-duplicates.py` is absent (an older generated wiki), skip
+this check.
+
 ## Output (report mode)
 
 ```
@@ -93,6 +116,7 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - N unresolved open questions
 - N gaps
 - N schema-drift issues
+- N near-duplicate page pairs
 
 # Details
 [grouped output by check]

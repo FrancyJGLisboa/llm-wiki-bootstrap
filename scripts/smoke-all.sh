@@ -6,11 +6,11 @@
 # driven test. This script IS the /goal completion condition for
 # .scratch/plug-and-play-curator-smoke/GOAL.md.
 #
-# Exit 0 iff all 17 checks pass.
+# Exit 0 iff all 18 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 17 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R12 guards). This is the CI path — the build phase is a precondition that
+#   only the 18 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R13 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -55,7 +55,7 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
 fi
 
 # ──── REGRESSION GUARDS R1–R5 ────
-section "Regression guards (R1–R12)"
+section "Regression guards (R1–R13)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -180,6 +180,15 @@ else
   record_fail "R12 verify-privacy-scan.sh exits non-zero (privacy guard regression)"
 fi
 
+# R13 — near-duplicate detector: discriminates a reworded pair from a distinct
+# page (stdlib-only). Defends the brain's novelty gate downstream — /wiki-lint
+# surfaces near-dups for review (surface, don't block). See wiki-lint.md check 8.
+if "$SCRIPT_DIR/verify-near-duplicates.sh" >/dev/null 2>&1; then
+  ok "R13 verify-near-duplicates.sh exits 0 (near-duplicate detector discriminates)"
+else
+  record_fail "R13 verify-near-duplicates.sh exits non-zero (near-dup detector regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -190,7 +199,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 17 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 18 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

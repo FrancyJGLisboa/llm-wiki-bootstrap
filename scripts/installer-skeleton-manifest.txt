@@ -34,6 +34,7 @@ scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
 scripts/wiki-to-kg.py
 scripts/wiki-graph-walk.py
+scripts/wiki-near-duplicates.py
 scripts/privacy-scan.sh
 scripts/hooks/pre-commit
 scripts/wiki-to-anki.sh
