@@ -2,6 +2,10 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-08 — fix stale verification note in operation-ingest.md
+
+Corrected a stale "honesty note" that claimed the 7-step ingest pipeline was **specified, not demonstrated** and that `/wiki-ingest` had **never been invoked**. Both are false: `scripts/smoke-build.sh` drives `claude -p "/wiki-ingest raw/smoke-source.md"` in a real session and `scripts/smoke-all.sh` runs it in CI on every push (C1 confirms the follow-up query reaches the right answer); `scripts/eval-onboarding.sh` exercises extract→ingest→query independently. Flipped `wiki/operation-ingest.md` lines 40–52 to "demonstrated end-to-end and CI-gated," preserving the honest nuance that the original karpathy-derived meta-wiki pages were hand-bootstrapped (only the smoke-fixture pages were machine-ingested) and the residual per-step granularity unknowns. The `diagrams/ingest-pipeline.*` poster (gitignored, regenerable) carried the same stale line and was corrected locally; it will regenerate correctly from the fixed source.
+
 ## 2026-06-08 — cut to core (factory + brain + causal removed)
 
 Trimmed the system to the core that earns its keep over "a folder + Claude": **init / extract / ingest / query / lint** + the **output commands** (visualize / flashcards / diagram) + the blank-wiki **installer** (`create-llm-wiki.sh`). Rationale: value-vs-cost review concluded the scale machinery was infrastructure ahead of single-user demand. Full prior system recoverable at git tag **`archive/full-system-v1`**.
