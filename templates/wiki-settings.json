@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash scripts/auto-commit-wiki.sh",
+            "timeout": 30,
+            "statusMessage": "Auto-committing wiki…"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -37,19 +37,20 @@ For the full step-by-step, see [[ingest-pipeline]].
 - [[operation-lint]] catches mistakes ingest made or didn't catch
 - [[query-as-write-loop]] does *ingest-like writes* triggered by queries instead of new raw files
 
-## Verification status (as of 2026-05-25)
+## Verification status (as of 2026-06-08)
 
-**Honesty note** `(source: analysis)`: the 7-step pipeline is **specified, not demonstrated**, in this project. `/wiki-ingest` has never been invoked. The wiki you are reading was produced by direct file writes during the design conversation that bootstrapped this repo, with me (the LLM in that session) playing the role of /wiki-ingest by hand. The output looks pipeline-conformant — but it is not a test that the prompt in `.claude/commands/wiki-ingest.md` actually drives a fresh LLM session through all 7 steps reliably.
+**Status note** `(source: analysis)`: the 7-step pipeline is **demonstrated end-to-end and CI-gated**. `scripts/smoke-build.sh` drives a real LLM session — `claude -p "/wiki-ingest raw/smoke-source.md"` — and `scripts/smoke-all.sh` runs it on every push; the C1 check confirms a follow-up `/wiki-query` against the result reaches the right answer. `scripts/eval-onboarding.sh` independently drives a fresh newcomer through extract→ingest→query. So `/wiki-ingest` is now **observed working**, not just specified.
 
-What's untested:
+Honest nuance: the original meta-wiki pages (the karpathy-derived set) were hand-bootstrapped by direct file writes during the design conversation, with the LLM playing /wiki-ingest by hand — those specific pages were not machine-ingested. The smoke-fixture pages (`smoke-source-summary.md` and friends) **were** produced by the real command, which is what makes them the proof.
 
-- Whether an LLM following the prompt does **all 7 steps**, or skips some (e.g., quietly omitting step 5's contradiction-flagging).
+What the smoke test does **not** granularly assert (residual unknowns):
+
+- Whether an LLM following the prompt fires **all 7 steps every time**, or quietly skips one (e.g., step 5's contradiction-flagging) — the smoke checks the end result, not each step's firing.
 - Whether step 4 ("update existing pages") touches the right pages — not too few (loses compounding) and not too many (collateral churn).
 - Whether step 5 catches subtle contradictions or only obvious ones.
-- Whether step 3's per-source summary page actually gets created on first ingest (the original bootstrap did not — it had to be backfilled later; see `log.md` 2026-05-25 08:30).
-- How long the pipeline takes for one source of ~5,000 words (token budget, wall-clock).
+- How long the pipeline takes for a large source of ~5,000 words (token budget, wall-clock).
 
-The first real-session invocation of `/wiki-ingest <new-source>` is the smoke test. Until then, treat the 7 steps as **what the system intends to do**, not **what it has been observed doing**.
+Treat the pipeline as **observed to run and reach correct answers**, with per-step conformance verified only at the coarse end-to-end level.
 
 ## Related
 

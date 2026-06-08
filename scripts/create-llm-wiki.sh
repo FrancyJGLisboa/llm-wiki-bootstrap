@@ -68,6 +68,12 @@ while IFS= read -r p; do
     README.md)
       source_path="$SRC/templates/README-fresh.md"
       ;;
+    .claude/settings.json)
+      # Sourced from a template so the dev repo keeps no live settings.json of
+      # its own — the generated wiki gets the auto-commit Stop hook; this repo
+      # does not.
+      source_path="$SRC/templates/wiki-settings.json"
+      ;;
     log.md)
       # Hard-coded stub; write directly.
       mkdir -p "$TARGET/$(dirname "$p")"

@@ -3,6 +3,7 @@ CLAUDE.md
 GEMINI.md
 LICENSE
 .gitignore
+.claude/settings.json
 .clinerules
 .cursor/rules/llm-wiki.mdc
 .github/copilot-instructions.md
@@ -23,6 +24,7 @@ LICENSE
 .claude/commands/wiki-diagram.md
 .claude/commands/diagram.md
 scripts/body-hash.sh
+scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
 scripts/lib/eval-common.sh
 scripts/preflight.sh
