@@ -2,15 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R9) into a single exit-code-
-# driven test. This script IS the /goal completion condition for
-# .scratch/plug-and-play-curator-smoke/GOAL.md.
+# (C1–C5), and the regression guards (R1–R8) into a single exit-code-
+# driven test.
 #
-# Exit 0 iff all 18 checks pass.
+# Exit 0 iff all 13 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 18 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R13 guards). This is the CI path — the build phase is a precondition that
+#   only the 13 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R8 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -54,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R5 ────
-section "Regression guards (R1–R13)"
+# ──── REGRESSION GUARDS R1–R8 ────
+section "Regression guards (R1–R8)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -104,89 +103,38 @@ if [ "$r4_ok" = yes ]; then
   ok "R4 schema version + type enum + core-script shebangs intact"
 fi
 
-# R5 — multi-wiki factory deterministic oracle (M1–M3) stays green
-if "$SCRIPT_DIR/verify-multi-wiki.sh" >/dev/null 2>&1; then
-  ok "R5 verify-multi-wiki.sh (factory M1–M3) exits 0"
-else
-  record_fail "R5 verify-multi-wiki.sh exits non-zero (factory regression)"
-fi
-
-# R6 — body-hash.sh frontmatter validation (malformed input fails closed)
+# R5 — body-hash.sh frontmatter validation (malformed input fails closed)
 if "$SCRIPT_DIR/verify-body-hash.sh" >/dev/null 2>&1; then
-  ok "R6 verify-body-hash.sh exits 0 (malformed frontmatter rejected)"
+  ok "R5 verify-body-hash.sh exits 0 (malformed frontmatter rejected)"
 else
-  record_fail "R6 verify-body-hash.sh exits non-zero (silent-data-loss guard regressed)"
+  record_fail "R5 verify-body-hash.sh exits non-zero (silent-data-loss guard regressed)"
 fi
 
-# R7 — typed-relations lint (was advertised + fixture-backed but never in CI).
-# Mirrors the typed-wikilinks GOAL C3/C4: good fixture passes, bad fixture
-# fails, and the meta-wiki stays backward-compatible (untyped = implicit).
+# R6 — typed-relations lint: good fixture passes, bad fixture fails, and the
+# meta-wiki stays backward-compatible (untyped = implicit).
 if "$SCRIPT_DIR/wiki-lint-typed-relations.sh" tests/canary/typed-related-fixture/ >/dev/null 2>&1 \
    && ! "$SCRIPT_DIR/wiki-lint-typed-relations.sh" tests/canary/typed-related-fixture-bad/ >/dev/null 2>&1 \
    && "$SCRIPT_DIR/wiki-lint-typed-relations.sh" wiki/ >/dev/null 2>&1; then
-  ok "R7 wiki-lint-typed-relations.sh (good=0, bad≠0, wiki/=0)"
+  ok "R6 wiki-lint-typed-relations.sh (good=0, bad≠0, wiki/=0)"
 else
-  record_fail "R7 wiki-lint-typed-relations.sh typed-relation checks regressed"
+  record_fail "R6 wiki-lint-typed-relations.sh typed-relation checks regressed"
 fi
 
-# R8 — installer oracle (single-wiki create-llm-wiki: tree shape + no dev-repo
-# string leakage + target preflight). Was a manual-only oracle; now a CI guard.
+# R7 — installer oracle (create-llm-wiki: tree shape EQUALS manifest + no dev-repo
+# string leakage + target preflight).
 if "$SCRIPT_DIR/verify-create-llm-wiki.sh" >/dev/null 2>&1; then
-  ok "R8 verify-create-llm-wiki.sh exits 0 (clean fresh-skeleton install)"
+  ok "R7 verify-create-llm-wiki.sh exits 0 (clean fresh-skeleton install)"
 else
-  record_fail "R8 verify-create-llm-wiki.sh exits non-zero (installer regression)"
+  record_fail "R7 verify-create-llm-wiki.sh exits non-zero (installer regression)"
 fi
 
-# R9 — citation-faithfulness deterministic floor (C1+C2): the audit must catch
+# R8 — citation-faithfulness deterministic floor (C1+C2): the audit must catch
 # broken/fabricated citations on the planted fixture (no LLM; the C3 entailment
 # judge is a separate manual tool — see scripts/eval-citation-faithfulness.sh).
 if "$SCRIPT_DIR/verify-citation-audit.sh" >/dev/null 2>&1; then
-  ok "R9 verify-citation-audit.sh exits 0 (citation floor catches fabrications)"
+  ok "R8 verify-citation-audit.sh exits 0 (citation floor catches fabrications)"
 else
-  record_fail "R9 verify-citation-audit.sh exits non-zero (citation-audit floor regressed)"
-fi
-
-# R10 — skill-install oracle: the /wiki-skill output must satisfy the load
-# preconditions + be self-contained once installed into a host (.claude/skills/) —
-# i.e. SKILL.md is well-formed, its `name` matches the install dir, and every
-# workflow it names is bundled inside the folder so the agent never depends on a
-# host-registered slash command. Deterministic: scaffolds + stamps + simulates the
-# install (S1-S3, S5). Note: this guards the template + manifest, not the LLM
-# stamping path — that is verified by /wiki-skill itself calling this oracle.
-if "$SCRIPT_DIR/verify-skill-install.sh" >/dev/null 2>&1; then
-  ok "R10 verify-skill-install.sh exits 0 (generated skill is self-contained)"
-else
-  record_fail "R10 verify-skill-install.sh exits non-zero (skill-install regression)"
-fi
-
-# R11 — causal-relationships deterministic oracle: causal-vocabulary lint
-# (good/bad/wiki + synonym suggestions), KG exact-tuple materialization +
-# input-sensitivity, stdlib-only KG builder, and the schema/ingest/content
-# guards (G1–G3). See .scratch/causal-relationships/GOAL.md.
-if "$SCRIPT_DIR/verify-causal.sh" >/dev/null 2>&1; then
-  ok "R11 verify-causal.sh exits 0 (causal lint + KG + guards)"
-else
-  record_fail "R11 verify-causal.sh exits non-zero (causal capability regression)"
-fi
-
-# R12 — shared-brain privacy guard: the scanner discriminates (clean/dirty),
-# auto-detects shared via SKILL.md, the pre-commit HOOK blocks a dirty commit and
-# accepts a clean one (tested-path == runtime-path), and the scaffolder ships +
-# wires the guard into generated wikis (core.hooksPath). Fail-closed at the
-# irreversible commit boundary — the one mechanical exception to soft enforcement.
-if "$SCRIPT_DIR/verify-privacy-scan.sh" >/dev/null 2>&1; then
-  ok "R12 verify-privacy-scan.sh exits 0 (shared-brain privacy guard + hook + ship)"
-else
-  record_fail "R12 verify-privacy-scan.sh exits non-zero (privacy guard regression)"
-fi
-
-# R13 — near-duplicate detector: discriminates a reworded pair from a distinct
-# page (stdlib-only). Defends the brain's novelty gate downstream — /wiki-lint
-# surfaces near-dups for review (surface, don't block). See wiki-lint.md check 8.
-if "$SCRIPT_DIR/verify-near-duplicates.sh" >/dev/null 2>&1; then
-  ok "R13 verify-near-duplicates.sh exits 0 (near-duplicate detector discriminates)"
-else
-  record_fail "R13 verify-near-duplicates.sh exits non-zero (near-dup detector regression)"
+  record_fail "R8 verify-citation-audit.sh exits non-zero (citation-audit floor regressed)"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
@@ -199,7 +147,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 18 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 13 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

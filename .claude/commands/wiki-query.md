@@ -26,24 +26,6 @@ Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
 
 From `wiki/index.md` and via `Grep` over `wiki/`, identify the 3-10 pages most likely to contain relevant material. Read them (frontmatter + body).
 
-### Step 1.5 — Causal traversal (when the question is causal)
-
-If the question is **causal** — "what caused X?", "what are the downstream effects of Y?", "trace the chain from A to B", "why did Z happen?" — reason over the causal graph, not just nearest-page prose:
-
-1. **Materialize the causal graph.** Check for `wiki/_kg.jsonl`; if absent, build it on demand with `scripts/wiki-to-kg.py --causal-only wiki/` (read-only — do **not** write the sidecar into `wiki/`). Each line is a directed triple `{"source","verb","target"}`, `verb` ∈ {`causes`,`caused-by`,`enables`,`prevents`,`contributes-to`}. **Causal direction lives only in these triples** — page bodies may be silent on, or even misleading about, which node causes which.
-2. **Traverse by shelling out to `scripts/wiki-graph-walk.py` — do not walk the graph in your head.** A deterministic walk is correct and traceable every time; eyeballing a small graph is guess-prone, and a cyclic graph would loop. Pipe the causal KG into the walker:
-
-   ```bash
-   scripts/wiki-to-kg.py --causal-only wiki/ | scripts/wiki-graph-walk.py --start <slug> --direction down --max-hops 2
-   ```
-
-   - "downstream effects of Y" → `--start <y> --direction down`; "what caused X / why did X / root cause" → `--direction up`.
-   - Add `--max-hops N` when the question bounds the distance ("two hops downstream", "the Nth node"); **omit** it for "the full chain / the root cause" — the walk is cycle-safe (a visited-set terminates even on a ring), so it returns the full reachable closure.
-   - The walker prints the reached nodes in hop order (`{"hop","node","via"}`), start excluded. **Treat this output as authoritative.** (If `wiki-graph-walk.py` is absent — an older generated wiki — fall back to reasoning over the triples directly, walking backward for causes / forward for effects.)
-3. Read the pages on the resulting node(s) for the requested detail (e.g. an attribute or `Code` in the body), then answer — citing each node as `[[page-name]]`. Follow any output-format instruction in the question literally (e.g. "reply with the integer only").
-
-If the question is not causal, skip this step. The KG is a retrieval aid layered on the typed `## Related` edges — see `AGENTS.md` → "Causal relations".
-
 ### Step 2 — Try to answer from the wiki alone
 
 Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.

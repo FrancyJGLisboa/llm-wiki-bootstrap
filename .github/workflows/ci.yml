@@ -2,8 +2,8 @@ name: CI
 
 # Deterministic proof the pipeline holds together — runs on every push/PR with
 # no API key and no `claude` CLI. The LLM build phase is skipped (--no-build);
-# CI verifies the committed smoke artifacts (C1–C5) plus the R1–R9 regression
-# guards (body-hash idempotence, installer, factory, citation floor, …).
+# CI verifies the committed smoke artifacts (C1–C5) plus the R1–R8 regression
+# guards (body-hash idempotence, installer, typed-relations, citation floor, …).
 #
 # The full end-to-end run that actually drives `claude -p` (extract → ingest →
 # query, and the newcomer onboarding eval) is scripts/smoke-all.sh /
@@ -28,7 +28,7 @@ jobs:
           bash --version | head -1
           openssl version
           python3 --version
-      - name: Run 14 deterministic checks
+      - name: Run 13 deterministic checks
         run: bash scripts/smoke-all.sh --no-build
 
   quality:

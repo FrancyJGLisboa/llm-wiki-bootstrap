@@ -39,13 +39,10 @@ JSCPD_VERSION="${JSCPD_VERSION:-5.0.4}"
 
 # Duplication ceiling — scoped to scripts/ (code only; markdown commands are
 # 0%-duplicated and owned by /wiki-lint, and would only dilute the metric).
-# Re-baselined to 3.25% under the pinned jscpd@5.0.4 (measured 3.04%): the prior
-# 2.5% was set against an older, lower-counting jscpd, and the shared-brain privacy
-# guard added a new standalone sibling oracle (verify-privacy-scan.sh + privacy-scan.sh)
-# carrying the same accepted reporting/file-collect boilerplate every verify script
-# uses. The clean consolidation point (scripts/lib/eval-common.sh) is frozen by the
-# causal oracle's G3 guard, so this growth is the convention, not copy-paste sloppiness.
-JSCPD_THRESHOLD="${JSCPD_THRESHOLD:-3.25}"
+# 2.5% under the pinned jscpd@5.0.4 (measured ~1.9% after the cut-to-core trim
+# removed the factory/brain/causal scripts and their sibling oracles). The
+# remaining duplication is the accepted per-verify-script reporting boilerplate.
+JSCPD_THRESHOLD="${JSCPD_THRESHOLD:-2.5}"
 JSCPD_MIN_TOKENS="${JSCPD_MIN_TOKENS:-50}"
 
 if [ -t 1 ]; then

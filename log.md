@@ -2,6 +2,16 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-08 — cut to core (factory + brain + causal removed)
+
+Trimmed the system to the core that earns its keep over "a folder + Claude": **init / extract / ingest / query / lint** + the **output commands** (visualize / flashcards / diagram) + the blank-wiki **installer** (`create-llm-wiki.sh`). Rationale: value-vs-cost review concluded the scale machinery was infrastructure ahead of single-user demand. Full prior system recoverable at git tag **`archive/full-system-v1`**.
+
+- **Removed — factory:** `/wiki-new` `/wiki-skill` `/wiki-registry` (+ `new`/`wikis` aliases), `scripts/{new-wiki,registry,verify-multi-wiki,verify-skill-install}.sh`, `templates/skill/`. Smoke R5/R10 dropped.
+- **Removed — self-updating brain:** `/wiki-learn` (+ `learn`), and this branch's brain/scale guards: `scripts/privacy-scan.sh`, `scripts/hooks/pre-commit`, `scripts/wiki-near-duplicates.py`, their verifiers + fixtures. Smoke R12/R13 dropped; `core.hooksPath` wiring removed from the installer.
+- **Removed — causal layer:** `scripts/{wiki-lint-causal.sh,wiki-to-kg.py,wiki-graph-walk.py,verify-causal.sh,eval-causal.sh}`, `templates/causal-vocab.txt`, causal fixtures, `raw/causal-smoke-source.md`, causal step 1.5 in `wiki-query.md` + authoring prose in `wiki-ingest.md` + the "Causal relations" section in `AGENTS.md`. Smoke R11 dropped.
+- **Smoke is now 13 checks** (C1–C5 + R1–R8, renumbered contiguous); `jscpd` ceiling tightened 3.25% → 2.5% (post-cut duplication ~1.9%). `AGENTS.md`/`CLAUDE.md`/`GEMINI.md` + README/QUICKSTART/EXPLAIN + `wiki/commands.md`/`glossary.md` updated to core-only.
+- **Kept (degrade gracefully):** the typed-relations evals (`eval-multi-hop*`) still reference the removed `wiki-to-kg.py` behind an `[ -f ]` guard, so they run sidecar-less. `presentations/lseg-sales/` (a deck for the removed skill feature) left untouched as a separate artifact.
+
 ## 2026-06-01 — conversion pass: prove it runs, show it, one start-here, CI
 
 First-visitor → adoption polish. The decisive change: the README no longer says "Runtime behaviour is untested" — because it now *is* tested. The Claude Code happy path is proven end-to-end (`scripts/eval-onboarding.sh` drives `claude -p` as a fresh newcomer through extract→ingest→query and confirms they reach the right answer). Durable wins: C1 (pipeline reaches the correct answer) reliably green, and C2 (one unambiguous start-here) structurally fixed by the README-FRESH move. The post-change run scored 5/5; C3 (agent write-before-read) and C4 (AGENTS.md probe) have run-to-run variance, so treat 5/5 as a ceiling, not a guarantee.

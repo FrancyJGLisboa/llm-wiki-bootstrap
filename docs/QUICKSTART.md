@@ -75,7 +75,7 @@ cd my-wiki
 ./scripts/smoke-all.sh
 ```
 
-Runs the full pipeline: `claude -p` ingests a fictitious technical source (under `tests/smoke/`), queries it, and 9 binary checks (5 smoke + 4 regression guards) assert that ingest produced wiki pages with the right anchors, `log.md` has the entry, `/wiki-query` recalled the fact and cited the source, and no schema/script invariants regressed. First run ~30-60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 9 green = your install works end-to-end.
+Runs the full pipeline: `claude -p` ingests a fictitious technical source (under `tests/smoke/`), queries it, and 13 binary checks (5 smoke C1–C5 + 8 regression guards R1–R8) assert that ingest produced wiki pages with the right anchors, `log.md` has the entry, `/wiki-query` recalled the fact and cited the source, and no schema/script invariants regressed. First run ~30-60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end.
 
 ### Shape-check smokes (per-format)
 
@@ -108,17 +108,6 @@ You will use the same 5 operations regardless of tool. Each one has two intercha
 | **lint** `[--apply]` | `/lint` or `/wiki-lint` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
 
 In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition). The short-form alias files (`.claude/commands/{init,extract,ingest,query,lint}.md`) are thin delegators that point the AI at the canonical file — both names work identically.
-
-### Generating new wikis (the factory)
-
-The 5 operations above work *inside* one wiki. This repo can also generate **other** wikis, each shaped for a domain and tracked in a local catalog:
-
-| Command | Purpose |
-|---|---|
-| `/wiki-new <name> --domain "<description>"` (alias `/new`) | Scaffold a fresh wiki under your workspace (`~/llm-wikis/` by default), then author a domain layer (vocabulary + a navigation index + 3–5 seed pages) from your one-line description. `--target <path>` puts it anywhere instead. |
-| `/wiki-registry [prune]` (alias `/wikis`) | List every wiki you've generated, with seeded status and drift detection. |
-
-These are **factory-only** — they run from this repo and are not shipped into the wikis they create. Full spec in [`AGENTS.md`](../AGENTS.md) → "Generating new wikis (the factory)" and the "Multi-wiki factory" section of the [README](../README.md).
 
 ---
 
@@ -217,11 +206,9 @@ Run wiki-lint per .claude/commands/wiki-lint.md. Report issues
 but don't apply fixes yet.
 ```
 
-Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+Output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
 
 ```
-Create a new wiki "coffee-roasting" about home espresso per
-.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
 Make a poster — "status of X for management" — per
 .claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
 ```
@@ -272,11 +259,9 @@ Lint:
 Run wiki-lint per .claude/commands/wiki-lint.md.
 ```
 
-Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+Output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
 
 ```
-Create a new wiki "coffee-roasting" about home espresso per
-.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
 Make a poster — "status of X for management" — per
 .claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
 ```
@@ -327,11 +312,9 @@ Lint:
 Run wiki-lint.
 ```
 
-Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+Output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
 
 ```
-Create a new wiki "coffee-roasting" about home espresso per
-.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
 Make a poster — "status of X for management" — per
 .claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
 ```
@@ -373,11 +356,9 @@ Wiki-ask: <your question>.
 Run wiki-lint.
 ```
 
-Factory + output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
+Output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
 
 ```
-Create a new wiki "coffee-roasting" about home espresso per
-.claude/commands/wiki-new.md; then list my wikis (wiki-registry).
 Make a poster — "status of X for management" — per
 .claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
 ```
@@ -402,7 +383,7 @@ Read AGENTS.md. Then run wiki-extract on https://example.com/foo
 following .claude/commands/wiki-extract.md.
 ```
 
-(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed. The factory commands `wiki-new` / `wiki-registry` and the output commands `wiki-visualize` / `wiki-flashcards` / `wiki-diagram` follow the same pattern — name the workflow and point at its `.claude/commands/*.md`.)
+(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed. The output commands `wiki-visualize` / `wiki-flashcards` / `wiki-diagram` follow the same pattern — name the workflow and point at its `.claude/commands/*.md`.)
 
 ---
 

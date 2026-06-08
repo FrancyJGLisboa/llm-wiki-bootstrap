@@ -1,5 +1,0 @@
-causes
-caused-by
-enables
-prevents
-contributes-to

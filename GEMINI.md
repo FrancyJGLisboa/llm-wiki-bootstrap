@@ -18,17 +18,7 @@ Plus two **output workflows** that render/export an already-built wiki (read-onl
 - `wiki-flashcards [dir]` — export `## Flashcards` sections to an Anki CSV; wraps `scripts/wiki-to-anki.sh`
 - `wiki-diagram "<intent>"` — semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`; contracts in `templates/infographic/`
 
-Two **factory workflows** generate and catalog *other* wikis (they belong to this repo only — they are not shipped into the wikis they create; real slash commands in Claude Code, natural-language in Gemini):
-
-- `wiki-new <name> --domain "<description>"` — scaffold a new domain-shaped wiki and register it; wraps `scripts/new-wiki.sh` (which reuses `scripts/create-llm-wiki.sh`)
-- `wiki-registry [prune]` — list / prune the workspace catalog (`registry.jsonl`); wraps `scripts/registry.sh`
-
-Invoking the factory in Gemini (natural language → what you do):
-
-- *"Create a new wiki called coffee-roasting about home espresso and roasting"* → run `scripts/new-wiki.sh coffee-roasting --domain "home espresso and roasting"` (`--domain` is required), then author the domain layer per `.claude/commands/wiki-new.md`.
-- *"List the wikis I've made"* → `scripts/registry.sh list`. *"Prune dangling entries"* → `scripts/registry.sh prune` (dry run), then `prune --apply` only after the user confirms.
-
-See `AGENTS.md` → "Generating new wikis (the factory)".
+A blank wiki can be scaffolded with `scripts/create-llm-wiki.sh <target-dir>` (the installer; verified by `scripts/verify-create-llm-wiki.sh`).
 
 Hard rules (full text in `AGENTS.md`):
 

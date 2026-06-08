@@ -56,12 +56,12 @@ Just trying it out? Skip this. When you want to confirm the whole pipeline works
 
 ```bash
 ./scripts/preflight.sh    # hard reqs (bash/awk/openssl/git) + which extract formats work first-try
-./scripts/smoke-all.sh    # full pipeline (extract → ingest → query) on a fictitious fixture; 10 binary checks
+./scripts/smoke-all.sh    # full pipeline (extract → ingest → query) on a fictitious fixture; 13 binary checks
 ```
 
 `preflight.sh` tells you in advance which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but knowing in advance avoids surprises).
 
-`smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 10 green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
+`smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
 **For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md).
 
@@ -110,29 +110,6 @@ Two more commands render or export an **already-built** wiki — they sit outsid
 `/wiki-visualize` is **mechanical** (renders the structure that already exists); `/wiki-diagram` is **semantic** (composes a new poster by reasoning over a query). See the diagram contracts in `templates/infographic/`.
 
 **Optional: typed relations.** Inside `## Related`, you can attach a verb to a link — `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark; backward-compat with untyped lines. Verb regex: `[a-z][a-z0-9-]*`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Full spec in [`AGENTS.md`](AGENTS.md) → "Typed relations". An empirical eval (`scripts/eval-multi-hop.sh`) measures whether typed verbs improve `/wiki-query` recall over the same wiki with verbs stripped — see [`.scratch/typed-wikilinks-semantic-viz/GOAL.md`](.scratch/typed-wikilinks-semantic-viz/GOAL.md) for the methodology and current null-result on a Wikipedia-derived fixture.
-
-## Multi-wiki factory
-
-This repo doesn't just *become* one wiki — it can **generate many**, each shaped for its own domain and tracked in a local catalog. Two factory commands (they live here, in the factory; they are not shipped inside the wikis they create):
-
-| Prefixed | Short | What it does |
-|---|---|---|
-| `/wiki-new <name> --domain "<description>"` | `/new` | Generate a new wiki pre-shaped for `<description>`. Scaffolds a fresh skeleton, then authors a domain layer: a `## Domain conventions` section in the new wiki's `AGENTS.md`, a navigation `index.md`, and 3–5 honest seed pages. Registers it in the workspace catalog. |
-| `/wiki-registry [prune]` | `/wikis` | List every wiki you've generated — name, domain, seeded status, and drift (a registered dir that's gone, or a stray dir not in the catalog). `prune --apply` removes dangling entries. |
-
-```
-/wiki-new "vineyard-ops" --domain "vineyard operations management"
-# → ~/llm-wikis/vineyard-ops/  (own git repo, domain-shaped, seeded)
-# → registered in ~/llm-wikis/registry.jsonl
-
-/wiki-registry            # see the whole catalog
-```
-
-**Where wikis go.** By default each new wiki lands under a **workspace** (`${LLM_WIKI_WORKSPACE:-~/llm-wikis}`) as its own git repo, with a `registry.jsonl` catalog at the workspace root. Want it elsewhere? `--target <path>` creates an independent repo anywhere and still registers it (by absolute path). The deterministic half is plain shell — `scripts/new-wiki.sh` (which reuses the proven `scripts/create-llm-wiki.sh`) and `scripts/registry.sh` — so you can script wiki creation without an AI tool; only the seed-page authoring needs the LLM.
-
-**No pre-baked domains.** The factory ships zero hand-authored domain content. You describe the domain in one line (`--domain "..."`) and the seed pages are generated for *that* description. Seed pages are always `source: analysis` (interpretation, no raw source yet) and disclose it — enforced by `scripts/verify-multi-wiki.sh`.
-
-> Not yet built (phase 2): freezing a built wiki into a reusable static template (`snapshot`), and a *remote/published* registry others can browse. Today's registry is local.
 
 ## Visualize your wiki
 
@@ -214,9 +191,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │       ├── wiki-extract.md
 │       ├── wiki-ingest.md
 │       ├── wiki-query.md
-│       ├── wiki-lint.md
-│       ├── wiki-new.md             # factory: generate a new domain-shaped wiki (+ alias new.md)
-│       └── wiki-registry.md        # factory: list/prune the workspace catalog (+ alias wikis.md)
+│       └── wiki-lint.md
 ├── .cursor/
 │   └── rules/
 │       └── llm-wiki.mdc            # Cursor shim
@@ -244,9 +219,6 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── create-llm-wiki.sh          # manifest-driven installer for a fresh skeleton
 │   ├── verify-create-llm-wiki.sh   # oracle for the installer (I1–I5)
 │   ├── installer-skeleton-manifest.txt # single source of truth for what ships fresh
-│   ├── new-wiki.sh                 # factory: scaffold + register a new wiki (reuses create-llm-wiki.sh)
-│   ├── registry.sh                 # factory: owner of the workspace registry.jsonl catalog
-│   ├── verify-multi-wiki.sh        # factory oracle (M1–M5: scaffold/register/drift/seeded-validity)
 │   └── visualize/                  # opt-in OSS visualization wrappers
 │       ├── graph.sh                # bash wrapper around graph-html.py
 │       ├── graph-html.py           # stdlib-only D3 force-graph generator
@@ -299,9 +271,7 @@ See `wiki/four-principles.md` for the full account.
 
 V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, and Codex are all in place. Real slash commands exist only for Claude Code; other tools invoke the workflows by natural language using the same prompt bodies.
 
-The **multi-wiki factory** (`/wiki-new`, `/wiki-registry`) now exists: it generates domain-shaped wikis into a workspace and tracks them in a local `registry.jsonl`. Its deterministic half (`scripts/new-wiki.sh`, `scripts/registry.sh`) is shell-verified by `scripts/verify-multi-wiki.sh` (checks M1–M5, all green), and the existing single-wiki installer oracle (`scripts/verify-create-llm-wiki.sh`) still passes unchanged — the factory was built additively on top of it. *Remote/published* registry publishing, template snapshotting, richer outputs, and parallel-ingest concurrency are still future work.
-
-**The Claude Code happy path is verified end-to-end.** Two harnesses guard it. `scripts/smoke-all.sh` — 14 deterministic checks (extract → ingest → query, body-hash idempotence, installer, factory) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed). `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
+**The Claude Code happy path is verified end-to-end.** Two harnesses guard it. `scripts/smoke-all.sh` — 13 deterministic checks (extract → ingest → query, body-hash idempotence, installer) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed). `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 

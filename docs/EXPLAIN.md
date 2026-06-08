@@ -147,7 +147,7 @@ The payoff property is step 4: **one source touches 10–15 wiki pages, not one.
 
 ### Status of this pipeline (updated 2026-05-26)
 
-The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 9 binary checks (5 smoke + 4 regression) gate the demonstration; passing them is what "the pipeline works" means.
+The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 13 binary checks (5 smoke C1–C5 + 8 regression R1–R8) gate the demonstration; passing them is what "the pipeline works" means.
 
 On a fresh real source, the most common failure modes remain step 5 (contradiction-flagging skipped) and step 3 (summary page skipped). [`QUICKSTART.md`](QUICKSTART.md) has the exact re-prompts. The per-tool parity for Cursor / Copilot / Gemini / Codex paths is **still undemonstrated** — they likely work via the natural-language shims but haven't been observed.
 
@@ -166,7 +166,7 @@ Three opt-in extensions, none of which changes the three-layer model or the five
 
 The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a version bump; the journal exception is the rule change that bumped 1→2 (a v1 client running `/wiki-ingest` on a v2 repo could clobber a journal entry — see `log.md`'s 2026-05-26 05:30 migration note).
 
-## Four escape hatches the v2 era adds
+## Three escape hatches the v2 era adds
 
 These don't replace the five commands; they sit alongside them.
 
@@ -176,15 +176,11 @@ A manifest-driven scaffolder. `scripts/installer-skeleton-manifest.txt` is the s
 
 ### The smoke umbrella — `scripts/smoke-all.sh`
 
-The "does my install actually work" command. Composes the end-to-end ingest smoke (the 7-step demonstration) + the previous canary shape-checks + 4 regression guards. Idempotent: first run ~45s LLM-driven, subsequent runs sub-second pure shell. The /goal completion oracle for the iteration that proved the pipeline runs.
+The "does my install actually work" command. Composes the end-to-end ingest smoke (the 7-step demonstration) + the previous canary shape-checks + 8 regression guards (R1–R8). Idempotent: first run ~45s LLM-driven, subsequent runs sub-second pure shell. The /goal completion oracle for the iteration that proved the pipeline runs.
 
 ### The visualization wrappers — `scripts/visualize/`
 
 Five opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The others — `slides.sh`, `mermaid.sh`, `serve.sh` (wrapping `npx` packages and a Python HTTP server), and `render.sh` (HTML poster → PDF/PNG via a headless browser or puppeteer, with graceful HTML fallback; backs `/wiki-query --visual` and `/wiki-diagram --pdf/--png`). None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
-
-### The factory — `/wiki-new` + `/wiki-registry`
-
-Where the installer makes *one* wiki, the factory makes *many* and remembers them. `scripts/new-wiki.sh` composes the installer with a workspace (`~/llm-wikis/` by default) and a local catalog (`registry.jsonl`, owned by `scripts/registry.sh`); the `/wiki-new` command then has the LLM author a domain layer (a `## Domain conventions` block, a navigation index, and a few `source: analysis` seed pages) from a one-line `--domain` description. `/wiki-registry` lists/prunes the catalog and flags drift. Factory-only — these are not shipped into the wikis they generate. Verified by `scripts/verify-multi-wiki.sh` (M1–M5 + an E1–E9 edge battery), which also rides along as guard R5 in `smoke-all.sh`.
 
 ## The four principles, with a "you'd lose this if…" for each
 

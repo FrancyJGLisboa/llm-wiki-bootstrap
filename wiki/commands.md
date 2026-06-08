@@ -161,17 +161,6 @@ Each backing script guards its own dependency and prints an install hint; the co
 
 **Boundary vs `/wiki-visualize`.** Visualize is mechanical (renders structure that already exists); diagram is semantic (composes a new artifact by reasoning over a query). **Wiki-only by default** — no web search, no promotion; if the wiki can't answer the intent, it hands the user back to `/wiki-query`. Diagrams are interpretive (`source: analysis`-equivalent) — grounded in cited pages, not extracted verbatim.
 
-## Factory commands
-
-Two commands belong to the **factory** (this `llm-wiki-bootstrap` repo) rather than to an individual wiki. They are **not** shipped into generated wikis — a produced wiki is a leaf, not itself a factory.
-
-| Command | Purpose |
-|---|---|
-| `/wiki-new <name> --domain "<description>"` | Generate a new domain-shaped wiki (scaffold via `scripts/new-wiki.sh`, which reuses `scripts/create-llm-wiki.sh`, then author a `## Domain conventions` block + navigation index + 3–5 `source: analysis` seed pages) and register it in the workspace catalog. `--target <path>` places it outside the default workspace. |
-| `/wiki-registry [prune]` | List every generated wiki (name, domain, seeded status, drift) from `registry.jsonl`; `prune --apply` drops dangling entries. Wraps `scripts/registry.sh`. |
-
-Layout: generated wikis live under `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`, each its own git repo, with `registry.jsonl` at the workspace root.
-
 ## Related
 
 - [[operation-ingest]], [[operation-query]], [[operation-lint]] — the video-named operations these commands implement

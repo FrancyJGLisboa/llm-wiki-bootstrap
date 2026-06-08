@@ -46,8 +46,6 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 
 Full spec lives at [`wiki/commands.md`](wiki/commands.md). Canonical implementations at `.claude/commands/wiki-*.md`; the short-form aliases at `.claude/commands/{init,extract,ingest,query,lint}.md` are thin delegators.
 
-**Self-updating brains — `/wiki-learn` (`/learn`).** One further lifecycle command turns an **interaction** into wiki knowledge, making the wiki the live, self-updating "brain" of an agent skill. It is a thin composition of the two existing write primitives plus a notability gate: it distills a session into durable, novel facts, gates them (durable ∧ novel ∧ attributable ∧ in-scope; tagged `preference` vs `factual`, with a privacy guard), captures the kept ones as a `raw/session-*.md` source (`source_type: interaction`) via `/wiki-extract --text --source-type interaction`, then `/wiki-ingest`s them — citing the originating turn and applying **latest-wins-with-trail** for contradictions. It never writes `wiki/` directly; the three-layer ownership model is untouched (writes flow raw → wiki). `--dry-run` reports gate decisions without writing; `--scope-dir <path>` targets one brain among many (per-user layout). Canonical: `.claude/commands/wiki-learn.md`.
-
 Two further **output commands** (`/wiki-visualize`, `/wiki-flashcards`) sit alongside the five — they render or export an already-built wiki rather than participating in the acquire→maintain loop. See below.
 
 ### Output commands
@@ -80,22 +78,6 @@ Both `/wiki-query --visual` and `/wiki-diagram` choose from these eight lenses (
 | A8 | Taxonomy / Tree | is a hierarchy or classification that branches |
 
 The **score** is the sum of four sub-dimensions (see `scoring-rubric.md`); a candidate must clear **≥ 3.5** to be surfaced. `/wiki-diagram` shows the full scored menu and lets you pick; `/wiki-query --visual` auto-picks the top one and names it.
-
-## Generating new wikis (the factory)
-
-This repo is also a **factory**: it can generate *other* wikis, each pre-shaped for a domain and tracked in a local catalog. These commands are **factory-only** — they live here and do **not** ship inside the wikis they produce (a generated wiki is a leaf, not itself a factory).
-
-| Prefixed | Short | Purpose |
-|---|---|---|
-| `/wiki-new <name> --domain "<description>"` | `/new` | Generate a new wiki shaped for `<description>`: a deterministic skeleton (`scripts/new-wiki.sh`, which reuses `scripts/create-llm-wiki.sh`) plus an LLM-authored domain layer — a `## Domain conventions` section in the new wiki's `AGENTS.md`, a navigation `index.md`, and 3–5 seed pages. Registers the result in the workspace catalog. |
-| `/wiki-skill <name> --domain "<description>" [--scope per-user\|shared]` | — | Like `/wiki-new`, but additionally wraps the new wiki as a **self-updating agent skill**: turns the wiki folder into a skill — a root `SKILL.md` entry point (operating procedure read = `/wiki-query --no-promote`, write = `/wiki-learn`) over the bundled `wiki/`/`raw/`/`scripts/`. Delegates wiki creation to `/wiki-new`; `--scope` defaults to `per-user`. |
-| `/wiki-registry [prune]` | `/wikis` | List every generated wiki (name, domain, seeded status, drift) from the catalog. Thin wrapper over `scripts/registry.sh`. `prune --apply` drops dangling entries. |
-
-**Layout.** Generated wikis live under a **workspace** (default `${LLM_WIKI_WORKSPACE:-~/llm-wikis}`), each its own `git`-initialized repo, with a `registry.jsonl` catalog at the workspace root. The `--target <path>` escape hatch creates an independent repo anywhere instead, registered by absolute path (`in_workspace:false`). The registry always lives at the workspace root, even for `--target` wikis.
-
-**No committed domains.** The factory ships **no** hand-authored domain content. Domain-shaping is generate-on-demand from the `--domain` description you pass.
-
-**Seed-page provenance honesty (hard rule).** Seed pages have no raw source, so they MUST be `source: analysis` and say so in the body (an interpretive disclaimer). Never write a `(source: raw/...)` citation on a seed page. The oracle `scripts/verify-multi-wiki.sh --seeded <dir>` enforces this plus frontmatter completeness, link resolution, and index coverage.
 
 ## Wiki page convention
 
@@ -171,8 +153,6 @@ Parse rule (single regex, no AST):
 **Vocabulary**: open. There is no controlled list. `/wiki-lint` only validates the regex shape — semantics (does the verb make sense?) is the wiki author's call. Visualization (`scripts/visualize/graph.sh`) groups edges by verb for filtering.
 
 **Where typed lines live**: only inside `## Related`. Verbs in body prose, `## Open questions`, `## Flashcards`, or `index.md` are ignored by the lint and the graph.
-
-**Causal relations (controlled sub-vocabulary):** the general verb vocabulary stays open, but *causal* edges use a small **canonical set** so they can be validated, materialized, and traversed: **`causes`, `caused-by`, `enables`, `prevents`, `contributes-to`** — the single source of truth is `templates/causal-vocab.txt`. Direction is **source-page → target**: on page `drought`, `- [[yield-drop]] causes — …` reads *drought causes yield-drop*; the inverse verb `caused-by` reads target→source for the same edge. `scripts/wiki-lint-causal.sh` flags known non-canonical causal synonyms (e.g. `leads-to → causes`, `due-to → caused-by`) so causal phrasing stays consistent; open non-causal verbs are unaffected. `scripts/wiki-to-kg.py [--causal-only]` materializes typed edges as a JSONL graph (`source,verb,target`) that `/wiki-query` traverses for multi-hop causal questions ("what caused X?", "what are the downstream effects of Y?"). The KG is built on demand — never written into `wiki/` at ingest, so it stays out of the body-hash.
 
 ### Source attribution
 
