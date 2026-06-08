@@ -63,7 +63,15 @@ Overwrite `$WIKI/wiki/index.md` with a `type: navigation` page that links **ever
 Create 3–5 pages under `$WIKI/wiki/` (`<slug>.md`), each a `concept` or `entity` for this domain. Every seed page MUST follow the page template and these **hard rules** (the factory's oracle enforces them):
 
 - Complete frontmatter: `title`, `type` (`concept`|`entity`), `source: analysis`, `updated: <today>`, `tags: [...]`.
-- **Provenance honesty.** There is no raw source yet, so `source` is `analysis` and the body MUST contain an interpretive disclaimer, e.g. *"This page is interpretation, not extracted from a raw source."* Never write a `(source: raw/...)` citation — there are no raw sources.
+- **Provenance honesty.** There is no raw source yet, so `source` is `analysis` and the body MUST contain an interpretive disclaimer wrapped in the structural marker the oracle checks for (the wording inside is free — the marker is what's enforced, so prompt and oracle never drift on phrasing):
+
+  ```markdown
+  <!-- SEED-DISCLAIMER -->
+  This page is interpretation, not extracted from a raw source.
+  <!-- /SEED-DISCLAIMER -->
+  ```
+
+  Never write a `(source: raw/...)` citation — there are no raw sources.
 - Sections: `## Definition / TL;DR`, `## Body`, `## Related`.
 - `[[links]]` may point only to **other pages that exist** (other seeds or the index). No dangling links.
 - Pure CommonMark. No Obsidian callouts/dataview/embeds.
@@ -85,7 +93,10 @@ tags: [<domain-tag>, concept]
 1–2 sentences defining the term for this domain.
 
 ## Body
-This page is interpretation, not extracted from a raw source. <Domain-relevant explanation, with inline [[other-seed]] links to related seeds.>
+<!-- SEED-DISCLAIMER -->
+This page is interpretation, not extracted from a raw source.
+<!-- /SEED-DISCLAIMER -->
+<Domain-relevant explanation, with inline [[other-seed]] links to related seeds.>
 
 ## Related
 - [[other-seed]] — why it relates

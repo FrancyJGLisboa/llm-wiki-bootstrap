@@ -113,12 +113,17 @@ verify_seeded() {
       concept|entity)
         awk '/^---$/{n++} n==1 && /^source:[[:space:]]*analysis/{ok=1} END{exit !ok}' "$page" \
           || prov_bad="${prov_bad} $(basename "$page"):source"
-        # Interpretive disclaimer somewhere in the body. NOTE: this accepted-phrasing
-        # set is coupled to the disclaimer wording in .claude/commands/wiki-new.md —
-        # keep the two in sync (the command's verify-and-fix loop self-heals a miss,
-        # but don't let prompt and oracle drift apart silently).
-        grep -qiE 'interpretation|interpretive|not extracted|no raw source|analysis, not' "$page" \
-          || prov_bad="${prov_bad} $(basename "$page"):disclaimer"
+        # Interpretive disclaimer in a STRUCTURAL marker, decoupled from prose:
+        # the body must carry an <!-- SEED-DISCLAIMER -->…<!-- /SEED-DISCLAIMER -->
+        # block with real content (>=20 non-space chars). This replaces an
+        # English-keyword grep that the prompt and oracle had to keep in sync —
+        # the check now verifies "a disclaimer is present", robust to any rewording.
+        awk '
+          /<!-- SEED-DISCLAIMER -->/    {inblk=1; next}
+          /<!-- \/SEED-DISCLAIMER -->/  {if(inblk) closed=1; inblk=0; next}
+          inblk {t=$0; gsub(/[[:space:]]/,"",t); chars+=length(t)}
+          END {exit !(closed && chars>=20)}
+        ' "$page" || prov_bad="${prov_bad} $(basename "$page"):disclaimer"
         ;;
     esac
   done
