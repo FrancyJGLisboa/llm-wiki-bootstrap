@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Conhecimento que se acumula — LSEG AI Enablement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Serif:ital,wght@0,400;0,500;0,600;1,400&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A1020; --bg2:#0E1626; --panel:#131D31; --panel2:#172339;
+    --line:#22304A; --line2:#2C3C5A;
+    --ink:#EAEEF6; --mut:#8C99B2; --mut2:#6A7894;
+    --gold:#F2B23E; --teal:#54CFC2;
+    --gold-soft:rgba(242,178,62,.13); --teal-soft:rgba(84,207,194,.11);
+    --serif:'IBM Plex Serif',Georgia,serif;
+    --sans:'Inter',system-ui,-apple-system,sans-serif;
+    --mono:'JetBrains Mono',ui-monospace,monospace;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--sans);
+    overflow:hidden; -webkit-font-smoothing:antialiased;
+  }
+
+  /* ---------- deck frame ---------- */
+  #deck{position:fixed; inset:0}
+  .slide{
+    position:absolute; inset:0; display:none;
+    padding:clamp(28px,5.2vh,64px) clamp(28px,7vw,120px);
+    flex-direction:column; justify-content:center;
+    opacity:0; transition:opacity .45s ease;
+  }
+  .slide.active{display:flex; opacity:1}
+  .slide.active .reveal{animation:rise .6s cubic-bezier(.2,.7,.2,1) both}
+  .slide.active .reveal:nth-child(2){animation-delay:.06s}
+  .slide.active .reveal:nth-child(3){animation-delay:.12s}
+  .slide.active .reveal:nth-child(4){animation-delay:.18s}
+  .slide.active .reveal:nth-child(5){animation-delay:.24s}
+  @keyframes rise{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
+
+  .wrap{width:100%; max-width:1180px; margin:0 auto}
+
+  /* ---------- type system ---------- */
+  .eyebrow{
+    font-family:var(--mono); font-size:clamp(11px,1.15vw,13px);
+    letter-spacing:.28em; text-transform:uppercase; color:var(--gold);
+    display:flex; align-items:center; gap:14px; margin-bottom:22px;
+  }
+  .eyebrow::before{content:""; width:34px; height:1px; background:var(--gold); opacity:.7}
+  .eyebrow.teal{color:var(--teal)} .eyebrow.teal::before{background:var(--teal)}
+
+  h1{font-family:var(--serif); font-weight:600; line-height:1.02; letter-spacing:-.01em}
+  h2{font-family:var(--serif); font-weight:500; line-height:1.06; letter-spacing:-.005em;
+     font-size:clamp(30px,4.6vw,58px); margin-bottom:.55em}
+  .lead{font-size:clamp(16px,1.7vw,21px); color:var(--mut); line-height:1.55; max-width:60ch}
+  .lead strong{color:var(--ink); font-weight:600}
+  .gold{color:var(--gold)} .tl{color:var(--teal)}
+  em{font-style:italic; color:var(--ink)}
+
+  /* ---------- title slide ---------- */
+  #s-title{align-items:flex-start}
+  #s-title h1{font-size:clamp(44px,8.4vw,108px); max-width:16ch}
+  #s-title .sub{font-size:clamp(17px,2vw,25px); color:var(--mut); margin-top:.7em; max-width:44ch; line-height:1.4}
+  #s-title .org{
+    margin-top:clamp(36px,8vh,76px); font-family:var(--mono); font-size:13px;
+    letter-spacing:.22em; text-transform:uppercase; color:var(--mut2);
+    display:flex; align-items:center; gap:16px;
+  }
+  #s-title .org b{color:var(--ink); font-weight:500}
+  #netcanvas{position:absolute; inset:0; z-index:-1; opacity:.55}
+
+  /* ---------- generic columns / cards ---------- */
+  .cols{display:grid; gap:clamp(16px,2vw,26px); margin-top:clamp(20px,3vh,34px)}
+  .cols-3{grid-template-columns:repeat(3,1fr)}
+  .cols-2{grid-template-columns:1fr 1fr}
+  .card{
+    background:var(--panel); border:1px solid var(--line); border-radius:14px;
+    padding:clamp(18px,2vw,28px); position:relative;
+  }
+  .card .num{font-family:var(--mono); font-size:13px; color:var(--gold); letter-spacing:.1em}
+  .card h3{font-family:var(--sans); font-weight:600; font-size:clamp(17px,1.5vw,20px); margin:.55em 0 .4em}
+  .card p{color:var(--mut); font-size:clamp(13px,1.05vw,15px); line-height:1.5}
+  .card.teal .num{color:var(--teal)}
+
+  /* ---------- pull quote ---------- */
+  .quote{
+    border-left:3px solid var(--gold); padding:6px 0 6px 28px;
+    font-family:var(--serif); font-style:italic; line-height:1.42;
+    font-size:clamp(22px,3vw,38px); max-width:22ch;
+  }
+  .quote.full{max-width:30ch}
+  .attrib{font-family:var(--mono); font-style:normal; font-size:13px; letter-spacing:.16em;
+           text-transform:uppercase; color:var(--mut); margin-top:22px}
+
+  /* ---------- architecture diagram ---------- */
+  .arch{display:grid; grid-template-columns:1fr auto 1fr auto 1fr; align-items:stretch;
+        gap:clamp(8px,1.4vw,18px); margin-top:clamp(18px,3vh,30px)}
+  .arch .layer{background:var(--panel); border:1px solid var(--line); border-radius:14px;
+        padding:clamp(16px,1.8vw,24px); display:flex; flex-direction:column; gap:8px}
+  .arch .layer .tag{font-family:var(--mono); font-size:11px; letter-spacing:.2em; text-transform:uppercase}
+  .arch .layer h3{font-family:var(--sans); font-weight:600; font-size:clamp(16px,1.5vw,21px)}
+  .arch .layer p{color:var(--mut); font-size:clamp(12px,1vw,14px); line-height:1.45}
+  .arch .layer.raw{border-color:var(--line2)} .arch .layer.raw .tag{color:var(--mut)}
+  .arch .layer.wiki{border-color:rgba(242,178,62,.4); background:linear-gradient(180deg,var(--gold-soft),var(--panel))}
+  .arch .layer.wiki .tag{color:var(--gold)}
+  .arch .layer.schema .tag{color:var(--teal)} .arch .layer.schema{border-color:rgba(84,207,194,.35)}
+  .arch .arrow{display:flex; align-items:center; justify-content:center; color:var(--mut2); font-size:22px}
+
+  /* ---------- step list ---------- */
+  .steps{display:grid; grid-template-columns:1fr 1fr; gap:10px 34px; margin-top:24px}
+  .step{display:flex; gap:14px; align-items:baseline; padding:9px 0; border-bottom:1px solid var(--line)}
+  .step .k{font-family:var(--mono); color:var(--gold); font-size:14px; min-width:26px}
+  .step .t{font-size:clamp(14px,1.15vw,16px); color:var(--ink)}
+  .step .t span{color:var(--mut)}
+
+  /* ---------- two-side labor ---------- */
+  .labor{display:grid; grid-template-columns:1fr 1fr; gap:22px; margin-top:26px}
+  .labor .side{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:clamp(20px,2vw,30px)}
+  .labor .side h3{font-family:var(--serif); font-weight:500; font-size:clamp(20px,2vw,28px); margin-bottom:14px}
+  .labor .side.human h3{color:var(--teal)} .labor .side.ai h3{color:var(--gold)}
+  .labor li{list-style:none; color:var(--mut); font-size:clamp(14px,1.1vw,16px); padding:7px 0 7px 22px; position:relative; line-height:1.4}
+  .labor li::before{content:""; position:absolute; left:0; top:14px; width:7px; height:7px; border-radius:50%}
+  .labor .human li::before{background:var(--teal)} .labor .ai li::before{background:var(--gold)}
+
+  /* ---------- principles / benefits grid ---------- */
+  .grid4{display:grid; grid-template-columns:repeat(2,1fr); gap:16px; margin-top:26px}
+  .feat{background:var(--panel); border:1px solid var(--line); border-radius:14px; padding:clamp(18px,1.9vw,26px)}
+  .feat .lbl{font-family:var(--mono); font-size:12px; letter-spacing:.18em; text-transform:uppercase; color:var(--teal)}
+  .feat h3{font-family:var(--sans); font-weight:600; font-size:clamp(16px,1.4vw,19px); margin:.5em 0 .35em}
+  .feat p{color:var(--mut); font-size:clamp(13px,1.02vw,14.5px); line-height:1.5}
+
+  /* ---------- use cases ---------- */
+  .uc{display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-top:24px}
+  .uc .row{background:var(--panel); border:1px solid var(--line); border-radius:12px; padding:16px 20px; display:flex; gap:16px; align-items:flex-start}
+  .uc .row .tag{font-family:var(--mono); font-size:11px; color:var(--gold); letter-spacing:.12em; text-transform:uppercase; white-space:nowrap; padding-top:3px; min-width:104px}
+  .uc .row h3{font-size:clamp(15px,1.2vw,17px); font-weight:600; margin-bottom:3px}
+  .uc .row p{color:var(--mut); font-size:clamp(12.5px,1vw,14px); line-height:1.45}
+
+  /* ---------- demo terminal ---------- */
+  .demo{display:grid; grid-template-columns:1.05fr .95fr; gap:26px; margin-top:22px; align-items:start}
+  .term{background:#070C16; border:1px solid var(--line2); border-radius:12px; overflow:hidden; font-family:var(--mono); font-size:clamp(11.5px,.95vw,13.5px)}
+  .term .bar{background:#0E1626; padding:9px 14px; display:flex; gap:7px; border-bottom:1px solid var(--line)}
+  .term .bar i{width:11px; height:11px; border-radius:50%; display:inline-block}
+  .term .bar i:nth-child(1){background:#E5685B} .term .bar i:nth-child(2){background:#E7B14C} .term .bar i:nth-child(3){background:#5FB871}
+  .term .body{padding:16px 18px; line-height:1.7; color:#C7D2E6}
+  .term .p{color:var(--teal)} .term .c{color:var(--gold)} .term .d{color:var(--mut2)} .term .f{color:#9DB4D8}
+  .runlist{counter-reset:r; display:flex; flex-direction:column; gap:11px}
+  .runlist .ri{display:flex; gap:14px; align-items:baseline; counter-increment:r}
+  .runlist .ri::before{content:counter(r); font-family:var(--mono); color:var(--gold); font-size:13px; min-width:22px; border:1px solid var(--line2); border-radius:6px; text-align:center; padding:2px 0; flex:none}
+  .runlist .ri b{font-weight:600; display:block; font-size:clamp(14px,1.1vw,15.5px)}
+  .runlist .ri span{color:var(--mut); font-size:clamp(12.5px,1vw,14px); line-height:1.45}
+
+  /* ---------- closing ---------- */
+  #s-close .big{font-family:var(--serif); font-weight:500; font-size:clamp(30px,4.4vw,56px); line-height:1.08; max-width:18ch; margin-bottom:.5em}
+  .startsteps{display:flex; gap:14px; margin-top:30px; flex-wrap:wrap}
+  .startsteps .pill{background:var(--panel); border:1px solid var(--line); border-radius:999px; padding:12px 20px; font-size:14px; color:var(--mut)}
+  .startsteps .pill b{color:var(--ink)}
+
+  /* ---------- compounding signature svg ---------- */
+  #grow{width:100%; max-width:560px; margin-top:6px}
+  #grow .lnk{stroke:var(--teal); stroke-width:1.4; opacity:0}
+  #grow .nd{opacity:0}
+  .slide.active #grow .lnk{animation:fade .5s ease forwards}
+  .slide.active #grow .nd{animation:pop .45s cubic-bezier(.2,1.4,.4,1) forwards}
+  @keyframes fade{to{opacity:.5}}
+  @keyframes pop{to{opacity:1}}
+
+  /* ---------- chrome ---------- */
+  #prog{position:fixed; top:0; left:0; height:3px; background:var(--gold); z-index:50; transition:width .4s ease}
+  #foot{position:fixed; bottom:0; left:0; right:0; height:42px; display:flex; align-items:center;
+        justify-content:space-between; padding:0 clamp(20px,4vw,48px); z-index:40;
+        font-family:var(--mono); font-size:11px; letter-spacing:.16em; text-transform:uppercase; color:var(--mut2)}
+  #foot .brand{color:var(--mut)}
+  #foot .brand b{color:var(--gold); font-weight:500}
+  .nav{position:fixed; bottom:46px; right:clamp(20px,4vw,48px); display:flex; gap:8px; z-index:45}
+  .nav button{width:42px; height:42px; border-radius:10px; border:1px solid var(--line2); background:var(--panel);
+        color:var(--ink); font-size:18px; cursor:pointer; transition:.15s; display:flex; align-items:center; justify-content:center}
+  .nav button:hover{border-color:var(--gold); color:var(--gold)}
+  .nav button:focus-visible{outline:2px solid var(--teal); outline-offset:2px}
+  .hint{position:fixed; bottom:54px; left:clamp(20px,4vw,48px); z-index:45; font-family:var(--mono); font-size:11px; letter-spacing:.12em; color:var(--mut2); transition:opacity .6s}
+
+  @media (max-width:820px){
+    .cols-3,.cols-2,.steps,.labor,.grid4,.uc,.demo{grid-template-columns:1fr}
+    .arch{grid-template-columns:1fr; }
+    .arch .arrow{transform:rotate(90deg)}
+    .slide{padding:24px 22px 64px}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *{animation-duration:.001s !important; transition-duration:.001s !important}
+    #netcanvas{display:none}
+  }
+</style>
+</head>
+<body>
+<div id="prog"></div>
+<div id="deck">
+
+  <!-- 1 — TITLE -->
+  <section class="slide active" id="s-title" data-eb="">
+    <canvas id="netcanvas"></canvas>
+    <div class="reveal eyebrow">LSEG · AI Enablement</div>
+    <h1 class="reveal">Conhecimento que <span class="gold">se acumula.</span></h1>
+    <p class="reveal sub">Um jeito simples de fazer um LLM construir e manter uma base de conhecimento viva sobre suas contas, seu setor e seu ofício — para que sua preparação pare de começar do zero.</p>
+    <div class="reveal org"><span>Baseado no padrão de <b>base de conhecimento com LLM</b> de Andrej Karpathy</span></div>
+  </section>
+
+  <!-- 2 — ORIGIN -->
+  <section class="slide" id="s-origin">
+    <div class="wrap">
+      <div class="reveal eyebrow">01 · De onde isso veio</div>
+      <div class="reveal quote full">"using LLMs to build personal knowledge bases for various topics of research interest"</div>
+      <div class="reveal attrib">— Andrej Karpathy &nbsp;·&nbsp; <span style="text-transform:none;letter-spacing:0">usar LLMs para construir bases de conhecimento pessoais</span></div>
+      <p class="reveal lead" style="margin-top:34px">Karpathy descreveu gastar menos do seu tempo de IA <strong>manipulando código</strong> e mais <strong>manipulando conhecimento</strong> — guardado como markdown e imagens. A ideia se espalhou rápido entre pesquisadores. E transfere direto para uma mesa de vendas.</p>
+    </div>
+  </section>
+
+  <!-- 3 — THE PROBLEM -->
+  <section class="slide" id="s-problem">
+    <div class="wrap">
+      <div class="reveal eyebrow">02 · O problema de como usamos IA hoje</div>
+      <h2 class="reveal">Nada se acumula.</h2>
+      <p class="reveal lead">Hoje a maioria joga arquivos num chat e faz uma pergunta. O modelo recupera alguns trechos e responde. Funciona para coisas simples — mas <strong>cada pergunta redescobre o conhecimento do zero.</strong></p>
+      <div class="reveal cols cols-3">
+        <div class="card"><div class="num">→</div><h3>Sem memória</h3><p>A próxima pergunta relê os mesmos documentos como se nunca os tivesse visto.</p></div>
+        <div class="card"><div class="num">→</div><h3>Sem referências cruzadas</h3><p>As conexões entre cinco fontes diferentes são recosturadas a cada pergunta.</p></div>
+        <div class="card"><div class="num">→</div><h3>Não compõe</h3><p>Toda boa resposta de ontem é descartada. E você paga por ela de novo hoje.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4 — THE FLIP / COMPOUNDING -->
+  <section class="slide" id="s-flip">
+    <div class="wrap">
+      <div class="reveal eyebrow teal">03 · A virada</div>
+      <div class="cols cols-2" style="align-items:center; gap:48px">
+        <div>
+          <h2 class="reveal">Construa a wiki <span class="tl">antes.</span></h2>
+          <p class="reveal lead">Em vez de recuperar na hora da pergunta, o LLM <strong>constrói incrementalmente uma wiki persistente e interligada</strong> que fica entre você e suas fontes brutas. As referências cruzadas já existem. As contradições já estão sinalizadas. O conhecimento se acumula em vez de ser descartado.</p>
+        </div>
+        <div class="reveal">
+          <svg id="grow" viewBox="0 0 560 360" aria-hidden="true"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5 — ARCHITECTURE -->
+  <section class="slide" id="s-arch">
+    <div class="wrap">
+      <div class="reveal eyebrow">04 · A arquitetura — três camadas</div>
+      <h2 class="reveal" style="font-size:clamp(26px,3.6vw,44px)">Limpa e totalmente sua.</h2>
+      <div class="reveal arch">
+        <div class="layer raw">
+          <span class="tag">Fontes brutas</span>
+          <h3>Imutáveis</h3>
+          <p>Artigos, calls, e-mails, relatórios, notícias, dados. O LLM lê, nunca edita. Sua fonte da verdade.</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="layer wiki">
+          <span class="tag">A wiki</span>
+          <h3>Do LLM</h3>
+          <p>Uma pasta de arquivos markdown: resumos, páginas de conta, páginas de conceito, comparações — todos interligados e consistentes.</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="layer schema">
+          <span class="tag">O schema</span>
+          <h3>As regras</h3>
+          <p>Um arquivo de config (um <span class="mono">AGENTS.md</span>) que diz ao LLM como a wiki é estruturada e quais fluxos seguir.</p>
+        </div>
+      </div>
+      <p class="reveal lead" style="margin-top:26px; font-size:clamp(15px,1.4vw,18px)">Modelo mental: a wiki é o <em>código</em>, o <span class="mono">/wiki-visualize</span> é o <em>visualizador</em>, o LLM é quem <em>escreve</em> e o schema é o <em>guia de estilo</em>.</p>
+    </div>
+  </section>
+
+  <!-- 6 — THREE OPERATIONS -->
+  <section class="slide" id="s-ops">
+    <div class="wrap">
+      <div class="reveal eyebrow">05 · Três operações, só isso</div>
+      <div class="cols cols-3">
+        <div class="reveal card"><div class="num">INGERIR</div><h3>Solte uma fonte</h3><p>Adicione um arquivo em <span class="mono">raw/</span> e peça para o LLM processar. Ele escreve um resumo, atualiza o índice e o conecta a todas as páginas relevantes.</p></div>
+        <div class="reveal card teal"><div class="num">CONSULTAR</div><h3>Pergunte à wiki</h3><p>Faça uma pergunta. Ele lê as páginas relevantes e responde — e uma boa resposta pode virar uma nova página, então suas explorações também se acumulam.</p></div>
+        <div class="reveal card"><div class="num">REVISAR</div><h3>Faça o check-up</h3><p>Peça para ele achar contradições, afirmações desatualizadas, páginas órfãs e lacunas que valem uma busca na web. A wiki se mantém limpa enquanto cresce.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7 — WHAT HAPPENS ON INGEST -->
+  <section class="slide" id="s-ingest">
+    <div class="wrap">
+      <div class="reveal eyebrow">06 · O que acontece quando uma fonte entra</div>
+      <h2 class="reveal" style="font-size:clamp(24px,3.4vw,42px)">Um arquivo entra. A wiki inteira fica mais inteligente.</h2>
+      <div class="reveal steps">
+        <div class="step"><span class="k">1</span><span class="t">Lê a fonte bruta</span></div>
+        <div class="step"><span class="k">5</span><span class="t">Sinaliza <span>qualquer contradição com o que já existe</span></span></div>
+        <div class="step"><span class="k">2</span><span class="t">Extrai <span>conceitos, entidades, afirmações, dados</span></span></div>
+        <div class="step"><span class="k">6</span><span class="t">Atualiza o índice <span>— o catálogo mestre</span></span></div>
+        <div class="step"><span class="k">3</span><span class="t">Escreve uma página de resumo <span>com tags + metadados</span></span></div>
+        <div class="step"><span class="k">7</span><span class="t">Anexa ao log <span>— registro de mudanças com data/hora</span></span></div>
+        <div class="step"><span class="k">4</span><span class="t">Atualiza páginas existentes <span>com a nova informação</span></span></div>
+        <div class="step" style="border-bottom:none"><span class="k gold" style="color:var(--gold)">↻</span><span class="t" style="color:var(--gold)">Uma única fonte pode tocar de 10 a 15 páginas</span></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 8 — DIVISION OF LABOR -->
+  <section class="slide" id="s-labor">
+    <div class="wrap">
+      <div class="reveal eyebrow">07 · Por que ela realmente se mantém</div>
+      <p class="reveal lead">As pessoas abandonam wikis porque a manutenção cresce mais rápido que o valor. <strong>O LLM não se entedia, não esquece de atualizar uma referência cruzada e edita 15 arquivos numa única passada.</strong> O custo de manutenção cai a quase zero.</p>
+      <div class="reveal labor">
+        <div class="side human">
+          <h3>Você</h3>
+          <li>Escolhe as fontes que valem a pena</li>
+          <li>Direciona a análise</li>
+          <li>Faz as perguntas certas</li>
+          <li>Decide o que importa</li>
+        </div>
+        <div class="side ai">
+          <h3>O LLM</h3>
+          <li>Resume cada fonte</li>
+          <li>Escreve e conecta todas as páginas</li>
+          <li>Mantém as referências cruzadas em dia</li>
+          <li>Sinaliza contradições, faz a burocracia</li>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9 — WHY THIS WINS -->
+  <section class="slide" id="s-why">
+    <div class="wrap">
+      <div class="reveal eyebrow">08 · Quatro razões para vencer a memória caixa-preta</div>
+      <div class="reveal grid4">
+        <div class="feat"><span class="lbl">Explícita</span><h3>Você vê o que ela sabe</h3><p>Uma wiki navegável, não embeddings ocultos. Você vê exatamente o que a IA sabe — e o que não sabe.</p></div>
+        <div class="feat"><span class="lbl">Sua</span><h3>Arquivos locais, sua propriedade</h3><p>Arquivos simples na sua máquina. Sem dependência de fornecedor. O conhecimento fica com você.</p></div>
+        <div class="feat"><span class="lbl">Arquivo &gt; app</span><h3>Formatos universais</h3><p>Markdown e imagens. Funciona com qualquer ferramenta, qualquer visualizador, qualquer fluxo futuro.</p></div>
+        <div class="feat"><span class="lbl">IA à sua escolha</span><h3>Troque o modelo livremente</h3><p>Use Claude hoje, outra coisa amanhã. O ativo é a wiki, não o fornecedor.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 10 — THE PIVOT: FOR YOU -->
+  <section class="slide" id="s-foryou">
+    <div class="wrap">
+      <div class="reveal eyebrow teal">09 · O que isso significa na mesa de vendas</div>
+      <h2 class="reveal">Sua preparação para de começar do zero.</h2>
+      <div class="reveal cols cols-3">
+        <div class="card teal"><h3>Chegue pronto</h3><p>Um briefing vivo da conta — notas de call, notícias, resultados, histórico de suporte — atualizado toda vez, montado em minutos, não horas.</p></div>
+        <div class="card teal"><h3>Onboarding mais rápido</h3><p>Um novo rep herda uma base estruturada, não um drive com PDFs que ninguém leu.</p></div>
+        <div class="card teal"><h3>Nada se perde</h3><p>Toda boa resposta que você acha volta arquivada. Sua pesquisa vira um ativo que rende de novo depois.</p></div>
+      </div>
+      <p class="reveal lead" style="margin-top:24px; font-size:clamp(15px,1.3vw,18px)">E as fontes brutas podem ser os <strong>próprios dados da LSEG</strong> — Workspace, notícias, fundamentos, feeds conectados — transformados numa base de conhecimento que só você mantém.</p>
+    </div>
+  </section>
+
+  <!-- 11 — USE CASES -->
+  <section class="slide" id="s-usecases">
+    <div class="wrap">
+      <div class="reveal eyebrow">10 · Casos de uso para começar</div>
+      <div class="reveal uc">
+        <div class="row"><span class="tag">Dossiê de conta</span><div><h3>A página viva da conta</h3><p>Notas de call, e-mails, relatórios anuais, resultados e notícias numa conta que se atualiza sozinha.</p></div></div>
+        <div class="row"><span class="tag">Battle cards</span><div><h3>Inteligência competitiva sempre atual</h3><p>Movimentos do concorrente, sinais de preço, notas de analistas — páginas que se atualizam e sinalizam contradições.</p></div></div>
+        <div class="row"><span class="tag">Mesa setorial</span><div><h3>Cobertura temática que compõe</h3><p>Fluxos do buy-side, drivers regulatórios (T+1 etc.), dores do cliente — seu domínio do setor num só lugar.</p></div></div>
+        <div class="row"><span class="tag">Propostas</span><div><h3>Reuso de RFP e objeções</h3><p>Propostas passadas, notas de ganho/perda, tratamento de objeções — pesquisável e acumulável, não enterrado.</p></div></div>
+        <div class="row"><span class="tag">Domínio de produto</span><div><h3>Como posicionar o X</h3><p>Docs de produto e release notes numa referência pessoal de "como eu vendo isso".</p></div></div>
+        <div class="row"><span class="tag">Onboarding</span><div><h3>Pergunte à wiki, não ao colega</h3><p>Novos contratados consultam a wiki em vez de interromper reps sêniores com a mesma dúvida.</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 12 — DEMO INTRO -->
+  <section class="slide" id="s-demointro">
+    <div class="wrap">
+      <div class="reveal eyebrow teal">11 · Demo ao vivo</div>
+      <h2 class="reveal">Vamos construir uma. Leva cerca de uma hora.</h2>
+      <p class="reveal lead">Vamos montar uma pequena wiki de inteligência de conta no <strong>Claude Code</strong> a partir de algumas fontes de exemplo, consultá-la e ver ela se preencher sozinha. Tudo que você vê é markdown puro em disco.</p>
+      <div class="reveal demo" style="grid-template-columns:1fr; max-width:760px; margin-top:30px">
+        <div class="term">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <div class="body">
+<span class="d"># uma pasta com algumas fontes de exemplo</span><br>
+<span class="p">~/sales-wiki $</span> ls raw/<br>
+<span class="f">call_acme_q1.md&nbsp;&nbsp;competitor_press.md&nbsp;&nbsp;analyst_note.pdf</span><br><br>
+<span class="p">~/sales-wiki $</span> claude<br>
+<span class="c">&gt; planeje a construção de uma wiki com LLM a partir destas fontes</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 13 — DEMO SCRIPT -->
+  <section class="slide" id="s-demoscript">
+    <div class="wrap">
+      <div class="reveal eyebrow">12 · Roteiro da demo — execute nesta ordem</div>
+      <div class="reveal demo">
+        <div class="runlist">
+          <div class="ri"><div><b>Planejar</b><span>Peça ao Claude (em modo de plano) para desenhar a wiki a partir das fontes de exemplo. Ele propõe as pastas, o schema <span class="mono">AGENTS.md</span> e o layout das páginas.</span></div></div>
+          <div class="ri"><div><b>Montar o esqueleto</b><span>Aprove. Ele cria <span class="mono">raw/</span>, <span class="mono">wiki/</span>, o schema, um índice e um log.</span></div></div>
+          <div class="ri"><div><b>Ingerir</b><span>Mande ingerir as fontes. Veja um arquivo criar páginas de conta, pessoa e concorrente — todas interligadas.</span></div></div>
+          <div class="ri"><div><b>Visualizar</b><span>Rode <span class="mono">/wiki-visualize</span> para renderizar o grafo de notas interligadas.</span></div></div>
+          <div class="ri"><div><b>Consultar</b><span>"Quais são as principais objeções da Acme e como já lidamos com elas?" — respondido pela wiki, sem repesquisar.</span></div></div>
+          <div class="ri"><div><b>Preencher ao vivo</b><span>Pergunte algo que ela não tem. Ela busca na web e arquiva a resposta como uma nova página.</span></div></div>
+          <div class="ri"><div><b>Revisar</b><span>Rode o check-up — contradições, afirmações antigas, páginas órfãs, lacunas a preencher.</span></div></div>
+        </div>
+        <div class="term">
+          <div class="bar"><i></i><i></i><i></i></div>
+          <div class="body">
+<span class="c">&gt; ingerir tudo em raw/</span><br>
+<span class="d">· lendo 3 fontes…</span><br>
+<span class="f">+ wiki/contas/acme.md</span><br>
+<span class="f">+ wiki/pessoas/j-tan.md</span><br>
+<span class="f">+ wiki/concorrentes/northwind.md</span><br>
+<span class="f">+ wiki/conceitos/liquidacao-t1.md</span><br>
+<span class="d">· 11 páginas interligadas · índice atualizado</span><br><br>
+<span class="c">&gt; quais as principais objeções da Acme?</span><br>
+<span class="d">· lendo 4 páginas da wiki…</span><br>
+<span class="f">1. latência de dados vs. incumbente</span><br>
+<span class="f">2. custo de migração &nbsp;3. preço por usuário</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 14 — CLOSE -->
+  <section class="slide" id="s-close">
+    <div class="wrap">
+      <div class="reveal eyebrow">13 · Comece esta semana</div>
+      <div class="reveal big">Escolha uma conta.<br>Solte cinco fontes.<br>Deixe acumular.</div>
+      <p class="reveal lead">Você cura e faz as boas perguntas. O modelo resume, conecta e cuida da burocracia que ninguém quer fazer. Em uma hora você tem um ativo que fica mais inteligente cada vez que você usa.</p>
+      <div class="reveal startsteps">
+        <div class="pill"><b>1.</b> Abra o Claude Code numa pasta nova</div>
+        <div class="pill"><b>2.</b> Adicione algumas fontes reais em <span class="mono">raw/</span></div>
+        <div class="pill"><b>3.</b> "Desenhe e construa uma wiki com LLM a partir destas"</div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div id="foot">
+  <span class="brand"><b>LSEG</b> · AI Enablement</span>
+  <span id="counter">01 / 14</span>
+</div>
+<div class="hint" id="hint">← / →&nbsp;&nbsp;para navegar</div>
+<div class="nav">
+  <button id="prev" aria-label="Slide anterior">‹</button>
+  <button id="next" aria-label="Próximo slide">›</button>
+</div>
+
+<script>
+(function(){
+  const slides=[...document.querySelectorAll('.slide')];
+  const total=slides.length;
+  let i=0;
+  const prog=document.getElementById('prog');
+  const counter=document.getElementById('counter');
+  const hint=document.getElementById('hint');
+  function pad(n){return String(n).padStart(2,'0')}
+  function show(n){
+    i=Math.max(0,Math.min(total-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    prog.style.width=((i+1)/total*100)+'%';
+    counter.textContent=pad(i+1)+' / '+pad(total);
+    if(i>0) hint.style.opacity='0';
+  }
+  function next(){show(i+1)} function prev(){show(i-1)}
+  document.getElementById('next').onclick=next;
+  document.getElementById('prev').onclick=prev;
+  document.addEventListener('keydown',e=>{
+    if(e.key==='ArrowRight'||e.key===' '||e.key==='PageDown'){e.preventDefault();next()}
+    else if(e.key==='ArrowLeft'||e.key==='PageUp'){e.preventDefault();prev()}
+    else if(e.key==='Home'){show(0)} else if(e.key==='End'){show(total-1)}
+  });
+  show(0);
+
+  /* ---- compounding network reveal (slide 4) ---- */
+  (function(){
+    const svg=document.getElementById('grow'); if(!svg) return;
+    const NS='http://www.w3.org/2000/svg';
+    const nodes=[
+      [90,60],[470,70],[260,40],[60,200],[500,210],[260,180],
+      [150,300],[400,310],[260,320],[330,150],[190,130]
+    ];
+    const links=[[2,10],[10,0],[10,3],[2,9],[9,1],[9,4],[10,5],[9,5],[5,6],[5,7],[6,8],[7,8],[3,6],[4,7]];
+    links.forEach((l,idx)=>{
+      const a=nodes[l[0]],b=nodes[l[1]];
+      const ln=document.createElementNS(NS,'line');
+      ln.setAttribute('x1',a[0]);ln.setAttribute('y1',a[1]);
+      ln.setAttribute('x2',b[0]);ln.setAttribute('y2',b[1]);
+      ln.setAttribute('class','lnk');
+      ln.style.animationDelay=(.3+idx*.07)+'s';
+      svg.appendChild(ln);
+    });
+    nodes.forEach((n,idx)=>{
+      const g=document.createElementNS(NS,'g'); g.setAttribute('class','nd');
+      g.style.animationDelay=(idx*.08)+'s';
+      const c=document.createElementNS(NS,'circle');
+      const big=[2,9,10,5].includes(idx);
+      c.setAttribute('cx',n[0]);c.setAttribute('cy',n[1]);
+      c.setAttribute('r',big?9:5.5);
+      c.setAttribute('fill',big?'var(--gold)':'var(--teal)');
+      g.appendChild(c); svg.appendChild(g);
+    });
+  })();
+
+  /* ---- ambient network on title ---- */
+  (function(){
+    const reduce=window.matchMedia('(prefers-reduced-motion:reduce)').matches;
+    const cv=document.getElementById('netcanvas'); if(!cv||reduce) return;
+    const ctx=cv.getContext('2d'); let w,h,pts;
+    function init(){
+      w=cv.width=innerWidth; h=cv.height=innerHeight;
+      const n=Math.min(46,Math.floor(w*h/34000));
+      pts=Array.from({length:n},()=>({x:Math.random()*w,y:Math.random()*h,
+        vx:(Math.random()-.5)*.25,vy:(Math.random()-.5)*.25}));
+    }
+    function step(){
+      ctx.clearRect(0,0,w,h);
+      for(const p of pts){p.x+=p.vx;p.y+=p.vy;
+        if(p.x<0||p.x>w)p.vx*=-1; if(p.y<0||p.y>h)p.vy*=-1;}
+      for(let a=0;a<pts.length;a++){
+        for(let b=a+1;b<pts.length;b++){
+          const dx=pts[a].x-pts[b].x,dy=pts[a].y-pts[b].y,d=Math.hypot(dx,dy);
+          if(d<150){ctx.strokeStyle='rgba(84,207,194,'+(1-d/150)*.16+')';
+            ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(pts[a].x,pts[a].y);
+            ctx.lineTo(pts[b].x,pts[b].y);ctx.stroke();}
+        }
+        ctx.fillStyle='rgba(242,178,62,.5)';
+        ctx.beginPath();ctx.arc(pts[a].x,pts[a].y,1.6,0,7);ctx.fill();
+      }
+      requestAnimationFrame(step);
+    }
+    addEventListener('resize',init); init(); step();
+  })();
+})();
+</script>
+</body>
+</html>
