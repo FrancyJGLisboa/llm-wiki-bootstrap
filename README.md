@@ -33,7 +33,7 @@ That's the whole pitch: you just queried a knowledge base nobody hand-wrote. Now
 
 That's the whole loop. The wiki that ships here is *meta* — a wiki about the LLM-wiki pattern itself ([`wiki/index.md`](wiki/index.md)), there as a working example. **Make it yours:** keep adding sources alongside it, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
 
-> **The block above is the one and only start-here.** Not on Claude Code? [`docs/QUICKSTART.md`](docs/QUICKSTART.md) has the same loop as a command sequence for Cursor, Cline, Copilot, Gemini, and Codex.
+> **The block above is the one and only start-here.** Not on Claude Code? [`docs/QUICKSTART.md`](docs/QUICKSTART.md) has the same loop as a command sequence for Cursor, Cline, Copilot, Gemini, and Codex — plus a [VS Code + Copilot fast path](docs/QUICKSTART.md#fastest-path-vs-code--github-copilot--mac-or-windows). **On Windows?** Do the [one-time 5-minute setup](docs/QUICKSTART.md#windows-setup-one-time--5-minutes) (Git Bash + Python) so the toolchain runs.
 
 ## Install details
 

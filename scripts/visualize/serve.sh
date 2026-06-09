@@ -24,8 +24,10 @@ if [ ! -d "$target_dir" ]; then
   exit 2
 fi
 
-if ! command -v python3 >/dev/null 2>&1; then
-  echo "error: python3 not found on PATH (required for http.server)." >&2
+# Windows' python.org build ships `python`, not `python3`; accept either.
+PY="$(command -v python3 || command -v python || true)"
+if [ -z "$PY" ]; then
+  echo "error: no Python interpreter (python3 / python) on PATH (required for http.server)." >&2
   exit 1
 fi
 
@@ -36,4 +38,4 @@ fi
 
 echo "Serving $target_dir on http://localhost:$port"
 echo "Ctrl+C to stop."
-exec python3 -m http.server "$port" --directory "$target_dir"
+exec "$PY" -m http.server "$port" --directory "$target_dir"
