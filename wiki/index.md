@@ -34,6 +34,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 - [[operation-query]] — asking the wiki questions
 - [[operation-lint]] — keeping the wiki healthy
 - [[ingest-pipeline]] — the 7 steps of ingest, in detail
+- [[synthesis-artifacts]] — Step 8: the derived views regenerated on every mutation
 - [[query-as-write-loop]] — how queries also grow the wiki
 
 ## This system specifically

@@ -19,7 +19,11 @@ From the video: *"You drop a new source into a raw folder and tell the LLM to pr
 ### Inputs and outputs
 
 - **Input:** one or more files in `raw/` whose `ingested_hash` is empty or stale.
-- **Output:** new or updated pages in `wiki/`; appended `log.md` entry; updated `ingested_*` fields in the raw frontmatter.
+- **Output:** new or updated pages in `wiki/`; appended `log.md` entry; updated `ingested_*` fields in the raw frontmatter; regenerated [[synthesis-artifacts]].
+
+### Step 8 — synthesis artifacts `(analysis: project convention, schema v3)`
+
+After the per-file 7-step loop (and even on a no-op run), ingest runs one mechanical, deterministic pass — `scripts/synthesize/all.sh` — that regenerates four derived views from markers already in the wiki: an open-questions dashboard, a tensions (contradictions) tracker, a decision/activity timeline, and `knowledge-graph.json`. No LLM work, no churn when nothing changed. The same pass also runs after a `/wiki-query` promote and a `/wiki-lint --apply`. See [[synthesis-artifacts]].
 
 ### Compounding effect
 

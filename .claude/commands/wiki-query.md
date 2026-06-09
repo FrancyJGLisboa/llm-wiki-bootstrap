@@ -62,6 +62,18 @@ For each notable piece:
   - Promoted: wiki/<file> (new) | wiki/<file> (updated)
   ```
 
+If you promoted anything (created or updated a page), **regenerate the synthesis
+artifacts** as the last action of this step so the dashboards reflect the new/updated
+pages and the new log entry:
+
+```bash
+./scripts/synthesize/all.sh
+```
+
+(Skip silently if the script is absent — older wiki.) If promotion produced **no**
+page changes — or `--no-promote` was passed — skip this regeneration; nothing in
+`wiki/` changed.
+
 If `--no-promote` was passed: skip this entire step. Mention to the user that promotion was disabled.
 
 ### Step 5.5 — Visual output (only if `--visual` was passed)

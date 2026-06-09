@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R9) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R10) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 14 checks pass.
+# Exit 0 iff all 15 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 14 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R9 guards). This is the CI path — the build phase is a precondition that
+#   only the 15 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R10 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R9 ────
-section "Regression guards (R1–R9)"
+# ──── REGRESSION GUARDS R1–R10 ────
+section "Regression guards (R1–R10)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -84,9 +84,9 @@ fi
 
 # R4 — schema and core-script purity stay stable
 r4_ok=yes
-if ! grep -q '\*\*Schema version:\*\* 2' AGENTS.md; then
+if ! grep -q '\*\*Schema version:\*\* 3' AGENTS.md; then
   r4_ok=no
-  record_fail "R4 AGENTS.md schema version is not 2"
+  record_fail "R4 AGENTS.md schema version is not 3"
 fi
 if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal' AGENTS.md; then
   r4_ok=no
@@ -146,6 +146,14 @@ else
   record_fail "R9 verify-auto-commit.sh exits non-zero (auto-commit hook regression)"
 fi
 
+# R10 — synthesis layer: artifacts generate deterministically, aggregate the
+# planted markers, and the graph JSON matches the rendered graph (schema v3).
+if "$SCRIPT_DIR/verify-synthesize.sh" >/dev/null 2>&1; then
+  ok "R10 verify-synthesize.sh exits 0 (deterministic synthesis + graph parity)"
+else
+  record_fail "R10 verify-synthesize.sh exits non-zero (synthesis layer regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -156,7 +164,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 14 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 15 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

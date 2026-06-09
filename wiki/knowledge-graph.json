@@ -1,0 +1,1272 @@
+{
+  "links": [
+    {
+      "source": "commands",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "commands",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "dr-alma-voss",
+      "target": "phase-coherence-engineering",
+      "verb": "related-to"
+    },
+    {
+      "source": "dr-alma-voss",
+      "target": "quortex-protocol",
+      "verb": "related-to"
+    },
+    {
+      "source": "dr-alma-voss",
+      "target": "smoke-source-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "four-principles",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "four-principles",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "four-principles",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "four-principles",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "four-principles",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "index",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "glossary",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "implicit-constraints",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "dr-alma-voss",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "glossary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "karpathy-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "karpathy-video-slide-ingest-pipeline-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "phase-coherence-engineering",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "quortex-protocol",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "smoke-source-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "use-cases",
+      "verb": "related-to"
+    },
+    {
+      "source": "ingest-pipeline",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "ingest-pipeline",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "ingest-pipeline",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "ingest-pipeline",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "ingest-pipeline",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "karpathy-video-slide-ingest-pipeline-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-llm-wiki-video-transcript-summary",
+      "target": "use-cases",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "index",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "karpathy-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "karpathy-video-slide-ingest-pipeline-summary",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "knowledge-compounds",
+      "target": "use-cases",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-raw-sources",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-raw-sources",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-raw-sources",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-schema",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-schema",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-schema",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-schema",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-schema",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "index",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "layer-wiki",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions",
+      "target": "use-cases",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "dr-alma-voss",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "glossary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "index",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "karpathy-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "karpathy-video-slide-ingest-pipeline-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "phase-coherence-engineering",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "quortex-protocol",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "smoke-source-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "use-cases",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-ingest",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-lint",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-lint",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-lint",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-lint",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-query",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-query",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-query",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "operation-query",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "phase-coherence-engineering",
+      "target": "dr-alma-voss",
+      "verb": "related-to"
+    },
+    {
+      "source": "phase-coherence-engineering",
+      "target": "quortex-protocol",
+      "verb": "related-to"
+    },
+    {
+      "source": "phase-coherence-engineering",
+      "target": "smoke-source-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "problem-with-naive-rag",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "problem-with-naive-rag",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "problem-with-naive-rag",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "problem-with-naive-rag",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "problem-with-naive-rag",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "query-as-write-loop",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "quortex-protocol",
+      "target": "dr-alma-voss",
+      "verb": "related-to"
+    },
+    {
+      "source": "quortex-protocol",
+      "target": "phase-coherence-engineering",
+      "verb": "related-to"
+    },
+    {
+      "source": "quortex-protocol",
+      "target": "smoke-source-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "smoke-source-summary",
+      "target": "dr-alma-voss",
+      "verb": "related-to"
+    },
+    {
+      "source": "smoke-source-summary",
+      "target": "phase-coherence-engineering",
+      "verb": "related-to"
+    },
+    {
+      "source": "smoke-source-summary",
+      "target": "quortex-protocol",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "karpathy-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "karpathy-video-slide-ingest-pipeline-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "open-questions",
+      "verb": "related-to"
+    },
+    {
+      "source": "source-attribution",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "commands",
+      "verb": "documented-in"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "ingest-pipeline",
+      "verb": "produces-markers-for"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "open-questions",
+      "verb": "aggregated-by"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "operation-ingest",
+      "verb": "runs"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "synthesis-artifacts",
+      "target": "operation-query",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "layer-raw-sources",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "three-layer-architecture",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "use-cases",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "use-cases",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "use-cases",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "use-cases",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "commands"
+    },
+    {
+      "id": "core-idea"
+    },
+    {
+      "id": "decision-timeline"
+    },
+    {
+      "id": "division-of-labor"
+    },
+    {
+      "id": "dr-alma-voss"
+    },
+    {
+      "id": "four-principles"
+    },
+    {
+      "id": "glossary"
+    },
+    {
+      "id": "implicit-constraints"
+    },
+    {
+      "id": "index"
+    },
+    {
+      "id": "index-FRESH"
+    },
+    {
+      "id": "ingest-pipeline"
+    },
+    {
+      "id": "karpathy-llm-wiki-video-transcript-summary"
+    },
+    {
+      "id": "karpathy-video-slide-ingest-pipeline-summary"
+    },
+    {
+      "id": "knowledge-compounds"
+    },
+    {
+      "id": "layer-raw-sources"
+    },
+    {
+      "id": "layer-schema"
+    },
+    {
+      "id": "layer-wiki"
+    },
+    {
+      "id": "open-questions"
+    },
+    {
+      "id": "open-questions-dashboard"
+    },
+    {
+      "id": "operation-ingest"
+    },
+    {
+      "id": "operation-lint"
+    },
+    {
+      "id": "operation-query"
+    },
+    {
+      "id": "phase-coherence-engineering"
+    },
+    {
+      "id": "problem-with-naive-rag"
+    },
+    {
+      "id": "query-as-write-loop"
+    },
+    {
+      "id": "quortex-protocol"
+    },
+    {
+      "id": "smoke-source-summary"
+    },
+    {
+      "id": "source-attribution"
+    },
+    {
+      "id": "synthesis-artifacts"
+    },
+    {
+      "id": "tensions"
+    },
+    {
+      "id": "three-layer-architecture"
+    },
+    {
+      "id": "use-cases"
+    }
+  ]
+}
