@@ -16,10 +16,12 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-if ! command -v python3 >/dev/null 2>&1; then
+# Windows' python.org build ships `python`, not `python3`; accept either.
+PY="$(command -v python3 || command -v python || true)"
+if [ -z "$PY" ]; then
   INSTALL_CMD="<your-package-manager> install"
   [ -f "$SCRIPT_DIR/../lib/platform-hint.sh" ] && . "$SCRIPT_DIR/../lib/platform-hint.sh"
-  echo "error: python3 not found on PATH (required for the graph generator)." >&2
+  echo "error: no Python interpreter (python3 / python) on PATH (required for the graph generator)." >&2
   echo "       install: ${INSTALL_CMD} python3" >&2
   exit 1
 fi
@@ -35,4 +37,4 @@ EOF
   exit 2
 fi
 
-exec python3 "$SCRIPT_DIR/graph-html.py" "$@"
+exec "$PY" "$SCRIPT_DIR/graph-html.py" "$@"

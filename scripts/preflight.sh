@@ -110,21 +110,25 @@ else warn "pandoc" "missing — DOCX will try python-docx, then fail (install: $
 if have xlsx2csv; then ok "xlsx2csv" "present — XLSX primary handler"; have_xlsx2csv=yes
 else warn "xlsx2csv" "missing — XLSX will try openpyxl, then fail (install: pip install xlsx2csv)"; fi
 
-# python3 + modules
-if have python3; then
-  ok "python3" "present"
-  if python3 -c "import docx" >/dev/null 2>&1; then
+# python interpreter + modules. Windows' python.org build ships `python`, not
+# `python3`; accept either. Python is optional for the core text loop
+# (ingest/query/lint) but required for the synthesis dashboards, the
+# knowledge-graph.json, /wiki-visualize, and the DOCX/XLSX extract fallbacks.
+PYBIN="$(command -v python3 || command -v python || true)"
+if [ -n "$PYBIN" ]; then
+  ok "python" "present (${PYBIN##*/})"
+  if "$PYBIN" -c "import docx" >/dev/null 2>&1; then
     ok "python-docx" "present — DOCX fallback ready"; have_python_docx=yes
   else
     warn "python-docx" "missing (install: pip install python-docx)"
   fi
-  if python3 -c "import openpyxl" >/dev/null 2>&1; then
+  if "$PYBIN" -c "import openpyxl" >/dev/null 2>&1; then
     ok "openpyxl" "present — XLSX fallback ready"; have_python_openpyxl=yes
   else
     warn "openpyxl" "missing (install: pip install openpyxl)"
   fi
 else
-  warn "python3" "missing — DOCX/XLSX fallbacks unavailable (install: ${INSTALL_CMD} python3)"
+  warn "python" "missing — synthesis dashboards, knowledge-graph.json, /wiki-visualize, and DOCX/XLSX fallbacks unavailable; the text loop still works (install: ${INSTALL_CMD} python3)"
 fi
 
 # npx — only needed for the optional MCP server (scripts/mcp-server.sh).

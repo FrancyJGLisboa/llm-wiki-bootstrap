@@ -20,10 +20,57 @@ Then, inside Claude Code:
 
 That's the loop. Everything below is depth — per-tool setup, the optional smoke test, cost, recovery. Skip to [The 5 operations](#the-5-operations) if you just want the commands.
 
+## Fastest path (VS Code + GitHub Copilot — Mac **or** Windows)
+
+> **Windows users: do the [one-time setup](#windows-setup-one-time--5-minutes) first** (≈5 min). Mac/Linux: nothing to set up.
+
+1. **Clone and open** in VS Code:
+   ```bash
+   git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+   code my-wiki
+   ```
+2. Open **Copilot Chat** (`Ctrl+Shift+I` / `Cmd+Shift+I`) and **toggle Agent Mode** (classic Chat can't run multi-step workflows).
+3. Paste this one message to scaffold an **empty wiki and acquire your first source**:
+   ```
+   Read AGENTS.md. Then scaffold an empty wiki by running /wiki-init per
+   .claude/commands/wiki-init.md, and fetch <your-url> into raw/ per
+   .claude/commands/wiki-extract.md. Show me each step.
+   ```
+   **No bash *helper scripts* run in this step** — `/wiki-init` and URL `/wiki-extract` are pure agent work (file writes + `WebFetch`), so you reach your first source before the toolchain's `.sh` scripts (which start at `/wiki-ingest`) ever matter.
+4. Integrate it and ask a question:
+   ```
+   Run /wiki-ingest per .claude/commands/wiki-ingest.md, then answer:
+   what does that source say about <topic>? Follow .claude/commands/wiki-query.md.
+   ```
+   `/wiki-ingest` is the first step that runs a bash helper (`scripts/body-hash.sh`) — which is exactly why Windows needs the one-time setup below.
+
+---
+
+## Windows setup (one-time — 5 minutes)
+
+**On macOS or Linux? Skip this.** `bash`, `awk`, `openssl`, and `git` are already present; optionally install Python 3 for the graph/synthesis output. Go to [Before you start](#before-you-start).
+
+The wiki's helper scripts are **bash + Python** (e.g. `scripts/body-hash.sh`, which `/wiki-ingest` requires and must not be bypassed). VS Code's default terminal on Windows is **PowerShell**, which cannot run them — so the agent's `./scripts/*.sh` calls fail silently until you give it a real shell. Fix it once:
+
+1. **Install Git for Windows** → <https://git-scm.com/download/win>. One installer gives you **`git` *and* Git Bash**, and Git Bash bundles **`bash`, `awk`, and `openssl`** — every *hard* requirement, covered in a single step.
+2. **Install Python 3** → <https://www.python.org/downloads/> (tick **"Add python.exe to PATH"** in the installer). The core text loop (extract / ingest / query / lint) runs **without** Python; it's needed for the synthesis artifacts (`knowledge-graph.json`, the dashboards) and `/wiki-visualize`. The scripts accept either `python` or `python3`, so the standard python.org install just works.
+3. **Make Git Bash the VS Code default terminal:** `Ctrl+Shift+P` → **"Terminal: Select Default Profile"** → **Git Bash**. Open a fresh terminal (``Ctrl+` ``); the prompt should read `MINGW64`.
+4. **Confirm you're ready** — from the repo root in that terminal:
+   ```bash
+   bash scripts/preflight.sh
+   ```
+   Green on **bash / awk / openssl / git** = the core text loop runs. Python shows as optional — install it (step 2) and the dashboards + visuals turn on too; skip it and ingest still works, it just prints "synthesis: skipped". This is your go/no-go gate.
+
+> **If preflight is *not* green** (rare — e.g. `awk` or `openssl` somehow missing from your Git Bash), don't chase individual packages: Git Bash has no package manager. Use **WSL** instead — `wsl --install` (PowerShell as admin) gives a full Linux shell with `apt`, so any missing tool is one `sudo apt install` away. Set WSL as VS Code's default terminal the same way, and run the wiki from inside the WSL filesystem (`~/`), not `/mnt/c`, for speed. If you already use WSL, start there — it's the smoother environment.
+
+Once `preflight.sh` is green, jump to the [Fastest path (VS Code + Copilot)](#fastest-path-vs-code--github-copilot--mac-or-windows) above.
+
 ---
 
 ## Table of contents
 
+- [Fastest path (VS Code + Copilot — Mac or Windows)](#fastest-path-vs-code--github-copilot--mac-or-windows)
+- [Windows setup (one-time — 5 minutes)](#windows-setup-one-time--5-minutes)
 - [Before you start](#before-you-start)
 - [Smoke test (optional)](#smoke-test-optional--confirm-your-setup)
 - [The 5 operations (one paragraph each)](#the-5-operations)
@@ -225,6 +272,8 @@ Make a poster — "status of X for management" — per
 
 Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the workflows. Classic Copilot Chat won't autonomously do multi-step ingest.
 
+> **Windows:** do the [one-time setup](#windows-setup-one-time--5-minutes) first so the agent's bash calls (during `/wiki-ingest`) actually run. Scaffolding and URL extract work without it, but ingest won't.
+
 1. Open the directory:
    ```bash
    code my-wiki
@@ -232,10 +281,11 @@ Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the work
 2. Open the Copilot Chat panel (Ctrl+Shift+I / Cmd+Shift+I).
 3. **Toggle Agent Mode** in the chat panel.
 
-Then in the chat:
+**Start an empty wiki and grab your first source** (no `.sh` helper scripts involved yet):
 
 ```
-Read AGENTS.md to learn this project's conventions. Then fetch
+Read AGENTS.md to learn this project's conventions. Then scaffold an empty
+wiki by running /wiki-init per .claude/commands/wiki-init.md, and fetch
 https://example.com/some-article into raw/ following
 .claude/commands/wiki-extract.md.
 ```

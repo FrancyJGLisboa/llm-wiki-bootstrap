@@ -28,7 +28,15 @@ Plus two **output workflows** that render/export an already-built wiki (read-onl
 - `wiki-flashcards [dir]` — export `## Flashcards` sections to an Anki CSV; wraps `scripts/wiki-to-anki.sh`
 - `wiki-diagram "<intent>"` — semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`; contracts in `templates/infographic/`
 
-A blank wiki can be scaffolded with `scripts/create-llm-wiki.sh <target-dir>` (the installer; verified by `scripts/verify-create-llm-wiki.sh`).
+A blank wiki can be scaffolded with `scripts/create-llm-wiki.sh <target-dir>` (the installer; verified by `scripts/verify-create-llm-wiki.sh`). To start fresh **without** the bash installer, scaffold in place by following `.claude/commands/wiki-init.md` — pure file creation, no shell needed.
+
+## First run (help the user reach their first source)
+
+Shortest path to value: scaffold (`wiki-init`) → acquire one source (`wiki-extract <url>`) → integrate (`wiki-ingest`) → ask (`wiki-query`). `wiki-init` and a URL `wiki-extract` need **no shell scripts** — do them directly. When a new user arrives with a URL or file, offer to run `wiki-init` + `wiki-extract` in one go.
+
+## Shell requirement (matters on Windows)
+
+`wiki-ingest` and the visualize/flashcards workflows call bash + Python helpers (`scripts/body-hash.sh`, `scripts/synthesize/all.sh`, `scripts/visualize/*`). They need a real POSIX shell on PATH. On Windows the default terminal is PowerShell, which **cannot** run `.sh` files — if a `./scripts/*.sh` call fails, tell the user to install **Git for Windows** (bundles Git Bash + `awk`/`openssl`), set Git Bash as the VS Code default terminal, then re-run `bash scripts/preflight.sh` to confirm. See `docs/QUICKSTART.md` → "Windows setup". Never work around `body-hash.sh` by hashing inline — that breaks ingest idempotence (hard rule 2).
 
 ## Hard rules
 

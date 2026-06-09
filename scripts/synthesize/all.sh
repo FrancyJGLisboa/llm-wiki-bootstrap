@@ -15,8 +15,7 @@
 #   ./scripts/synthesize/all.sh <root>     # operate on <root>/wiki and <root>/log.md
 #
 # Exit codes:
-#   0 — completed
-#   1 — python3 missing
+#   0 — completed (also 0 when skipped: no Python interpreter — degrades gracefully)
 #   2 — usage error (wiki dir absent)
 
 set -euo pipefail
@@ -27,21 +26,27 @@ WIKI_DIR="$ROOT/wiki"
 LOG="$ROOT/log.md"
 GRAPH_JSON="$WIKI_DIR/knowledge-graph.json"
 
-if ! command -v python3 >/dev/null 2>&1; then
-  INSTALL_CMD="<your-package-manager> install"
-  [ -f "$SCRIPT_DIR/../lib/platform-hint.sh" ] && . "$SCRIPT_DIR/../lib/platform-hint.sh"
-  echo "error: python3 not found on PATH (required for wiki synthesis)." >&2
-  echo "       install: ${INSTALL_CMD} python3" >&2
-  exit 1
-fi
-
 if [ ! -d "$WIKI_DIR" ]; then
   echo "usage: ./scripts/synthesize/all.sh [ROOT]" >&2
   echo "  expected a wiki at '$WIKI_DIR' (ROOT defaults to the current directory)" >&2
   exit 2
 fi
 
-python3 "$SCRIPT_DIR/build.py" --wiki "$WIKI_DIR" --log "$LOG"
-python3 "$SCRIPT_DIR/../visualize/graph-html.py" "$WIKI_DIR" --json --out "$GRAPH_JSON"
+# Resolve a Python interpreter. Windows' python.org build ships `python`, not
+# `python3`; macOS/Linux ship `python3`. Accept either.
+PY="$(command -v python3 || command -v python || true)"
+if [ -z "$PY" ]; then
+  INSTALL_CMD="<your-package-manager> install"
+  [ -f "$SCRIPT_DIR/../lib/platform-hint.sh" ] && . "$SCRIPT_DIR/../lib/platform-hint.sh"
+  # Degrade gracefully (the project's "every dependency optional" posture): the
+  # text loop (ingest/query/lint) already succeeded; only the derived views wait.
+  echo "synthesis: skipped — no Python interpreter (python3 / python) on PATH." >&2
+  echo "           install Python 3 to generate the dashboards + knowledge-graph.json (${INSTALL_CMD} python3)." >&2
+  echo "           the core text loop (ingest / query / lint) is unaffected." >&2
+  exit 0
+fi
+
+"$PY" "$SCRIPT_DIR/build.py" --wiki "$WIKI_DIR" --log "$LOG"
+"$PY" "$SCRIPT_DIR/../visualize/graph-html.py" "$WIKI_DIR" --json --out "$GRAPH_JSON"
 
 echo "synthesis: knowledge-graph.json + dashboards up to date" >&2
