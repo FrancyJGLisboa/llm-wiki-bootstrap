@@ -256,8 +256,10 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("input_dir", type=Path, help="Directory to walk recursively for *.md")
     parser.add_argument("--inline", action="store_true",
                         help="Embed d3.v7.min.js inline (must be present at scripts/visualize/d3.v7.min.js)")
+    parser.add_argument("--json", action="store_true",
+                        help="Emit the {nodes, links} graph as deterministic JSON and exit (no HTML)")
     parser.add_argument("--out", type=Path, default=None,
-                        help="Output HTML path (default: stdout)")
+                        help="Output path (default: stdout)")
     args = parser.parse_args(argv)
 
     if not args.input_dir.is_dir():
@@ -269,6 +271,17 @@ def main(argv: list[str] | None = None) -> int:
         sys.stderr.write(f"warning: no *.md files under {args.input_dir}\n")
 
     nodes, links = build_graph(pages)
+
+    # --json: same nodes/links the HTML embeds, emitted as a standalone artifact.
+    # sort_keys + trailing newline keep the bytes deterministic across runs so the
+    # committed wiki/knowledge-graph.json never churns when nothing changed.
+    if args.json:
+        graph_json = json.dumps({"nodes": nodes, "links": links}, sort_keys=True, indent=2) + "\n"
+        if args.out is None:
+            sys.stdout.write(graph_json)
+        else:
+            args.out.write_text(graph_json, encoding="utf-8")
+        return 0
 
     inline_d3: str | None = None
     if args.inline:

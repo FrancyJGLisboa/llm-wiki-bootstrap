@@ -8,9 +8,9 @@ You are executing `/wiki-extract $ARGUMENTS` from the `llm-wiki-bootstrap` syste
 
 ## Read first
 
-**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `AGENTS.md` is absent, you're not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `raw/` and `wiki/` are absent, you're not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
 
-Read `AGENTS.md` to confirm the raw source frontmatter convention and the slug naming convention.
+The raw-source frontmatter spec and slug convention are **inlined below** (Steps 2 and 4) — you don't need to open `AGENTS.md` to extract. Consult `AGENTS.md` → "Raw source convention" only for an edge case the steps below don't cover.
 
 ## Inline-text mode (when `$ARGUMENTS` begins with `--text`)
 

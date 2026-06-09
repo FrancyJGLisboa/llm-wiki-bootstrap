@@ -22,7 +22,7 @@ Three further **output commands** (`/wiki-visualize`, `/wiki-flashcards`, `/wiki
 |---|---|---|
 | `/wiki-init` | Scaffold an empty wiki structure in the current directory. | (bootstrap) |
 | `/wiki-extract <source>` | Acquire a URL / file / image — or pasted inline text (`--text`) — into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
-| `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]]. | [[operation-ingest]] |
+| `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]], then regenerate [[synthesis-artifacts]] (Step 8). | [[operation-ingest]] |
 | `/wiki-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. `--visual [html\|pdf\|png]` also emits a diagram of the answer. | [[operation-query]] + [[query-as-write-loop]] |
 | `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, gaps. | [[operation-lint]] |
 
@@ -90,6 +90,7 @@ Two optional frontmatter fields document the run: `extraction_method` (which han
 - For each file processed, run the 7 steps from [[ingest-pipeline]].
 - After success: update the raw's frontmatter (`ingested_hash`, `ingested_at`, `ingested_pages`).
 - Append a `log.md` entry summarizing what changed.
+- **Step 8 (once, after all files — even on a no-op run):** regenerate the [[synthesis-artifacts]] via `scripts/synthesize/all.sh`.
 
 ### /wiki-query <question>
 

@@ -8,6 +8,7 @@
 #   ./scripts/visualize/graph.sh <input-dir>                      # write to stdout
 #   ./scripts/visualize/graph.sh <input-dir> --out graph.html     # write to file
 #   ./scripts/visualize/graph.sh <input-dir> --inline             # embed local D3
+#   ./scripts/visualize/graph.sh <input-dir> --json --out g.json  # deterministic graph JSON
 #
 # Exit codes match the underlying Python.
 
@@ -25,10 +26,11 @@ fi
 
 if [ "$#" -lt 1 ]; then
   cat >&2 <<EOF
-usage: ./scripts/visualize/graph.sh <input-dir> [--inline] [--out <path>]
+usage: ./scripts/visualize/graph.sh <input-dir> [--inline] [--json] [--out <path>]
 
   Walks <input-dir> recursively for *.md files, parses [[wiki-links]],
   and emits a self-contained D3 graph as HTML to stdout (or --out).
+  --json emits the {nodes, links} graph as deterministic JSON instead of HTML.
 EOF
   exit 2
 fi

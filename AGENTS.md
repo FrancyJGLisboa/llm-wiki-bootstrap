@@ -1,6 +1,6 @@
 # AGENTS.md — `llm-wiki-bootstrap` schema
 
-**Schema version:** 2 — bumped 2026-05-26 (was: 1 introduced 2026-05-25). v2 adds the `wiki/journal/` user-owned exception (and the `type: journal` enum value), the `## Flashcards` content convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
+**Schema version:** 3 — bumped 2026-06-09 (was: 2 from 2026-05-26, 1 from 2026-05-25). v3 adds the **synthesis layer**: `/wiki-ingest` (and `/wiki-query` promote, `/wiki-lint --apply`) now mechanically regenerate four derived artifacts — `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json` — via `scripts/synthesize/all.sh`. This partially and deliberately re-introduces aggregate-view machinery cut on 2026-06-08 (`a76196f`), but only the narrow, deterministic core. v2 added the `wiki/journal/` user-owned exception (and `type: journal`), the `## Flashcards` convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
 
 This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-schema.md`](wiki/layer-schema.md)). It tells any AI agent operating on this directory how the wiki is structured and how to work with it.
 
@@ -40,7 +40,7 @@ Each command has a prefixed name (`/wiki-extract`) and a short alias (`/extract`
 |---|---|---|
 | `/wiki-init` | `/init` | Scaffold an empty wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md) in the current directory. Idempotent. |
 | `/wiki-extract <sources>` | `/extract` | Acquire **one or many** URLs / local files / images into `raw/` with frontmatter. Bulk mode: multiple space- or newline-separated sources are extracted in a single pass with a consolidated summary. Also accepts pasted inline text via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | `/ingest` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md). Detects deltas via body hash. |
+| `/wiki-ingest [<raw-file>]` | `/ingest` | Process raw → wiki: 7-step pipeline (read, extract, write summary, update entity/concept pages, flag contradictions, update index, append log.md), then **Step 8 — regenerate synthesis artifacts** (see "Synthesis artifacts"). Detects deltas via body hash. |
 | `/wiki-query <question>` | `/query` | Answer from wiki; if gaps, web-search and auto-promote answers as new/updated pages. `--no-promote` disables promotion. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query; `--archetype <name>` to force one). |
 | `/wiki-lint` | `/lint` | Maintenance pass: broken links, orphans, contradictions, stale claims, unresolved open-questions, gaps. Reports + proposes edits; `--apply` to write them. |
 
@@ -61,6 +61,40 @@ These operate on an **already-built** wiki: they are not lifecycle steps. Both a
 **Diagrams from answers vs. from intent:** `/wiki-query … --visual` and `/wiki-diagram` share the same vendored archetype system (`templates/infographic/`) and the same `render.sh` for pdf/png. The difference: `/wiki-query --visual` diagrams the **answer it just synthesized** (and auto-picks the archetype), while `/wiki-diagram` diagrams a standalone **intent** (and lets you pick).
 
 **`/wiki-visualize` vs `/wiki-diagram`:** visualize is **mechanical** — it renders structure that already exists (the `[[link]]` graph, mermaid, slides). diagram is **semantic** — it composes a *new* audience-targeted poster by reasoning over a query. Use visualize to *see the wiki*; use diagram to *make a point from it*.
+
+## Synthesis artifacts
+
+Four **derived** pages are regenerated mechanically (no LLM work) from markers that
+already exist in the wiki. They are written by `scripts/synthesize/all.sh`, invoked as
+the **final action of every wiki-mutating command**: `/wiki-ingest` always (even on a
+no-op "No changes to ingest" run), `/wiki-query` when it promotes a page, and
+`/wiki-lint --apply` after it writes fixes. Generation is **deterministic** — identical
+inputs produce byte-identical output, so a no-change run leaves git clean.
+
+| Artifact | Built from |
+|---|---|
+| `wiki/open-questions-dashboard.md` | every `## Open questions on this page` section, grouped by page |
+| `wiki/tensions.md` | every `> CONTRADICTION FLAGGED` flag (the `/wiki-ingest` step-5 contract), newest first |
+| `wiki/decision-timeline.md` | reverse-chronological activity timeline parsed from `log.md` entry headers |
+| `wiki/knowledge-graph.json` | the `[[link]]` graph as JSON — emitted by `scripts/visualize/graph-html.py --json`, the same parser `/wiki-visualize` uses, so the JSON and the rendered graph never diverge |
+
+**These are generated, not authored.** The three markdown pages are `type: navigation`
+(exempt from the `## Related` ≥2-link invariant) and carry an
+`<!-- AUTO-GENERATED by scripts/synthesize … -->` marker on the first body line. Rules:
+
+- **Never hand-edit them** — the next mutating command overwrites them. To change their
+  content, change the underlying markers (resolve an open question, resolve a contradiction
+  at its raw source, etc.) and let the next run regenerate.
+- `/wiki-ingest` must not treat them as inputs (don't cite them, don't count them when
+  deciding what step-4 pages to create).
+- `/wiki-lint` skips them in the orphan / stale-claim / open-questions / schema-drift checks
+  (it still validates that `[[links]]` inside them resolve). `knowledge-graph.json` is not
+  markdown and is ignored by all `*.md` tooling.
+- Distinct from the manually-authored `wiki/open-questions.md` (`type: analysis`, system-level
+  gaps) — the auto **dashboard** aggregates per-page question sections and links to that page.
+
+If `scripts/synthesize/all.sh` is absent (a wiki scaffolded before v3), commands skip Step 8
+silently; re-scaffold with `scripts/create-llm-wiki.sh` to adopt it.
 
 ### Diagram archetypes (A1–A8)
 
@@ -266,7 +300,7 @@ If every handler for a binary format fails, the binary is still saved to `raw/` 
 
 ## Schema versioning
 
-The number at the top of this file (`Schema version: 1`) increments when conventions in this document change in a way that could surprise an older client. The policy:
+The number at the top of this file (`Schema version`) increments when conventions in this document change in a way that could surprise an older client. The policy:
 
 - **Bump for breaking or behavior-changing edits.** Examples: renaming a frontmatter field, changing what `/wiki-extract` writes, redefining a layer's ownership rules, restructuring `log.md`'s format.
 - **Don't bump for typo fixes, clarifications, or additions that are strictly opt-in.** Adding an optional frontmatter field with a documented default is additive, not breaking.

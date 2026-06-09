@@ -2,6 +2,15 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-09 — schema v2 → v3: synthesis layer
+
+Added a **mechanical synthesis layer**. `/wiki-ingest` (Step 8), `/wiki-query` (on promote), and `/wiki-lint --apply` now regenerate four derived artifacts via `scripts/synthesize/all.sh`: `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json`. Generation is deterministic (byte-identical on no change) and does **no LLM work** — it only aggregates markers the LLM already wrote (`## Open questions` sections, `> CONTRADICTION FLAGGED` flags, `log.md` headers, `[[links]]`). The graph JSON reuses `scripts/visualize/graph-html.py --json` (the same parser `/wiki-visualize` uses), so JSON and rendered graph can't diverge.
+
+This **partially and deliberately re-introduces** aggregate-view machinery cut on 2026-06-08 (`a76196f`, "infrastructure ahead of single-user demand") — but only the narrow, deterministic, zero-LLM-cost core, and pushed onto the read/write-completion path rather than as bespoke per-source LLM synthesis. Did **not** restore the causal-KG, factory, or self-updating-brain layers.
+
+- **Added:** `scripts/synthesize/{build.py,all.sh}`, `scripts/verify-synthesize.sh`, `--json` mode on `graph-html.py`, manifest entries, AGENTS.md "Synthesis artifacts" section.
+- **Migration note for older clients:** a wiki scaffolded before v3 has no `scripts/synthesize/all.sh`; commands skip Step 8 silently (the four artifacts simply won't exist/update). Re-scaffold with `scripts/create-llm-wiki.sh` to adopt it. No frontmatter or layer-ownership rules changed; the four artifacts are additive `type: navigation` pages + one JSON.
+
 ## 2026-06-08 — fix stale verification note in operation-ingest.md
 
 Corrected a stale "honesty note" that claimed the 7-step ingest pipeline was **specified, not demonstrated** and that `/wiki-ingest` had **never been invoked**. Both are false: `scripts/smoke-build.sh` drives `claude -p "/wiki-ingest raw/smoke-source.md"` in a real session and `scripts/smoke-all.sh` runs it in CI on every push (C1 confirms the follow-up query reaches the right answer); `scripts/eval-onboarding.sh` exercises extract→ingest→query independently. Flipped `wiki/operation-ingest.md` lines 40–52 to "demonstrated end-to-end and CI-gated," preserving the honest nuance that the original karpathy-derived meta-wiki pages were hand-bootstrapped (only the smoke-fixture pages were machine-ingested) and the residual per-step granularity unknowns. The `diagrams/ingest-pipeline.*` poster (gitignored, regenerable) carried the same stale line and was corrected locally; it will regenerate correctly from the fixed source.

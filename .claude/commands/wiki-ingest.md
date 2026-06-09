@@ -1,5 +1,5 @@
 ---
-description: Process raw/ into wiki/ via the 7-step pipeline. Detects deltas via body hash; idempotent on unchanged sources.
+description: Process raw/ into wiki/ via the 7-step pipeline, then regenerate synthesis artifacts. Detects deltas via body hash; idempotent on unchanged sources.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [<raw-file>]
 ---
@@ -8,7 +8,7 @@ You are executing `/wiki-ingest $ARGUMENTS` from the `llm-wiki-bootstrap` system
 
 ## Read first
 
-**Run from the wiki root** — the directory holding `raw/`, `wiki/`, `AGENTS.md`, and `log.md`. If `AGENTS.md` is absent you are not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
+**Run from the wiki root** — the directory holding `raw/`, `wiki/`, `AGENTS.md`, and `log.md`. If `raw/` and `wiki/` are absent you are not in a wiki: tell the user to run `/wiki-init` first (or `cd` into their wiki), then stop.
 
 Read `wiki/index.md` (what already exists) and `log.md` (recent activity). You don't need to re-read all of `AGENTS.md` — the page template you'll write is inlined below; consult `AGENTS.md` → "Wiki page convention" only for edge cases.
 
@@ -17,7 +17,7 @@ Read `wiki/index.md` (what already exists) and `log.md` (recent activity). You d
 - If `$ARGUMENTS` is empty: walk all files in `raw/`. For each, compute the current body hash by running **`scripts/body-hash.sh <file>`** (this is the canonical algorithm — do NOT recompute the hash inline with `sha256sum`, `shasum`, or a different awk pattern, or idempotence will break). Skip files whose `ingested_hash` in frontmatter matches the current hash.
 - If `$ARGUMENTS` names a specific file: process only that file, regardless of hash.
 
-If nothing to process: print "No changes to ingest." and exit. If `raw/` is **empty** (no sources at all), add: "Next: run `/wiki-extract <source>` to acquire a source, then `/wiki-ingest` again."
+If nothing to process: print "No changes to ingest.", **still run Step 8 (synthesis) below**, then exit — other commands (`/wiki-query` promote, `/wiki-lint --apply`) may have changed `wiki/` since the last synthesis, so the dashboards must be refreshed even on a no-op ingest. If `raw/` is **empty** (no sources at all), add: "Next: run `/wiki-extract <source>` to acquire a source, then `/wiki-ingest` again."
 
 ## Page template (every page you create or update in steps 3–4)
 
@@ -114,10 +114,34 @@ Update the raw file's frontmatter:
 - `ingested_at:` set to current timestamp (format: `YYYY-MM-DD HH:MM`)
 - `ingested_pages:` set to the array of wiki files this raw touched (created or updated)
 
+## Step 8 — Regenerate synthesis artifacts (once, after all files)
+
+After the per-file loop — and **also on the "No changes to ingest" path** — run the
+synthesis regenerator exactly once:
+
+```bash
+./scripts/synthesize/all.sh
+```
+
+This is a **mechanical, deterministic** pass (no LLM work): it aggregates markers
+you already wrote into four standing artifacts and rewrites them only if their
+content changed.
+
+- `wiki/open-questions-dashboard.md` — every `## Open questions on this page` section, grouped by page
+- `wiki/tensions.md` — every `> CONTRADICTION FLAGGED` flag (step 5), newest first
+- `wiki/decision-timeline.md` — reverse-chronological `log.md` activity timeline
+- `wiki/knowledge-graph.json` — the `[[link]]` graph as deterministic JSON (reuses the `/wiki-visualize` parser)
+
+These four are **generated, not authored**: never hand-edit them, never cite them as
+sources, and don't count them when deciding what to create in step 4 — they are
+overwritten on every run. If `scripts/synthesize/all.sh` is absent (older wiki), skip
+this step and tell the user to re-scaffold with `scripts/create-llm-wiki.sh` to pick it up.
+
 ## What you must NOT do
 
 - Edit anything in `raw/` other than the frontmatter fields `ingested_hash`, `ingested_at`, `ingested_pages`.
 - Skip the changelog entry.
+- Hand-edit the four Step-8 synthesis artifacts — they are regenerated mechanically.
 - Use Obsidian-specific syntax in any wiki page.
 - Promote orphan information (claims that don't relate to anything else) into their own page just to have something. Better: skip them and let lint surface gaps.
 

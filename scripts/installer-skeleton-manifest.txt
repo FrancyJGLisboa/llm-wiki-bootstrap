@@ -72,6 +72,9 @@ scripts/visualize/mermaid.sh
 scripts/visualize/serve.sh
 scripts/visualize/render.sh
 scripts/visualize/verify-visualizers.sh
+scripts/synthesize/build.py
+scripts/synthesize/all.sh
+scripts/verify-synthesize.sh
 raw/.gitkeep
 wiki/journal/.gitkeep
 wiki/index.md
