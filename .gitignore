@@ -18,6 +18,10 @@ desktop.ini
 .env
 .env.local
 
+# Unattended-ingest staging (transient; sources land in raw/ after extract)
+inbox/
+.auto-ingest.log
+
 # Generated output artifacts (regenerate via slash commands; not source)
 diagrams/
 wiki-graph.html
