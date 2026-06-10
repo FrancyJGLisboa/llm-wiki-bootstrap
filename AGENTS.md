@@ -250,6 +250,7 @@ notes: |
 | Format | Primary handler | Fallback | `extraction_method` value |
 |---|---|---|---|
 | URL | `WebFetch` → markdown | — | `webfetch` |
+| YouTube video URL (`youtube.com/watch`, `youtu.be`, `youtube.com/shorts`) | `yt-dlp` subtitles → `scripts/vtt-to-md.sh` | — (user pastes transcript via `--text`) | `yt-dlp` |
 | Plain text (`.md`, `.txt`, `.html`, `.json`, etc.) | Passthrough copy | — | `passthrough` |
 | Inline text (`--text "<content>"`) | Passthrough write to `raw/<slug>.md` | — | `passthrough` |
 | `.csv` | Copy + render markdown table preview in sidecar | — | `csv-passthrough` |
@@ -257,6 +258,8 @@ notes: |
 | `.pdf` | `pdftotext` | LLM-vision (read PDF) | `pdftotext` \| `llm-vision` |
 | `.docx` | `pandoc -f docx -t markdown` | `python-docx` | `pandoc` \| `python-docx` |
 | `.xlsx` | `xlsx2csv` → markdown table per sheet | `openpyxl` | `xlsx2csv` \| `openpyxl` |
+
+YouTube scope: single videos only (playlist/channel URLs are rejected — pass individual video URLs); subtitles only, no audio download or speech-to-text. Creator-uploaded captions → `extraction_status: ok`; auto-generated captions → `degraded`; no captions → `failed` sidecar suggesting the `--text` paste path.
 
 If every handler for a binary format fails, the binary is still saved to `raw/` and the sidecar `<file>.<ext>.md` carries `extraction_status: failed` plus a one-line install hint. This preserves the BYO-AI guarantee — a user with zero shell tools installed still gets a functional repo, just with degraded extraction quality on formats whose only handler is a shell tool.
 
@@ -266,7 +269,7 @@ If every handler for a binary format fails, the binary is still saved to `raw/` 
 
 **Canonical hashing.** The ONE allowed way to compute `ingested_hash` is `scripts/body-hash.sh <file>`. Do not reinvent the hashing logic inline (different awk patterns, different newline handling, different SHA tools → different hashes → broken idempotence). The script defines "body" as everything after the closing `---` of frontmatter, hashed with SHA-256.
 
-**Environment check.** `scripts/preflight.sh` reports which extraction tools (`pdftotext`, `pandoc`, `xlsx2csv`, `python-docx`, `openpyxl`) are present and which `/wiki-extract` formats will run first-try vs fall back vs fail. Suggest running it if a user reports unexpected `extraction_status: failed` sidecars or asks why DOCX/XLSX produced empty content.
+**Environment check.** `scripts/preflight.sh` reports which extraction tools (`pdftotext`, `pandoc`, `xlsx2csv`, `python-docx`, `openpyxl`, `yt-dlp`) are present and which `/wiki-extract` formats will run first-try vs fall back vs fail. Suggest running it if a user reports unexpected `extraction_status: failed` sidecars or asks why DOCX/XLSX produced empty content.
 
 **Optional MCP read surface.** A user may launch `./scripts/mcp-server.sh` to expose `wiki/` to any MCP-aware client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) with BM25 search over the wiki. This is **read-by-convention**, additive, and does not change the three-layer model or the slash commands. Writes should still flow through `/wiki-ingest` / `/wiki-query` so `log.md` stays accurate. Setup: [`docs/MCP.md`](docs/MCP.md).
 

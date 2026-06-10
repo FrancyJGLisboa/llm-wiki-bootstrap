@@ -24,6 +24,7 @@ LICENSE
 .claude/commands/wiki-diagram.md
 .claude/commands/diagram.md
 scripts/body-hash.sh
+scripts/vtt-to-md.sh
 scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
 scripts/lib/eval-common.sh
@@ -46,6 +47,7 @@ docs/MCP.md
 docs/VISUALIZATION.md
 tests/canary/canary-smoke-test.md
 tests/canary/canary-csv.csv
+tests/canary/canary-autosub.vtt
 tests/canary/canary-flashcards.md
 tests/canary/graph-fixture/page-a.md
 tests/canary/graph-fixture/page-b.md

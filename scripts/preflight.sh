@@ -47,6 +47,7 @@ hard_failures=0
 have_pdftotext=no
 have_pandoc=no
 have_xlsx2csv=no
+have_ytdlp=no
 have_python_docx=no
 have_python_openpyxl=no
 have_npx=no
@@ -109,6 +110,10 @@ else warn "pandoc" "missing — DOCX will try python-docx, then fail (install: $
 # xlsx2csv
 if have xlsx2csv; then ok "xlsx2csv" "present — XLSX primary handler"; have_xlsx2csv=yes
 else warn "xlsx2csv" "missing — XLSX will try openpyxl, then fail (install: pip install xlsx2csv)"; fi
+
+# yt-dlp — YouTube transcript handler (subtitles only; no fallback)
+if have yt-dlp; then ok "yt-dlp" "present — YouTube transcript handler (keep it updated; YouTube changes break old versions)"; have_ytdlp=yes
+else warn "yt-dlp" "missing — YouTube URLs will produce extraction_status: failed sidecars (install: ${INSTALL_CMD} yt-dlp, or pip install yt-dlp)"; fi
 
 # python interpreter + modules. Windows' python.org build ships `python`, not
 # `python3`; accept either. Python is optional for the core text loop
@@ -180,6 +185,12 @@ elif [ "$have_python_openpyxl" = "yes" ]; then
   partial="${partial}, XLSX (openpyxl fallback)"
 else
   degraded="${degraded}, XLSX (will produce extraction_status: failed sidecar)"
+fi
+
+if [ "$have_ytdlp" = "yes" ]; then
+  full="${full}, YouTube transcripts"
+else
+  degraded="${degraded}, YouTube transcripts (will produce extraction_status: failed sidecar — user can paste transcripts via --text)"
 fi
 
 # Strip leading ", " from partial / degraded before printing.

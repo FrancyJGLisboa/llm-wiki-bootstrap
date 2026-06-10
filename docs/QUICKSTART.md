@@ -136,6 +136,9 @@ Verify that `/wiki-extract` produces output with the right shape in your environ
 ./scripts/verify-extract.sh canary-csv
 
 ./scripts/verify-wiki-to-anki.sh                    # Anki exporter shape
+
+./scripts/vtt-to-md.sh tests/canary/canary-autosub.vtt   # YouTube VTT→markdown converter
+# expect: clean prose (no duplicated rolling-caption lines) with `## (m:ss)` anchors
 ```
 
 `verify-extract.sh` checks shape only — wrong `source_type`, hallucinated `source_title` etc. will slip past. For semantics, eyeball the produced `raw/` file directly.
