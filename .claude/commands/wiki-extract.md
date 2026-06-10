@@ -1,5 +1,5 @@
 ---
-description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) — or pasted inline text (--text) — into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
+description: Acquire one OR MANY URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text, YouTube video URLs via yt-dlp) — or pasted inline text (--text) — into raw/, parsing binary content to markdown when possible. Does not modify wiki/.
 allowed-tools: Bash, Read, Write, WebFetch
 argument-hint: <url-or-filepath> [<url-or-filepath> ...]  |  --text [--title "<title>"] [--source-type <value>] <pasted text>
 ---
@@ -37,6 +37,8 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 ## Steps (run once per source)
 
 1. **Identify the source type** from the current source (extension-based, lowercase comparison). _(Skip this step entirely in inline-text mode — see above; the argument is content, already known to be passthrough.)_
+   - Contains `youtube.com/watch`, `youtu.be/`, or `youtube.com/shorts/` → YouTube video (transcript via `yt-dlp`; checked BEFORE the generic URL rule)
+   - Contains `youtube.com/playlist`, or a `list=` parameter with no single-video id → YouTube playlist: **reject** — tell the user to pass individual video URLs (expanding a playlist silently could mean hundreds of downloads). In bulk mode, count it under Failed with reason "playlist URL"; write no file.
    - Starts with `http://` or `https://` → URL
    - `.png`, `.jpg`, `.jpeg`, `.gif`, `.webp` → image
    - `.pdf` → PDF
@@ -48,6 +50,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
 2. **Derive a slug** for the file name in `raw/`:
    - URL: domain + path-leaf (e.g. `karpathy-tweet-1234.md`), kebab-case, drop punctuation.
+   - YouTube video: `<uploader>-<title>` kebab-cased (uploader/title from yt-dlp metadata, Step 3) — not the URL, whose path-leaf (`watch`) is meaningless.
    - File: original basename, kebab-cased.
    - Inline text (`--text`): kebab-case the `--title` value (or the title you asked the user for).
    - If the slug collides with an existing file in `raw/`, append a date suffix (`-2026-05-25`).
@@ -55,6 +58,17 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 3. **Acquire the content.** Every binary format below follows a **graceful tool chain** — try the best handler first, fall back if it's missing, and if everything fails save the binary with an `extraction_status: failed` sidecar (never silently). Record what you used in the `extraction_method` frontmatter field (see step 4).
 
    - **URL:** use `WebFetch` with the prompt "Return the main textual content of this page as clean markdown, preserving headings and lists." Save the result as `raw/<slug>.md`. → `extraction_method: webfetch`.
+
+   - **YouTube video** (`youtube.com/watch?v=...`, `youtu.be/...`, `youtube.com/shorts/...`): extract the caption track via `yt-dlp` — never WebFetch (the watch page HTML contains no transcript). Subtitles only: never download audio/video, and never transcribe speech yourself.
+     1. Probe `Bash command -v yt-dlp`. If missing → write `raw/<slug>.md` with `extraction_status: failed` and the install hint in `notes:` ("install yt-dlp: `brew install yt-dlp` or `pip install yt-dlp` — and keep it updated; YouTube changes routinely break old versions"). Stop this source.
+     2. Metadata: `Bash yt-dlp --no-playlist --skip-download --print "%(title)s" --print "%(uploader)s" --print "%(upload_date)s" "<url>"` (one value per line; do NOT use `\t` in the template — yt-dlp prints it literally) → fills `source_title`, `source_author`. If this itself fails (private/removed/region-blocked video), write the failed sidecar with yt-dlp's error in `notes:` and stop this source.
+     3. Subtitles: list what exists with `Bash yt-dlp --no-playlist --list-subs "<url>"`. Prefer a **creator-uploaded** track in the video's original language (fall back to `en`); download it into a temp dir:
+        `Bash yt-dlp --no-playlist --skip-download --write-subs --sub-format vtt --sub-langs "<lang>" -o "<tmpdir>/%(id)s" "<url>"`
+        If no creator track exists, retry with `--write-auto-subs` (auto-generated captions) → mark `extraction_status: degraded` ("auto-generated captions; quality varies").
+     4. Convert: `Bash scripts/vtt-to-md.sh "<tmpdir>/<id>.<lang>.vtt"` → transcript body with `## (m:ss)` timestamp anchors. Save as `raw/<slug>.md` with a `# <title> — YouTube transcript` heading between frontmatter and body. Clean up the temp dir.
+     5. If the video has **no captions at all**: write the failed sidecar suggesting the user paste a transcript manually via `/wiki-extract --text --title "<title>" --source-type video-transcript <pasted transcript>`.
+
+     Frontmatter: `source_type: video-transcript`, `source_url: <canonical watch URL>`. → `extraction_method: yt-dlp`.
 
    - **Plain text** (`.md`, `.txt`, `.html`, `.json`, `.yaml`, `.toml`, source code, etc.): use `Read`, then `Write` to `raw/<slug>.<ext>`. → `extraction_method: passthrough`.
 
@@ -86,7 +100,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
      For sheets with >100 rows: header + first 20 rows + `(...truncated, N total rows)` per sheet. Save as `raw/<slug>.xlsx.md`. → `extraction_method: xlsx2csv | openpyxl | failed`.
 
-   **Tool-availability check:** before running any optional binary (`pdftotext`, `pandoc`, `xlsx2csv`, `python3`), probe it with `Bash command -v <tool>` and branch accordingly. Never assume; never crash the command on a missing tool.
+   **Tool-availability check:** before running any optional binary (`pdftotext`, `pandoc`, `xlsx2csv`, `python3`, `yt-dlp`), probe it with `Bash command -v <tool>` and branch accordingly. Never assume; never crash the command on a missing tool.
 
 4. **Write the frontmatter** at the top of the markdown file (or sidecar). Required + optional fields:
 
@@ -100,7 +114,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
    ingested_hash: ""
    ingested_at: never
    ingested_pages: []
-   extraction_method: <webfetch | passthrough | csv-passthrough | pdftotext | llm-vision | pandoc | python-docx | xlsx2csv | openpyxl | failed>
+   extraction_method: <webfetch | passthrough | csv-passthrough | pdftotext | llm-vision | pandoc | python-docx | xlsx2csv | openpyxl | yt-dlp | failed>
    extraction_status: <ok | degraded | failed>   # optional; omit when ok
    notes: |
      <optional context about why this was fetched, or how it was acquired. If extraction was degraded or failed, name the missing tool and the install hint here.>
