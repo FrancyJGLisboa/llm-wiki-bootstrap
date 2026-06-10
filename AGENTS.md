@@ -263,7 +263,7 @@ YouTube scope: single videos only (playlist/channel URLs are rejected — pass i
 
 If every handler for a binary format fails, the binary is still saved to `raw/` and the sidecar `<file>.<ext>.md` carries `extraction_status: failed` plus a one-line install hint. This preserves the BYO-AI guarantee — a user with zero shell tools installed still gets a functional repo, just with degraded extraction quality on formats whose only handler is a shell tool.
 
-**Verification status:** the DOCX, XLSX, CSV, and PDF-LLM-vision handlers are **specified, not yet demonstrated**. First real `/wiki-extract` on each format is the smoke test. Same posture as the 7-step ingest pipeline (see [[operation-ingest]]).
+**Verification status:** the DOCX and XLSX handlers are **specified, not yet demonstrated**. First real `/wiki-extract` on each format is the smoke test. Same posture as the 7-step ingest pipeline (see [[operation-ingest]]). PDF-LLM-vision was demonstrated 2026-06-10: `tests/canary/canary-scanned.pdf` is an image-only PDF (pdftotext → 0 chars) whose vision-extracted sidecar is committed as `raw/canary-scanned.pdf.md` with three verifiable ground-truth facts.
 
 `/wiki-ingest` computes the current body hash; if it differs from `ingested_hash`, the source is processed (or re-processed). Otherwise it's skipped.
 

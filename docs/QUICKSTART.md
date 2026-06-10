@@ -135,6 +135,10 @@ Verify that `/wiki-extract` produces output with the right shape in your environ
 /wiki-extract tests/canary/canary-csv.csv           # CSV path
 ./scripts/verify-extract.sh canary-csv
 
+/wiki-extract tests/canary/canary-scanned.pdf       # scanned-PDF → LLM-vision path
+./scripts/verify-extract.sh canary-scanned.pdf
+# the fixture has no text layer; check the sidecar recovered the codeword BLUE-HERON-7
+
 ./scripts/verify-wiki-to-anki.sh                    # Anki exporter shape
 
 ./scripts/vtt-to-md.sh tests/canary/canary-autosub.vtt   # YouTube VTT→markdown converter
@@ -142,6 +146,26 @@ Verify that `/wiki-extract` produces output with the right shape in your environ
 ```
 
 `verify-extract.sh` checks shape only — wrong `source_type`, hallucinated `source_title` etc. will slip past. For semantics, eyeball the produced `raw/` file directly.
+
+### Unattended ingest (cron)
+
+If sources arrive on a schedule (call transcripts, exported notes, watch folders), you don't have to paste them one by one. Drop files into `inbox/` and let cron drive the loop:
+
+```bash
+./scripts/auto-ingest.sh              # inbox/ → /wiki-extract each file → /wiki-ingest
+./scripts/auto-ingest.sh --dry-run    # list what would be processed
+```
+
+Successfully extracted files move to `inbox/processed/`, so re-runs are no-ops. A lock directory prevents overlapping runs. Requires the `claude` CLI (the same headless driver `smoke-all.sh` uses). Example crontab — ingest every 30 minutes, lint nightly:
+
+```cron
+*/30 * * * *  cd /path/to/my-wiki && ./scripts/auto-ingest.sh >> .auto-ingest.log 2>&1
+0 6 * * *     cd /path/to/my-wiki && claude -p "/wiki-lint" >> .auto-ingest.log 2>&1
+```
+
+### Scale expectations (measured)
+
+`scripts/bench-scale.sh [N]` generates a synthetic N-source corpus and times the deterministic loop on your machine — zero LLM tokens by default. Reference numbers (N=500, Apple silicon, 2026-06-10): hash-scan ~18–21s for 500 sources (~25 files/s, process-spawn bound), citation audit and synthesis both sub-second at 250 pages. LLM ingest is the real cost: `--llm-sample 2` measured ~142s/source headless, so a 400-source backlog is roughly a weekend of serial unattended ingest — paid once, since ingest is hash-gated and incremental thereafter.
 
 ---
 
@@ -554,7 +578,7 @@ These are estimates. **Heavy users should set token / cost limits in their tool*
 What's still untested:
 
 - **Per-tool slash-command parity.** Only Claude Code (via `claude -p`) drove the smoke. Cursor / Copilot CLI / VSCode + Copilot Chat / Cline / Gemini CLI / Codex paths in this guide rely on the natural-language shim approach — they likely work but haven't been observed end-to-end.
-- **DOCX / XLSX / PDF-LLM-vision** extraction handlers in `/wiki-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`) cover only plain-text and CSV. The other formats are specified, not demonstrated.
+- **DOCX / XLSX** extraction handlers in `/wiki-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`, `canary-scanned.pdf`) cover plain-text, CSV, and the PDF-LLM-vision fallback (demonstrated 2026-06-10 — evidence in `raw/canary-scanned.pdf.md`). DOCX and XLSX remain specified, not demonstrated.
 - **Concurrency.** The video mentions parallel ingest agents; no locking or conflict resolution defined yet.
 
 If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/wiki-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues, or open a PR with the prompt improvement.
