@@ -23,6 +23,8 @@ LICENSE
 .claude/commands/flashcards.md
 .claude/commands/wiki-diagram.md
 .claude/commands/diagram.md
+.claude/commands/wiki-discover.md
+.claude/commands/discover.md
 scripts/body-hash.sh
 scripts/vtt-to-md.sh
 scripts/extract/segment-doc.py
@@ -37,6 +39,7 @@ scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
 scripts/wiki-to-kg.py
 scripts/wiki-graph-walk.py
+scripts/wiki-discover.py
 scripts/wiki-to-anki.sh
 scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh
