@@ -28,6 +28,18 @@ From `wiki/index.md` and via `Grep` over `wiki/`, identify the 3-10 pages most l
 
 **Section-tree drill-down (segmented sources).** If a relevant page is a summary whose `## Body` is a **section tree** (nested one-line nodes each carrying a `(source: raw/<slug>.<ext>.md#<section-slug>)` anchor — produced from a `segmented: true` source), do NOT read the whole sidecar. Read the tree, pick the node(s) whose summaries match the question, and read **only those sections** from the sidecar: `Bash awk '/^#{1,6} <Title>.*\\(/{f=1;print;next} /^#{1,6} .*\\(/{f=0} f' raw/<slug>.<ext>.md` — or just open the sidecar and read the lines under the matching `## <Title> (range)` heading. Cite the specific section anchor you used, not the whole document. This is the PageIndex-style "reason over the summaries, then read the chosen sections" loop.
 
+**Causal / connection traversal.** When the question is about **causation or connection** — "what caused X", "what does X lead to / enable", "how does A connect to B", "what's the chain between …" — don't eyeball it across pages. Materialize the typed-relation graph and walk it deterministically:
+
+```bash
+# causal chain (upstream causes or downstream effects of a node):
+python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-walk.py --causes-of <node>
+python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-walk.py --effects-of <node>
+# connection path between two pages (sign-agnostic, undirected):
+python3 scripts/wiki-to-kg.py wiki/ | python3 scripts/wiki-graph-walk.py --path <a> <b>
+```
+
+`<node>`/`<a>`/`<b>` are page slugs. Use the returned chain as the spine of your answer, then cite each hop's page as `[[slug]]`. If the walk returns "no recorded …", the edges aren't in the wiki yet — fall back to reading pages, and note the gap (a missing causal edge is a good `## Open questions` item). This is the key-free path: it runs on the graph your wiki already encodes, no subscription call.
+
 ### Step 2 — Try to answer from the wiki alone
 
 Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.
