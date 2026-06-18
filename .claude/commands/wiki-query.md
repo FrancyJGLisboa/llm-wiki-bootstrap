@@ -26,6 +26,8 @@ Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
 
 From `wiki/index.md` and via `Grep` over `wiki/`, identify the 3-10 pages most likely to contain relevant material. Read them (frontmatter + body).
 
+**Section-tree drill-down (segmented sources).** If a relevant page is a summary whose `## Body` is a **section tree** (nested one-line nodes each carrying a `(source: raw/<slug>.<ext>.md#<section-slug>)` anchor — produced from a `segmented: true` source), do NOT read the whole sidecar. Read the tree, pick the node(s) whose summaries match the question, and read **only those sections** from the sidecar: `Bash awk '/^#{1,6} <Title>.*\\(/{f=1;print;next} /^#{1,6} .*\\(/{f=0} f' raw/<slug>.<ext>.md` — or just open the sidecar and read the lines under the matching `## <Title> (range)` heading. Cite the specific section anchor you used, not the whole document. This is the PageIndex-style "reason over the summaries, then read the chosen sections" loop.
+
 ### Step 2 — Try to answer from the wiki alone
 
 Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.
