@@ -73,7 +73,10 @@ fi
 # R3 — no Obsidian-flavored markdown in non-smoke content
 # Patterns live in scripts/r3-obsidian-patterns.txt (avoids shell-quoting
 # hazards from inlining backticked regexes).
-R3_HITS="$(grep -rE -f "$SCRIPT_DIR/r3-obsidian-patterns.txt" \
+# -I skips binary files: committed PDFs (tests/canary/canary-scanned.pdf,
+# docs/files-*/*.pdf) can match the patterns on raw bytes and produce a
+# "Binary file … matches" false positive — R3 is a text-content guard.
+R3_HITS="$(grep -rIE -f "$SCRIPT_DIR/r3-obsidian-patterns.txt" \
             wiki/ tests/canary/ templates/ docs/ 2>/dev/null || true)"
 if [ -z "$R3_HITS" ]; then
   ok "R3 no Obsidian-flavored markdown in wiki/ tests/canary/ templates/ docs/"
