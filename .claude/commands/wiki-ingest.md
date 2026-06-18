@@ -58,6 +58,8 @@ For each raw file that needs processing:
 
 Read the file. For binaries (image, PDF), read the sidecar `.md` instead.
 
+**If the sidecar is segmented** (frontmatter `segmented: true`): it is a section tree — a sequence of `#{level} <Title> (lines A-B | pages N-M)` anchors built by `segment-doc.py`. Skim the headings first to grasp the shape, then read **only the sections you need**, section by section. Do not load the whole blob into context — avoiding that is the entire point of segmentation (no context rot on a long doc).
+
 ### Step 2 — Extract key information
 
 Identify: concepts (ideas, terms, patterns), entities (people, tools, places, datasets), claims (statements that could be true or false), data points (numbers, dates, quotes).
@@ -65,6 +67,8 @@ Identify: concepts (ideas, terms, patterns), entities (people, tools, places, da
 ### Step 3 — Write a summary page
 
 Create or update `wiki/<source-slug>-summary.md` with `type: summary`, `source: <type>` (matching the raw's `source_type` family — `video` for video-transcript, `external` for fetched web pages, etc.), and the source's main takeaways. Cite the raw inline with `(source: raw/<filename>#<anchor>)`.
+
+**For a segmented source** (`segmented: true`): write the summary `## Body` as a **section tree** — a nested bullet outline mirroring the sidecar's heading hierarchy, **one line per node** summarizing that section, each ending with its anchor `(source: raw/<slug>.<ext>.md#<section-slug>)`. The `<section-slug>` is the kebab-case of the heading title **with the `(lines …)`/`(pages …)` range dropped** (e.g. `## Power Envelope (lines 13-19)` → `#power-envelope`). This compact tree — not a wall of prose — is what `/wiki-query` later walks to fetch only the relevant section. Every leaf's anchor MUST correspond to a real heading in the sidecar (no invented anchors).
 
 ### Step 4 — Update existing entity / concept pages
 

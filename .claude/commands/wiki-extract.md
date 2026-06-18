@@ -102,6 +102,13 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
    **Tool-availability check:** before running any optional binary (`pdftotext`, `pandoc`, `xlsx2csv`, `python3`, `yt-dlp`), probe it with `Bash command -v <tool>` and branch accordingly. Never assume; never crash the command on a missing tool.
 
+   **Long-source segmentation (after extraction, before frontmatter).** A long source dumped as one flat blob forces `/wiki-ingest` to read the whole thing and leaves `/wiki-query` no way to pull back a single section. For text-bearing sources, replace the flat body with a deterministic **section tree** so the agent can summarize and retrieve by anchor:
+   - **When to segment.** Apply to PDF, DOCX, and plain-text/markdown sources (NOT CSV/XLSX/image, and NOT YouTube — `vtt-to-md.sh` already anchors transcripts by `## (m:ss)`). Trigger when the source is **long**: a PDF with **≥ 20 pages**, or any extracted body of **≥ 6000 words** (`Bash wc -w`). Short sources keep the flat sidecar above — do not segment them.
+   - **How.** Probe `Bash command -v python3`. Then run the deterministic segmenter (no LLM):
+     - PDF: `Bash python3 scripts/extract/segment-doc.py raw/<slug>.pdf --type pdf` — emits `#{level} <Title> (pages N-M)` anchors from the PDF outline (fallback: page windows). Needs `pymupdf`; if absent the script self-degrades to flat text and says so on stderr.
+     - DOCX / plain text: write the extracted markdown to the sidecar first, then `Bash python3 scripts/extract/segment-doc.py raw/<slug>.<ext>.md` (or `raw/<slug>.<ext>` for plain text) — emits `#{level} <Title> (lines A-B)` anchors.
+   - **Use its stdout as the sidecar body** (the segmenter prints body only, exactly like `vtt-to-md.sh` — you prepend the Step 4 frontmatter and a `# <title>` heading). Record `extraction_method: <base>+segment-doc`, add `segmented: true` and `segments: <count of heading anchors>` to the frontmatter. If `python3` (or, for PDFs, `pymupdf`) is missing, keep the flat body and set `extraction_status: degraded` with the install hint (`pip install pymupdf`) in `notes:` — never crash.
+
 4. **Write the frontmatter** at the top of the markdown file (or sidecar). Required + optional fields:
 
    ```yaml
@@ -114,8 +121,10 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
    ingested_hash: ""
    ingested_at: never
    ingested_pages: []
-   extraction_method: <webfetch | passthrough | csv-passthrough | pdftotext | llm-vision | pandoc | python-docx | xlsx2csv | openpyxl | yt-dlp | failed>
+   extraction_method: <webfetch | passthrough | csv-passthrough | pdftotext | llm-vision | pandoc | python-docx | xlsx2csv | openpyxl | yt-dlp | failed>   # append "+segment-doc" when a section tree was built
    extraction_status: <ok | degraded | failed>   # optional; omit when ok
+   segmented: <true>            # optional; present only when segment-doc.py built a section tree
+   segments: <N>                # optional; count of `(lines …)`/`(pages …)` anchors when segmented
    notes: |
      <optional context about why this was fetched, or how it was acquired. If extraction was degraded or failed, name the missing tool and the install hint here.>
    ---

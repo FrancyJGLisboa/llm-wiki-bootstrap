@@ -1,6 +1,6 @@
 # AGENTS.md — `llm-wiki-bootstrap` schema
 
-**Schema version:** 3 — bumped 2026-06-09 (was: 2 from 2026-05-26, 1 from 2026-05-25). v3 adds the **synthesis layer**: `/wiki-ingest` (and `/wiki-query` promote, `/wiki-lint --apply`) now mechanically regenerate four derived artifacts — `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json` — via `scripts/synthesize/all.sh`. This partially and deliberately re-introduces aggregate-view machinery cut on 2026-06-08 (`a76196f`), but only the narrow, deterministic core. v2 added the `wiki/journal/` user-owned exception (and `type: journal`), the `## Flashcards` convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
+**Schema version:** 4 — bumped 2026-06-18 (was: 3 from 2026-06-09, 2 from 2026-05-26, 1 from 2026-05-25). v4 adds the **long-source segmentation layer**: `/wiki-extract` runs the deterministic `scripts/extract/segment-doc.py` to turn long sources (≥ 20-page PDFs or ≥ 6000-word bodies) into anchored section trees; `/wiki-ingest` authors the summary as a tree of one-line node summaries, each citing a `#<section-slug>` anchor; `/wiki-query` walks that tree and reads only the cited sections. Additive and backward-compatible — older clients simply skip segmentation. v3 adds the **synthesis layer**: `/wiki-ingest` (and `/wiki-query` promote, `/wiki-lint --apply`) now mechanically regenerate four derived artifacts — `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json` — via `scripts/synthesize/all.sh`. This partially and deliberately re-introduces aggregate-view machinery cut on 2026-06-08 (`a76196f`), but only the narrow, deterministic core. v2 added the `wiki/journal/` user-owned exception (and `type: journal`), the `## Flashcards` convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
 
 This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-schema.md`](wiki/layer-schema.md)). It tells any AI agent operating on this directory how the wiki is structured and how to work with it.
 
@@ -236,8 +236,10 @@ fetched_at: YYYY-MM-DD
 ingested_hash: <sha256 of body at last successful ingest, or "">
 ingested_at: YYYY-MM-DD HH:MM | never
 ingested_pages: [<list of wiki/*.md files this raw touched on last ingest>]
-extraction_method: <see below>            # set by /wiki-extract
+extraction_method: <see below>            # set by /wiki-extract; "+segment-doc" suffix when a section tree was built
 extraction_status: <ok | degraded | failed>  # optional; omit when ok
+segmented: true                            # optional; present when segment-doc.py built a section tree (long sources)
+segments: <N>                              # optional; count of section anchors when segmented
 notes: |
   Optional context about how this source was acquired or interpreted. If extraction was degraded or failed, name the missing tool + install hint here.
 ---
@@ -264,6 +266,19 @@ YouTube scope: single videos only (playlist/channel URLs are rejected — pass i
 If every handler for a binary format fails, the binary is still saved to `raw/` and the sidecar `<file>.<ext>.md` carries `extraction_status: failed` plus a one-line install hint. This preserves the BYO-AI guarantee — a user with zero shell tools installed still gets a functional repo, just with degraded extraction quality on formats whose only handler is a shell tool.
 
 **Verification status:** the DOCX and XLSX handlers are **specified, not yet demonstrated**. First real `/wiki-extract` on each format is the smoke test. Same posture as the 7-step ingest pipeline (see [[operation-ingest]]). PDF-LLM-vision was demonstrated 2026-06-10: `tests/canary/canary-scanned.pdf` is an image-only PDF (pdftotext → 0 chars) whose vision-extracted sidecar is committed as `raw/canary-scanned.pdf.md` with three verifiable ground-truth facts.
+
+### Long-source segmentation (hierarchical tree retrieval)
+
+A long source dumped as one flat blob forces `/wiki-ingest` to read the whole thing (context rot) and leaves `/wiki-query` no way to pull back a single section. For long text-bearing sources — a PDF with **≥ 20 pages**, or any extracted body of **≥ 6000 words** (excludes CSV/XLSX/image; YouTube is already anchored by `vtt-to-md.sh`) — `/wiki-extract` runs the **deterministic** segmenter `scripts/extract/segment-doc.py` (no LLM) and stores a **section tree** in the sidecar: a sequence of
+
+```
+#{level} <Title> (lines A-B)     # text / markdown / docx
+#{level} <Title> (pages N-M)     # pdf (from the PDF outline; falls back to page windows)
+```
+
+headings, each followed by that section's verbatim text. Heading levels preserve hierarchy. The script is idempotent and lossless (proven by `scripts/verify-segment-doc.sh`). It needs `python3` (and `pymupdf` for PDF page ranges); if absent it self-degrades to a flat body and sets `extraction_status: degraded` — never crashes.
+
+This is the BYO-agent port of PageIndex: the **script** segments deterministically; the **agent** supplies judgment. At ingest, the summary page's `## Body` is authored as a tree of one-line node summaries, each citing its section via `(source: raw/<slug>.<ext>.md#<section-slug>)` where `<section-slug>` is the kebab-case heading title **with the range dropped** (`## Power Envelope (lines 13-19)` → `#power-envelope`). At query time the agent reads that compact tree, picks the matching node(s), and reads only those sections from the sidecar — instead of the whole document. Every leaf anchor must resolve to a real sidecar heading.
 
 `/wiki-ingest` computes the current body hash; if it differs from `ingested_hash`, the source is processed (or re-processed). Otherwise it's skipped.
 
