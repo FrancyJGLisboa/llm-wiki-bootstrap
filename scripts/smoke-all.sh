@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R14) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R15) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 19 checks pass.
+# Exit 0 iff all 20 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 19 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R14 guards). This is the CI path — the build phase is a precondition that
+#   only the 20 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R15 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R14 ────
-section "Regression guards (R1–R14)"
+# ──── REGRESSION GUARDS R1–R15 ────
+section "Regression guards (R1–R15)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -189,6 +189,14 @@ else
   record_fail "R14 verify-graph-walk.sh exits non-zero (graph-walk regression)"
 fi
 
+# R15 — discovery report (D1–D4): wiki-discover surfaces multi-hop causal chains,
+# hub concepts, and the widest connection (graph diameter), deterministically.
+if "$SCRIPT_DIR/verify-discover.sh" >/dev/null 2>&1; then
+  ok "R15 verify-discover.sh exits 0 (chains + hubs + widest bridge surfaced)"
+else
+  record_fail "R15 verify-discover.sh exits non-zero (discovery regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -199,7 +207,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 19 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 20 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"
