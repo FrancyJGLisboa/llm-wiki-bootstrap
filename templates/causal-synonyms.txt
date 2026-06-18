@@ -1,0 +1,11 @@
+# Non-canonical causal verbs → their canonical form (causal-vocab.txt).
+# The causal lint rejects the left-hand verb and suggests the right-hand one.
+# Format: <synonym> <canonical>
+results-in causes
+leads-to causes
+results-from caused-by
+due-to caused-by
+because-of caused-by
+enabled-by enables
+prevented-by prevents
+contributes contributes-to

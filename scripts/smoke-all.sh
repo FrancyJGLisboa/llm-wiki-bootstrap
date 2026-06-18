@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R12) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R14) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 17 checks pass.
+# Exit 0 iff all 19 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 17 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R12 guards). This is the CI path — the build phase is a precondition that
+#   only the 19 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R14 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R12 ────
-section "Regression guards (R1–R12)"
+# ──── REGRESSION GUARDS R1–R14 ────
+section "Regression guards (R1–R14)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -173,6 +173,22 @@ else
   record_fail "R12 verify-wiki-to-kg.sh exits non-zero (KG materializer regression)"
 fi
 
+# R13 — causal lint (L1–L3): accepts canonical causal verbs, rejects synonyms
+# with the correct canonical suggestion, real wiki stays clean.
+if "$SCRIPT_DIR/verify-causal-lint.sh" >/dev/null 2>&1; then
+  ok "R13 verify-causal-lint.sh exits 0 (canonical accepted, synonyms rejected)"
+else
+  record_fail "R13 verify-causal-lint.sh exits non-zero (causal lint regression)"
+fi
+
+# R14 — causal/connection traversal floor (W1–W4): wiki-graph-walk answers
+# multi-hop causes-of / effects-of / path over the materialized KG, no LLM.
+if "$SCRIPT_DIR/verify-graph-walk.sh" >/dev/null 2>&1; then
+  ok "R14 verify-graph-walk.sh exits 0 (causal chains + connection paths traverse)"
+else
+  record_fail "R14 verify-graph-walk.sh exits non-zero (graph-walk regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -183,7 +199,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 17 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 19 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

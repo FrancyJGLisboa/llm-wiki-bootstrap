@@ -188,6 +188,22 @@ Parse rule (single regex, no AST):
 
 **Where typed lines live**: only inside `## Related`. Verbs in body prose, `## Open questions`, `## Flashcards`, or `index.md` are ignored by the lint and the graph.
 
+### Causal relations (canonical sub-vocabulary)
+
+Typed-relation verbs are open, but the **causal** ones are canonicalized so that "what caused X / what does X enable / how does A connect to B" can be answered by graph traversal instead of re-reading prose. Five canonical causal verbs (`templates/causal-vocab.txt`):
+
+| Verb | Direction |
+|---|---|
+| `causes` | source → effect |
+| `caused-by` | source ← cause (inverse of `causes`) |
+| `enables` | source → enabled thing |
+| `contributes-to` | source → effect (partial cause) |
+| `prevents` | source ⊣ effect (negative; excluded from causal chains) |
+
+`scripts/wiki-lint-causal.sh` rejects common **synonyms** (`results-in`, `due-to`, `enabled-by`, …) and names the canonical verb to use (`templates/causal-synonyms.txt`). Prefer a canonical causal verb whenever a `## Related` line expresses cause/effect.
+
+These edges are materialized — read-only, stdlib-only, never at ingest — by `scripts/wiki-to-kg.py` (JSONL `{source,verb,target}`; `--causal-only` filters to the causal sub-vocabulary), and traversed by `scripts/wiki-graph-walk.py` (`--causes-of`, `--effects-of`, `--path`). This is a **vocabulary + tooling layer, not a schema change** — untyped and non-causal pages are unaffected.
+
 ### Source attribution
 
 Any claim that came from a raw source must include `(source: <raw-file>#<anchor>)` inline. Example: `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`. The anchor can be a timestamp, heading, or line range.
