@@ -83,6 +83,8 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 **"Documented, not yet e2e-verified"** means: the shim file ships, the natural-language workflow is specified, and the pattern is expected to work — but the smoke harness only drives Claude Code, so these paths have not been observed end-to-end by the project. If you use one of these tools and something does not work, that is a reportable bug — please open an issue.
 
+**Verify your tool in one command.** `scripts/smoke-tool.sh <tool>` (`claude`/`codex`/`gemini`/`copilot`) drives that CLI through a real ingest→query loop in a throwaway wiki and asserts the agent built a citing wiki page and recalled a planted fact — with the raw source deleted before the query, so the answer must come from the wiki, not a re-read. It **skips cleanly** (exit 3) if the CLI isn't installed. `claude` passes today; if your tool passes, that row has earned "e2e-verified" — please open a PR flipping it (and attach the run).
+
 ## The five slash commands
 
 Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/extract`). The short forms are the ones you'll actually type once you're inside a fresh installed repo; the prefixed form is there for global use where namespace collisions matter. Both resolve to the exact same procedure.
