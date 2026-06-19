@@ -95,6 +95,32 @@ Worked example — `wiki/fluid-bed-roaster.md` gains, and `wiki/drum-roaster.md`
 
 Add the mirror flag to the page it points at so the contradiction is visible from both sides.
 
+### Step 5.5 — Faithfulness gate (verify claims against evidence before committing)
+
+After writing/updating the pages for this source, verify every cited claim actually holds
+against its `raw/` evidence — don't trust your own paraphrase. Run the gate over the pages
+you created or updated in this ingest:
+
+```bash
+scripts/wiki-faithfulness-gate.sh --mode ingest wiki/<changed-page>.md [wiki/<more>.md ...]
+```
+
+It reuses `scripts/citation-audit.py` to extract each `(source: raw/<file>#<anchor>)` claim,
+judges it against the cited passage (SUPPORTED / UNSUPPORTED / CONTRADICTED), and applies:
+
+- **CONTRADICTED, or a broken citation → the gate exits non-zero (blocks).** Fix the
+  offending claim — rewrite it to match the evidence, or drop the citation if the source
+  doesn't support it — then re-run the gate **once**. If it still blocks, leave that page
+  out of this ingest and tell the user, rather than committing an unfaithful claim.
+- **UNSUPPORTED → the gate appends a `FAITHFULNESS UNVERIFIED` marker** to the claim's line
+  (line count preserved) and passes. Leave the marker in place — `/wiki-lint` surfaces it
+  later. Don't hand-delete it; cite better evidence or rephrase if you want it gone.
+
+The entailment judgment uses the `claude` CLI; if it's unavailable the gate skips with a
+note (the deterministic citation floor still applies at lint time). This is the BYO-agent
+analogue of the existing `eval-citation-faithfulness.sh` measurement, run as a gate on the
+specific pages this ingest touched.
+
 ### Step 6 — Update the index
 
 Read `wiki/index.md`. Add new pages to the appropriate section. Remove links to pages that were deleted (rare). Keep the existing organization.

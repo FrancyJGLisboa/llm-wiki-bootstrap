@@ -40,6 +40,8 @@ scripts/wiki-lint-causal.sh
 scripts/wiki-to-kg.py
 scripts/wiki-graph-walk.py
 scripts/wiki-discover.py
+scripts/citation-audit.py
+scripts/wiki-faithfulness-gate.sh
 scripts/wiki-to-anki.sh
 scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh
