@@ -28,10 +28,14 @@ Output:
               carry NO resolving citation; exit 1 if any exist. A page is exempt
               when `type: navigation` (structural, points inward) or it declares
               `provenance: none` (an explicit "makes no external claims" knob).
-  --no-bare-urls  list bare web citations — `(source: <url>)` where <url> is a web
-              URL (has '://' or starts with 'www.'), NOT a raw/ path; exit 1 if any
-              exist. Web sources must be snapshotted to raw/ first, then cited as
-              raw/ so the claim is coverage-counted and entailment-checkable.
+  --no-bare-urls  list non-raw citations — any `(source: X)` whose target X (minus
+              a #anchor) is NOT `raw/<file>` and is NOT exactly `analysis`; exit 1 if
+              any exist. This is an ALLOWLIST: the only two legal citation targets are
+              a raw snapshot (`raw/<file>[#anchor]`) and the analysis marker
+              (`analysis`). Every web form — scheme://, www., bare host, uppercase,
+              protocol-less path — is caught by construction, no URL parsing. Web
+              sources must be snapshotted to raw/ first (via /wiki-extract), then cited
+              as raw/ so the claim is coverage-counted and entailment-checkable.
   --tsv     one TSV row per citation for the shell harness (always exit 0):
              tag<TAB>page<TAB>line<TAB>file<TAB>anchor<TAB>c1<TAB>c2<TAB>claim_b64<TAB>evidence_b64
            claim/evidence are base64 (single-line, no tabs/newlines) — decode with
@@ -49,13 +53,14 @@ import re
 import sys
 
 CITATION_RE = re.compile(r"\(source:\s*raw/([^)#\s]+)(?:#([^)\s]+))?\)")
-# Bare web citation: any (source: X) whose X is a web URL (contains '://' or
-# starts with 'www.') rather than a raw/ path. These dodge the raw/-only
-# CITATION_RE above, so the cited claim is never coverage-counted or
-# entailment-checked — and the receipt is a rot-prone external link. The vision
-# requires web sources to be SNAPSHOTTED into raw/ first, then cited as raw/.
-BARE_URL_CITATION_RE = re.compile(
-    r"\(source:\s*((?:[a-zA-Z][a-zA-Z0-9+.-]*://|www\.)[^)\s]+)\)")
+# ANY inline (source: X), regardless of target — used by the allowlist check to
+# find non-raw, non-analysis targets (the inverse of CITATION_RE). The only two
+# legal targets in the wiki are `raw/<file>[#anchor]` and `analysis`; everything
+# else (every web form: scheme://, www., bare host, uppercase, protocol-less
+# path, or any junk) is a VIOLATION — the receipt isn't snapshotted, so the
+# claim is never coverage-counted or entailment-checked and the link rots.
+# An allowlist catches every web variant by construction, no URL parsing.
+ANY_CITATION_RE = re.compile(r"\(source:\s*([^)]+?)\s*\)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 TIMESTAMP_RE = re.compile(r"^\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?$")
 LINERANGE_RE = re.compile(r"^L(\d+)(?:-L?(\d+))?$")
@@ -334,12 +339,26 @@ def audit(wiki_dir, raw_dir):
     return records
 
 
-def bare_url_cites(wiki_dir):
-    """Every bare web citation in wiki/ — a `(source: <url>)` that isn't raw/.
+def _is_allowed_target(target):
+    """True iff a citation target is on the allowlist: a raw snapshot or analysis.
 
-    Returns sorted [(page, line, url)]. Skips fenced code blocks (showing
-    syntax, not citing) the same way audit() does. A bare web URL is a
-    VIOLATION: the source must be snapshotted into raw/ and cited as raw/.
+    The target is trimmed and its #anchor (if any) ignored — only the file/marker
+    part decides. Legal: `raw/<file>` (with or without an anchor) and exactly
+    `analysis`. Everything else — every web form (scheme://, www., bare host,
+    uppercase, protocol-less path) or any other junk — is NOT allowed.
+    """
+    base = target.strip().split("#", 1)[0]
+    return base.startswith("raw/") or base == "analysis"
+
+
+def bare_url_cites(wiki_dir):
+    """Every non-raw, non-analysis citation in wiki/ — an allowlist violation.
+
+    Returns sorted [(page, line, target)]. Skips fenced code blocks (showing
+    syntax, not citing) the same way audit() does. The ONLY legal citation
+    targets are `raw/<file>[#anchor]` (snapshot a web source via /wiki-extract
+    first) and `analysis`; any other target — every web URL form by
+    construction — is a VIOLATION.
     """
     hits = []
     for root, _dirs, files in os.walk(wiki_dir):
@@ -355,8 +374,10 @@ def bare_url_cites(wiki_dir):
                     continue
                 if in_fence:
                     continue
-                for m in BARE_URL_CITATION_RE.finditer(line):
-                    hits.append((page, idx + 1, m.group(1)))
+                for m in ANY_CITATION_RE.finditer(line):
+                    target = m.group(1)
+                    if not _is_allowed_target(target):
+                        hits.append((page, idx + 1, target.strip()))
     return sorted(hits)
 
 
@@ -379,15 +400,16 @@ def main(argv):
         return 2
 
     if "--no-bare-urls" in argv:
-        # Deterministic, raw-dir-independent: scan wiki/ for bare web citations.
+        # Deterministic, raw-dir-independent: scan wiki/ for citation targets that
+        # aren't on the allowlist (raw/<file> or analysis).
         hits = bare_url_cites(wiki_dir)
         print(f"citation-audit --no-bare-urls — {wiki_dir}")
         if not hits:
-            print("  no bare web citations (every web source is snapshotted to raw/)")
+            print("  every citation target is raw/<file> or 'analysis'")
             return 0
-        print(f"  {len(hits)} bare web citation(s) — snapshot the source to raw/ and cite raw/<slug>#<anchor>:")
-        for page, line, url in hits:
-            print(f"  ✗ {page}:{line} -> (source: {url})")
+        print(f"  {len(hits)} non-raw citation(s) — citation target must be raw/<file> (snapshot web sources via /wiki-extract first) or 'analysis':")
+        for page, line, target in hits:
+            print(f"  ✗ {page}:{line} -> (source: {target})")
         return 1
 
     records = audit(wiki_dir, raw_dir)

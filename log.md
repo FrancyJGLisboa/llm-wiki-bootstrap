@@ -2,6 +2,10 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — vision hardening wave 6 (bare-url guard → allowlist)
+
+Re-audit found Wave 5's `--no-bare-urls` closed the web-cite gap by name, not by class: it matched only `://`-scheme and literal `www.`, so protocol-less / bare-host / uppercase cites (`(source: cnn.com/x)`, `(source: example.com)`, `(source: WWW.x/y)`) bypassed it. Inverted to an **allowlist**: an inline `(source: X)` is legal only if X is `raw/<file>[#anchor]` or exactly `analysis`; everything else is flagged by construction (no URL parsing). The check now also runs in the faithfulness gate's **ingest** mode (was promote-only). Removed the dead regex. This closes the last HIGH gap.
+
 ## 2026-06-22 — vision hardening wave 5 (web sources must snapshot to raw/)
 
 Closed V2 gap 3 (web claims invisible to the gate). Promoted web findings can no longer be cited with a bare `(source: <url>)` — the receipts rule now extends to the web: a web source must be snapshotted into `raw/` (via `/wiki-extract`) before citing, so the claim is raw-backed, coverage-counted, and entailment-checkable. New deterministic guard `citation-audit.py --no-bare-urls` (flags `(source: …://…)` / `www.`, leaves `(source: analysis)` and `raw/` alone), wired as smoke **R20** (25 checks) and as a promote-mode floor in the faithfulness gate (bare-url page → exit 3). `/wiki-query` promote prose + AGENTS.md updated; `verify-no-bare-urls.sh` added. The actual fetch stays LLM-driven (CI has no network); the guard is the keyless mechanical enforcement.

@@ -8,9 +8,9 @@
 #
 #   CONTRADICTED  -> block (exit 3) in BOTH modes
 #   BAD floor row -> block (exit 3) in BOTH modes   (broken citation pointer)
-#   bare web cite -> block (exit 3) in --mode promote: a `(source: <url>)` whose
-#                    URL isn't a raw/ path must be snapshotted to raw/ first
-#                    (reuses citation-audit.py --no-bare-urls)
+#   non-raw cite  -> block (exit 3) in BOTH modes: a `(source: X)` whose target
+#                    isn't raw/<file> or 'analysis' must be snapshotted to raw/
+#                    first (reuses citation-audit.py --no-bare-urls allowlist)
 #   UNSUPPORTED   -> block (exit 3) in --mode promote;
 #                    in --mode ingest, append a FAITHFULNESS UNVERIFIED marker to
 #                    the claim's line (line count preserved) and pass
@@ -141,26 +141,26 @@ for p in "${pages[@]}"; do
   printf '%s\t%s\n' "$root" "$rel" >> "$WANT"
 done
 
-# Bare-url floor (promote only): a promoted page must not carry a bare web
-# citation `(source: <url>)`. The source must be snapshotted into raw/ first and
-# cited as raw/ — only then is the claim coverage-counted and entailment-checkable.
-# This makes /wiki-query promotion mechanically unable to leave a bare-url cite.
+# Citation-target floor (BOTH modes): a target page must not carry a citation
+# whose target isn't on the allowlist (raw/<file> or 'analysis'). A web source
+# must be snapshotted into raw/ first and cited as raw/ — only then is the claim
+# coverage-counted and entailment-checkable. This makes both /wiki-ingest and
+# /wiki-query promotion mechanically unable to leave a non-raw cite.
 # REUSES citation-audit.py --no-bare-urls per target-page root (deterministic,
-# raw-dir-independent). On ingest we skip it: ingest sources are already in raw/.
+# raw-dir-independent). Runs on ingest too: an ingest-produced page must not carry
+# a non-raw external citation either.
 bare=0
-if [ "$mode" = "promote" ]; then
-  while IFS= read -r root; do
-    [ -n "$root" ] || continue
-    rep="$(python3 "$AUDIT" "$root" --no-bare-urls 2>/dev/null)" || true
-    while IFS= read -r hitline; do
-      # hitline: "  ✗ <page>:<line> -> (source: <url>)" — only block target pages.
-      pg="${hitline#*✗ }"; pg="${pg%%:*}"
-      grep -Fxq "$(printf '%s\t%s' "$root" "$pg")" "$WANT" || continue
-      bare=$((bare + 1))
-      echo "  BLOCK ${hitline#  }  (bare web URL: snapshot to raw/ and cite raw/<slug>#<anchor>)"
-    done < <(printf '%s\n' "$rep" | grep -E '✗ .*-> \(source: ')
-  done < <(sort -u "$ROOTS")
-fi
+while IFS= read -r root; do
+  [ -n "$root" ] || continue
+  rep="$(python3 "$AUDIT" "$root" --no-bare-urls 2>/dev/null)" || true
+  while IFS= read -r hitline; do
+    # hitline: "  ✗ <page>:<line> -> (source: <target>)" — only block target pages.
+    pg="${hitline#*✗ }"; pg="${pg%%:*}"
+    grep -Fxq "$(printf '%s\t%s' "$root" "$pg")" "$WANT" || continue
+    bare=$((bare + 1))
+    echo "  BLOCK ${hitline#  }  (non-raw citation: snapshot to raw/ and cite raw/<slug>#<anchor>, or use 'analysis')"
+  done < <(printf '%s\n' "$rep" | grep -E '✗ .*-> \(source: ')
+done < <(sort -u "$ROOTS")
 
 judged=0; blocked=0
 while IFS= read -r root; do
