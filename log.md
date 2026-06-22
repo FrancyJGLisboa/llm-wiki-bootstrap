@@ -2,6 +2,10 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — vision hardening wave 7 (path-traversal confinement)
+
+Closing wave 6's allowlist exposed a path-traversal hole: `(source: raw/../secret.txt#L1)` passed both `--no-bare-urls` (prefix `raw/`) and C1/C2 (read a file *outside* `raw/`, earned coverage) — defeating the "snapshotted in raw/" invariant. Fixed at both points in `citation-audit.py` (stdlib `os.path`): `_is_allowed_target` normalizes (`normpath`) and requires the target to stay under `raw/` (so `raw/../x`→reject, `raw//x`→ok); C1 confines `realpath(rawpath)` to be inside `realpath(raw_dir)` (escape → c1=False, doesn't resolve). Follow-up noted: apply the same confine-to-dir everywhere a wiki string becomes a path (bundle/kg/anki).
+
 ## 2026-06-22 — vision hardening wave 6 (bare-url guard → allowlist)
 
 Re-audit found Wave 5's `--no-bare-urls` closed the web-cite gap by name, not by class: it matched only `://`-scheme and literal `www.`, so protocol-less / bare-host / uppercase cites (`(source: cnn.com/x)`, `(source: example.com)`, `(source: WWW.x/y)`) bypassed it. Inverted to an **allowlist**: an inline `(source: X)` is legal only if X is `raw/<file>[#anchor]` or exactly `analysis`; everything else is flagged by construction (no URL parsing). The check now also runs in the faithfulness gate's **ingest** mode (was promote-only). Removed the dead regex. This closes the last HIGH gap.

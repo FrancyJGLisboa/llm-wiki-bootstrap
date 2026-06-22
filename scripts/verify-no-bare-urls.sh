@@ -17,9 +17,11 @@
 #   bare host        (source: cnn.com/madeup-story)   — MUST be flagged
 #   bare domain      (source: example.com)            — MUST be flagged
 #   protocol-less    (source: docs.python.org/3/x)    — MUST be flagged
+#   path traversal   (source: raw/../secret.txt#L1)   — MUST be flagged (escapes raw/)
 # and the legal forms that must NOT be flagged:
 #   raw + anchor     (source: raw/snap.md#anchor)     — MUST pass
 #   raw whole-file   (source: raw/other.md)           — MUST pass
+#   raw double-slash (source: raw//x.md)              — MUST pass (normalizes to raw/x.md)
 #   analysis marker  (source: analysis)               — MUST NOT be flagged
 #   fenced code      ```(source: https://x)```        — MUST NOT be flagged
 # and asserts: flagged page => exit 1; clean page (raw + analysis + fenced) => exit 0.
@@ -56,6 +58,7 @@ An uppercase WWW host claim (source: WWW.x/y).
 A bare-host claim (source: cnn.com/madeup-story).
 A bare-domain claim (source: example.com).
 A protocol-less path claim (source: docs.python.org/3/x).
+A path-traversal claim (source: raw/../secret.txt#L1).
 EOF
 
 # Clean page: every LEGAL form — raw+anchor, raw whole-file, analysis marker,
@@ -67,6 +70,7 @@ type: concept
 ---
 A snapshotted claim (source: raw/snap.md#anchor).
 A whole-file cite (source: raw/other.md).
+A double-slash cite (source: raw//x.md).
 An interpretation note (source: analysis).
 
 Example of a bad cite to avoid:
@@ -97,12 +101,18 @@ printf '%s' "$report" | grep -q 'bare.md:7 -> (source: example.com)' \
 printf '%s' "$report" | grep -q 'bare.md:8 -> (source: docs.python.org/3/x)' \
   && ok "flags the protocol-less path citation" \
   || fail "did not flag the protocol-less path citation"
+# A raw/ target that NORMALIZES outside raw/ (path traversal) escapes the bare
+# startswith('raw/') check but must still be flagged — it's not snapshotted in raw/.
+printf '%s' "$report" | grep -q 'bare.md:9 -> (source: raw/../secret.txt#L1)' \
+  && ok "flags the path-traversal citation that escapes raw/" \
+  || fail "did not flag the raw/../secret.txt path-traversal citation"
 
-# 3. No legal form (raw+anchor, raw whole-file, analysis, fenced) is flagged.
-if printf '%s' "$report" | grep -qE 'raw/snap\.md|raw/other\.md|source: analysis|clean\.md'; then
-  fail "false-positive: a raw/ snapshot, (source: analysis), or fenced cite was flagged"
+# 3. No legal form (raw+anchor, raw whole-file, raw//double-slash, analysis,
+#    fenced) is flagged. raw//x.md normalizes to raw/x.md — stays under raw/.
+if printf '%s' "$report" | grep -qE 'raw/snap\.md|raw/other\.md|raw//x\.md|source: analysis|clean\.md'; then
+  fail "false-positive: a raw/ snapshot, raw//double-slash, (source: analysis), or fenced cite was flagged"
 else
-  ok "raw/ cites (anchor + whole-file), (source: analysis), and fenced code are NOT flagged"
+  ok "raw/ cites (anchor + whole-file + double-slash), (source: analysis), and fenced code are NOT flagged"
 fi
 
 # 4. Remove the bare page: the clean-only wiki (raw + analysis + fenced) passes (exit 0).

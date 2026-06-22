@@ -55,6 +55,40 @@ else
   ok "resolving citations (good + unfaithful) pass the floor — C3's job to judge"
 fi
 
+# 5. Path-traversal confinement: a `(source: raw/../secret.txt#L1)` joins to a
+# file OUTSIDE raw/. Even if that file exists, C1 must NOT resolve it (it can't
+# earn coverage or feed the entailment judge an out-of-tree file), while a
+# genuine raw cite and a normalizing raw//x.md cite are handled correctly.
+tmp="$(mktemp -d)"
+trap 'rm -rf "$tmp"' EXIT
+mkdir -p "$tmp/raw" "$tmp/wiki"
+printf 'leaked secret\n' > "$tmp/secret.txt"
+printf '# Heading\nreal body line\n' > "$tmp/raw/x.md"
+cat > "$tmp/wiki/p.md" <<'EOF'
+---
+type: concept
+---
+A traversal claim (source: raw/../secret.txt#L1).
+A genuine claim (source: raw/x.md#heading).
+EOF
+tsv="$(python3 "$AUDIT" "$tmp/wiki" --raw "$tmp/raw" --tsv 2>&1)"
+# traversal cite: file part '../secret.txt', C1 column (field 6) must be 0.
+if printf '%s' "$tsv" | grep -qE '^BAD	p\.md	4	\.\./secret\.txt	L1	0	0'; then
+  ok "C1 confinement: raw/../secret.txt escapes raw/ and does NOT resolve (c1=0)"
+else
+  fail "C1 did not confine raw/../secret.txt — traversal target resolved (security hole)"
+fi
+# genuine in-tree cite still resolves (c1=1, c2=1).
+if printf '%s' "$tsv" | grep -qE '^OK	p\.md	5	x\.md	heading	1	1'; then
+  ok "genuine in-tree cite (raw/x.md#heading) still resolves under confinement"
+else
+  fail "confinement broke a genuine in-tree citation"
+fi
+# the default audit on this wiki exits non-zero (the traversal cite is broken).
+python3 "$AUDIT" "$tmp/wiki" --raw "$tmp/raw" >/dev/null 2>&1
+[ "$?" -ne 0 ] && ok "default audit exits non-zero when a traversal cite is present" \
+              || fail "default audit exited 0 with an unresolvable traversal cite"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d check(s).\n" "$RED" "$RESET" "$failures"; exit 1

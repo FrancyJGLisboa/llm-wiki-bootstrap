@@ -322,7 +322,15 @@ def audit(wiki_dir, raw_dir):
                             or (anchor and ("<" in anchor or anchor == "..."))):
                         continue
                     rawpath = os.path.join(raw_dir, rawfile)
-                    c1 = os.path.isfile(rawpath)
+                    # ponytail: path-traversal confinement. A target like
+                    # `raw/../secret.txt` joins to a file OUTSIDE raw_dir; if it
+                    # exists C1 would falsely resolve, earning coverage and feeding
+                    # the entailment judge an out-of-tree file. Require the realpath
+                    # to stay inside realpath(raw_dir) — escapes fail C1.
+                    real_raw = os.path.realpath(raw_dir)
+                    real_target = os.path.realpath(rawpath)
+                    confined = real_target == real_raw or real_target.startswith(real_raw + os.sep)
+                    c1 = confined and os.path.isfile(rawpath)
                     c2, evidence = (False, "")
                     if c1:
                         c2, evidence = resolve_anchor(anchor, raw_lines(rawpath))
@@ -346,9 +354,20 @@ def _is_allowed_target(target):
     part decides. Legal: `raw/<file>` (with or without an anchor) and exactly
     `analysis`. Everything else — every web form (scheme://, www., bare host,
     uppercase, protocol-less path) or any other junk — is NOT allowed.
+
+    ponytail: normalize-and-confine. A bare `startswith('raw/')` lets a traversal
+    target like `raw/../secret.txt` pass the allowlist while pointing OUTSIDE raw/.
+    Normalize the path and require it stay under raw/: normpath('raw/../secret.txt')
+    == 'secret.txt' (escapes → reject), normpath('raw//x') == 'raw/x' (stays → ok).
+    Absolute (/raw/x) and ./raw/x are already rejected by the prefix test below.
     """
     base = target.strip().split("#", 1)[0]
-    return base.startswith("raw/") or base == "analysis"
+    if base == "analysis":
+        return True
+    if not base.startswith("raw/"):
+        return False
+    norm = os.path.normpath(base)
+    return norm == "raw" or norm.startswith("raw" + os.sep)
 
 
 def bare_url_cites(wiki_dir):
