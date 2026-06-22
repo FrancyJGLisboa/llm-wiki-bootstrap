@@ -18,6 +18,9 @@ desktop.ini
 .env
 .env.local
 
+# Packaged bundles (regenerate via scripts/package-wiki.sh)
+dist/
+
 # Unattended-ingest staging (transient; sources land in raw/ after extract)
 inbox/
 .auto-ingest.log

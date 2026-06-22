@@ -50,6 +50,8 @@ cd ~/my-wiki
 
 The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
+A wiki you've curated is also a transferable asset: `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle a buyer can verify offline — see [`docs/SELLING.md`](docs/SELLING.md) for the productized-wiki recipe (schema, packaging, the raw-rights rule).
+
 ### Optional: confirm your full setup
 
 Just trying it out? Skip this. When you want to confirm the whole pipeline works on your machine, run:
