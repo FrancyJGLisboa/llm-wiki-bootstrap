@@ -321,6 +321,14 @@ def audit(wiki_dir, raw_dir):
                     if ("<" in rawfile or rawfile == "..." or rawfile.startswith("...")
                             or (anchor and ("<" in anchor or anchor == "..."))):
                         continue
+                    # ponytail: a NUL/control char in the target is malformed —
+                    # fail C1 without calling realpath (which raises ValueError on
+                    # an embedded NUL, crashing the whole gate).
+                    if any(ord(ch) < 32 or ch == "\x7f" for ch in rawfile):
+                        records.append({"page": page, "line": idx + 1, "file": rawfile,
+                                        "anchor": anchor, "c1": False, "c2": False,
+                                        "claim": extract_claim(lines, idx, m.start()), "evidence": ""})
+                        continue
                     rawpath = os.path.join(raw_dir, rawfile)
                     # ponytail: path-traversal confinement. A target like
                     # `raw/../secret.txt` joins to a file OUTSIDE raw_dir; if it
@@ -362,6 +370,10 @@ def _is_allowed_target(target):
     Absolute (/raw/x) and ./raw/x are already rejected by the prefix test below.
     """
     base = target.strip().split("#", 1)[0]
+    # ponytail: a NUL/control char in a target is malformed — reject (and never
+    # let it reach os.path.realpath, which raises ValueError on an embedded NUL).
+    if any(ord(c) < 32 or c == "\x7f" for c in base):
+        return False
     if base == "analysis":
         return True
     if not base.startswith("raw/"):

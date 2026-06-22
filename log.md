@@ -4,7 +4,7 @@ Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lin
 
 ## 2026-06-22 — vision hardening wave 7 (path-traversal confinement)
 
-Closing wave 6's allowlist exposed a path-traversal hole: `(source: raw/../secret.txt#L1)` passed both `--no-bare-urls` (prefix `raw/`) and C1/C2 (read a file *outside* `raw/`, earned coverage) — defeating the "snapshotted in raw/" invariant. Fixed at both points in `citation-audit.py` (stdlib `os.path`): `_is_allowed_target` normalizes (`normpath`) and requires the target to stay under `raw/` (so `raw/../x`→reject, `raw//x`→ok); C1 confines `realpath(rawpath)` to be inside `realpath(raw_dir)` (escape → c1=False, doesn't resolve). Follow-up noted: apply the same confine-to-dir everywhere a wiki string becomes a path (bundle/kg/anki).
+Closing wave 6's allowlist exposed a path-traversal hole: `(source: raw/../secret.txt#L1)` passed both `--no-bare-urls` (prefix `raw/`) and C1/C2 (read a file *outside* `raw/`, earned coverage) — defeating the "snapshotted in raw/" invariant. Fixed at both points in `citation-audit.py` (stdlib `os.path`): `_is_allowed_target` normalizes (`normpath`) and requires the target to stay under `raw/` (so `raw/../x`→reject, `raw//x`→ok); C1 confines `realpath(rawpath)` to be inside `realpath(raw_dir)` (escape → c1=False, doesn't resolve). Also reject NUL/control-char citation targets in both `_is_allowed_target` and `audit()` before `realpath` (an embedded NUL raised `ValueError`, crashing the gate) — now flagged + non-resolving, no crash. Follow-up noted: apply the same confine-to-dir everywhere a wiki string becomes a path (bundle/kg/anki).
 
 ## 2026-06-22 — vision hardening wave 6 (bare-url guard → allowlist)
 
