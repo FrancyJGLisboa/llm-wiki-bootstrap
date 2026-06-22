@@ -3,6 +3,7 @@ title: The Five Slash Commands
 type: analysis
 source: analysis
 updated: 2026-05-28
+provenance: none
 tags: [system, commands, spec]
 ---
 

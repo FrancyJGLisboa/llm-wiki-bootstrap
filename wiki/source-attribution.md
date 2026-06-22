@@ -3,6 +3,7 @@ title: Source Attribution
 type: analysis
 source: analysis
 updated: 2026-05-25
+provenance: none
 tags: [meta, honesty, attribution]
 ---
 
