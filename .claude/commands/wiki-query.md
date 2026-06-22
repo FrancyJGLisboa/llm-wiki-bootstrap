@@ -76,9 +76,30 @@ For each notable piece:
   - Promoted: wiki/<file> (new) | wiki/<file> (updated)
   ```
 
-If you promoted anything (created or updated a page), **regenerate the synthesis
-artifacts** as the last action of this step so the dashboards reflect the new/updated
-pages and the new log entry:
+If you promoted anything (created or updated a page), **run the faithfulness gate in
+promote mode over exactly those changed pages BEFORE synthesizing** — promotion writes
+new claims into `wiki/`, so the same C3 entailment check that `/wiki-ingest` applies
+(step 5.5) applies here. This mirrors `wiki-ingest.md` step 5.5:
+
+```bash
+scripts/wiki-faithfulness-gate.sh --mode promote wiki/<changed-page>.md [wiki/<more>.md ...]
+```
+
+It reuses `scripts/citation-audit.py` to extract each `(source: ...)` claim and judges it
+against its cited evidence (SUPPORTED / UNSUPPORTED / CONTRADICTED). **Treat a non-zero
+exit as blocking**: on `--mode promote`, CONTRADICTED, UNSUPPORTED, or a broken citation
+all block. If the gate blocks, **do not promote** — roll back the page change (undo the
+append, or delete the just-created page), tell the user which claim failed, and skip
+synthesis. Only proceed to regenerate synthesis when the gate exits 0.
+
+The entailment judgment uses the `claude` CLI. With no judge available the gate **fails
+closed (exit 3)** — install the `claude` CLI or, to proceed without entailment checking
+(citation floor only), pass `--allow-unjudged`, which prints a loud `FAITHFULNESS
+UNVERIFIED` warning. C3 entailment is a write-time gate; CI/offline enforces only the
+deterministic citation floor (C1/C2), not entailment.
+
+Then **regenerate the synthesis artifacts** as the last action of this step so the
+dashboards reflect the new/updated pages and the new log entry:
 
 ```bash
 ./scripts/synthesize/all.sh

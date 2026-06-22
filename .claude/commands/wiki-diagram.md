@@ -24,7 +24,8 @@ Read the vendored contracts under `templates/infographic/` — they are the sing
 
 - **Read-only on `raw/` and `wiki/`.** This command never edits wiki pages. It writes only the output artifact.
 - **Wiki-only by default — no web search, no promotion.** A diagram is a *view* of existing knowledge. If the wiki lacks what the intent needs, say so and recommend running `/wiki-query` first to fill the gap, then re-running this.
-- **Never invent connections** not supported by the retrieved pages. Every diagram cites its `source_pages`.
+- **Never invent connections** not supported by the retrieved pages.
+- **Cite the raw receipts, not just slugs.** A diagram inherits the wiki's provenance rule: every factual claim block must trace to a raw citation. The footer cites the underlying `(source: raw/<file>#<anchor>)` citations carried by the `source_pages` — the page slugs are the mutable LLM layer, not a receipt. A claim resting on a `source_page` that carries no resolving `(source: raw/...)` citation must be dropped or rendered as explicitly-labelled interpretive synthesis, never footnoted as a sourced fact. See `templates/infographic/generator-contract.md` → "Provenance".
 - Output goes to `diagrams/<slug>.html` (the `diagrams/` directory is git-ignored).
 
 ## Procedure
@@ -55,7 +56,7 @@ First ensure the output directory exists (it is git-ignored and absent in a fres
 mkdir -p diagrams
 ```
 
-For each chosen candidate, fill its `handoff_to_generator` block (the variables in `generator-contract.md`) and apply the generation protocol to produce a **single self-contained HTML file (no JavaScript, only Google Fonts external)**, using `example-poster.html` as the style scaffold and the archetype's content structure from `archetypes.md`. Write each to `diagrams/<slug>.html`. The footer must cite `source_pages`.
+For each chosen candidate, fill its `handoff_to_generator` block (the variables in `generator-contract.md`) and apply the generation protocol to produce a **single self-contained HTML file (no JavaScript, only Google Fonts external)**, using `example-poster.html` as the style scaffold and the archetype's content structure from `archetypes.md`. Write each to `diagrams/<slug>.html`. The footer must cite the **raw receipts** behind `source_pages` — the `(source: raw/<file>#<anchor>)` citations those pages carry — not the slugs alone (see the "Provenance" section of `generator-contract.md`).
 
 If `--pdf` or `--png` was passed, also render each poster to that format:
 
@@ -66,7 +67,7 @@ scripts/visualize/render.sh diagrams/<slug>.html --pdf   # or --png
 If `render.sh` exits non-zero (no headless browser and no Node/puppeteer), it keeps the HTML and prints an install hint — surface that hint and point the user at the `.html` (degraded, not failed).
 
 ### 6. Report
-Print the full path(s) written. Note that diagrams are interpretive (`source: analysis`-equivalent) — synthesized by the librarian, grounded in the cited pages, not extracted verbatim. Optionally suggest `/wiki-visualize serve diagrams` to browse them.
+Print the full path(s) written. Note that diagrams are interpretive (`source: analysis`-equivalent) — synthesized by the librarian, grounded in the cited pages, not extracted verbatim. Interpretive synthesis is allowed, but it must be labelled as such; any block presented as a *fact* must carry its raw `(source: raw/...)` receipt in the footer (see step's provenance rule). Optionally suggest `/wiki-visualize serve diagrams` to browse them.
 
 ## What you must NOT do
 

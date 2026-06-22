@@ -25,6 +25,16 @@ Usage:
 
 --causal-only keeps only edges whose verb is in the causal vocabulary
 (default templates/causal-vocab.txt, relative to the repo root if present).
+
+Receipts guarantee: a CAUSAL edge (verb in the causal vocabulary) is read from
+a `## Related` line, which by schema carries NO citation. So we cannot trust a
+causal edge by itself. For every causal edge we attach an additive boolean
+field `"sourced"`: true iff the SOURCE page carries at least one resolving
+`(source: raw/...)` citation somewhere in its body. Downstream consumers
+(wiki-discover.py) can then tell an uncited causal assertion (which must not be
+composed into a chain presented as fact) from a sourced one. The field is
+additive and only present on causal edges, so the existing {source,verb,target}
+JSON consumers are unchanged.
 """
 
 from __future__ import annotations
@@ -38,6 +48,9 @@ from pathlib import Path
 _LINK_RE = re.compile(r"\[\[([a-z][a-z0-9-]*)\]\]")
 _VERB_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 _EM_DASH = "—"
+# Canonical raw-citation pattern (mirrors CITATION_RE in citation-audit.py).
+# Light presence check — does the page carry any raw receipt at all?
+_CITATION_RE = re.compile(r"\(source:\s*raw/[^)#\s]+(?:#[^)\s]+)?\)")
 
 
 def _verb_from_single(line: str) -> str:
@@ -109,10 +122,18 @@ def main(argv: list[str]) -> int:
     for md in sorted(root.rglob("*.md")):
         source = md.stem
         text = md.read_text(encoding="utf-8", errors="replace")
+        # Does this source page carry any resolving raw citation at all?
+        page_sourced = bool(_CITATION_RE.search(text))
         for src, verb, target in edges_in_page(text, source):
             if args.causal_only and verb not in vocab:
                 continue
-            out.write(json.dumps({"source": src, "verb": verb, "target": target}) + "\n")
+            edge = {"source": src, "verb": verb, "target": target}
+            # Causal edges come from uncited `## Related` lines; flag whether
+            # the source page is backed by a raw receipt so downstream
+            # consumers don't compose uncited claims into asserted chains.
+            if verb in vocab:
+                edge["sourced"] = page_sourced
+            out.write(json.dumps(edge) + "\n")
     return 0
 
 

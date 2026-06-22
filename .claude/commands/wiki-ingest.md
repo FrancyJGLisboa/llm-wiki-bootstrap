@@ -116,10 +116,17 @@ judges it against the cited passage (SUPPORTED / UNSUPPORTED / CONTRADICTED), an
   (line count preserved) and passes. Leave the marker in place — `/wiki-lint` surfaces it
   later. Don't hand-delete it; cite better evidence or rephrase if you want it gone.
 
-The entailment judgment uses the `claude` CLI; if it's unavailable the gate skips with a
-note (the deterministic citation floor still applies at lint time). This is the BYO-agent
-analogue of the existing `eval-citation-faithfulness.sh` measurement, run as a gate on the
-specific pages this ingest touched.
+The entailment judgment uses the `claude` CLI. C3 entailment inherently needs an LLM, so
+this is a **write-time gate** (ingest + promote), not a keyless-CI check: the deterministic
+floor that CI/offline enforces is the citation audit (C1/C2, plus `--coverage`), **not**
+entailment. With no judge available the gate **fails closed (exit 3)** rather than passing
+unchecked — install the `claude` CLI, or pass `--allow-unjudged` to proceed on the citation
+floor only (it prints a loud `FAITHFULNESS UNVERIFIED` warning so the gap is visible). This
+is the BYO-agent analogue of the existing `eval-citation-faithfulness.sh` measurement, run
+as a gate on the specific pages this ingest touched.
+
+Follow-ups (deferred, not built here): a per-page `entailment: judged|skipped` frontmatter
+marker, and a git pre-commit hook template that runs this gate.
 
 ### Step 6 — Update the index
 

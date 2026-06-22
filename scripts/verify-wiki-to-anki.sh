@@ -5,9 +5,11 @@
 # Scope:
 #   Validates SHAPE, not SEMANTICS. The verifier catches:
 #     - Exporter exits non-zero
-#     - Header row missing or wrong
+#     - Header row missing or wrong (must be 4 cols incl. Source)
 #     - No data rows produced from the canary fixture
 #     - CSV columns malformed (wrong field count on a row)
+#     - A cited card does NOT carry its (source: raw/...) citation in Source
+#     - An uncited card is NOT excluded + warned (receipt leak)
 #   It does NOT catch:
 #     - Whether the Q/A pairs are pedagogically useful
 #     - Whether Anki imports the CSV without warnings (a manual eyeball step)
@@ -53,25 +55,27 @@ if [ ! -f "$fixture_file" ]; then
 fi
 ok "fixture present: tests/canary/canary-flashcards.md"
 
-# Run the exporter against the canary dir and capture output.
+# Run the exporter against the canary dir and capture stdout + stderr separately
+# (stderr carries the uncited-card exclusion warnings we assert on below).
 out_file="$(mktemp)"
-trap 'rm -f "$out_file"' EXIT
+err_file="$(mktemp)"
+trap 'rm -f "$out_file" "$err_file"' EXIT
 
-if ! "$SCRIPT_DIR/wiki-to-anki.sh" "$fixture_dir" > "$out_file" 2>&1; then
+if ! "$SCRIPT_DIR/wiki-to-anki.sh" "$fixture_dir" > "$out_file" 2>"$err_file"; then
   fail "wiki-to-anki.sh exited non-zero"
-  cat "$out_file" >&2
+  cat "$out_file" "$err_file" >&2
   echo
   printf "%sFailed.%s\n" "$RED" "$RESET"
   exit 1
 fi
 ok "wiki-to-anki.sh exited 0"
 
-# Header row check.
+# Header row check — 4 columns including Source.
 header="$(head -n 1 "$out_file")"
-if [ "$header" = "Front,Back,Tags" ]; then
+if [ "$header" = "Front,Back,Tags,Source" ]; then
   ok "header row: ${header}"
 else
-  fail "header row wrong — got '${header}', expected 'Front,Back,Tags'"
+  fail "header row wrong — got '${header}', expected 'Front,Back,Tags,Source'"
 fi
 
 # Data row count.
@@ -82,7 +86,7 @@ else
   fail "no data rows produced from canary fixture"
 fi
 
-# Field count per row (every row should have exactly 3 fields once you
+# Field count per row (every row should have exactly 4 fields once you
 # account for quoted commas). Use awk in CSV-aware mode: split on commas
 # that are NOT inside double quotes.
 bad_rows="$(awk '
@@ -94,16 +98,40 @@ bad_rows="$(awk '
       if (c == "\"") in_q = !in_q
       else if (c == "," && !in_q) n++
     }
-    # n commas => n+1 fields. We expect 3 fields => 2 commas.
-    if (n != 2) print NR": "n+1" fields"
+    # n commas => n+1 fields. We expect 4 fields => 3 commas.
+    if (n != 3) print NR": "n+1" fields"
   }
 ' "$out_file")"
 
 if [ -z "$bad_rows" ]; then
-  ok "every data row has exactly 3 fields"
+  ok "every data row has exactly 4 fields"
 else
   fail "rows with wrong field count:"
   printf '  %s\n' "$bad_rows" >&2
+fi
+
+# A cited card carries its (source: raw/...) citation in the Source column.
+# The Source column is the last CSV field; assert at least one data row whose
+# final field is a raw citation.
+if tail -n +2 "$out_file" | grep -qE ',\(source:[[:space:]]*raw/[^)]*\)"?$'; then
+  ok "a cited card carries its raw citation in the Source column"
+else
+  fail "no data row carries a (source: raw/...) citation in Source — receipt dropped"
+fi
+
+# An uncited card is excluded from the CSV and warned on stderr.
+# The canary fixture's 4th card has no citation: it must NOT appear in output
+# and MUST trigger an exclusion warning.
+if grep -qiF "no receipt and must be excluded" "$out_file"; then
+  fail "uncited card leaked into the CSV (must be excluded)"
+else
+  ok "uncited card is absent from the CSV"
+fi
+
+if grep -qF "excluding uncited card" "$err_file"; then
+  ok "uncited card triggered a stderr exclusion warning"
+else
+  fail "no stderr warning for the excluded uncited card"
 fi
 
 echo

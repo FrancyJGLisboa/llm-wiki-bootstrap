@@ -19,7 +19,7 @@ Turns a candidate's `handoff_to_generator` block into a renderable HTML infograp
 | `idioma` | `PT-BR` or `EN` |
 | `arquetipo` | One of: `single_number_metric`, `process_flow`, `state_regime`, `comparison_matrix`, `causal_chain`, `cycle_loop`, `network_map`, `taxonomy_tree` |
 | `analogia_final` | Cross-domain analogy for the pull quote, or null |
-| `source_pages` | The wiki pages this candidate drew from (cite them in the footer) |
+| `source_pages` | The wiki pages this candidate drew from. The footer cites the RAW receipts behind these pages, not the slugs — see "Provenance" below. |
 
 ## Generation protocol
 
@@ -70,4 +70,26 @@ Write the file to `diagrams/<slug>.html` (the `diagrams/` directory is git-ignor
 - No filler ("It is important to note that…")
 - No hedging when the fact is clear
 - Language: `idioma`
-- **Footer must cite `source_pages`** — the wiki pages the diagram drew from. Never invent connections not supported by retrieved pages.
+
+## Provenance (the receipts rule — applies to every factual claim block)
+
+The wiki page slugs in `source_pages` are the **mutable LLM layer**, not a
+receipt. A diagram that cites only slugs lets a factual claim escape the wiki's
+receipts guarantee. So the diagram inherits the same provenance rule as a wiki
+page: **every factual claim block must trace to a raw citation**.
+
+Mechanically, when generating the footer:
+
+1. For each page in `source_pages`, open that wiki page and collect the
+   `(source: raw/<file>#<anchor>)` citations it carries (the canonical
+   citation form, `(source: raw/...)`).
+2. **The footer must list those underlying `(source: raw/...#anchor)`
+   citations** — the raw receipts — not just the page slugs. Slugs may appear
+   as a label, but the receipt is the `raw/...` citation.
+3. If a `source_page` carries no resolving `(source: raw/...)` citation, you
+   may not present a factual claim resting on it as fact. Either drop that
+   claim, or render it explicitly as interpretive synthesis (clearly marked,
+   never footnoted as a sourced fact).
+4. Never invent connections not supported by retrieved pages. An interpretive
+   synthesized assertion is allowed only when labelled as interpretation — it
+   must never be dressed up with a raw citation it does not have.
