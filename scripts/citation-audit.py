@@ -17,14 +17,18 @@ anchor points at). Those pairs feed the C3 entailment judge in
 runnable / self-testable with no LLM.
 
 Usage:
-  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json]
+  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage]
 
   Default <raw-dir> is "<wiki-dir>/../raw".
 
 Output:
-  default  human report; exit 1 if any C1/C2 fails (the deterministic gate)
-  --json   one JSON object per citation on stdout (for the harness); always exit 0
-  --tsv    one TSV row per citation for the shell harness (always exit 0):
+  default   human report; exit 1 if any C1/C2 fails (the deterministic gate)
+  --json    one JSON object per citation on stdout (for the harness); always exit 0
+  --coverage  the inverse gate (vision check #5): list claim-bearing pages that
+              carry NO resolving citation; exit 1 if any exist. A page is exempt
+              when `type: navigation` (structural, points inward) or it declares
+              `provenance: none` (an explicit "makes no external claims" knob).
+  --tsv     one TSV row per citation for the shell harness (always exit 0):
              tag<TAB>page<TAB>line<TAB>file<TAB>anchor<TAB>c1<TAB>c2<TAB>claim_b64<TAB>evidence_b64
            claim/evidence are base64 (single-line, no tabs/newlines) — decode with
            `openssl base64 -d -A`. tag is OK when c1 ∧ c2, else BAD.
@@ -171,6 +175,48 @@ def extract_claim(lines: list[str], idx: int, match_start: int) -> str:
     return cleaned or line.strip()
 
 
+def page_frontmatter(lines):
+    """Parse the leading --- frontmatter block into a flat {key: value} dict."""
+    if lines[:1] != ["---"]:
+        return {}
+    fm = {}
+    for line in lines[1:]:
+        if line == "---":
+            break
+        m = re.match(r"([A-Za-z_][\w-]*):\s*(.*)$", line)
+        if m:
+            fm[m.group(1)] = m.group(2).strip()
+    return fm
+
+
+# A page need not cite raw when it makes no external claims: structural pages
+# (indexes, dashboards, timelines) point inward, and any page may opt out
+# explicitly with `provenance: none`. Everything else must carry provenance.
+EXEMPT_TYPES = {"navigation"}
+
+
+def page_is_exempt(fm):
+    return fm.get("type") in EXEMPT_TYPES or fm.get("provenance") == "none"
+
+
+def coverage(wiki_dir, raw_dir, records):
+    """Vision check #5: pages that make claims but carry no resolving citation.
+
+    Reuses `records` (every citation + its c1/c2 verdict) to find pages with at
+    least one resolving citation; any non-exempt page NOT in that set is a gap.
+    """
+    ok_pages = {r["page"] for r in records if r["c1"] and r["c2"]}
+    gaps = []
+    for root, _dirs, files in os.walk(wiki_dir):
+        for name in sorted(files):
+            if not name.endswith(".md") or os.path.relpath(os.path.join(root, name), wiki_dir) in ok_pages:
+                continue
+            page = os.path.relpath(os.path.join(root, name), wiki_dir)
+            if not page_is_exempt(page_frontmatter(raw_lines(os.path.join(root, name)))):
+                gaps.append(page)
+    return sorted(gaps)
+
+
 def audit(wiki_dir, raw_dir):
     records = []
     for root, _dirs, files in os.walk(wiki_dir):
@@ -224,6 +270,17 @@ def main(argv):
         return 2
 
     records = audit(wiki_dir, raw_dir)
+
+    if "--coverage" in argv:
+        gaps = coverage(wiki_dir, raw_dir, records)
+        print(f"citation-coverage — {wiki_dir}")
+        if not gaps:
+            print("  every claim-bearing page carries a resolving citation")
+            return 0
+        print(f"  {len(gaps)} page(s) make claims with no resolving citation:")
+        for p in gaps:
+            print(f"  ✗ {p} — cite a raw source, or set 'provenance: none' if it makes no external claims")
+        return 1
 
     if as_json:
         for r in records:

@@ -3,6 +3,7 @@ title: Synthesis Artifacts
 type: concept
 source: analysis
 updated: 2026-06-09
+provenance: none
 tags: [system, synthesis, ingest, schema-v3]
 ---
 

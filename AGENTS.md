@@ -124,6 +124,7 @@ title: <Title Case>
 type: concept | entity | summary | analysis | navigation
 source: video | analysis | external | mixed
 updated: YYYY-MM-DD
+provenance: none   # OPTIONAL. Only on meta pages that make no external claims.
 tags: [...]
 ---
 
@@ -142,6 +143,8 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 ## Open questions on this page
 - ... (consumed by /wiki-lint)
 ```
+
+**Citation-coverage invariant (check #5):** every claim-bearing page carries **≥ 1 resolving** `(source: raw/...)` citation. `scripts/citation-audit.py <wiki> --coverage` is the deterministic gate (exit 1 on a gap). Two pages are exempt: `type: navigation` (structural, points inward) and any page that declares `provenance: none` (an explicit "this page makes no external claims" knob, for meta/design pages like `glossary.md` or `source-attribution.md`). Don't set `provenance: none` to silence a page that *should* cite — that defeats the gate.
 
 **Related-section invariant:** every content page lists **≥ 2** `[[links]]` in `## Related` so it joins the web — a page with fewer than two outbound links is nearly an orphan. `navigation` pages (e.g. `index.md`) and `journal` entries are **exempt**: they join the web through their body/index structure, not a `## Related` section. `/wiki-lint` enforces exactly this (schema-drift check).
 

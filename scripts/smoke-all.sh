@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R16) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R17) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 21 checks pass.
+# Exit 0 iff all 22 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 21 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R16 guards). This is the CI path — the build phase is a precondition that
+#   only the 22 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R17 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R16 ────
-section "Regression guards (R1–R16)"
+# ──── REGRESSION GUARDS R1–R17 ────
+section "Regression guards (R1–R17)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -207,6 +207,15 @@ else
   record_fail "R16 verify-faithfulness-gate.sh exits non-zero (faithfulness gate regression)"
 fi
 
+# R17 — citation coverage (vision check #5): the --coverage gate flags pages
+# that make claims with no resolving citation, and exempts type:navigation and
+# provenance:none. Catches the inverse of R8 — claims with no source at all.
+if "$SCRIPT_DIR/verify-citation-coverage.sh" >/dev/null 2>&1; then
+  ok "R17 verify-citation-coverage.sh exits 0 (uncited claims flagged, exemptions honored)"
+else
+  record_fail "R17 verify-citation-coverage.sh exits non-zero (coverage gate regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -217,7 +226,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 21 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 22 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

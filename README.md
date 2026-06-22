@@ -260,6 +260,26 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 
 </details>
 
+## Vision — a second brain that ships with receipts
+
+Every "second brain" tells you things and you hope they're true. This one is
+different: **every claim is mechanically traceable to a source, faithfulness is
+enforced at write-time, and the whole wiki is a portable, verifiable asset — not
+a service you rent.** That's the moat. The markdown is trivially copied (like an
+ebook); the verified provenance is not.
+
+The vision is falsifiable — these are the binary checks that say we're living it:
+
+1. Every wiki claim cites a raw anchor that resolves. (`scripts/citation-audit.py` — zero BAD)
+2. Every claim is entailed by its cited source. (the C3 entailment gate at ingest)
+3. A third party can verify a bundle with only what's inside it. (`scripts/verify-bundle.sh` — no seller infra)
+4. It runs with no app, viewer, or account. (pure CommonMark, slash commands)
+5. Every claim-bearing page carries provenance — none leak unsourced. (`citation-audit.py --coverage`)
+
+A change that can't answer "yes" to the relevant checks is drifting off-vision.
+Supporting features (causal graph, discovery, flashcards, diagrams) earn their
+weight only by inheriting these guarantees.
+
 ## Principles this project honors
 
 1. **Explicit.** Everything in markdown. No hidden embeddings, no opaque memory.

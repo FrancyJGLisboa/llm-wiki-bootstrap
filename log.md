@@ -2,6 +2,14 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — citation-coverage gate (vision check #5)
+
+Added the inverse of the citation-audit floor: instead of "do citations resolve?", **"does every claim-bearing page carry one?"**. `scripts/citation-audit.py --coverage` lists pages with no resolving `(source: raw/...)` citation and exits 1 if any exist (R17 in `smoke-all.sh`, test: `scripts/verify-citation-coverage.sh`). Two exemptions: `type: navigation` (structural pages point inward) and a new optional `provenance: none` frontmatter knob for meta pages that make no external claims.
+
+- **Marked `provenance: none`:** `commands.md`, `glossary.md`, `source-attribution.md`, `synthesis-artifacts.md` — each already self-declares as `source: analysis` design/interpretation, not external claims. (The other 7 `source: analysis` pages cite raw and stay gated.)
+- **Schema:** additive/opt-in field documented in AGENTS.md; no version bump (per the bump policy).
+- **Why:** codifies the project vision — "a second brain that ships with receipts" — as a deterministic gate, so no feature can quietly add unsourced claims. See README "Vision".
+
 ## 2026-06-09 — schema v2 → v3: synthesis layer
 
 Added a **mechanical synthesis layer**. `/wiki-ingest` (Step 8), `/wiki-query` (on promote), and `/wiki-lint --apply` now regenerate four derived artifacts via `scripts/synthesize/all.sh`: `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json`. Generation is deterministic (byte-identical on no change) and does **no LLM work** — it only aggregates markers the LLM already wrote (`## Open questions` sections, `> CONTRADICTION FLAGGED` flags, `log.md` headers, `[[links]]`). The graph JSON reuses `scripts/visualize/graph-html.py --json` (the same parser `/wiki-visualize` uses), so JSON and rendered graph can't diverge.
