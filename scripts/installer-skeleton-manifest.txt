@@ -33,6 +33,8 @@ scripts/lib/platform-hint.sh
 scripts/lib/eval-common.sh
 scripts/preflight.sh
 scripts/auto-ingest.sh
+scripts/package-wiki.sh
+scripts/verify-bundle.sh
 scripts/verify-extract.sh
 scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
@@ -52,6 +54,7 @@ templates/infographic/scoring-rubric.md
 templates/infographic/generator-contract.md
 templates/infographic/example-poster.html
 docs/QUICKSTART.md
+docs/SELLING.md
 docs/EXPLAIN.md
 docs/MCP.md
 docs/VISUALIZATION.md
