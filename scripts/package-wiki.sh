@@ -91,10 +91,9 @@ ok "G1 raw frontmatter: all raw files hash cleanly"
 g2_bad=0
 for f in "$ROOT"/wiki/*.md; do
   [ -e "$f" ] || continue
+  fm="$(awk '/^---$/{n++; next} n>=2{exit} n==1' "$f")"  # frontmatter block (between the first two ---)
   for key in title type source updated; do
-    if ! awk -v k="$key" 'NR==1 && $0!="---"{exit 1} /^---$/{fm++; next} fm==1 && $0 ~ "^"k":"{found=1} fm>=2{exit} END{exit !found}' "$f"; then
-      echo "  missing '$key:' in frontmatter: $f" >&2; g2_bad=$((g2_bad + 1))
-    fi
+    printf '%s\n' "$fm" | grep -q "^$key:" || { echo "  missing '$key:' in frontmatter: $f" >&2; g2_bad=$((g2_bad + 1)); }
   done
 done
 [ "$g2_bad" -eq 0 ] || fail "G2 wiki frontmatter: $g2_bad missing key(s) — fix before packaging"
@@ -138,7 +137,6 @@ copy_if .clinerules
 copy_if .cursor
 copy_if .github/copilot-instructions.md
 copy_if .claude/commands
-copy_if .claude/settings.json
 copy_if templates
 for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py; do
   copy_if "scripts/$s"
