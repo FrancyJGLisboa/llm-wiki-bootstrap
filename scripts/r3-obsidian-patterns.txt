@@ -4,3 +4,4 @@
 ^%%[^`%][^%]*%%
 ^[[:space:]]*~~~+[[:space:]]*dataview
 ^[[:space:]]*```dataview
+^[[:space:]]*<(div|table|script|iframe|style|details|summary)( |>|/)
