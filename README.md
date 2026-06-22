@@ -273,7 +273,7 @@ ebook); the verified provenance is not.
 The vision is falsifiable — these are the binary checks that say we're living it:
 
 1. Every wiki claim cites a raw anchor that resolves. (`scripts/citation-audit.py` — zero BAD)
-2. Every claim is entailed by its cited source. (the C3 entailment gate at ingest)
+2. Every claim is entailed by its cited source. (the C3 entailment gate at ingest — applies to raw-source-backed claims, judged against local raw evidence; web-url-cited claims are not entailment-checked)
 3. A third party can verify a bundle with only what's inside it. (`scripts/verify-bundle.sh` — no seller infra)
 4. It runs with no app, viewer, or account. (pure CommonMark, slash commands)
 5. Every claim-bearing page carries provenance — none leak unsourced. (`citation-audit.py --coverage`)

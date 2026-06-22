@@ -31,14 +31,17 @@ def load(stream):
         ln = ln.strip()
         if ln:
             o = json.loads(ln)
-            edges.append((o["source"], o["verb"], o["target"]))
+            # wiki-to-kg.py attaches "sourced" only to causal edges; absent on
+            # non-causal edges. Default True so the absence never marks a chain.
+            edges.append((o["source"], o["verb"], o["target"], o.get("sourced", True)))
     return edges
 
 
 def causal_fwd(edges):
     fwd, indeg = defaultdict(set), defaultdict(int)
     nodes = set()
-    for s, v, t in edges:
+    hop_sourced = {}  # (cause, effect) -> all underlying edges carry a receipt
+    for s, v, t, sourced in edges:
         if v in _FWD:
             c, e = s, t
         elif v in _REV:
@@ -47,10 +50,12 @@ def causal_fwd(edges):
             continue
         fwd[c].add(e)
         nodes |= {c, e}
+        # An uncited edge poisons the hop even if a parallel cited one exists.
+        hop_sourced[(c, e)] = hop_sourced.get((c, e), True) and sourced
     for c in fwd:
         for e in fwd[c]:
             indeg[e] += 1
-    return fwd, indeg, nodes
+    return fwd, indeg, nodes, hop_sourced
 
 
 def maximal_chains(fwd, indeg, nodes):
@@ -74,7 +79,7 @@ def maximal_chains(fwd, indeg, nodes):
 
 def undirected(edges):
     adj = defaultdict(set)
-    for s, _v, t in edges:
+    for s, _v, t, _sourced in edges:
         adj[s].add(t)
         adj[t].add(s)
     return adj
@@ -115,12 +120,19 @@ def main():
         print("\n".join(out))
         return 0
 
-    fwd, indeg, nodes = causal_fwd(edges)
+    fwd, indeg, nodes, hop_sourced = causal_fwd(edges)
     chains = maximal_chains(fwd, indeg, nodes)
     out.append("## Causal chains")
     if chains:
         for c in sorted(chains, key=lambda p: (-len(p), p)):
-            out.append(f"- {' → '.join(c)}")
+            line = f"- {' → '.join(c)}"
+            # "Ships with receipts": if any hop rests on an uncited causal edge,
+            # the chain can't be surfaced as fact — mark it visibly rather than
+            # suppress it (transparency > silent drop).
+            hops = zip(c, c[1:])
+            if any(not hop_sourced.get(h, True) for h in hops):
+                line += "  ⚠ contains uncited edge [unsourced]"
+            out.append(line)
     else:
         out.append("- _(none ≥2 hops — encode cause→effect with canonical causal verbs to grow these)_")
     out.append("")

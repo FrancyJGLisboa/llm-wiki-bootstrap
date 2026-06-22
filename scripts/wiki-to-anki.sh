@@ -22,8 +22,11 @@
 #   column is the page slug (filename without `.md`), which Anki treats as a
 #   single flashcard tag for filtering. The `Source` column carries the raw
 #   receipt — the `(source: raw/<file>#<anchor>)` citation attached to the
-#   card's Q or A line, or the nearest such citation above the card within the
-#   same `## Flashcards` section.
+#   card's OWN Q line, A line, or wrapped answer continuation line(s).
+#   Attribution is strictly card-local: a citation that is not part of a card
+#   (a standalone line, prose, or a citation belonging to an earlier card) is
+#   NOT inherited. This closes the laundering bypass where one standalone
+#   citation could stamp every subsequent uncited card.
 #
 #   A card with NO resolvable raw citation is EXCLUDED from the CSV and a
 #   warning is written to stderr — a factual Q/A assertion must not escape the
@@ -78,19 +81,19 @@ find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
     }
     function flush() {
       if (q != "" && a != "") {
-        # Source priority: a citation on the card (Q or A) wins; otherwise the
-        # nearest citation seen above the card within this Flashcards section.
-        src = card_cite != "" ? card_cite : section_cite
-        if (src == "") {
+        # Card-local only: the citation must appear on this card own Q, A, or
+        # wrapped continuation line(s). Nothing is inherited from earlier lines.
+        if (card_cite == "") {
           printf "wiki-to-anki: excluding uncited card (no resolving raw citation): %s -> Q: %s\n", file, q > "/dev/stderr"
         } else {
-          printf "%s,%s,%s,%s\n", csv_escape(q), csv_escape(a), csv_escape(slug), csv_escape(src)
+          printf "%s,%s,%s,%s\n", csv_escape(q), csv_escape(a), csv_escape(slug), csv_escape(card_cite)
         }
       }
+      # Reset all per-card state at every card boundary.
       q = ""; a = ""; mode = ""; card_cite = ""
     }
-    # Enter the Flashcards section. Reset the section-level citation tracker.
-    /^##[[:space:]]+Flashcards[[:space:]]*$/ { in_section=1; section_cite=""; next }
+    # Enter the Flashcards section.
+    /^##[[:space:]]+Flashcards[[:space:]]*$/ { in_section=1; next }
     # Any other H2 heading ends the section.
     /^##[[:space:]]+/ && in_section { flush(); in_section=0; next }
     # Start of a new Q line.
@@ -123,13 +126,8 @@ find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
       if (card_cite == "" && c != "") card_cite = c
       next
     }
-    # Any other in-section line (prose, blank): track the nearest citation seen
-    # above the next card. The Q/A/continuation rules above all `next`, so this
-    # only sees lines that are NOT part of the current card.
-    in_section {
-      c = cite_in($0)
-      if (c != "") section_cite = c
-    }
+    # Any other in-section line (prose, blank, standalone citation): NOT part of
+    # any card, so its citation is ignored. Card-local attribution only.
     END { flush() }
   ' "$file"
 done

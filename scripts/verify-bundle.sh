@@ -83,6 +83,7 @@ else bad "B1 integrity: $b1_bad file(s) missing or modified since packaging"; fi
 # A bare MANIFEST proves "intact since packaging" but not WHO packaged it
 # (tamper + regenerate is undetectable). If the seller signed it, prove it;
 # otherwise say plainly that integrity is self-referential.
+authenticity_confirmed=0
 if [ -f MANIFEST.sig ] && [ -f MANIFEST.pubkey ]; then
   if ! command -v gpg >/dev/null 2>&1; then
     warn "MANIFEST.sig present but gpg not installed — authenticity unverified (install gpg to check)"
@@ -91,6 +92,7 @@ if [ -f MANIFEST.sig ] && [ -f MANIFEST.pubkey ]; then
     if gpg --homedir "$gpgtmp" --batch --quiet --import MANIFEST.pubkey >/dev/null 2>&1 \
        && gpg --homedir "$gpgtmp" --batch --quiet --verify MANIFEST.sig MANIFEST >/dev/null 2>&1; then
       ok "authenticity: MANIFEST signature verifies against the bundled public key"
+      authenticity_confirmed=1
     else
       bad "authenticity: MANIFEST signature does NOT verify — bundle may be forged or tampered"
     fi
@@ -140,7 +142,11 @@ fi
 
 echo
 if [ "$failures" -eq 0 ]; then
-  echo "Bundle verified. The content matches what the seller packaged."
+  if [ "$authenticity_confirmed" -eq 1 ]; then
+    echo "Bundle verified: authenticity confirmed (signature) + citation integrity + intact since packaging."
+  else
+    echo "Bundle verified: citation integrity + intact since packaging. UNSIGNED — this does NOT prove authenticity (tamper+regenerate is undetectable; verify the source)."
+  fi
   exit 0
 fi
 echo "$failures check(s) FAILED — this bundle is not what the seller packaged." >&2

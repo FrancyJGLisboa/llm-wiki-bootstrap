@@ -103,6 +103,32 @@ r4="$(run_cov "$T4")"; rc4=$?
                  || fail "journal exemption: a type:journal page was flagged: $r4"
 rm -rf "$T4"
 
+# R5 — FENCED-CODE CITATION: a citation inside a ``` / ~~~ code block is showing
+# the cite SYNTAX, not making a claim — it must NOT earn coverage. The page's
+# real (prose) body claim stays uncited, so the page is still flagged.
+T5="$(mktemp -d "${TMPDIR:-/tmp}/cov5.XXXXXX")"
+mkdir -p "$T5/raw" "$T5/wiki"
+printf '%s\n' '---' 'title: Src' '---' '# Heading One' 'Evidence.' > "$T5/raw/src.md"
+printf '%s\n' '---' 'title: Fenced' 'type: concept' '---' \
+  'A bold prose claim with no real source.' \
+  'Here is how you cite:' '```' '(source: raw/src.md#heading-one)' '```' > "$T5/wiki/fenced.md"
+r5="$(run_cov "$T5")"
+printf '%s' "$r5" | grep -q 'fenced.md' \
+  && ok "fenced-code citation: page flagged (cite inside a code fence does not earn coverage)" \
+  || fail "fenced-code citation: a code-fence citation falsely satisfied coverage"
+rm -rf "$T5"
+
+# R6 — EMPTY / FRONTMATTER-ONLY PAGE: a page with no claim-bearing body line
+# (only frontmatter, or empty) makes no claims → NOT a coverage gap.
+T6="$(mktemp -d "${TMPDIR:-/tmp}/cov6.XXXXXX")"
+mkdir -p "$T6/raw" "$T6/wiki"
+printf '%s\n' '---' 'title: Stub' 'type: concept' '---' > "$T6/wiki/fmonly.md"
+printf '%s' '' > "$T6/wiki/empty.md"
+r6="$(run_cov "$T6")"; rc6=$?
+[ "$rc6" -eq 0 ] && ok "empty/frontmatter-only page: not flagged (no claims to cite)" \
+                 || fail "empty/frontmatter-only page: a page with no body claims was flagged: $r6"
+rm -rf "$T6"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d check(s).\n" "$RED" "$RESET" "$failures"; exit 1

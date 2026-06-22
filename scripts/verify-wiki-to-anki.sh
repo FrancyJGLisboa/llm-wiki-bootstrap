@@ -10,6 +10,8 @@
 #     - CSV columns malformed (wrong field count on a row)
 #     - A cited card does NOT carry its (source: raw/...) citation in Source
 #     - An uncited card is NOT excluded + warned (receipt leak)
+#     - A standalone citation line LAUNDERS onto a later uncited card
+#       (card-local attribution bypass)
 #   It does NOT catch:
 #     - Whether the Q/A pairs are pedagogically useful
 #     - Whether Anki imports the CSV without warnings (a manual eyeball step)
@@ -132,6 +134,35 @@ if grep -qF "excluding uncited card" "$err_file"; then
   ok "uncited card triggered a stderr exclusion warning"
 else
   fail "no stderr warning for the excluded uncited card"
+fi
+
+# Card-local attribution (laundering bypass closed).
+# Card A has its OWN inline citation (#cardlocal) and must be kept with that
+# citation in Source. Card B sits after a STANDALONE citation line
+# (#standalone-launder) but carries no citation of its own — it must be
+# EXCLUDED + warned, and the standalone citation must NOT leak into any row.
+if tail -n +2 "$out_file" | grep -qF '(source: raw/canary.md#cardlocal)'; then
+  ok "card with its own inline citation is kept (card-local attribution)"
+else
+  fail "card A with its own citation was dropped — card-local attribution broken"
+fi
+
+if grep -qF 'raw/canary.md#standalone-launder' "$out_file"; then
+  fail "standalone citation laundered onto a card (laundering bypass not closed)"
+else
+  ok "standalone citation did NOT launder into any card (bypass closed)"
+fi
+
+if grep -qF "Card B — does a standalone citation line above this card launder it in?" "$out_file"; then
+  fail "uncited card B leaked into the CSV via a standalone citation line"
+else
+  ok "uncited card B (after standalone cite) is absent from the CSV"
+fi
+
+if grep -qF "Card B — does a standalone citation line above this card launder it in?" "$err_file"; then
+  ok "uncited card B triggered a stderr exclusion warning"
+else
+  fail "no stderr warning for excluded card B"
 fi
 
 echo

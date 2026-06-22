@@ -228,6 +228,20 @@ def page_is_exempt(fm):
     return fm.get("type") in EXEMPT_TYPES or fm.get("provenance") == "none"
 
 
+def page_is_claim_bearing(lines):
+    """True iff the body holds at least one line that could carry a claim.
+
+    ponytail: 'claim-bearing' is defined minimally as one non-blank,
+    non-heading, non-formatting body line (reusing FORMATTING_ONLY_RE). A page
+    with only frontmatter — or empty — has zero such lines, so it makes no
+    claims and is NOT a coverage gap. Ceiling: this is line-shape only, not NLP;
+    a body line that is grammatically not an assertion (e.g. a stray prose
+    fragment) still counts as claim-bearing.
+    """
+    body = lines[body_start(lines):]
+    return any(not FORMATTING_ONLY_RE.match(line) for line in body)
+
+
 def coverage(wiki_dir, raw_dir, records):
     """Vision check #5: pages that make claims but carry no resolving citation.
 
@@ -250,8 +264,13 @@ def coverage(wiki_dir, raw_dir, records):
             if not name.endswith(".md") or os.path.relpath(os.path.join(root, name), wiki_dir) in ok_pages:
                 continue
             page = os.path.relpath(os.path.join(root, name), wiki_dir)
-            if not page_is_exempt(page_frontmatter(raw_lines(os.path.join(root, name)))):
-                gaps.append(page)
+            page_lines = raw_lines(os.path.join(root, name))
+            if page_is_exempt(page_frontmatter(page_lines)):
+                continue
+            # No claim-bearing body line → nothing to cite → not a gap.
+            if not page_is_claim_bearing(page_lines):
+                continue
+            gaps.append(page)
     return sorted(gaps)
 
 
@@ -267,8 +286,17 @@ def audit(wiki_dir, raw_dir):
             # inside the leading --- frontmatter must NOT satisfy coverage while
             # the body stays uncited.
             start = body_start(lines)
+            in_fence = False
             for idx, line in enumerate(lines):
                 if idx < start:
+                    continue
+                # Fenced code block (``` or ~~~): a citation inside it is showing
+                # the SYNTAX, not making a claim — skip matching while open. Mirror
+                # how the frontmatter block is skipped above.
+                if line.lstrip().startswith(("```", "~~~")):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
                     continue
                 for m in CITATION_RE.finditer(line):
                     rawfile, anchor = m.group(1), m.group(2)

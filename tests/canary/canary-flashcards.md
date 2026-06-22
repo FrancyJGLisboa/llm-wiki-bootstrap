@@ -30,6 +30,14 @@ expected output — keep it stable unless you also update `verify-wiki-to-anki.s
   A: The exporter wraps the field in double quotes so CSV parsers handle it correctly. (source: raw/canary.md#escaping)
 - Q: Which card has no receipt and must be excluded from the CSV?
   A: This one — it has no raw citation, so the exporter drops it and warns on stderr.
+- Q: Card A — does a card with its own inline citation get kept?
+  A: Yes, attribution is card-local. (source: raw/canary.md#cardlocal)
+
+(source: raw/canary.md#standalone-launder)
+
+- Q: Card B — does a standalone citation line above this card launder it in?
+  A: No. Card B has no citation of its own, so it is excluded despite the
+     standalone line above — that line belongs to no card.
 
 ## Related
 
