@@ -24,7 +24,7 @@ This is the per-source summary for the **second raw source** in this project: a 
 > 06 Updates `index.md` — catalog entry with link and one-line summary
 > 07 Appends to `log.md` — timestamped record of what changed
 
-`(source: raw/karpathy-video-slide-ingest-pipeline.png.md)`
+`(source: raw/karpathy-video-slide-ingest-pipeline.png.md#body-verbatim-numbered-0107)`
 
 ## What this source adds beyond the transcript
 

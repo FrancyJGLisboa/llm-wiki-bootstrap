@@ -2,6 +2,36 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — vision hardening wave 7 (path-traversal confinement)
+
+Closing wave 6's allowlist exposed a path-traversal hole: `(source: raw/../secret.txt#L1)` passed both `--no-bare-urls` (prefix `raw/`) and C1/C2 (read a file *outside* `raw/`, earned coverage) — defeating the "snapshotted in raw/" invariant. Fixed at both points in `citation-audit.py` (stdlib `os.path`): `_is_allowed_target` normalizes (`normpath`) and requires the target to stay under `raw/` (so `raw/../x`→reject, `raw//x`→ok); C1 confines `realpath(rawpath)` to be inside `realpath(raw_dir)` (escape → c1=False, doesn't resolve). Also reject NUL/control-char citation targets in both `_is_allowed_target` and `audit()` before `realpath` (an embedded NUL raised `ValueError`, crashing the gate) — now flagged + non-resolving, no crash. Follow-up noted: apply the same confine-to-dir everywhere a wiki string becomes a path (bundle/kg/anki).
+
+## 2026-06-22 — vision hardening wave 6 (bare-url guard → allowlist)
+
+Re-audit found Wave 5's `--no-bare-urls` closed the web-cite gap by name, not by class: it matched only `://`-scheme and literal `www.`, so protocol-less / bare-host / uppercase cites (`(source: cnn.com/x)`, `(source: example.com)`, `(source: WWW.x/y)`) bypassed it. Inverted to an **allowlist**: an inline `(source: X)` is legal only if X is `raw/<file>[#anchor]` or exactly `analysis`; everything else is flagged by construction (no URL parsing). The check now also runs in the faithfulness gate's **ingest** mode (was promote-only). Removed the dead regex. This closes the last HIGH gap.
+
+## 2026-06-22 — vision hardening wave 5 (web sources must snapshot to raw/)
+
+Closed V2 gap 3 (web claims invisible to the gate). Promoted web findings can no longer be cited with a bare `(source: <url>)` — the receipts rule now extends to the web: a web source must be snapshotted into `raw/` (via `/wiki-extract`) before citing, so the claim is raw-backed, coverage-counted, and entailment-checkable. New deterministic guard `citation-audit.py --no-bare-urls` (flags `(source: …://…)` / `www.`, leaves `(source: analysis)` and `raw/` alone), wired as smoke **R20** (25 checks) and as a promote-mode floor in the faithfulness gate (bare-url page → exit 3). `/wiki-query` promote prose + AGENTS.md updated; `verify-no-bare-urls.sh` added. The actual fetch stays LLM-driven (CI has no network); the guard is the keyless mechanical enforcement.
+
+## 2026-06-22 — vision hardening waves 2–4 (gate, features, discover, edges)
+
+Re-audit raised the vision from 72%→88%→(targeting ≥99%). Wave 2: faithfulness gate fails CLOSED (exit 3) with no judge (`--allow-unjudged` opt-out + loud warning); `/wiki-query` promote path now invokes the gate before synthesis; flashcards carry a Source column; KG stamps causal edges `sourced:true/false`; diagram contract requires raw-anchored footers. Wave 3: CI gains R18 (bundle round-trip) + R19 (real-wiki coverage gate), R3 scoped to `*.md` + block-HTML patterns (22→24 checks). Wave 4 (closing re-audit residuals): **`wiki-discover.py` now reads the `sourced` flag and marks causal chains resting on uncited edges `⚠ [unsourced]`** (was a real HIGH leak — KG stamped the flag but discover ignored it); flashcard citation is now card-local (closed the sticky-citation laundering bypass); `citation-audit.py` skips fenced code blocks and no longer false-flags empty/frontmatter-only pages; verify-bundle success line + README + SELLING + ci.yml label all corrected to not overclaim.
+
+## 2026-06-22 — vision hardening wave 1 (floor + coverage + bundle)
+
+Adversarial audit of the 6 vision checks (72% achieved) drove fixes. Floor/coverage (`citation-audit.py`): skip frontmatter when matching citations; `page_frontmatter` returns {} on an unclosed fence (no self-exempt); timestamp anchors match on a token boundary (not substring); reject line-ranges inside frontmatter; fail C2 on duplicate-slug ambiguity; **anchorless whole-file cites no longer count toward `--coverage`** (a bare file cite could exempt a page of fabrications); `journal` added to `EXEMPT_TYPES`. Bundle: package-wiki gains **G4 coverage gate**, verify-bundle gains **B5**; both refuse symlinks; verify-bundle hard-fails on missing python3 and runs faithfulness checks over the full tree even under `--post-use`; optional `WIKI_SIGN_KEY` detached signature; buyer-facing wording downgraded from "faithfulness" to "citation integrity" (C3 entailment is a write-time seller attestation, not reproducible offline). New `verify-bundle-roundtrip.sh`.
+
+- **Wiki content:** `karpathy-video-slide-ingest-pipeline-summary.md` re-cited with `#body-verbatim-numbered-0107` (was an anchorless whole-file cite the stricter coverage gate correctly flagged).
+
+## 2026-06-22 — citation-coverage gate (vision check #5)
+
+Added the inverse of the citation-audit floor: instead of "do citations resolve?", **"does every claim-bearing page carry one?"**. `scripts/citation-audit.py --coverage` lists pages with no resolving `(source: raw/...)` citation and exits 1 if any exist (R17 in `smoke-all.sh`, test: `scripts/verify-citation-coverage.sh`). Two exemptions: `type: navigation` (structural pages point inward) and a new optional `provenance: none` frontmatter knob for meta pages that make no external claims.
+
+- **Marked `provenance: none`:** `commands.md`, `glossary.md`, `source-attribution.md`, `synthesis-artifacts.md` — each already self-declares as `source: analysis` design/interpretation, not external claims. (The other 7 `source: analysis` pages cite raw and stay gated.)
+- **Schema:** additive/opt-in field documented in AGENTS.md; no version bump (per the bump policy).
+- **Why:** codifies the project vision — "a second brain that ships with receipts" — as a deterministic gate, so no feature can quietly add unsourced claims. See README "Vision".
+
 ## 2026-06-09 — schema v2 → v3: synthesis layer
 
 Added a **mechanical synthesis layer**. `/wiki-ingest` (Step 8), `/wiki-query` (on promote), and `/wiki-lint --apply` now regenerate four derived artifacts via `scripts/synthesize/all.sh`: `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json`. Generation is deterministic (byte-identical on no change) and does **no LLM work** — it only aggregates markers the LLM already wrote (`## Open questions` sections, `> CONTRADICTION FLAGGED` flags, `log.md` headers, `[[links]]`). The graph JSON reuses `scripts/visualize/graph-html.py --json` (the same parser `/wiki-visualize` uses), so JSON and rendered graph can't diverge.

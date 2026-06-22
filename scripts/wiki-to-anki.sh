@@ -18,9 +18,19 @@
 #   Flashcards section.
 #
 # Output:
-#   CSV with header `Front,Back,Tags` written to stdout. The `Tags` column is
-#   the page slug (filename without `.md`), which Anki treats as a single
-#   flashcard tag for filtering.
+#   CSV with header `Front,Back,Tags,Source` written to stdout. The `Tags`
+#   column is the page slug (filename without `.md`), which Anki treats as a
+#   single flashcard tag for filtering. The `Source` column carries the raw
+#   receipt — the `(source: raw/<file>#<anchor>)` citation attached to the
+#   card's OWN Q line, A line, or wrapped answer continuation line(s).
+#   Attribution is strictly card-local: a citation that is not part of a card
+#   (a standalone line, prose, or a citation belonging to an earlier card) is
+#   NOT inherited. This closes the laundering bypass where one standalone
+#   citation could stamp every subsequent uncited card.
+#
+#   A card with NO resolvable raw citation is EXCLUDED from the CSV and a
+#   warning is written to stderr — a factual Q/A assertion must not escape the
+#   wiki's receipts guarantee by landing in Anki uncited.
 #
 # Usage:
 #   ./scripts/wiki-to-anki.sh                  # default: scan ./wiki/
@@ -47,22 +57,40 @@ if [ ! -d "$src" ]; then
   exit 2
 fi
 
-printf 'Front,Back,Tags\n'
+printf 'Front,Back,Tags,Source\n'
 
+# Citation pattern: (source: raw/<file>#<anchor>) — mirrors the canonical
+# CITATION_RE in scripts/citation-audit.py. The first such match on (or above,
+# within the section) a card is the card's raw receipt.
 find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
   slug="$(basename "$file" .md)"
-  awk -v slug="$slug" '
+  awk -v slug="$slug" -v file="$file" '
     function csv_escape(s,   needs_quote) {
       needs_quote = (index(s, ",") || index(s, "\""))
       gsub(/"/, "\"\"", s)
       if (needs_quote) return "\"" s "\""
       return s
     }
+    # Extract the first (source: raw/...) citation in a string, or "".
+    function cite_in(s,   m) {
+      if (match(s, /\(source:[[:space:]]*raw\/[^)]*\)/)) {
+        m = substr(s, RSTART, RLENGTH)
+        return m
+      }
+      return ""
+    }
     function flush() {
       if (q != "" && a != "") {
-        printf "%s,%s,%s\n", csv_escape(q), csv_escape(a), csv_escape(slug)
+        # Card-local only: the citation must appear on this card own Q, A, or
+        # wrapped continuation line(s). Nothing is inherited from earlier lines.
+        if (card_cite == "") {
+          printf "wiki-to-anki: excluding uncited card (no resolving raw citation): %s -> Q: %s\n", file, q > "/dev/stderr"
+        } else {
+          printf "%s,%s,%s,%s\n", csv_escape(q), csv_escape(a), csv_escape(slug), csv_escape(card_cite)
+        }
       }
-      q = ""; a = ""; mode = ""
+      # Reset all per-card state at every card boundary.
+      q = ""; a = ""; mode = ""; card_cite = ""
     }
     # Enter the Flashcards section.
     /^##[[:space:]]+Flashcards[[:space:]]*$/ { in_section=1; next }
@@ -75,6 +103,8 @@ find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
       sub(/^-[[:space:]]+Q:[[:space:]]*/, "", line)
       q = line
       mode = "q"
+      c = cite_in($0)
+      if (c != "") card_cite = c
       next
     }
     # Start of the matching A line.
@@ -83,6 +113,8 @@ find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
       sub(/^[[:space:]]+A:[[:space:]]*/, "", line)
       a = line
       mode = "a"
+      c = cite_in($0)
+      if (card_cite == "" && c != "") card_cite = c
       next
     }
     # Continuation of an answer (indented, not a new bullet).
@@ -90,8 +122,12 @@ find "$src" -type f -name '*.md' -print0 | while IFS= read -r -d '' file; do
       line = $0
       sub(/^[[:space:]]+/, " ", line)
       a = a line
+      c = cite_in($0)
+      if (card_cite == "" && c != "") card_cite = c
       next
     }
+    # Any other in-section line (prose, blank, standalone citation): NOT part of
+    # any card, so its citation is ignored. Card-local attribution only.
     END { flush() }
   ' "$file"
 done

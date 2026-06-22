@@ -11,6 +11,12 @@
 #                       that --causal-only correctly drops (filter really filters)
 #   K4 stdlib-only   : wiki-to-kg.py imports nothing outside the stdlib
 #   K5 read-only     : running the builder does not mutate the wiki fixtures
+#   K6 causal receipt: every causal edge carries an additive boolean `sourced`;
+#                      a causal edge from a page WITH a raw citation is
+#                      sourced:true, one from an UNCITED page is sourced:false,
+#                      and non-causal (related-to) edges carry no such flag.
+#                      This is the receipts gate — an uncited causal assertion
+#                      must be distinguishable from a sourced one downstream.
 #
 # Usage: ./scripts/verify-wiki-to-kg.sh   Exit: 0 all green, 1 a check failed.
 
@@ -91,10 +97,42 @@ after=$(snap)
 if [ "$before" = "$after" ]; then ok "K5 read-only (fixtures byte-unchanged after build)"
 else fail "K5 builder mutated fixture content (read-only violated)"; fi
 
+# --- K6: causal edges carry a receipt flag that discriminates ----------------
+# The good fixture's drought.md carries a (source: raw/...) citation; every
+# other causal source page is uncited. So drought's causal edge must be
+# sourced:true, the rest sourced:false, all causal edges must carry the flag,
+# and non-causal related-to edges must NOT carry it.
+if python3 - "$KG" "$GOOD" <<'PY'
+import json, subprocess, sys
+kg, good = sys.argv[1], sys.argv[2]
+causal = [json.loads(l) for l in
+          subprocess.run([sys.executable, kg, "--causal-only", good],
+                         capture_output=True, text=True).stdout.splitlines() if l.strip()]
+full = [json.loads(l) for l in
+        subprocess.run([sys.executable, kg, good],
+                       capture_output=True, text=True).stdout.splitlines() if l.strip()]
+# Every causal edge carries the boolean flag.
+if not all("sourced" in e and isinstance(e["sourced"], bool) for e in causal):
+    sys.exit(1)
+# The cited page (drought) is sourced:true; at least one uncited page is false.
+by_src = {(e["source"], e["verb"], e["target"]): e["sourced"] for e in causal}
+if by_src.get(("drought", "causes", "crop-failure")) is not True:
+    sys.exit(1)
+if not any(v is False for v in by_src.values()):
+    sys.exit(1)
+# Non-causal related-to edges must NOT carry the flag (additive, causal-only).
+relto = [e for e in full if e["verb"] == "related-to"]
+if not relto or any("sourced" in e for e in relto):
+    sys.exit(1)
+sys.exit(0)
+PY
+then ok "K6 causal edges carry sourced flag (cited→true, uncited→false); related-to unflagged"
+else fail "K6 causal receipt flag missing/wrong (run: python3 $KG --causal-only $GOOD)"; fi
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d KG-materializer check(s) did not pass.\n" "$RED" "$RESET" "$failures"
   exit 1
 fi
-printf "%sPassed.%s K1-K5 green — KG materializer is exact, input-sensitive, stdlib-only, read-only.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s K1-K6 green — KG materializer is exact, input-sensitive, stdlib-only, read-only, receipt-flagged.\n" "$GREEN" "$RESET"
 exit 0

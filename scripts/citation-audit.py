@@ -17,14 +17,26 @@ anchor points at). Those pairs feed the C3 entailment judge in
 runnable / self-testable with no LLM.
 
 Usage:
-  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json]
+  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage|--no-bare-urls]
 
   Default <raw-dir> is "<wiki-dir>/../raw".
 
 Output:
-  default  human report; exit 1 if any C1/C2 fails (the deterministic gate)
-  --json   one JSON object per citation on stdout (for the harness); always exit 0
-  --tsv    one TSV row per citation for the shell harness (always exit 0):
+  default   human report; exit 1 if any C1/C2 fails (the deterministic gate)
+  --json    one JSON object per citation on stdout (for the harness); always exit 0
+  --coverage  the inverse gate (vision check #5): list claim-bearing pages that
+              carry NO resolving citation; exit 1 if any exist. A page is exempt
+              when `type: navigation` (structural, points inward) or it declares
+              `provenance: none` (an explicit "makes no external claims" knob).
+  --no-bare-urls  list non-raw citations — any `(source: X)` whose target X (minus
+              a #anchor) is NOT `raw/<file>` and is NOT exactly `analysis`; exit 1 if
+              any exist. This is an ALLOWLIST: the only two legal citation targets are
+              a raw snapshot (`raw/<file>[#anchor]`) and the analysis marker
+              (`analysis`). Every web form — scheme://, www., bare host, uppercase,
+              protocol-less path — is caught by construction, no URL parsing. Web
+              sources must be snapshotted to raw/ first (via /wiki-extract), then cited
+              as raw/ so the claim is coverage-counted and entailment-checkable.
+  --tsv     one TSV row per citation for the shell harness (always exit 0):
              tag<TAB>page<TAB>line<TAB>file<TAB>anchor<TAB>c1<TAB>c2<TAB>claim_b64<TAB>evidence_b64
            claim/evidence are base64 (single-line, no tabs/newlines) — decode with
            `openssl base64 -d -A`. tag is OK when c1 ∧ c2, else BAD.
@@ -41,10 +53,32 @@ import re
 import sys
 
 CITATION_RE = re.compile(r"\(source:\s*raw/([^)#\s]+)(?:#([^)\s]+))?\)")
+# ANY inline (source: X), regardless of target — used by the allowlist check to
+# find non-raw, non-analysis targets (the inverse of CITATION_RE). The only two
+# legal targets in the wiki are `raw/<file>[#anchor]` and `analysis`; everything
+# else (every web form: scheme://, www., bare host, uppercase, protocol-less
+# path, or any junk) is a VIOLATION — the receipt isn't snapshotted, so the
+# claim is never coverage-counted or entailment-checked and the link rots.
+# An allowlist catches every web variant by construction, no URL parsing.
+ANY_CITATION_RE = re.compile(r"\(source:\s*([^)]+?)\s*\)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 TIMESTAMP_RE = re.compile(r"^\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?$")
 LINERANGE_RE = re.compile(r"^L(\d+)(?:-L?(\d+))?$")
 EVIDENCE_MAX_LINES = 40
+
+
+def body_start(lines):
+    """Index of the first body line: 0, or just past a closed leading --- block.
+
+    An UNCLOSED leading `---` is treated as no frontmatter (body starts at 0) so
+    a citation buried in a never-closed YAML-ish block still counts as body.
+    """
+    if lines[:1] != ["---"]:
+        return 0
+    try:
+        return lines.index("---", 1) + 1
+    except ValueError:
+        return 0
 
 
 def slugify(text):
@@ -74,11 +108,14 @@ def resolve_anchor(anchor, lines):
                 body = lines
         return True, "\n".join(body[:EVIDENCE_MAX_LINES]).strip()
 
-    # Timestamp anchor (#M:SS or #M:SS-M:SS): start token must appear in the raw.
+    # Timestamp anchor (#M:SS or #M:SS-M:SS): start token must appear in the raw,
+    # as a whole token — not a substring (#1:23 must not match '11:235', #2:00 must
+    # not match '12:000'). Bound it with negative lookarounds for digit/colon.
     if TIMESTAMP_RE.match(anchor):
         start = anchor.split("-", 1)[0]
+        start_re = re.compile(r"(?<![\d:])" + re.escape(start) + r"(?![\d:])")
         for i, line in enumerate(lines):
-            if start in line:
+            if start_re.search(line):
                 # If the timestamp lives in a section heading (the transcript's
                 # convention), the passage is the WHOLE section (heading to next
                 # heading) — not a fixed window, which can clip the cited claim.
@@ -94,27 +131,33 @@ def resolve_anchor(anchor, lines):
                 return True, "\n".join(lines[i: i + 8]).strip()
         return False, ""
 
-    # Line-range anchor (#L5 / #L5-L10): range within bounds.
+    # Line-range anchor (#L5 / #L5-L10): range within bounds and pointing at body,
+    # not the leading --- frontmatter (a range entirely inside frontmatter cites
+    # metadata, not content).
     m = LINERANGE_RE.match(anchor)
     if m:
         lo = int(m.group(1))
         hi = int(m.group(2)) if m.group(2) else lo
-        if 1 <= lo <= hi <= len(lines):
+        if 1 <= lo <= hi <= len(lines) and hi > body_start(lines):
             return True, "\n".join(lines[lo - 1: hi]).strip()
         return False, ""
 
-    # Heading-slug anchor: some heading slugifies to the anchor.
-    for i, line in enumerate(lines):
-        hm = HEADING_RE.match(line)
-        if hm and slugify(hm.group(1)) == anchor:
-            evidence = [line]
-            for nxt in lines[i + 1:]:
-                if HEADING_RE.match(nxt):
-                    break
-                evidence.append(nxt)
-                if len(evidence) >= EVIDENCE_MAX_LINES:
-                    break
-            return True, "\n".join(evidence).strip()
+    # Heading-slug anchor: a heading slugifies to the anchor. If MORE THAN ONE
+    # heading collides on the same slug (e.g. 'Results' and 'Results!!!'), the
+    # anchor is ambiguous — fail C2 rather than silently feed the judge the first
+    # match's passage.
+    matches = [i for i, line in enumerate(lines)
+               if (hm := HEADING_RE.match(line)) and slugify(hm.group(1)) == anchor]
+    if len(matches) == 1:
+        i = matches[0]
+        evidence = [lines[i]]
+        for nxt in lines[i + 1:]:
+            if HEADING_RE.match(nxt):
+                break
+            evidence.append(nxt)
+            if len(evidence) >= EVIDENCE_MAX_LINES:
+                break
+        return True, "\n".join(evidence).strip()
     return False, ""
 
 
@@ -171,6 +214,82 @@ def extract_claim(lines: list[str], idx: int, match_start: int) -> str:
     return cleaned or line.strip()
 
 
+def page_frontmatter(lines):
+    """Parse the leading --- frontmatter block into a flat {key: value} dict."""
+    if lines[:1] != ["---"]:
+        return {}
+    # No closing fence → not a real frontmatter block. Treat as {} (non-exempt)
+    # so an author can't open `---` + `type: navigation` and never close it to
+    # exempt a page from coverage.
+    try:
+        close = lines.index("---", 1)
+    except ValueError:
+        return {}
+    fm = {}
+    for line in lines[1:close]:
+        m = re.match(r"([A-Za-z_][\w-]*):\s*(.*)$", line)
+        if m:
+            fm[m.group(1)] = m.group(2).strip()
+    return fm
+
+
+# A page need not cite raw when it makes no external claims: structural pages
+# (indexes, dashboards, timelines) point inward, journal entries are user-owned
+# free-form (per AGENTS.md), and any page may opt out explicitly with
+# `provenance: none`. Everything else must carry provenance.
+EXEMPT_TYPES = {"navigation", "journal"}
+
+
+def page_is_exempt(fm):
+    return fm.get("type") in EXEMPT_TYPES or fm.get("provenance") == "none"
+
+
+def page_is_claim_bearing(lines):
+    """True iff the body holds at least one line that could carry a claim.
+
+    ponytail: 'claim-bearing' is defined minimally as one non-blank,
+    non-heading, non-formatting body line (reusing FORMATTING_ONLY_RE). A page
+    with only frontmatter — or empty — has zero such lines, so it makes no
+    claims and is NOT a coverage gap. Ceiling: this is line-shape only, not NLP;
+    a body line that is grammatically not an assertion (e.g. a stray prose
+    fragment) still counts as claim-bearing.
+    """
+    body = lines[body_start(lines):]
+    return any(not FORMATTING_ONLY_RE.match(line) for line in body)
+
+
+def coverage(wiki_dir, raw_dir, records):
+    """Vision check #5: pages that make claims but carry no resolving citation.
+
+    Reuses `records` (every citation + its c1/c2 verdict) to find pages with at
+    least one resolving citation; any non-exempt page NOT in that set is a gap.
+    """
+    # ponytail: a page is "covered" only if it carries at least one ANCHORED
+    # resolving citation. An anchorless whole-file cite `(source: raw/x.md)`
+    # resolves unconditionally (C1∧C2), so counting it would let a bare cite
+    # exempt a page of fabrications — the anchor is what ties a claim to a
+    # locatable passage. Anchorless cites stay resolving in the C1/C2 report
+    # (they ARE valid file references); they just don't earn coverage on their own.
+    # Ceiling: a page whose only honest source genuinely has no anchorable
+    # structure (e.g. a one-line slide) must set `provenance: none` or cite with
+    # a line range — coverage won't accept the bare file cite.
+    ok_pages = {r["page"] for r in records if r["c1"] and r["c2"] and r["anchor"]}
+    gaps = []
+    for root, _dirs, files in os.walk(wiki_dir):
+        for name in sorted(files):
+            if not name.endswith(".md") or os.path.relpath(os.path.join(root, name), wiki_dir) in ok_pages:
+                continue
+            page = os.path.relpath(os.path.join(root, name), wiki_dir)
+            page_lines = raw_lines(os.path.join(root, name))
+            if page_is_exempt(page_frontmatter(page_lines)):
+                continue
+            # No claim-bearing body line → nothing to cite → not a gap.
+            if not page_is_claim_bearing(page_lines):
+                continue
+            gaps.append(page)
+    return sorted(gaps)
+
+
 def audit(wiki_dir, raw_dir):
     records = []
     for root, _dirs, files in os.walk(wiki_dir):
@@ -179,7 +298,22 @@ def audit(wiki_dir, raw_dir):
                 continue
             page = os.path.relpath(os.path.join(root, name), wiki_dir)
             lines = raw_lines(os.path.join(root, name))
+            # Only body lines yield citation records — a `(source: ...)` placed
+            # inside the leading --- frontmatter must NOT satisfy coverage while
+            # the body stays uncited.
+            start = body_start(lines)
+            in_fence = False
             for idx, line in enumerate(lines):
+                if idx < start:
+                    continue
+                # Fenced code block (``` or ~~~): a citation inside it is showing
+                # the SYNTAX, not making a claim — skip matching while open. Mirror
+                # how the frontmatter block is skipped above.
+                if line.lstrip().startswith(("```", "~~~")):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
                 for m in CITATION_RE.finditer(line):
                     rawfile, anchor = m.group(1), m.group(2)
                     # Skip documentation-of-the-syntax, not a real citation:
@@ -187,8 +321,24 @@ def audit(wiki_dir, raw_dir):
                     if ("<" in rawfile or rawfile == "..." or rawfile.startswith("...")
                             or (anchor and ("<" in anchor or anchor == "..."))):
                         continue
+                    # ponytail: a NUL/control char in the target is malformed —
+                    # fail C1 without calling realpath (which raises ValueError on
+                    # an embedded NUL, crashing the whole gate).
+                    if any(ord(ch) < 32 or ch == "\x7f" for ch in rawfile):
+                        records.append({"page": page, "line": idx + 1, "file": rawfile,
+                                        "anchor": anchor, "c1": False, "c2": False,
+                                        "claim": extract_claim(lines, idx, m.start()), "evidence": ""})
+                        continue
                     rawpath = os.path.join(raw_dir, rawfile)
-                    c1 = os.path.isfile(rawpath)
+                    # ponytail: path-traversal confinement. A target like
+                    # `raw/../secret.txt` joins to a file OUTSIDE raw_dir; if it
+                    # exists C1 would falsely resolve, earning coverage and feeding
+                    # the entailment judge an out-of-tree file. Require the realpath
+                    # to stay inside realpath(raw_dir) — escapes fail C1.
+                    real_raw = os.path.realpath(raw_dir)
+                    real_target = os.path.realpath(rawpath)
+                    confined = real_target == real_raw or real_target.startswith(real_raw + os.sep)
+                    c1 = confined and os.path.isfile(rawpath)
                     c2, evidence = (False, "")
                     if c1:
                         c2, evidence = resolve_anchor(anchor, raw_lines(rawpath))
@@ -205,6 +355,63 @@ def audit(wiki_dir, raw_dir):
     return records
 
 
+def _is_allowed_target(target):
+    """True iff a citation target is on the allowlist: a raw snapshot or analysis.
+
+    The target is trimmed and its #anchor (if any) ignored — only the file/marker
+    part decides. Legal: `raw/<file>` (with or without an anchor) and exactly
+    `analysis`. Everything else — every web form (scheme://, www., bare host,
+    uppercase, protocol-less path) or any other junk — is NOT allowed.
+
+    ponytail: normalize-and-confine. A bare `startswith('raw/')` lets a traversal
+    target like `raw/../secret.txt` pass the allowlist while pointing OUTSIDE raw/.
+    Normalize the path and require it stay under raw/: normpath('raw/../secret.txt')
+    == 'secret.txt' (escapes → reject), normpath('raw//x') == 'raw/x' (stays → ok).
+    Absolute (/raw/x) and ./raw/x are already rejected by the prefix test below.
+    """
+    base = target.strip().split("#", 1)[0]
+    # ponytail: a NUL/control char in a target is malformed — reject (and never
+    # let it reach os.path.realpath, which raises ValueError on an embedded NUL).
+    if any(ord(c) < 32 or c == "\x7f" for c in base):
+        return False
+    if base == "analysis":
+        return True
+    if not base.startswith("raw/"):
+        return False
+    norm = os.path.normpath(base)
+    return norm == "raw" or norm.startswith("raw" + os.sep)
+
+
+def bare_url_cites(wiki_dir):
+    """Every non-raw, non-analysis citation in wiki/ — an allowlist violation.
+
+    Returns sorted [(page, line, target)]. Skips fenced code blocks (showing
+    syntax, not citing) the same way audit() does. The ONLY legal citation
+    targets are `raw/<file>[#anchor]` (snapshot a web source via /wiki-extract
+    first) and `analysis`; any other target — every web URL form by
+    construction — is a VIOLATION.
+    """
+    hits = []
+    for root, _dirs, files in os.walk(wiki_dir):
+        for name in sorted(files):
+            if not name.endswith(".md"):
+                continue
+            page = os.path.relpath(os.path.join(root, name), wiki_dir)
+            lines = raw_lines(os.path.join(root, name))
+            in_fence = False
+            for idx, line in enumerate(lines):
+                if line.lstrip().startswith(("```", "~~~")):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
+                for m in ANY_CITATION_RE.finditer(line):
+                    target = m.group(1)
+                    if not _is_allowed_target(target):
+                        hits.append((page, idx + 1, target.strip()))
+    return sorted(hits)
+
+
 def main(argv):
     args = [a for a in argv if not a.startswith("--")]
     raw_dir = None
@@ -214,7 +421,7 @@ def main(argv):
         raw_dir = argv[i + 1]
         args = [a for a in args if a != raw_dir]
     if len(args) != 1:
-        sys.stderr.write("usage: citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json]\n")
+        sys.stderr.write("usage: citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage|--no-bare-urls]\n")
         return 2
     wiki_dir = args[0]
     if raw_dir is None:
@@ -223,7 +430,31 @@ def main(argv):
         sys.stderr.write(f"error: not a directory: {wiki_dir}\n")
         return 2
 
+    if "--no-bare-urls" in argv:
+        # Deterministic, raw-dir-independent: scan wiki/ for citation targets that
+        # aren't on the allowlist (raw/<file> or analysis).
+        hits = bare_url_cites(wiki_dir)
+        print(f"citation-audit --no-bare-urls — {wiki_dir}")
+        if not hits:
+            print("  every citation target is raw/<file> or 'analysis'")
+            return 0
+        print(f"  {len(hits)} non-raw citation(s) — citation target must be raw/<file> (snapshot web sources via /wiki-extract first) or 'analysis':")
+        for page, line, target in hits:
+            print(f"  ✗ {page}:{line} -> (source: {target})")
+        return 1
+
     records = audit(wiki_dir, raw_dir)
+
+    if "--coverage" in argv:
+        gaps = coverage(wiki_dir, raw_dir, records)
+        print(f"citation-coverage — {wiki_dir}")
+        if not gaps:
+            print("  every claim-bearing page carries a resolving citation")
+            return 0
+        print(f"  {len(gaps)} page(s) make claims with no resolving citation:")
+        for p in gaps:
+            print(f"  ✗ {p} — cite a raw source, or set 'provenance: none' if it makes no external claims")
+        return 1
 
     if as_json:
         for r in records:

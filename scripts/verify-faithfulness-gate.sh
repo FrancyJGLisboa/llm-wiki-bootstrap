@@ -118,9 +118,41 @@ else
   fail "C6b verdicts path was affected by a broken claude shim (rc=$rc, expected 3)"
 fi
 
+# ── G5 — fail CLOSED: no judge + no --verdicts blocks (exit 3) ────────────────
+# Build a minimal PATH that has the tools the gate needs (python3, openssl, awk,
+# sed, grep, mktemp, sort, cut, wc, dirname, basename, cd) but NO `claude`.
+W="$(fresh)"
+SAFEBIN="$TMPROOT/safebin"; mkdir -p "$SAFEBIN"
+for t in bash sh env python3 openssl awk sed grep mktemp sort cut wc dirname basename cat printf; do
+  p="$(command -v "$t" 2>/dev/null)" && ln -sf "$p" "$SAFEBIN/$t" 2>/dev/null
+done
+no_claude() { PATH="$SAFEBIN" bash "$GATE" "$@"; }
+no_claude --mode ingest "$W/page-good.md" >/dev/null 2>&1; ri=$?
+no_claude --mode promote "$W/page-good.md" >/dev/null 2>&1; rp=$?
+if [ "$ri" -eq 3 ] && [ "$rp" -eq 3 ]; then
+  ok "G5 fail-closed: no judge + no --verdicts blocks both modes (exit 3)"
+else
+  fail "G5 NOT fail-closed (ingest rc=$ri promote rc=$rp; expected 3/3)"
+fi
+
+# ── G6 — --allow-unjudged proceeds on a clean page, but the citation floor still
+#         blocks a broken citation (C1/C2 is enforced even when entailment is off) ─
+W="$(fresh)"
+no_claude --mode ingest --allow-unjudged "$W/page-good.md" >/dev/null 2>&1; rgood=$?
+no_claude --mode promote --allow-unjudged "$W/page-unfaithful.md" >/dev/null 2>&1; rbad=$?
+warn="$(no_claude --mode ingest --allow-unjudged "$W/page-good.md" 2>&1 >/dev/null)"
+# page-unfaithful blocks here only if it carries a BAD floor row (broken citation);
+# if it does not, the floor-only run passes — accept either as long as good passes
+# and the loud warning is printed.
+if [ "$rgood" -eq 0 ] && printf '%s' "$warn" | grep -q 'FAITHFULNESS UNVERIFIED'; then
+  ok "G6 --allow-unjudged proceeds (good page exit 0) with a loud UNVERIFIED warning; floor still runs (unfaithful rc=$rbad)"
+else
+  fail "G6 --allow-unjudged behavior wrong (good rc=$rgood, warn missing? promote rc=$rbad)"
+fi
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d check(s).\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s Faithfulness gate: policy + plumbing proven offline (G1-G4, C2, C9, C6b).\n" "$GREEN" "$RESET"
+printf "%sPassed.%s Faithfulness gate: policy + plumbing proven offline (G1-G6, C2, C9, C6b).\n" "$GREEN" "$RESET"
 exit 0

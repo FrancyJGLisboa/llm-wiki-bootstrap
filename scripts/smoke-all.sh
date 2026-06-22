@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R16) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R20) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 21 checks pass.
+# Exit 0 iff all 25 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 21 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R16 guards). This is the CI path — the build phase is a precondition that
+#   only the 25 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R20 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R16 ────
-section "Regression guards (R1–R16)"
+# ──── REGRESSION GUARDS R1–R20 ────
+section "Regression guards (R1–R20)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -76,7 +76,10 @@ fi
 # -I skips binary files: committed PDFs (tests/canary/canary-scanned.pdf,
 # docs/files-*/*.pdf) can match the patterns on raw bytes and produce a
 # "Binary file … matches" false positive — R3 is a text-content guard.
-R3_HITS="$(grep -rIE -f "$SCRIPT_DIR/r3-obsidian-patterns.txt" \
+# --include='*.md' scopes to markdown: the block-level HTML patterns would
+# otherwise flag legitimate standalone .html docs (docs/pitch-*.html). R3 guards
+# the wiki's CommonMark purity, not hand-authored HTML artifacts.
+R3_HITS="$(grep -rIE --include='*.md' -f "$SCRIPT_DIR/r3-obsidian-patterns.txt" \
             wiki/ tests/canary/ templates/ docs/ 2>/dev/null || true)"
 if [ -z "$R3_HITS" ]; then
   ok "R3 no Obsidian-flavored markdown in wiki/ tests/canary/ templates/ docs/"
@@ -207,6 +210,44 @@ else
   record_fail "R16 verify-faithfulness-gate.sh exits non-zero (faithfulness gate regression)"
 fi
 
+# R17 — citation coverage (vision check #5): the --coverage gate flags pages
+# that make claims with no resolving citation, and exempts type:navigation and
+# provenance:none. Catches the inverse of R8 — claims with no source at all.
+if "$SCRIPT_DIR/verify-citation-coverage.sh" >/dev/null 2>&1; then
+  ok "R17 verify-citation-coverage.sh exits 0 (uncited claims flagged, exemptions honored)"
+else
+  record_fail "R17 verify-citation-coverage.sh exits non-zero (coverage gate regression)"
+fi
+
+# R18 — bundle round-trip (V3): package a fixture wiki, verify it (exit 0), then
+# tamper (modify a file / add an unmanifested file / break a citation / add an
+# uncited claim page) and assert each is rejected. Proves package-wiki + verify-bundle
+# gates (incl. G4/B5 coverage) actually bite. No LLM/key.
+if "$SCRIPT_DIR/verify-bundle-roundtrip.sh" >/dev/null 2>&1; then
+  ok "R18 verify-bundle-roundtrip.sh exits 0 (package/verify gates bite on tamper)"
+else
+  record_fail "R18 verify-bundle-roundtrip.sh exits non-zero (bundle round-trip regression)"
+fi
+
+# R19 — REAL-wiki coverage gate (V5): R17 proves the mechanism on a synthetic
+# fixture; this gates the repo's ACTUAL wiki/ so a committed uncited claim fails CI.
+if python3 "$SCRIPT_DIR/citation-audit.py" wiki --raw raw --coverage >/dev/null 2>&1; then
+  ok "R19 real wiki/ passes citation coverage (every claim-bearing page is sourced)"
+else
+  record_fail "R19 real wiki/ has an uncited claim-bearing page (citation-audit --coverage)"
+fi
+
+# R20 — bare-web-URL guard (V2 gap 3): citation-audit.py --no-bare-urls flags
+# bare `(source: <url>)` cites (web sources that dodge the raw/-only floor) and
+# passes raw-snapshot cites; the repo's REAL wiki/ must carry zero bare-url cites.
+# Closes the "ships with receipts" hole — web sources must be snapshotted to raw/
+# before citing so the claim is coverage-counted and entailment-checkable.
+if "$SCRIPT_DIR/verify-no-bare-urls.sh" >/dev/null 2>&1; then
+  ok "R20 verify-no-bare-urls.sh exits 0 (bare web cites flagged; real wiki/ clean)"
+else
+  record_fail "R20 verify-no-bare-urls.sh exits non-zero (bare-web-URL guard regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -217,7 +258,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 21 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 25 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

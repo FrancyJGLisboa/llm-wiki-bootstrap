@@ -5,6 +5,8 @@
 #   D2 hubs   : the most-connected concept is identified
 #   D3 bridge : the widest-connection (diameter) path spans the graph (≥4 hops)
 #   D4 stdlib-only
+#   D5 receipts: a chain resting on an uncited causal edge is visibly marked
+#   D6 receipts: a chain from fully-cited pages is NOT marked
 #
 # Usage: ./scripts/verify-discover.sh   Exit: 0 all green, 1 a check failed.
 
@@ -50,6 +52,28 @@ sys.exit(1 if (mods - set(sys.stdlib_module_names) - {""}) else 0)
 PY
 then ok "D4 wiki-discover.py is stdlib-only"
 else fail "D4 wiki-discover.py imports a non-stdlib module"; fi
+
+# D5 — the fixture's marquee chain rests on uncited edges (only drought.md
+# carries a receipt), so its chain line must wear the unsourced marker.
+chain_line=$(grep 'drought → crop-failure → price-spike → export-ban' <<<"$REPORT" | grep '##' -v | head -1)
+if grep -q 'unsourced' <<<"$chain_line"; then
+  ok "D5 uncited chain marked unsourced"
+else fail "D5 uncited chain NOT marked (receipts gap): ${chain_line:-<missing>}"; fi
+
+# D6 — a chain whose every source page carries a (source: raw/...) receipt must
+# NOT be marked. Build a throwaway fully-cited chain a→b→c.
+TMP=$(mktemp -d)
+trap 'rm -rf "$TMP"' EXIT
+for n in alpha beta gamma; do
+  printf '# %s\n\nBacked by a receipt (source: raw/%s.md#x).\n\n## Related\n' "$n" "$n" >"$TMP/$n.md"
+done
+printf -- '- [[beta]] causes — a leads to b\n'  >>"$TMP/alpha.md"
+printf -- '- [[gamma]] causes — b leads to c\n' >>"$TMP/beta.md"
+CITED=$(python3 "$KG" "$TMP" | python3 "$DISC")
+cited_line=$(grep 'alpha → beta → gamma' <<<"$CITED" | head -1)
+if [ -n "$cited_line" ] && ! grep -q 'unsourced' <<<"$cited_line"; then
+  ok "D6 fully-cited chain left unmarked"
+else fail "D6 cited chain wrongly marked or missing: ${cited_line:-<missing>}"; fi
 
 echo
 if [ "$failures" -gt 0 ]; then

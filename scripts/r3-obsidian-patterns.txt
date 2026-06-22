@@ -1,3 +1,9 @@
-^> \[!
-^%%
-^```dataview
+^[[:space:]]*>[[:space:]]?\[![a-zA-Z]
+[^`]>[[:space:]]?\[![a-zA-Z]
+[^`]%%[^`%][^%]*%%
+^%%[^`%][^%]*%%
+^[[:space:]]*~~~+[[:space:]]*dataview
+^[[:space:]]*```dataview
+^[[:space:]]*<(div|table|script|iframe|style|details|summary)( |>|/)
+^[[:space:]]*\[![a-zA-Z]
+^[[:space:]]*</(div|table|script|iframe|style|details|summary)[[:space:]]*>
