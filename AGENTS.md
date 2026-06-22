@@ -212,6 +212,8 @@ These edges are materialized — read-only, stdlib-only, never at ingest — by 
 
 Any claim that came from a raw source must include `(source: <raw-file>#<anchor>)` inline. Example: `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`. The anchor can be a timestamp, heading, or line range.
 
+The receipts rule extends to the web: **web sources must be snapshotted into `raw/` (via `/wiki-extract`) before being cited** — no bare external URLs in `wiki/`. A bare `(source: <url>)` is invisible to the citation floor (not coverage-counted, not entailment-checkable) and rots; `scripts/citation-audit.py <wiki> --no-bare-urls` is the deterministic gate (exit 1 on any bare web cite), and `/wiki-query` promotion blocks one.
+
 Pages with `source: analysis` must say so visibly in the body (e.g., "This page is interpretation, not extracted from the video.").
 
 ### Optional `## Flashcards` section

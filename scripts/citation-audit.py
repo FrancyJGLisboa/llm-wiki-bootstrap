@@ -17,7 +17,7 @@ anchor points at). Those pairs feed the C3 entailment judge in
 runnable / self-testable with no LLM.
 
 Usage:
-  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage]
+  scripts/citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage|--no-bare-urls]
 
   Default <raw-dir> is "<wiki-dir>/../raw".
 
@@ -28,6 +28,10 @@ Output:
               carry NO resolving citation; exit 1 if any exist. A page is exempt
               when `type: navigation` (structural, points inward) or it declares
               `provenance: none` (an explicit "makes no external claims" knob).
+  --no-bare-urls  list bare web citations — `(source: <url>)` where <url> is a web
+              URL (has '://' or starts with 'www.'), NOT a raw/ path; exit 1 if any
+              exist. Web sources must be snapshotted to raw/ first, then cited as
+              raw/ so the claim is coverage-counted and entailment-checkable.
   --tsv     one TSV row per citation for the shell harness (always exit 0):
              tag<TAB>page<TAB>line<TAB>file<TAB>anchor<TAB>c1<TAB>c2<TAB>claim_b64<TAB>evidence_b64
            claim/evidence are base64 (single-line, no tabs/newlines) — decode with
@@ -45,6 +49,13 @@ import re
 import sys
 
 CITATION_RE = re.compile(r"\(source:\s*raw/([^)#\s]+)(?:#([^)\s]+))?\)")
+# Bare web citation: any (source: X) whose X is a web URL (contains '://' or
+# starts with 'www.') rather than a raw/ path. These dodge the raw/-only
+# CITATION_RE above, so the cited claim is never coverage-counted or
+# entailment-checked — and the receipt is a rot-prone external link. The vision
+# requires web sources to be SNAPSHOTTED into raw/ first, then cited as raw/.
+BARE_URL_CITATION_RE = re.compile(
+    r"\(source:\s*((?:[a-zA-Z][a-zA-Z0-9+.-]*://|www\.)[^)\s]+)\)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 TIMESTAMP_RE = re.compile(r"^\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?$")
 LINERANGE_RE = re.compile(r"^L(\d+)(?:-L?(\d+))?$")
@@ -323,6 +334,32 @@ def audit(wiki_dir, raw_dir):
     return records
 
 
+def bare_url_cites(wiki_dir):
+    """Every bare web citation in wiki/ — a `(source: <url>)` that isn't raw/.
+
+    Returns sorted [(page, line, url)]. Skips fenced code blocks (showing
+    syntax, not citing) the same way audit() does. A bare web URL is a
+    VIOLATION: the source must be snapshotted into raw/ and cited as raw/.
+    """
+    hits = []
+    for root, _dirs, files in os.walk(wiki_dir):
+        for name in sorted(files):
+            if not name.endswith(".md"):
+                continue
+            page = os.path.relpath(os.path.join(root, name), wiki_dir)
+            lines = raw_lines(os.path.join(root, name))
+            in_fence = False
+            for idx, line in enumerate(lines):
+                if line.lstrip().startswith(("```", "~~~")):
+                    in_fence = not in_fence
+                    continue
+                if in_fence:
+                    continue
+                for m in BARE_URL_CITATION_RE.finditer(line):
+                    hits.append((page, idx + 1, m.group(1)))
+    return sorted(hits)
+
+
 def main(argv):
     args = [a for a in argv if not a.startswith("--")]
     raw_dir = None
@@ -332,7 +369,7 @@ def main(argv):
         raw_dir = argv[i + 1]
         args = [a for a in args if a != raw_dir]
     if len(args) != 1:
-        sys.stderr.write("usage: citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json]\n")
+        sys.stderr.write("usage: citation-audit.py <wiki-dir> [--raw <raw-dir>] [--json|--tsv|--coverage|--no-bare-urls]\n")
         return 2
     wiki_dir = args[0]
     if raw_dir is None:
@@ -340,6 +377,18 @@ def main(argv):
     if not os.path.isdir(wiki_dir):
         sys.stderr.write(f"error: not a directory: {wiki_dir}\n")
         return 2
+
+    if "--no-bare-urls" in argv:
+        # Deterministic, raw-dir-independent: scan wiki/ for bare web citations.
+        hits = bare_url_cites(wiki_dir)
+        print(f"citation-audit --no-bare-urls — {wiki_dir}")
+        if not hits:
+            print("  no bare web citations (every web source is snapshotted to raw/)")
+            return 0
+        print(f"  {len(hits)} bare web citation(s) — snapshot the source to raw/ and cite raw/<slug>#<anchor>:")
+        for page, line, url in hits:
+            print(f"  ✗ {page}:{line} -> (source: {url})")
+        return 1
 
     records = audit(wiki_dir, raw_dir)
 

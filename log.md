@@ -2,6 +2,10 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — vision hardening wave 5 (web sources must snapshot to raw/)
+
+Closed V2 gap 3 (web claims invisible to the gate). Promoted web findings can no longer be cited with a bare `(source: <url>)` — the receipts rule now extends to the web: a web source must be snapshotted into `raw/` (via `/wiki-extract`) before citing, so the claim is raw-backed, coverage-counted, and entailment-checkable. New deterministic guard `citation-audit.py --no-bare-urls` (flags `(source: …://…)` / `www.`, leaves `(source: analysis)` and `raw/` alone), wired as smoke **R20** (25 checks) and as a promote-mode floor in the faithfulness gate (bare-url page → exit 3). `/wiki-query` promote prose + AGENTS.md updated; `verify-no-bare-urls.sh` added. The actual fetch stays LLM-driven (CI has no network); the guard is the keyless mechanical enforcement.
+
 ## 2026-06-22 — vision hardening waves 2–4 (gate, features, discover, edges)
 
 Re-audit raised the vision from 72%→88%→(targeting ≥99%). Wave 2: faithfulness gate fails CLOSED (exit 3) with no judge (`--allow-unjudged` opt-out + loud warning); `/wiki-query` promote path now invokes the gate before synthesis; flashcards carry a Source column; KG stamps causal edges `sourced:true/false`; diagram contract requires raw-anchored footers. Wave 3: CI gains R18 (bundle round-trip) + R19 (real-wiki coverage gate), R3 scoped to `*.md` + block-HTML patterns (22→24 checks). Wave 4 (closing re-audit residuals): **`wiki-discover.py` now reads the `sourced` flag and marks causal chains resting on uncited edges `⚠ [unsourced]`** (was a real HIGH leak — KG stamped the flag but discover ignored it); flashcard citation is now card-local (closed the sticky-citation laundering bypass); `citation-audit.py` skips fenced code blocks and no longer false-flags empty/frontmatter-only pages; verify-bundle success line + README + SELLING + ci.yml label all corrected to not overclaim.
