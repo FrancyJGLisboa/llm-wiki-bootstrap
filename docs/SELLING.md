@@ -14,9 +14,12 @@ Not the markdown — markdown is trivially copied, like an ebook. They are buyin
 
 1. **Your curation** — which sources made the cut, and your synthesis of them.
 2. **Provenance with receipts** — every claim cites a raw source the buyer can
-   open; `./scripts/verify-bundle.sh` proves the bundle is intact and every
-   citation resolves. No PDF course or Notion template ships verifiable
-   provenance.
+   open; `./scripts/verify-bundle.sh` proves **citation integrity**: the bundle
+   is intact, every citation resolves to a real raw anchor, and every
+   claim-bearing page is sourced. (It does not re-prove semantic entailment —
+   that each cited passage truly supports its claim. That C3 check needs an LLM
+   and is a write-time guarantee the seller attests to, not reproduced offline.)
+   No PDF course or Notion template ships verifiable provenance.
 3. **The update stream** — your wiki keeps compounding; theirs goes stale.
    Recurring revenue lives here, not in the artifact (see "Distribution").
 
@@ -86,9 +89,11 @@ The knowledge graph and dashboards regenerate mechanically.
 ```
 
 Packaging is gated — it **refuses** to ship a wiki that fails its own checks:
-malformed raw frontmatter (G1), wiki pages missing required keys (G2), or any
-citation that does not resolve (G3). A bundle that packages is a bundle whose
-provenance a buyer cannot trivially break.
+malformed raw frontmatter (G1), wiki pages missing required keys (G2), any
+citation that does not resolve (G3), or any claim-bearing page that carries no
+citation (G4 — coverage; a wiki of uncited claims would otherwise package
+clean). A bundle that packages is a bundle whose provenance a buyer cannot
+trivially break.
 
 The bundle contains the knowledge asset (`raw/`, `wiki/`, `AGENTS.md`,
 `log.md`), the slash commands and runtime scripts the buyer needs, a generated
@@ -99,15 +104,30 @@ git history, sessions, inbox, and env files cannot leak into it.
 The buyer verifies with zero infrastructure:
 
 ```bash
-./scripts/verify-bundle.sh             # pristine bundle: integrity + citations
+./scripts/verify-bundle.sh             # pristine bundle: integrity + citation integrity
 ./scripts/verify-bundle.sh --post-use  # after they extend it: original files still intact
 ```
 
-Optionally sign the artifact so "genuinely from you" is checkable:
+This proves **citation integrity**, not semantic faithfulness: the bundle is
+intact, citations resolve, and every claim-bearing page is sourced. It does not
+re-run the C3 entailment judge (that each passage supports its claim) — that
+needs an LLM and is your write-time attestation, not something the buyer
+reproduces offline.
+
+Authenticity is opt-in. By default a bundle is **unsigned** — its MANIFEST
+proves "intact since packaging", not "genuinely from you" (tamper + regenerate
+the MANIFEST is undetectable). To sign, package with a gpg key id in
+`WIKI_SIGN_KEY`; packaging then bundles `MANIFEST.sig` + `MANIFEST.pubkey`, and
+`verify-bundle.sh` checks the signature automatically:
 
 ```bash
-gpg --detach-sign dist/<bundle>.tar.gz
+WIKI_SIGN_KEY=<your-gpg-id> ./scripts/package-wiki.sh
 ```
+
+(The bundled public key is trust-on-first-use, not a chain of trust — it proves
+the MANIFEST was signed by whoever holds that key, which the buyer cross-checks
+against your published fingerprint. You can also sign the tarball itself:
+`gpg --detach-sign dist/<bundle>.tar.gz`.)
 
 ## Distribution patterns
 

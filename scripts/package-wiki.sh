@@ -17,9 +17,16 @@
 #   G1  every raw file hashes cleanly (catches malformed frontmatter)
 #   G2  every wiki page has the required frontmatter keys
 #   G3  every citation resolves — citation-audit.py C1+C2, zero BAD
+#   G4  every claim-bearing page is sourced — citation-audit.py --coverage
+#       (a wiki of uncited claims would otherwise package clean)
 #
 # The buyer verifies the artifact with the bundled scripts/verify-bundle.sh
 # (MANIFEST hash check + the same citation audit), needing no seller infra.
+#
+# Scope of the integrity claim: the bundle proves citations RESOLVE (G3) and
+# every claim-bearing page is COVERED (G4). Semantic entailment — that each
+# cited passage actually supports its claim, the C3 judge — is a WRITE-TIME
+# guarantee the seller attests to; it needs an LLM and is not reproduced here.
 #
 # Usage:
 #   scripts/package-wiki.sh [<wiki-root>] [--version <v>] [--out <dir>]
@@ -60,6 +67,12 @@ PYBIN="$(command -v python3 || command -v python || true)"
 [ -n "$PYBIN" ] || fail "python3 required — packaging will not ship unaudited citations" 2
 command -v tar >/dev/null 2>&1 || fail "tar required" 2
 
+# Refuse symlinks: a portable asset must not depend on host paths (a symlink
+# like raw/leak.md -> /tmp/secret would resolve on the buyer's machine, not
+# ship its target). cp -Rp + tar store symlinks verbatim, so reject up front.
+symlinks="$(find "$ROOT" -path "$ROOT/.git" -prune -o -type l -print | head -10)"
+[ -z "$symlinks" ] || { printf '  symlink: %s\n' $symlinks >&2; fail "symlinks present — a portable asset must not depend on host paths; remove them before packaging" 2; }
+
 NAME="$(basename "$ROOT" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//; s/-$//')"
 BUNDLE="${NAME}-${VERSION}"
 echo "packaging: $ROOT → $OUT/$BUNDLE.tar.gz"
@@ -93,6 +106,13 @@ if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" >/d
   fail "G3 citations: broken citations found — a buyer would catch this; fix before packaging"
 fi
 ok "G3 citations: every citation resolves to a real raw anchor"
+
+# ── Gate G4: every claim-bearing page is sourced (coverage) ─────────────────
+if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" --coverage >/dev/null 2>&1; then
+  "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" --coverage 2>&1 | grep '✗' | head -5 >&2
+  fail "G4 coverage: claim-bearing page(s) carry no citation — a buyer would catch this; cite them or set 'provenance: none'"
+fi
+ok "G4 coverage: every claim-bearing page carries a resolving citation"
 
 # ── Stage the bundle (include list only) ────────────────────────────────────
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/package-wiki.XXXXXX")"
@@ -150,7 +170,8 @@ base. You query it with the AI tool you already use — no service, no account.
    to confirm your environment.
 2. Ask your first question: \`/wiki-query "<anything about this topic>"\`
 3. Every answer cites its sources — raw material ships in \`raw/\`, claims
-   link to it. Verify the bundle is intact and faithful at any time:
+   link to it. Verify citation integrity (intact + citations resolve +
+   every claim-bearing page is sourced) at any time:
 
        ./scripts/verify-bundle.sh
 
@@ -172,6 +193,24 @@ EOF
     done
   } > MANIFEST
 )
+# Optional authenticity: if a signing key is named (WIKI_SIGN_KEY) and gpg is
+# present, emit a detached signature of the MANIFEST + the public key, so the
+# buyer can verify "genuinely from you". Otherwise the bundle is UNSIGNED and
+# integrity only proves "intact since packaging", not authenticity.
+if [ -n "${WIKI_SIGN_KEY:-}" ] && command -v gpg >/dev/null 2>&1; then
+  if gpg --batch --yes --local-user "$WIKI_SIGN_KEY" --detach-sign --armor \
+       --output "$DEST/MANIFEST.sig" "$DEST/MANIFEST" 2>/dev/null \
+     && gpg --batch --yes --armor --export "$WIKI_SIGN_KEY" > "$DEST/MANIFEST.pubkey" 2>/dev/null \
+     && [ -s "$DEST/MANIFEST.pubkey" ]; then
+    ok "signed MANIFEST with key $WIKI_SIGN_KEY (MANIFEST.sig + MANIFEST.pubkey bundled)"
+  else
+    rm -f "$DEST/MANIFEST.sig" "$DEST/MANIFEST.pubkey"
+    echo "⚠ signing requested (WIKI_SIGN_KEY=$WIKI_SIGN_KEY) but gpg failed — bundle is UNSIGNED" >&2
+  fi
+else
+  echo "⚠ UNSIGNED bundle: integrity proves 'intact since packaging', not authenticity (set WIKI_SIGN_KEY + gpg to sign)"
+fi
+
 files=$(find "$DEST" -type f | wc -l | tr -d ' ')
 ok "staged $files files; MANIFEST written"
 
@@ -185,5 +224,6 @@ echo
 echo "Before distributing:"
 echo "  1. Fill in $BUNDLE/LICENSE (a stub was generated unless you ship your own)."
 echo "  2. Confirm raw/ contains ONLY content you have the right to redistribute."
-echo "  3. Optionally sign it: gpg --detach-sign \"$OUT/$BUNDLE.tar.gz\""
+echo "  3. For authenticity, package with WIKI_SIGN_KEY=<your-gpg-id> set (signs"
+echo "     the MANIFEST), or sign the tarball: gpg --detach-sign \"$OUT/$BUNDLE.tar.gz\""
 exit 0

@@ -2,6 +2,12 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-06-22 — vision hardening wave 1 (floor + coverage + bundle)
+
+Adversarial audit of the 6 vision checks (72% achieved) drove fixes. Floor/coverage (`citation-audit.py`): skip frontmatter when matching citations; `page_frontmatter` returns {} on an unclosed fence (no self-exempt); timestamp anchors match on a token boundary (not substring); reject line-ranges inside frontmatter; fail C2 on duplicate-slug ambiguity; **anchorless whole-file cites no longer count toward `--coverage`** (a bare file cite could exempt a page of fabrications); `journal` added to `EXEMPT_TYPES`. Bundle: package-wiki gains **G4 coverage gate**, verify-bundle gains **B5**; both refuse symlinks; verify-bundle hard-fails on missing python3 and runs faithfulness checks over the full tree even under `--post-use`; optional `WIKI_SIGN_KEY` detached signature; buyer-facing wording downgraded from "faithfulness" to "citation integrity" (C3 entailment is a write-time seller attestation, not reproducible offline). New `verify-bundle-roundtrip.sh`.
+
+- **Wiki content:** `karpathy-video-slide-ingest-pipeline-summary.md` re-cited with `#body-verbatim-numbered-0107` (was an anchorless whole-file cite the stricter coverage gate correctly flagged).
+
 ## 2026-06-22 — citation-coverage gate (vision check #5)
 
 Added the inverse of the citation-audit floor: instead of "do citations resolve?", **"does every claim-bearing page carry one?"**. `scripts/citation-audit.py --coverage` lists pages with no resolving `(source: raw/...)` citation and exits 1 if any exist (R17 in `smoke-all.sh`, test: `scripts/verify-citation-coverage.sh`). Two exemptions: `type: navigation` (structural pages point inward) and a new optional `provenance: none` frontmatter knob for meta pages that make no external claims.

@@ -51,6 +51,20 @@ LINERANGE_RE = re.compile(r"^L(\d+)(?:-L?(\d+))?$")
 EVIDENCE_MAX_LINES = 40
 
 
+def body_start(lines):
+    """Index of the first body line: 0, or just past a closed leading --- block.
+
+    An UNCLOSED leading `---` is treated as no frontmatter (body starts at 0) so
+    a citation buried in a never-closed YAML-ish block still counts as body.
+    """
+    if lines[:1] != ["---"]:
+        return 0
+    try:
+        return lines.index("---", 1) + 1
+    except ValueError:
+        return 0
+
+
 def slugify(text):
     """GitHub-style heading slug: lowercase, drop punctuation, spaces -> hyphens."""
     text = text.strip().lower()
@@ -78,11 +92,14 @@ def resolve_anchor(anchor, lines):
                 body = lines
         return True, "\n".join(body[:EVIDENCE_MAX_LINES]).strip()
 
-    # Timestamp anchor (#M:SS or #M:SS-M:SS): start token must appear in the raw.
+    # Timestamp anchor (#M:SS or #M:SS-M:SS): start token must appear in the raw,
+    # as a whole token — not a substring (#1:23 must not match '11:235', #2:00 must
+    # not match '12:000'). Bound it with negative lookarounds for digit/colon.
     if TIMESTAMP_RE.match(anchor):
         start = anchor.split("-", 1)[0]
+        start_re = re.compile(r"(?<![\d:])" + re.escape(start) + r"(?![\d:])")
         for i, line in enumerate(lines):
-            if start in line:
+            if start_re.search(line):
                 # If the timestamp lives in a section heading (the transcript's
                 # convention), the passage is the WHOLE section (heading to next
                 # heading) — not a fixed window, which can clip the cited claim.
@@ -98,27 +115,33 @@ def resolve_anchor(anchor, lines):
                 return True, "\n".join(lines[i: i + 8]).strip()
         return False, ""
 
-    # Line-range anchor (#L5 / #L5-L10): range within bounds.
+    # Line-range anchor (#L5 / #L5-L10): range within bounds and pointing at body,
+    # not the leading --- frontmatter (a range entirely inside frontmatter cites
+    # metadata, not content).
     m = LINERANGE_RE.match(anchor)
     if m:
         lo = int(m.group(1))
         hi = int(m.group(2)) if m.group(2) else lo
-        if 1 <= lo <= hi <= len(lines):
+        if 1 <= lo <= hi <= len(lines) and hi > body_start(lines):
             return True, "\n".join(lines[lo - 1: hi]).strip()
         return False, ""
 
-    # Heading-slug anchor: some heading slugifies to the anchor.
-    for i, line in enumerate(lines):
-        hm = HEADING_RE.match(line)
-        if hm and slugify(hm.group(1)) == anchor:
-            evidence = [line]
-            for nxt in lines[i + 1:]:
-                if HEADING_RE.match(nxt):
-                    break
-                evidence.append(nxt)
-                if len(evidence) >= EVIDENCE_MAX_LINES:
-                    break
-            return True, "\n".join(evidence).strip()
+    # Heading-slug anchor: a heading slugifies to the anchor. If MORE THAN ONE
+    # heading collides on the same slug (e.g. 'Results' and 'Results!!!'), the
+    # anchor is ambiguous — fail C2 rather than silently feed the judge the first
+    # match's passage.
+    matches = [i for i, line in enumerate(lines)
+               if (hm := HEADING_RE.match(line)) and slugify(hm.group(1)) == anchor]
+    if len(matches) == 1:
+        i = matches[0]
+        evidence = [lines[i]]
+        for nxt in lines[i + 1:]:
+            if HEADING_RE.match(nxt):
+                break
+            evidence.append(nxt)
+            if len(evidence) >= EVIDENCE_MAX_LINES:
+                break
+        return True, "\n".join(evidence).strip()
     return False, ""
 
 
@@ -179,10 +202,15 @@ def page_frontmatter(lines):
     """Parse the leading --- frontmatter block into a flat {key: value} dict."""
     if lines[:1] != ["---"]:
         return {}
+    # No closing fence → not a real frontmatter block. Treat as {} (non-exempt)
+    # so an author can't open `---` + `type: navigation` and never close it to
+    # exempt a page from coverage.
+    try:
+        close = lines.index("---", 1)
+    except ValueError:
+        return {}
     fm = {}
-    for line in lines[1:]:
-        if line == "---":
-            break
+    for line in lines[1:close]:
         m = re.match(r"([A-Za-z_][\w-]*):\s*(.*)$", line)
         if m:
             fm[m.group(1)] = m.group(2).strip()
@@ -190,9 +218,10 @@ def page_frontmatter(lines):
 
 
 # A page need not cite raw when it makes no external claims: structural pages
-# (indexes, dashboards, timelines) point inward, and any page may opt out
-# explicitly with `provenance: none`. Everything else must carry provenance.
-EXEMPT_TYPES = {"navigation"}
+# (indexes, dashboards, timelines) point inward, journal entries are user-owned
+# free-form (per AGENTS.md), and any page may opt out explicitly with
+# `provenance: none`. Everything else must carry provenance.
+EXEMPT_TYPES = {"navigation", "journal"}
 
 
 def page_is_exempt(fm):
@@ -205,7 +234,16 @@ def coverage(wiki_dir, raw_dir, records):
     Reuses `records` (every citation + its c1/c2 verdict) to find pages with at
     least one resolving citation; any non-exempt page NOT in that set is a gap.
     """
-    ok_pages = {r["page"] for r in records if r["c1"] and r["c2"]}
+    # ponytail: a page is "covered" only if it carries at least one ANCHORED
+    # resolving citation. An anchorless whole-file cite `(source: raw/x.md)`
+    # resolves unconditionally (C1∧C2), so counting it would let a bare cite
+    # exempt a page of fabrications — the anchor is what ties a claim to a
+    # locatable passage. Anchorless cites stay resolving in the C1/C2 report
+    # (they ARE valid file references); they just don't earn coverage on their own.
+    # Ceiling: a page whose only honest source genuinely has no anchorable
+    # structure (e.g. a one-line slide) must set `provenance: none` or cite with
+    # a line range — coverage won't accept the bare file cite.
+    ok_pages = {r["page"] for r in records if r["c1"] and r["c2"] and r["anchor"]}
     gaps = []
     for root, _dirs, files in os.walk(wiki_dir):
         for name in sorted(files):
@@ -225,7 +263,13 @@ def audit(wiki_dir, raw_dir):
                 continue
             page = os.path.relpath(os.path.join(root, name), wiki_dir)
             lines = raw_lines(os.path.join(root, name))
+            # Only body lines yield citation records — a `(source: ...)` placed
+            # inside the leading --- frontmatter must NOT satisfy coverage while
+            # the body stays uncited.
+            start = body_start(lines)
             for idx, line in enumerate(lines):
+                if idx < start:
+                    continue
                 for m in CITATION_RE.finditer(line):
                     rawfile, anchor = m.group(1), m.group(2)
                     # Skip documentation-of-the-syntax, not a real citation:

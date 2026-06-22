@@ -1,3 +1,6 @@
-^> \[!
-^%%
-^```dataview
+^[[:space:]]*>[[:space:]]?\[![a-zA-Z]
+[^`]>[[:space:]]?\[![a-zA-Z]
+[^`]%%[^`%][^%]*%%
+^%%[^`%][^%]*%%
+^[[:space:]]*~~~+[[:space:]]*dataview
+^[[:space:]]*```dataview
