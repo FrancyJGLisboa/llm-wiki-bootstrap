@@ -53,20 +53,21 @@ Exit codes:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 import sys
 from pathlib import Path
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from wikitext import WIKILINK_RE, parse_frontmatter  # shared grammar + parser
 
 # Reserved OKF filenames (exempt from the non-empty-`type` conformance rule).
 RESERVED = {"index.md", "log.md"}
 # Derived artifacts that are not OKF concepts — skipped (regenerable, non-portable).
 SKIP_NAMES = {"knowledge-graph.json"}
 
-# Canonical wikilink grammar — mirrors _LINK_RE in wiki-to-kg.py and the slug
-# form wiki-lint enforces. Anchor/path variants (`[[#x]]`, `[[a/b]]`) are not
-# page links and are deliberately not matched.
-_WIKILINK_RE = re.compile(r"\[\[([a-z][a-z0-9-]*)\]\]")
+_WIKILINK_RE = WIKILINK_RE  # shared canonical grammar (scripts/lib/wikitext.py)
 _MD_LINK_RE = re.compile(r"\[([^\]]+)\]\((?:\./)?[^)]*\)")
 _CITATION_RE = re.compile(r"\(source:[^)]*\)")
 _TLDR_RE = re.compile(r"^##\s+Definition\s*/\s*TL;DR\s*$", re.IGNORECASE)
@@ -82,23 +83,6 @@ def split_frontmatter(text: str) -> tuple[list[str], str]:
     fm = text[4:end].splitlines()
     body = text[end + 5 :]
     return fm, body
-
-
-def parse_frontmatter(lines: list[str]) -> list[tuple[str, str]]:
-    """Parse simple `key: value` frontmatter into ordered (key, value) pairs.
-
-    Wiki pages use only single-line scalar/inline-list values (no block scalars),
-    so a line-wise split is sufficient and keeps us stdlib-only.
-    """
-    pairs: list[tuple[str, str]] = []
-    for line in lines:
-        if not line.strip() or line.lstrip().startswith("#"):
-            continue
-        if ":" not in line:
-            continue
-        key, _, value = line.partition(":")
-        pairs.append((key.strip(), value.strip()))
-    return pairs
 
 
 def rewrite_links(body: str) -> str:
@@ -133,13 +117,12 @@ def derive_description(body: str) -> str:
     return text
 
 
-def emit_frontmatter(pairs: list[tuple[str, str]], description: str) -> str:
-    """Build the OKF frontmatter block from parsed source pairs.
+def emit_frontmatter(src: dict[str, str], description: str) -> str:
+    """Build the OKF frontmatter block from a parsed frontmatter dict.
 
     Field order is fixed for determinism. `type` first (the one required key),
     then title/description/timestamp/tags, then passthrough extras.
     """
-    src = dict(pairs)
     out: list[tuple[str, str]] = []
     out.append(("type", src.get("type", "").strip() or "concept"))
     if "title" in src:
@@ -168,15 +151,14 @@ def _quote(s: str) -> str:
 
 
 def transform_page(text: str) -> str:
-    fm_lines, body = split_frontmatter(text)
+    _, body = split_frontmatter(text)
     body = rewrite_links(body)
-    pairs = parse_frontmatter(fm_lines)
-    description = derive_description(body)
-    if not pairs:
+    fm = parse_frontmatter(text.splitlines())
+    if not fm:
         # No frontmatter (shouldn't happen for wiki concepts) — still emit a
         # minimal conformant header so the bundle stays valid.
         return f"---\ntype: concept\n---\n{body}"
-    return emit_frontmatter(pairs, description) + body
+    return emit_frontmatter(fm, derive_description(body)) + body
 
 
 def export(wiki_root: Path, out: Path) -> list[Path]:
@@ -213,11 +195,7 @@ def check_bundle(out: Path) -> list[str]:
             failures.append(f"(b) unconverted wikilink in {md.name}")
         if md.name in RESERVED:
             continue
-        fm, _ = split_frontmatter(text)
-        if not fm:
-            failures.append(f"(a) no frontmatter in {md.name}")
-            continue
-        src = dict(parse_frontmatter(fm))
+        src = parse_frontmatter(text.splitlines())
         if not src.get("type", "").strip():
             failures.append(f"(a) empty/missing type in {md.name}")
     return failures

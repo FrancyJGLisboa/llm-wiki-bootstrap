@@ -75,17 +75,23 @@ if [ "$nfull" -gt "$ncausal" ] && [ "$has_relto" -ge 1 ]; then
   ok "K3 full graph ($nfull) ⊃ causal ($ncausal); --causal-only drops related-to"
 else fail "K3 expected full>causal and ≥1 related-to edge (full=$nfull causal=$ncausal relto=$has_relto)"; fi
 
-# --- K4: stdlib-only ---------------------------------------------------------
+# --- K4: no third-party deps (stdlib + first-party scripts/lib only) ----------
+# Intent: wiki-to-kg.py must run anywhere with just python3 — no pip installs.
+# A first-party module from scripts/lib/ (itself stdlib-only, ships with the repo)
+# preserves that intent, so it is allowed alongside the stdlib; only a genuine
+# third-party import fails this check.
 if python3 - "$KG" <<'PY'
-import ast, sys
+import ast, os, sys
 t = ast.parse(open(sys.argv[1]).read())
 mods = {(n.module or "").split(".")[0] for n in ast.walk(t) if isinstance(n, ast.ImportFrom)}
 mods |= {a.name.split(".")[0] for n in ast.walk(t) if isinstance(n, ast.Import) for a in n.names}
-extra = mods - set(sys.stdlib_module_names) - {""}
+libdir = os.path.join(os.path.dirname(sys.argv[1]), "lib")
+firstparty = {f[:-3] for f in os.listdir(libdir) if f.endswith(".py")} if os.path.isdir(libdir) else set()
+extra = mods - set(sys.stdlib_module_names) - firstparty - {""}
 sys.exit(1 if extra else 0)
 PY
-then ok "K4 wiki-to-kg.py is stdlib-only"
-else fail "K4 wiki-to-kg.py imports a non-stdlib module"; fi
+then ok "K4 wiki-to-kg.py has no third-party deps (stdlib + first-party lib)"
+else fail "K4 wiki-to-kg.py imports a third-party module"; fi
 
 # --- K5: read-only (builder does not mutate the wiki fixtures) ---------------
 snap() { find "$GOOD" "$BAD" -type f | sort | xargs shasum 2>/dev/null | shasum | awk '{print $1}'; }
