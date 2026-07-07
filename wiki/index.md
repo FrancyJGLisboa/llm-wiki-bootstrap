@@ -2,7 +2,7 @@
 title: Index
 type: navigation
 source: analysis
-updated: 2026-05-26
+updated: 2026-07-07
 tags: [navigation, index]
 ---
 
@@ -48,6 +48,13 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 - [[karpathy-llm-wiki-video-transcript-summary]] — main YouTube transcript (primary source)
 - [[karpathy-video-slide-ingest-pipeline-summary]] — single slide on the ingest pipeline (second source, same video)
 - [[smoke-source-summary]] — end-to-end smoke fixture (fictional "phase coherence engineering" primer)
+- [[okf-spec-v0-1-summary]] — Google's OKF v0.1 spec (degraded snapshot)
+- [[google-cloud-okf-blog-summary]] — Google Cloud's OKF announcement post (partial snapshot)
+- [[devsplainers-okf-llm-wiki-video-transcript-summary]] — third-party commentary video on OKF + the LLM-wiki idea
+
+## The wider ecosystem
+
+- [[open-knowledge-format]] — Google's June 2026 standardization of the LLM-wiki pattern (container only)
 
 ## Analysis (interpretive — `source: analysis`)
 
@@ -55,6 +62,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 - [[open-questions]] — gaps the video doesn't address
 - [[source-attribution]] — what's Karpathy, what's the YouTuber, what's us
 - [[glossary]] — terms used throughout the wiki
+- [[okf-vs-llm-wiki-bootstrap]] — how OKF's container maps onto this system, and what it omits
 
 ## Smoke fixture (derived from `raw/smoke-source.md` — fictional, do not treat as real-world knowledge)
 

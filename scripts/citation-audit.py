@@ -52,6 +52,9 @@ import os
 import re
 import sys
 
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from wikitext import parse_frontmatter  # shared frontmatter parser (hardened)
+
 CITATION_RE = re.compile(r"\(source:\s*raw/([^)#\s]+)(?:#([^)\s]+))?\)")
 # ANY inline (source: X), regardless of target — used by the allowlist check to
 # find non-raw, non-analysis targets (the inverse of CITATION_RE). The only two
@@ -214,23 +217,10 @@ def extract_claim(lines: list[str], idx: int, match_start: int) -> str:
     return cleaned or line.strip()
 
 
-def page_frontmatter(lines):
-    """Parse the leading --- frontmatter block into a flat {key: value} dict."""
-    if lines[:1] != ["---"]:
-        return {}
-    # No closing fence → not a real frontmatter block. Treat as {} (non-exempt)
-    # so an author can't open `---` + `type: navigation` and never close it to
-    # exempt a page from coverage.
-    try:
-        close = lines.index("---", 1)
-    except ValueError:
-        return {}
-    fm = {}
-    for line in lines[1:close]:
-        m = re.match(r"([A-Za-z_][\w-]*):\s*(.*)$", line)
-        if m:
-            fm[m.group(1)] = m.group(2).strip()
-    return fm
+# page_frontmatter is the shared, hardened parser (scripts/lib/wikitext.py): {} on
+# an unclosed fence keeps the coverage-exemption laundering hole closed. Kept as a
+# named alias so the rest of this module reads unchanged.
+page_frontmatter = parse_frontmatter
 
 
 # A page need not cite raw when it makes no external claims: structural pages

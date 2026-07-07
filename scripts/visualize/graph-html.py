@@ -25,11 +25,14 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-LINK_RE = re.compile(r"\[\[([a-z][a-z0-9-]*)\]\]")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "lib"))
+from wikitext import WIKILINK_RE as LINK_RE  # canonical wikilink grammar (shared)
+
 TYPED_LINE_RE = re.compile(r"^\s*-\s+\[\[([a-z][a-z0-9-]*)\]\](.*)$")
 VERB_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 RELATED_HEADING_RE = re.compile(r"^## Related\s*$")

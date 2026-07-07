@@ -41,11 +41,13 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import re
 import sys
 from pathlib import Path
 
-_LINK_RE = re.compile(r"\[\[([a-z][a-z0-9-]*)\]\]")
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "lib"))
+from wikitext import WIKILINK_RE as _LINK_RE  # canonical wikilink grammar (shared)
 _VERB_RE = re.compile(r"^[a-z][a-z0-9-]*$")
 _EM_DASH = "—"
 # Canonical raw-citation pattern (mirrors CITATION_RE in citation-audit.py).

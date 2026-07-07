@@ -70,11 +70,14 @@ cat > "$WIKI/log.md" <<'EOF'
 - 2026-06-22 fixture created.
 EOF
 
-# package-wiki ships verify-bundle.sh + citation-audit.py from THIS scripts/.
-# Copy them in so the fixture is a real wiki root the packager will accept.
+# package-wiki ships verify-bundle.sh + citation-audit.py + scripts/lib/ from
+# THIS scripts/. Copy them in so the fixture is a real wiki root the packager
+# will accept — including scripts/lib/ (citation-audit.py imports wikitext from
+# it), so the packaged bundle's citation-audit resolves its import.
 cp "$SCRIPT_DIR/body-hash.sh" "$WIKI/scripts/"
 cp "$SCRIPT_DIR/citation-audit.py" "$WIKI/scripts/"
 cp "$SCRIPT_DIR/verify-bundle.sh" "$WIKI/scripts/"
+cp -R "$SCRIPT_DIR/lib" "$WIKI/scripts/"
 
 DIST="$WORK/dist"
 echo "[build] packaging fixture wiki"

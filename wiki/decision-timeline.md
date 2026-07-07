@@ -2,7 +2,7 @@
 title: Decision Timeline
 type: navigation
 source: analysis
-updated: 2026-06-09
+updated: 2026-07-07
 tags: [synthesis, timeline, navigation]
 ---
 
@@ -12,6 +12,13 @@ tags: [synthesis, timeline, navigation]
 
 Reverse-chronological activity timeline parsed from every `log.md` entry (ingest / query / lint and other logged events). An activity trail, not a record of domain decisions.
 
+- **2026-07-07** 06:20 — /wiki-ingest
+- **2026-06-22** — vision hardening wave 7 (path-traversal confinement)
+- **2026-06-22** — vision hardening wave 6 (bare-url guard → allowlist)
+- **2026-06-22** — vision hardening wave 5 (web sources must snapshot to raw/)
+- **2026-06-22** — vision hardening waves 2–4 (gate, features, discover, edges)
+- **2026-06-22** — vision hardening wave 1 (floor + coverage + bundle)
+- **2026-06-22** — citation-coverage gate (vision check #5)
 - **2026-06-09** — schema v2 → v3: synthesis layer
 - **2026-06-08** — fix stale verification note in operation-ingest.md
 - **2026-06-08** — cut to core (factory + brain + causal removed)
