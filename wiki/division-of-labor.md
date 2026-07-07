@@ -2,7 +2,7 @@
 title: Division of Labor
 type: concept
 source: video
-updated: 2026-05-25
+updated: 2026-07-07
 tags: [foundations, philosophy]
 ---
 
@@ -43,6 +43,10 @@ LLMs are different on exactly this axis: *"LLMs don't get bored. They don't forg
 
 The user's job is **upstream**: be a good curator (high-quality raw sources beat lots of low-quality ones) and a good interrogator (questions reveal gaps the wiki should fill). Everything downstream of those two activities is the LLM's problem.
 
+### What happens when the maintenance half is dropped
+
+The [[open-knowledge-format]] is a natural experiment: when Google standardized the LLM-wiki pattern, it "kept the folder and left out the part that keeps it alive" — Karpathy's instructions for how the AI maintains the wiki (source: raw/devsplainers-okf-llm-wiki-video-transcript.md#3:29). The predicted failure mode is exactly the one this split exists to prevent: a shared folder "goes still in a month. Nobody volunteers to tend it and the agent starts answering from knowledge that expired back in spring" (source: raw/devsplainers-okf-llm-wiki-video-transcript.md#4:54). The maintenance half of the division of labor is not an accessory to the format — it is the part that makes the format worth having.
+
 ## Related
 
 - [[core-idea]] — the whole pattern restates this split
@@ -50,6 +54,7 @@ The user's job is **upstream**: be a good curator (high-quality raw sources beat
 - [[operation-ingest]] — the LLM's bulk work
 - [[operation-lint]] — the LLM's antidote to rot
 - [[four-principles]] — *Yours* (you own the wiki; you also own the curation) builds on this
+- [[open-knowledge-format]] — what a format looks like when the maintenance half is dropped
 
 ## Open questions on this page
 

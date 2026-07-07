@@ -2,7 +2,7 @@
 title: Tensions
 type: navigation
 source: analysis
-updated: 2026-06-09
+updated: 2026-07-07
 tags: [synthesis, contradictions, navigation]
 ---
 

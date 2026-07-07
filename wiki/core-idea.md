@@ -2,7 +2,7 @@
 title: Core Idea
 type: concept
 source: video
-updated: 2026-05-25
+updated: 2026-07-07
 tags: [foundations, karpathy]
 ---
 
@@ -26,6 +26,8 @@ Three things make this an idea worth a name, rather than just "use markdown for 
 
 The user's role is to be in charge of "the important stuff — finding the good sources, exploring, asking the right questions." The LLM handles "all the grunt work — the summarizing, the cross-referencing, the filing, the bookkeeping — all the stuff that makes knowledge bases useful, but that no one actually wants to do." `(source: raw/karpathy-llm-wiki-video-transcript.md#0:51)`
 
+The idea has since been formalized beyond Karpathy's sketch: in June 2026 Google Cloud published the [[open-knowledge-format]], describing it as "an open specification that formalizes the LLM-wiki pattern into a portable, interoperable format" (source: raw/google-cloud-okf-blog.md#overview) — standardizing the container, though not the maintenance loop (see [[okf-vs-llm-wiki-bootstrap]]).
+
 ## Related
 
 - [[problem-with-naive-rag]] — what this is a reaction against
@@ -33,6 +35,7 @@ The user's role is to be in charge of "the important stuff — finding the good 
 - [[three-layer-architecture]] — how the idea is structured into raw / wiki / schema
 - [[division-of-labor]] — who does what
 - [[four-principles]] — properties that make the idea durable
+- [[open-knowledge-format]] causes — the pattern's traction led Google to formalize it as OKF
 
 ## Open questions on this page
 

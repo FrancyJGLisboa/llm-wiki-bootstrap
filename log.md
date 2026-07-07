@@ -2,6 +2,17 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-07-07 06:20 — /wiki-ingest
+
+- Processed: raw/okf-spec-v0-1.md (hash 7d4121ee)
+- Processed: raw/google-cloud-okf-blog.md (hash 8d5556f6)
+- Processed: raw/devsplainers-okf-llm-wiki-video-transcript.md (hash d1d2986d)
+- Created: wiki/okf-spec-v0-1-summary.md, wiki/google-cloud-okf-blog-summary.md, wiki/devsplainers-okf-llm-wiki-video-transcript-summary.md, wiki/open-knowledge-format.md, wiki/okf-vs-llm-wiki-bootstrap.md
+- Updated: wiki/core-idea.md, wiki/division-of-labor.md, wiki/index.md
+- Contradictions flagged: none
+- Faithfulness gate: 42/43 SUPPORTED; 1 UNSUPPORTED marker on okf-vs-llm-wiki-bootstrap.md:43 (moat→three-layer paraphrase, anchor #6:15 — left for /wiki-lint per contract)
+- Note: both OKF web sources are `extraction_status: degraded` (blog partial, spec condensed) — full-page WebFetch blocked by context-gate egress hook this session. Re-extract from a fresh session to upgrade to verbatim.
+
 ## 2026-06-22 — vision hardening wave 7 (path-traversal confinement)
 
 Closing wave 6's allowlist exposed a path-traversal hole: `(source: raw/../secret.txt#L1)` passed both `--no-bare-urls` (prefix `raw/`) and C1/C2 (read a file *outside* `raw/`, earned coverage) — defeating the "snapshotted in raw/" invariant. Fixed at both points in `citation-audit.py` (stdlib `os.path`): `_is_allowed_target` normalizes (`normpath`) and requires the target to stay under `raw/` (so `raw/../x`→reject, `raw//x`→ok); C1 confines `realpath(rawpath)` to be inside `realpath(raw_dir)` (escape → c1=False, doesn't resolve). Also reject NUL/control-char citation targets in both `_is_allowed_target` and `audit()` before `realpath` (an embedded NUL raised `ValueError`, crashing the gate) — now flagged + non-resolving, no crash. Follow-up noted: apply the same confine-to-dir everywhere a wiki string becomes a path (bundle/kg/anki).

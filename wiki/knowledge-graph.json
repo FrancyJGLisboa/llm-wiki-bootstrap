@@ -62,12 +62,47 @@
     },
     {
       "source": "core-idea",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "open-knowledge-format",
+      "verb": "causes"
+    },
+    {
+      "source": "core-idea",
       "target": "problem-with-naive-rag",
       "verb": "related-to"
     },
     {
       "source": "core-idea",
       "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "target": "open-knowledge-format",
+      "verb": "related-to"
+    },
+    {
+      "source": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "target": "problem-with-naive-rag",
       "verb": "related-to"
     },
     {
@@ -83,6 +118,11 @@
     {
       "source": "division-of-labor",
       "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "division-of-labor",
+      "target": "open-knowledge-format",
       "verb": "related-to"
     },
     {
@@ -206,6 +246,31 @@
       "verb": "related-to"
     },
     {
+      "source": "google-cloud-okf-blog-summary",
+      "target": "core-idea",
+      "verb": "related-to"
+    },
+    {
+      "source": "google-cloud-okf-blog-summary",
+      "target": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "google-cloud-okf-blog-summary",
+      "target": "okf-spec-v0-1-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "google-cloud-okf-blog-summary",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "google-cloud-okf-blog-summary",
+      "target": "open-knowledge-format",
+      "verb": "related-to"
+    },
+    {
       "source": "implicit-constraints",
       "target": "commands",
       "verb": "related-to"
@@ -277,6 +342,11 @@
     },
     {
       "source": "index",
+      "target": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
       "target": "division-of-labor",
       "verb": "related-to"
     },
@@ -293,6 +363,11 @@
     {
       "source": "index",
       "target": "glossary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "google-cloud-okf-blog-summary",
       "verb": "related-to"
     },
     {
@@ -333,6 +408,21 @@
     {
       "source": "index",
       "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "okf-spec-v0-1-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "open-knowledge-format",
       "verb": "related-to"
     },
     {
@@ -676,6 +766,91 @@
       "verb": "related-to"
     },
     {
+      "source": "okf-spec-v0-1-summary",
+      "target": "google-cloud-okf-blog-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-spec-v0-1-summary",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-spec-v0-1-summary",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-spec-v0-1-summary",
+      "target": "open-knowledge-format",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "implicit-constraints",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "open-knowledge-format",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "okf-vs-llm-wiki-bootstrap",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "core-idea",
+      "verb": "caused-by"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "google-cloud-okf-blog-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "okf-spec-v0-1-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-knowledge-format",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
       "source": "open-questions",
       "target": "commands",
       "verb": "related-to"
@@ -732,6 +907,11 @@
     },
     {
       "source": "open-questions-dashboard",
+      "target": "devsplainers-okf-llm-wiki-video-transcript-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
       "target": "division-of-labor",
       "verb": "related-to"
     },
@@ -748,6 +928,11 @@
     {
       "source": "open-questions-dashboard",
       "target": "glossary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "google-cloud-okf-blog-summary",
       "verb": "related-to"
     },
     {
@@ -793,6 +978,21 @@
     {
       "source": "open-questions-dashboard",
       "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "okf-spec-v0-1-summary",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "okf-vs-llm-wiki-bootstrap",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
+      "target": "open-knowledge-format",
       "verb": "related-to"
     },
     {
@@ -1182,6 +1382,9 @@
       "id": "decision-timeline"
     },
     {
+      "id": "devsplainers-okf-llm-wiki-video-transcript-summary"
+    },
+    {
       "id": "division-of-labor"
     },
     {
@@ -1192,6 +1395,9 @@
     },
     {
       "id": "glossary"
+    },
+    {
+      "id": "google-cloud-okf-blog-summary"
     },
     {
       "id": "implicit-constraints"
@@ -1222,6 +1428,15 @@
     },
     {
       "id": "layer-wiki"
+    },
+    {
+      "id": "okf-spec-v0-1-summary"
+    },
+    {
+      "id": "okf-vs-llm-wiki-bootstrap"
+    },
+    {
+      "id": "open-knowledge-format"
     },
     {
       "id": "open-questions"
