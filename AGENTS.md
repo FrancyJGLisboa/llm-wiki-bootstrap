@@ -121,6 +121,7 @@ Every file in `wiki/` follows this template:
 ```markdown
 ---
 title: <Title Case>
+description: <one-sentence summary>   # OPTIONAL. Maps to OKF's `description` at export.
 type: concept | entity | summary | analysis | navigation
 source: video | analysis | external | mixed
 updated: YYYY-MM-DD
@@ -151,6 +152,7 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 ### Frontmatter fields
 
 - `title` — Title Case display name (the file name is the slug).
+- `description` — OPTIONAL. One-sentence summary of the page, for progressive disclosure (scanning an index without opening pages) and 1:1 mapping onto the Open Knowledge Format's recommended `description` field at export (`scripts/wiki-to-okf.py`). When absent, the export derives it from the page's `## Definition / TL;DR`. Additive/opt-in — no schema bump (per the bump policy below); `/wiki-lint` must not flag its absence.
 - `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages), `journal` (user-owned time-stamped entry, lives only under `wiki/journal/`).
 - `source` — `video` (literal from a raw video transcript), `analysis` (LLM/user interpretation; must be honest about being interpretive), `external` (added from web search), `mixed` (both video and analysis).
 - `updated` — ISO date of last edit.
