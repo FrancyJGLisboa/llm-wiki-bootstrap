@@ -80,6 +80,17 @@ if [ -n "$WORK" ]; then
   # `claude -p` calls, so a Ctrl-C or an OOM must not discard an hour of
   # extract+ingest. Re-invoke with the same --work=DIR to pick up where it died.
   mkdir -p "$WORK" || { echo "error: cannot create $WORK" >&2; exit 1; }
+  # A run killed during R5 leaves raw/ corrupted. Resuming on top of that
+  # re-ingests the mutated body, commits ingested_hash over it, and makes R5
+  # unscoreable while silently changing the as-of answer — a scored report built
+  # on a poisoned corpus. Force the expensive-but-correct path instead.
+  if [ -f "$WORK/.mutated" ]; then
+    echo "[retr] work dir was left mid-R5 with a mutated raw body — discarding" \
+         "extract/ingest so the corpus is rebuilt clean" >&2
+    rm -f "$WORK/.done-extract" "$WORK/.done-ingest" "$WORK/.mutated" \
+          "$WORK/.r5-pristine" "$WORK"/R*.answer.md
+    rm -rf "$WORK/wiki"; rm -f "$WORK/.done-install"
+  fi
 else
   WORK="$(mktemp -d -t eval-retrieval.XXXXXX)"
   trap 'rm -rf "$WORK"' EXIT
@@ -267,6 +278,17 @@ if [ "$HOLDOUT" -eq 0 ]; then
   if [ -z "$target" ]; then
     r5_note="inconclusive: capacity-report-q1 never reached raw/ (extract failed)"
   else
+    # R5 deliberately corrupts a raw body, which makes this work dir unsafe to
+    # resume: a later run with `extract` cached would re-ingest the MUTATED text,
+    # commit ingested_hash over it, and leave the drift undetectable — R5 becomes
+    # structurally unscoreable and the as-of question silently changes answer.
+    # That happened. Snapshot before, restore after, and mark the dir either way.
+    # No EXIT trap here: in non-resumable mode that slot already holds the
+    # temp-dir cleanup. Restore runs inline after R5, and if the run is killed
+    # mid-R5 the `.mutated` marker survives and the startup guard blocks the
+    # resume — a stuck marker costs one re-extract, a silent one costs the score.
+    cp "$target" "$WORK/.r5-pristine" 2>/dev/null || true
+    : > "$WORK/.mutated"
     LC_ALL=C sed -i '' 's/412 GB\/day/999 GB\/day/' "$target" 2>/dev/null \
       || LC_ALL=C sed -i 's/412 GB\/day/999 GB\/day/' "$target"
     if "$DRIFT_LINT" "$WIKI/raw" >/dev/null 2>&1; then
@@ -286,6 +308,10 @@ if [ "$HOLDOUT" -eq 0 ]; then
         r5_note="answer served the claim without flagging the drifted source"
       fi
       detail+=("R5-drift|vintage|$([ "$r5_pass" -eq 1 ] && echo PASS || echo FAIL)|n/a|n/a|")
+    fi
+    # Undo the corruption so this work dir stays resumable.
+    if [ -f "$WORK/.r5-pristine" ]; then
+      cp "$WORK/.r5-pristine" "$target" && rm -f "$WORK/.mutated"
     fi
   fi
 fi

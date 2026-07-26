@@ -66,6 +66,7 @@ modality: vintage
 expects: 412
 cite-contains: 412
 max-span: 40
+forbids-pattern: ^[^a-zA-Z0-9]{0,4}(389|999)
 
 ### R2-current
 What is sustained throughput now, per the most recent capacity report?
@@ -73,6 +74,7 @@ modality: vintage
 expects: 389
 cite-contains: 389
 max-span: 40
+forbids-pattern: ^[^a-zA-Z0-9]{0,4}412
 
 ### R3-absent
 What was sustained throughput in Q2 2026?

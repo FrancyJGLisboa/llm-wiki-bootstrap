@@ -71,6 +71,37 @@ retr_grade_answer "$TMP/good.md"  "NEEDLE-CSV-7f3a91, ORD-00947" "" false || { f
 retr_grade_answer "$TMP/vague.md" "NEEDLE-CSV-7f3a91, ORD-00947" "" false && { fail "E3 answer missing the needle graded PASS"; e3=1; }
 [ "$e3" -eq 0 ] && ok "E3 answer grader: needle-bearing passes, needle-less fails"
 
+# E3b — a vintage answer that LEADS with the wrong figure must fail even though
+# the right figure appears further down. This is a real observed false pass: an
+# as-of answer headlined 999 and passed on `expects: 412` because 412 turned up
+# in a caveat explaining why 999 was suspect. The guard is the question's
+# headline-anchored forbids-pattern, not a grader-wide rule — scoping `expects`
+# to the first N lines was tried and failed answers that open with a preamble.
+{ printf '**999 GB/day** — the Q1 2026 figure.\n\n'
+  printf 'Caveat: the raw was edited from 412 to 999, so 412 may be the truth.\n'; } > "$TMP/buried.md"
+printf '**412 GB/day** was the figure of record on that date.\n' > "$TMP/lead.md"
+ASOF_FORBIDS='^[^a-zA-Z0-9]{0,4}(389|999)'
+e3b=0
+retr_grade_answer "$TMP/lead.md"   "412" "$ASOF_FORBIDS" false || { fail "E3b correct headline graded FAIL"; e3b=1; }
+retr_grade_answer "$TMP/buried.md" "412" "$ASOF_FORBIDS" false && { fail "E3b wrong headline graded PASS (right figure buried in a caveat)"; e3b=1; }
+[ "$e3b" -eq 0 ] && ok "E3b vintage answer leading with the wrong figure fails despite a later mention"
+
+# E3c — every question with a competing wrong answer must carry that guard, or
+# the false pass above silently returns the next time a question is added.
+if [ "$(grep -c '^forbids-pattern:' "$QUESTIONS")" -lt 3 ]; then
+  fail "E3c fewer than 3 forbids-patterns in $QUESTIONS (R2-asof, R2-current, R3-absent each need one)"
+else
+  ok "E3c both vintage questions and the refusal question carry a forbids-pattern"
+fi
+
+# E5b — an exemplary refusal must not be graded FAIL. This exact phrasing was a
+# false negative: every marker required "for"/"in" straight after the noun.
+printf 'No Q2 2026 sustained throughput figure exists in this wiki.\n\nI will not interpolate a value.\n' \
+  > "$TMP/refuse2.md"
+retr_grade_answer "$TMP/refuse2.md" "" 'Q2[^.]{0,80}[0-9]{3} ?GB' true \
+  && ok "E5b 'no X figure exists in this wiki' is recognised as a refusal" \
+  || fail "E5b textbook refusal graded FAIL (marker list too narrow)"
+
 # E4 — citation grader: the Goodhart hole is "contains", so probe each way to fake it
 mk() { printf 'Answer text. (source: %s)\n' "$1" > "$2"; }
 mk 'raw/sales-2026.csv#L948'      "$TMP/c-exact.md"      # the locus

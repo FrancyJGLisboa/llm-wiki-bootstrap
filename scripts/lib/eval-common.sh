@@ -218,6 +218,15 @@ eval_verdict() {
 # Phrases that count as declining to answer. Deliberately narrow: "not in the
 # wiki" is a refusal, "not clear" is hedging inside an answer.
 RETR_REFUSAL_MARKERS='not in the wiki|no answer in|not found in the wiki|nothing in the wiki|is not covered|no .{0,20}(figure|report|data|record) (for|in) |cannot answer|can'"'"'t answer|no such (figure|report|record)|not present in the wiki|the wiki does not'
+# Second family of acknowledgements, added after a textbook refusal graded FAIL:
+# "No Q2 2026 sustained throughput figure exists in this wiki" matched none of
+# the above (they all require "for"/"in" immediately after the noun). Broadening
+# the acknowledgement side is safe because the teeth of a refusal check are the
+# forbids-pattern — the answer still fails if it states a number it cannot know.
+#
+# Kept free of nested bounded quantifiers on purpose: an earlier version used
+# `no .{0,40}(figure|report)[^.]{0,30}exist` and hung BSD grep by backtracking.
+RETR_REFUSAL_MARKERS="$RETR_REFUSAL_MARKERS"'|(figure|report|record|data) exists|does not exist|no report|will not (interpolate|fabricate|guess|invent)'
 
 # retr_parse_questions <questions_file> <out_tsv>
 # Emit: qid<TAB>question<TAB>modality<TAB>expects<TAB>cite_contains<TAB>max_span<TAB>forbids<TAB>refusal
@@ -268,6 +277,15 @@ retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
 # retr_grade_answer <answer_file> <expects_csv> <forbids_ere> <refusal true|false>
 # 0 = PASS. Scores the R1/R2/R3 bit: did the answer carry the fact (or decline
 # when it should have), without matching the fabrication pattern.
+#
+# `expects` is a document-wide substring search, which is NOT enough on its own:
+# an as-of answer once led with the wrong figure and still passed because the
+# right one appeared further down in a caveat explaining why the headline was
+# suspect. Scoping `expects` to the first N lines was tried and is worse — it
+# fails answers that open with a preamble while still passing that same buried
+# case. The working guard is per-question: a question with a plausible wrong
+# answer carries a `forbids-pattern` that matches the wrong answer in headline
+# position. Location is the question author's problem, not the grader's.
 retr_grade_answer() {
   local answer="$1" expects="$2" forbids="$3" refusal="$4" token OLD_IFS
   [ -f "$answer" ] || return 1
