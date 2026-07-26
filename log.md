@@ -2,6 +2,32 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-07-24 — cross-modality retrieval eval (the measuring instrument)
+
+"Can a bootstrapped wiki retrieve accurate, point-in-time info about anything?" was asserted, never measured — the existing evals cover multi-hop traversal and citation faithfulness, neither of which touches tabular or thread sources, and none of which has a time axis. Added `scripts/eval-retrieval.sh`: five binary checks (R1 needle retrieval per modality, R2 point-in-time as-of + current in one run, R3 refusal on absence, R4 citation locus, R5 stale evidence blocks the answer) run against a wiki built by the REAL installer and loaded through the REAL `/wiki-extract` → `/wiki-ingest` path — no hand-authored wiki fixture, because the gaps being hunted (tabular truncation past the 20-row preview, thread flattening) live in extract/ingest and a fixture would paper over exactly them.
+
+Corpus is generated, not committed (`tests/eval/retrieval-corpus/gen-corpus.sh`, deterministic — the numbers are only comparable across runs if the input is fixed): a 1200-row CSV with the needle at row 947, a 14-message thread with the needle in message 11, a 24-section 11k-word report with the needle in section 21, and two vintages of one throughput figure (412 Q1 → 389 Q3) with the vintage stated in the body text, so the eval runs against today's schema with no `asserted_at` field. Every needle is a synthetic `NEEDLE-<MODALITY>-<hex>` planted past the boundary its extractor truncates at — unguessable from a preview and absent from pretraining, so it can only be produced by actually reaching it.
+
+`scripts/cite-span.py` resolves a citation to its passage by importing `citation-audit.py`'s anchor grammar rather than reimplementing it (same reason `body-hash.sh` is the one hasher — a second copy would make the eval measure something the audit doesn't enforce). R4 is the Goodhart-hardened check: containment alone passes a whole-file cite, tight-span alone passes a cite of the wrong lines, so it demands one passage that does both.
+
+Graders live in `scripts/lib/eval-common.sh` so `scripts/verify-retrieval-eval.sh` (E1–E6, wired as smoke R23) can exercise them with no LLM and no spend: corpus determinism, needles past the first-40-lines boundary, and — the point — that whole-file, wrong-line, and oversized-but-containing citations all FAIL. An eval whose graders are unverified reports a perfect score on a broken system. Holdout: `tests/eval/retrieval-questions-holdout.md` plus `gen-corpus.sh --holdout` (plain-text meeting notes, own needle, supersession twist), never run by default, never in CI, never to be "fixed" by editing. Smoke now 28 checks, all green. The eval itself has NOT been run yet — that costs `claude -p` invocations and is the next step.
+
+## 2026-07-26 — first eval run came back VOID; hardened the instrument
+
+Ran `scripts/eval-retrieval.sh` for real. It printed `retrieval score: 6/12` (R1 3/3, R2 2/2, R3 1/1, R4 0/5, R5 inconclusive) and that number is **not a measurement** — recorded here because a plausible score from a broken harness is the most expensive artifact this project can produce.
+
+Three faults, in ascending order of importance. (1) `/wiki-ingest` died on a transient `API Error: 529 Overloaded`, leaving `wiki/` at one empty stock `index.md`; `claude_p()` now retries once on 5xx/overload/rate-limit. (2) The question loop ends `done < "$tmp_q"`, so every nested `claude -p` inherited stdin pointed at `questions.tsv` and swallowed the later eval questions into the first one's prompt — the model said so in its own answer. All three invocation sites now pin `</dev/null`. (3) The one that matters: with an empty wiki, `/wiki-query` answered all six questions **correctly by reading `raw/` directly**, and disclosed it. So R1 and R2 scored full marks while measuring "an agent can grep a CSV" — a false pass straight through the middle of the loss function, on the checks that exist to prove wiki retrieval.
+
+Fix for (3) is two-part, because detection and visibility are different problems. A VOID gate refuses to score when `wiki/` has <= 1 page or no raw source carries a real `ingested_hash` — it prints why and exits 3 instead of spending on queries that cannot measure the thing. And a `via` column tags every answer `wiki` / `raw-only` / `unknown`, so a raw bypass stays visible once the wiki *is* populated, which the gate alone would not catch. `verify-retrieval-eval.sh` grows E7 for both, negative-tested: deleting the gate fails it, unpinning stdin at one of three sites fails it.
+
+Also `--work=DIR`: state persists outside a temp dir and install/extract/ingest/each-question are skipped when already complete, so a kill costs the current stage instead of the whole run, and answers on disk re-grade for free when a grader changes. Two prior runs were lost to kills before this existed.
+
+Worth recording against the prediction made before the run — R1-csv fail, R2 fail both legs, R1-email unknown: every needle came back correct from raw text alone, across CSV row 947, email message 11, report section 21, and both report vintages. That is evidence about the agent's reading, and none about the wiki's retrieval. The run designed to measure the wiki passed without the wiki existing.
+
+## 2026-07-24 — hash-drift lint (ingest commitments enforced)
+
+`ingested_hash` was written but never re-checked: re-extract a source (or hand-edit a sidecar) and every `(source: raw/<file>#<anchor>)` citation keeps resolving to text that no longer supports the claim. `/wiki-lint` check 4 is page age, check 7 is frontmatter fields, and `citation-audit.py` only proves the target exists — nothing compared the body against its commitment. Added `scripts/wiki-lint-hash-drift.sh` (recomputes via `body-hash.sh`, the canonical hasher; names the drifted file, both hash prefixes, and the `ingested_pages` now at risk), its oracle `scripts/verify-hash-drift.sh` (H1–H5), and wired both in: `/wiki-lint` check 8 (fix = re-run `/wiki-ingest`, never restamp the hash — that launders the drift), smoke R22 (H5 gates the repo's real `raw/`), installer manifest. Not-yet-ingested sources (`ingested_hash: ""`) are skipped — that's `/wiki-ingest`'s job, and noise there would train users to ignore the lint. Smoke now 27 checks, all green.
+
 ## 2026-07-07 06:20 — /wiki-ingest
 
 - Processed: raw/okf-spec-v0-1.md (hash 7d4121ee)

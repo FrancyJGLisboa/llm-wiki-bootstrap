@@ -1,5 +1,5 @@
 ---
-description: Health-check the wiki. Find broken links, orphans, contradictions, stale claims, unresolved open questions, and gaps.
+description: Health-check the wiki. Find broken links, orphans, contradictions, stale claims, unresolved open questions, gaps, and drifted raw sources.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [--apply]
 ---
@@ -88,6 +88,22 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - Report violations.
 - Fix proposal: normalize.
 
+### 8. Hash drift (broken ingest commitments)
+
+`ingested_hash` is a commitment: the wiki pages in `ingested_pages` were written against *that* body. If a raw source is re-extracted or hand-edited afterwards, every `(source: raw/<file>#<anchor>)` citation still resolves — but to text that no longer says what the page claims. Check 4 (page age) and check 7 (frontmatter fields) do not catch this; `citation-audit.py` only proves the target exists.
+
+Run the deterministic lint:
+
+```bash
+./scripts/wiki-lint-hash-drift.sh raw/
+```
+
+(Skip silently if the script is absent — older wiki.)
+
+- Report each drifted source: `raw/<file>: body changed since ingest — recorded <hash>, now <hash>; at-risk pages: <ingested_pages>`.
+- Fix proposal (if `--apply`): **do not edit the wiki pages by hand and do not restamp `ingested_hash`** — that would launder the drift. The only correct fix is re-running `/wiki-ingest <raw-file>` so the claims are re-derived from the current body and the hash is re-stamped as part of that pass. Report it as a required follow-up action, not an applied fix.
+- An `unhashable` result (recorded hash + malformed frontmatter) means the commitment can't be verified at all — surface it at the same severity.
+
 ## Output (report mode)
 
 ```
@@ -101,6 +117,7 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - N unresolved open questions
 - N gaps
 - N schema-drift issues
+- N drifted raw sources (broken ingest commitments)
 
 # Details
 [grouped output by check]
