@@ -36,6 +36,20 @@ Re-graded verdicts (cached answers, no spend — the point of `--work`): R1 3/3,
 
 One process note worth more than any of the above: the first re-grade run reported R1 0/3, which was wrong — the ad-hoc loop ran under zsh, which does not word-split unquoted `$expects` on `IFS=','`, so multi-token expectations collapsed into one literal. The eval itself is `#!/usr/bin/env bash` and unaffected. Grader changes get verified by re-running the oracle or `bash -c`, never by a zsh one-liner.
 
+## 2026-07-26 — valid time: `asserted_at` enforced (timestamps phase 1 of 2)
+
+The clean run's R2 pass was load-bearing on luck: the corpus states its vintage in prose ("reporting period", "figure of record for Q1", "supersedes ... as the current number"), so an as-of answer could be assembled from phrases without any vintage reasoning. Delete those clauses and the capability goes with them, because nothing structured carried the document's own date. `fetched_at` is transaction time only.
+
+Added the valid-time axis. `asserted_at` is the date the DOCUMENT claims for its content, and it is never silently absent: either an ISO date plus `asserted_at_source` — an anchor into that file's own body where the date appears, resolved through `citation-audit.py`'s grammar, with the date required to be inside the passage — or the literal `unknown` plus `asserted_at_note` saying why. `unknown` is a first-class answer on purpose: plenty of real sources have no discoverable date, and a lint that blocked them would push authors to fabricate one. What is forbidden is silence.
+
+The check that earns the design is A5. Copying `fetched_at` into `asserted_at` is the cheapest possible false pass — 100% field coverage, zero information, and every as-of query silently defeated. The mandatory anchor is what prices it out: a date that must resolve to a passage stating it costs more to fake than to read off the page. A5 asserts both the rejection and that the message names the pattern, so the next author to try it is told why.
+
+`scripts/asserted-at-audit.py` (reuses `wikitext.parse_frontmatter` and `citation-audit.py`'s `resolve_anchor` — a second copy of either would let the lint accept anchors the citation audit rejects), `scripts/wiki-lint-asserted-at.sh`, oracle `scripts/verify-asserted-at.sh` A1–A11, smoke **R24**, `/wiki-lint` check 9, `/wiki-extract` step 4 populates all three fields, installer manifest. Smoke now 29 checks, all green. Prose date forms are accepted ("March 31, 2026" satisfies `2026-03-31`) — an ISO-only lint would force authors to edit `raw/`, which hard rule 1 forbids. Frontmatter-only writes leave the body hash untouched, so this does not trip the drift lint.
+
+T2 corpus pair added: `retry-budget-memo-feb/sep.md`, identical bodies apart from one figure, a bare `Published:` line, and no "supersedes"/"current"/quarter names anywhere — verified zero relational cues. Two questions (`T2-silent-asof`, `T2-silent-current`) with headline-anchored forbids. Honest limit, recorded so it is not overclaimed later: the date still lives in the body, so T2 does not prove the `asserted_at` FIELD is load-bearing — a source with no date anywhere would be unsatisfiable, since `/wiki-extract` would correctly record `unknown`. T2 proves the narrower thing: as-of survives with no relational scaffolding to lean on.
+
+Not yet run against T2 — that costs a full extract+ingest and is the next step. Phase 2 (entity extraction, checks E1–E3, feeding the existing KG rather than a parallel entity store) is not started. The `AGENTS.md` schema addition is a patch at `scratchpad/agents-md-asserted-at.patch`; context-gate blocks agent writes to that file.
+
 ## 2026-07-26 — clean run: 7/12, and point-in-time actually works
 
 First run where all five checks were measured on one honestly-ingested corpus — fresh install, no cached stage, `capacity-report-q1.md` ingested at 412 so R5's mutation had a real commitment to violate. 7 raw files, 11 wiki pages, every answer `via: wiki`.

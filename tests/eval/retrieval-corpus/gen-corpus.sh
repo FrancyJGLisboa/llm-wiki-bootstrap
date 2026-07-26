@@ -13,9 +13,13 @@
 #   thread-q3-planning.eml message 11 of 14 — past any naive head-of-thread read
 #   field-report.md       section 21 of 24  — past the first-page/first-chunk read
 #
-# and two vintages of one fact (capacity-report-q1/q3.md) for the point-in-time
-# check. Nothing here is guessable from a preview or from pretraining — which is
-# the whole point: an agent can only produce a needle by actually reaching it.
+# plus two point-in-time pairs: capacity-report-q1/q3.md, whose bodies state
+# their own reporting period in prose, and retry-budget-memo-feb/sep.md, which
+# strip every relational cue and carry only a bare `Published:` line (the harder
+# case — see the T2 block at the foot of this file).
+#
+# Nothing here is guessable from a preview or from pretraining — which is the
+# whole point: an agent can only produce a needle by actually reaching it.
 #
 # Determinism: no $RANDOM, no clock reads. Every value is arithmetic on the row
 # index. Same inputs → same bytes, verified by scripts/verify-retrieval-eval.sh.
@@ -164,9 +168,11 @@ SECTIONS="Scope and Method|Prior Baseline|Ingest Path|Storage Layout|Index Build
 } > "$TARGET/field-report.md"
 
 # ── 4. Two vintages of one fact (point-in-time) ───────────────────────────────
-# The vintage lives in the BODY TEXT, not in frontmatter — real documents state
-# their own reporting period, and this keeps the eval runnable against today's
-# schema (no `asserted_at` field exists yet).
+# The vintage lives in the BODY TEXT — real documents state their own reporting
+# period. These two are the GENEROUS case: they say "reporting period", "figure
+# of record for Q1", "supersedes ... as the current number". /wiki-extract lifts
+# such a date into `asserted_at`; the T2 pair below removes the relational prose
+# so the as-of answer cannot lean on it.
 cat > "$TARGET/capacity-report-q1.md" <<'Q1'
 # Capacity Report — Q1 2026
 
@@ -201,4 +207,53 @@ Additional validation on the ingest path costs throughput. The decline is
 expected and was accepted at review.
 Q3
 
-echo "corpus written to $TARGET (5 sources)" >&2
+# ── T2: as-of with NO relational prose ────────────────────────────────────────
+#
+# The capacity reports above are generous: they say "reporting period", "figure
+# of record for Q1", "supersedes the Q1 figure as the current number". An agent
+# can answer an as-of question from those phrases alone without ever reasoning
+# about vintage — which is exactly what happened, so R2 passing proved less than
+# it looked like.
+#
+# These two memos strip every relational cue. Each carries a bare `Published:`
+# line and a figure. Neither mentions the other, neither says "current" or
+# "supersedes" or names a quarter, and the bodies are otherwise identical. The
+# only way to answer "what was the retry budget in February" is to bind each
+# figure to its own date and compare against the asked-for date.
+#
+# Honest limit: the date still lives in the body, so this does not prove the
+# `asserted_at` FIELD is load-bearing — a source with no date anywhere would be
+# unsatisfiable, since /wiki-extract would correctly record `unknown`. What T2
+# proves is narrower and still worth having: as-of survives with no relational
+# scaffolding to lean on.
+cat > "$TARGET/retry-budget-memo-feb.md" <<'FEB'
+# Retry Budget Memo
+
+Published: 2026-02-10
+
+The ingest retry budget is set at 3 attempts per message, with a 45 second
+backoff ceiling. Operators may not raise it without sign-off from the platform
+owner. Exceeding the budget routes the message to the dead-letter queue.
+
+## Rationale
+
+The budget trades tail latency against delivery. The figure was fixed at the
+platform review and has not been revisited since.
+FEB
+
+cat > "$TARGET/retry-budget-memo-sep.md" <<'SEP'
+# Retry Budget Memo
+
+Published: 2026-09-22
+
+The ingest retry budget is set at 7 attempts per message, with a 45 second
+backoff ceiling. Operators may not raise it without sign-off from the platform
+owner. Exceeding the budget routes the message to the dead-letter queue.
+
+## Rationale
+
+The budget trades tail latency against delivery. The figure was fixed at the
+platform review and has not been revisited since.
+SEP
+
+echo "corpus written to $TARGET (7 sources)" >&2

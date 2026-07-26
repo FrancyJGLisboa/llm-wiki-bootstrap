@@ -76,6 +76,22 @@ cite-contains: 389
 max-span: 40
 forbids-pattern: ^[^a-zA-Z0-9]{0,4}412
 
+### T2-silent-asof
+What was the ingest retry budget, in attempts per message, as of 2026-03-01?
+modality: vintage
+expects: 3 attempts
+cite-contains: 3 attempts
+max-span: 40
+forbids-pattern: ^[^a-zA-Z0-9]{0,4}(7|seven)\b
+
+### T2-silent-current
+What is the ingest retry budget now, in attempts per message?
+modality: vintage
+expects: 7 attempts
+cite-contains: 7 attempts
+max-span: 40
+forbids-pattern: ^[^a-zA-Z0-9]{0,4}(3|three)\b
+
 ### R3-absent
 What was sustained throughput in Q2 2026?
 modality: absent

@@ -118,6 +118,9 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
    source_title: "..."
    source_author: "..."
    fetched_at: <YYYY-MM-DD>
+   asserted_at: <YYYY-MM-DD | unknown>       # the DOCUMENT's own date — see below
+   asserted_at_source: <#anchor>             # required when asserted_at is a date
+   asserted_at_note: "..."                   # required when asserted_at is `unknown`
    ingested_hash: ""
    ingested_at: never
    ingested_pages: []
@@ -132,7 +135,15 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
    For binaries: the frontmatter goes in the sidecar `.md`, not the binary.
 
-5. **Verify** the file was written. Read it back, confirm frontmatter is valid YAML.
+   **Establishing `asserted_at` (valid time).** `fetched_at` is when *you* grabbed the source. `asserted_at` is the date the **document** claims for its own content, and it is the axis an as-of question resolves against. Read the body and look for a stated date: a publication line, a byline date, a reporting period ("quarter ending 2026-03-31"), a meeting date, an email `Date:` header, a "last updated" line.
+
+   - **Found one** → write it as `asserted_at: YYYY-MM-DD` plus `asserted_at_source:` — an anchor into *this file's own body* where that date appears (`#L12`, `#L12-L18`, or a heading slug, same grammar as citations). The date must be inside the passage the anchor resolves to.
+   - **Found none** → write `asserted_at: unknown` and `asserted_at_note:` saying why ("scraped page, no publication date", "undated internal memo"). This is a legitimate outcome and does not block ingest.
+   - **When the source spans a period**, use the END of the period — that is the date as of which its claims held.
+
+   **Never copy `fetched_at` into `asserted_at`.** Stamping the fetch date makes every source look dated while encoding nothing, and silently defeats every as-of query. `scripts/wiki-lint-asserted-at.sh` rejects it by name, so it will fail the lint anyway. `unknown` is the honest answer when the body gives no date.
+
+5. **Verify** the file was written. Read it back, confirm frontmatter is valid YAML. Then run `./scripts/wiki-lint-asserted-at.sh raw/` — it is cheap and catches an unresolvable `asserted_at_source` while you still have the body in context. (Skip if the script is absent — older wiki.)
 
 ## What you must NOT do
 
