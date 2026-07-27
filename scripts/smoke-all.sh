@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R24) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R25) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 29 checks pass.
+# Exit 0 iff all 30 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 29 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R24 guards). This is the CI path — the build phase is a precondition that
+#   only the 30 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R25 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R24 ────
-section "Regression guards (R1–R24)"
+# ──── REGRESSION GUARDS R1–R25 ────
+section "Regression guards (R1–R25)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -289,6 +289,17 @@ else
   record_fail "R24 verify-asserted-at.sh exits non-zero (valid-time contract regression)"
 fi
 
+# R25 — /wiki-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
+# three eval runs and the cause was a spec gap, not the model: the output
+# template never asked for an inline `(source: raw/...)` at all, so the shape
+# varied per run and nothing could verify it. Q5 is the load-bearing one — the
+# form the doc teaches must stay identical to the form the audit extracts.
+if "$SCRIPT_DIR/verify-query-citation-contract.sh" >/dev/null 2>&1; then
+  ok "R25 verify-query-citation-contract.sh exits 0 (citation form stated + grader-compatible)"
+else
+  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/wiki-query citation contract regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -299,7 +310,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 29 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 30 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

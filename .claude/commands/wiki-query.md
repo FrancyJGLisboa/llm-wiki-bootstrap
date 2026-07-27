@@ -159,14 +159,36 @@ Give the user:
 ## Output format
 
 ```
-<the answer>
+<the answer — every load-bearing fact carries an inline (source: raw/<file>#<anchor>)>
 
 ---
 
 Sources:
 - Wiki: [[page-a]], [[page-b]]
+- Raw: (source: raw/<file>#<anchor>), (source: raw/<other>#<anchor>)
 - Web: <urls if used>
 
 Promoted to wiki: wiki/<file> (new) | (nothing — `--no-promote` was set | wiki was sufficient)
 Visual: diagrams/query-<slug>.<html|pdf|png> (archetype: <name>, score <n>) | (none — no --visual) | (HTML only — renderer missing, see hint above)
 ```
+
+### Citing raw evidence (the exact form matters)
+
+Every fact in the answer that a reader could check must carry an inline citation in **exactly** this shape, the same one AGENTS.md hard rule 4 mandates for wiki pages:
+
+```
+(source: raw/<file>#<anchor>)
+```
+
+The literal string `(source:` must open the parenthesis, and the `raw/...` path must follow it directly. This is not cosmetic — `scripts/citation-audit.py` and every downstream check locate provenance by grepping that exact form, so a citation in any other shape is unverifiable no matter how correct it is. These all **fail** even when the path and anchor are perfect:
+
+| written as | why it fails |
+|---|---|
+| ``source: `raw/f.md#L20` `` | backticks around the path; no opening `(source:` |
+| `([[page-summary]], source: raw/f.md#L20)` | `(source:` does not open the parenthesis |
+| `see raw/f.md#L20` | no `(source: …)` wrapper at all |
+| listing the path only under `Sources:` | the *claim* is uncited; only the answer as a whole is |
+
+Prefer the **narrowest** anchor that contains the fact — `#L948` over `#L900-L960`, a section slug over a whole file. A citation that resolves to 60 lines gestures at a document; one that resolves to 2 proves a claim. Whole-file citations (`raw/f.md` with no `#anchor`) are a last resort for facts that genuinely span the document.
+
+Cite the raw snapshot even when you reached the fact through a wiki page — name the page in `- Wiki:` **and** the underlying passage inline. The wikilink says where you read it; the `(source: …)` says how anyone else can check it.
