@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R25) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R26) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 30 checks pass.
+# Exit 0 iff all 31 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 30 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R25 guards). This is the CI path — the build phase is a precondition that
+#   only the 31 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R26 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R25 ────
-section "Regression guards (R1–R25)"
+# ──── REGRESSION GUARDS R1–R26 ────
+section "Regression guards (R1–R26)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -300,6 +300,16 @@ else
   record_fail "R25 verify-query-citation-contract.sh exits non-zero (/wiki-query citation contract regression)"
 fi
 
+# R26 — the entity eval's graders. E1 recall and E2 precision are each trivially
+# gameable alone (dump every Title Case phrase / emit only the two obvious
+# names), so this asserts each strategy actually LOSES. N7 guards a BSD-sed trap
+# that once made E3 read 0% on correct data.
+if "$SCRIPT_DIR/verify-entity-eval.sh" >/dev/null 2>&1; then
+  ok "R26 verify-entity-eval.sh exits 0 (recall/precision each punish the other's false pass)"
+else
+  record_fail "R26 verify-entity-eval.sh exits non-zero (entity-eval grader regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -310,7 +320,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 30 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 31 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

@@ -36,6 +36,22 @@ Re-graded verdicts (cached answers, no spend — the point of `--work`): R1 3/3,
 
 One process note worth more than any of the above: the first re-grade run reported R1 0/3, which was wrong — the ad-hoc loop ran under zsh, which does not word-split unquoted `$expects` on `IFS=','`, so multi-token expectations collapsed into one literal. The eval itself is `#!/usr/bin/env bash` and unaffected. Grader changes get verified by re-running the oracle or `bash -c`, never by a zsh one-liner.
 
+## 2026-07-27 — R4 root cause was a spec gap; entity extraction (phase 2) instrumented
+
+**R4's 0/5, 0/5, 0/7 was never the model.** `/wiki-query`'s output template asked for `- Wiki:` and `- Web:` and never asked for an inline `(source: raw/<file>#<anchor>)` at all. Answers that emitted one were improvising, so the shape varied per run: a backticked path, the path merged into a wikilink parenthesis, or provenance listed only in the Sources block. Every one is unverifiable, because `citation-audit.py` locates evidence by grepping the literal `(source:` form. The provenance was real and tight every time — the last run cited `raw/retry-budget-memo-feb.md#L20-L22`, exactly right — it just was not in the contracted shape. Three runs of evidence pointed at the model; the defect was in the instruction.
+
+`/wiki-query` now states the form literally, adds a `- Raw:` line, tabulates the near-miss shapes that actually occurred with why each fails, and requires the narrowest anchor (a citation resolving to 60 lines gestures at a document; one resolving to 2 proves a claim). Guarded by `verify-query-citation-contract.sh` (Q1-Q5, smoke R25). Q5 is the load-bearing check: it round-trips the taught form through the grader's real extractor, so contract and audit cannot drift apart silently and send R4 back to zero with no visible cause.
+
+**Phase 2 (entities) is instrumented but not yet measured.** Design decision: entities feed the EXISTING KG rather than a parallel store. `type: entity` is already a page type and `wiki-to-kg.py` already builds edges from `## Related` links, so a second entity store would be two sources of truth that disagree — the failure the drift lint exists to prevent. Step 4 already handled entities but gated page creation on "2+ raws OR structurally important", which is why a person who made one decision in one email was never captured at all. New Step 3.5 captures entities as cited bullets in an `## Entities` section on the summary page; promotion to a full page still respects Step 4's threshold. That gets contextualization without a page per person.
+
+The spec names what is NOT an entity, in a table, because listing every capitalized phrase is the failure mode: it looks thorough, doubles the noise, and makes entity retrieval useless — a list where everything is an entity identifies nothing.
+
+`scripts/eval-entities.sh` scores it deterministically against a gold set already present in the corpus (the five `From:` authors in the email thread) and planted decoys (Title Case section headings from the field report). E1 recall >= 80%, E2 decoy capture <= 20%, E3 provenance >= 80% resolvable to a containing passage <= 10 lines. E1 and E2 are each other's mitigation and are never to be read separately: recall alone is won by dumping every capitalized token, precision alone by emitting the two obvious names. `verify-entity-eval.sh` (N1-N7, smoke R26) builds a wiki that plays each strategy and asserts it LOSES.
+
+Two portability traps hit while building, both worth recording because they produce silent wrong numbers rather than errors: BSD `sed` has no `\|` alternation (GNU extension), so name extraction returned the whole bullet and E3 read 0% on correct data; and `grep -q` under `pipefail` closes the pipe, the producer takes SIGPIPE, and the pipeline reports failure on correct output. Both now covered by N7 and by N6's variable-capture pattern.
+
+Smoke 29 -> 31 checks (R25, R26), all green. The entity numbers are NOT measured yet — that needs an ingest run against the new Step 3.5.
+
 ## 2026-07-27 — T2 run: as-of survives without prose, and the eval mis-scored a correct answer
 
 Ran the eval against the T2 pair. 9 raw files, 16 wiki pages, every answer `via: wiki`.
