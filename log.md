@@ -36,6 +36,22 @@ Re-graded verdicts (cached answers, no spend — the point of `--work`): R1 3/3,
 
 One process note worth more than any of the above: the first re-grade run reported R1 0/3, which was wrong — the ad-hoc loop ran under zsh, which does not word-split unquoted `$expects` on `IFS=','`, so multi-token expectations collapsed into one literal. The eval itself is `#!/usr/bin/env bash` and unaffected. Grader changes get verified by re-running the oracle or `bash -c`, never by a zsh one-liner.
 
+## 2026-07-27 — T2 run: as-of survives without prose, and the eval mis-scored a correct answer
+
+Ran the eval against the T2 pair. 9 raw files, 16 wiki pages, every answer `via: wiki`.
+
+**The extract contract holds.** `/wiki-extract` populated `asserted_at` on all 7 sources unprompted and reasoned correctly about each: end-of-period for the two capacity reports (2026-03-31, 2026-09-30), the bare `Published:` line for both memos, the thread's last message date for the `.eml`, and `unknown` + a note for the two genuinely undated sources (`field-report.md`, `sales-2026.csv.md`). `fetched_at` was 2026-07-27 on every file and appears in **zero** `asserted_at` fields — the A5 false pass was not taken once. All 7 anchors resolve to a passage containing their stated date.
+
+**T2-silent-asof PASSED.** "As of 2026-03-01, the ingest retry budget was 3 attempts per message", citing `raw/retry-budget-memo-feb.md#L20-L22`. As-of reasoning survives with no relational prose to lean on — which is what T2 existed to find out, and the answer is yes.
+
+**T2-silent-current "FAILED" and the answer was right.** The run happened 2026-07-27; the second memo was dated 2026-09-22, two months in the FUTURE. The system answered 3 attempts, explained that only the February memo was in effect, flagged the future date as an anomaly worth chasing with the author, and recorded the two memos as a genuine contradiction. My question demanded 7. A corpus with fixed dates cannot ask about "now" — the question has to be answerable from the documents alone, with no reference to when the eval runs. Both dates moved into the past and both "now" questions rewritten to "the most recently published …". E9 now fails the oracle if a `now` question reappears, and it immediately caught a second instance I had not noticed: `R2-current` had the same defect and had been passing only because the Q3 report's prose says "supersedes … as the current number" — the relational prose was covering for a future-dated document. Exactly the dependency T2 was built to expose.
+
+**R5 "FAILED" on an API error.** The answer file contained `API Error: Unable to connect to API (ENOTFOUND)`; the drift logic was never exercised. Graded as FAIL, which in the report is indistinguishable from the system serving a stale claim — the same class of defect as scoring an empty wiki. `retr_answer_broken` now detects API/network/empty answers, the eval marks them INCONCLUSIVE and excludes them from the denominator rather than counting them as losses, and the report says how many were excluded. E8 covers it. The `.r5-pristine` restore did work: raw/ was back to 412 and the drift lint clean afterwards, so the poisoning fix from yesterday holds.
+
+**R4 0/7.** Third consecutive run at zero, and the cause is confirmed as format, not provenance: the T2 answer cited `raw/retry-budget-memo-feb.md#L20-L22` — exactly the right locus — but wrapped as ``([[page]], source: `raw/…`)`` rather than the bare `(source: raw/…)` that AGENTS.md hard rule 4 mandates and `retr_citations` greps for. The provenance is real and tight every time; the emitted format is not the contracted one. Still out of scope here, still not to be fixed by loosening the grader, and now with three runs of evidence behind it.
+
+Oracle: E1–E9, 12+ checks. Smoke 29 green.
+
 ## 2026-07-26 — valid time: `asserted_at` enforced (timestamps phase 1 of 2)
 
 The clean run's R2 pass was load-bearing on luck: the corpus states its vintage in prose ("reporting period", "figure of record for Q1", "supersedes ... as the current number"), so an as-of answer could be assembled from phrases without any vintage reasoning. Delete those clauses and the capability goes with them, because nothing structured carried the document's own date. `fetched_at` is transaction time only.

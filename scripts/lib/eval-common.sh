@@ -286,6 +286,20 @@ retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
 # case. The working guard is per-question: a question with a plausible wrong
 # answer carries a `forbids-pattern` that matches the wrong answer in headline
 # position. Location is the question author's problem, not the grader's.
+# retr_answer_broken <answer_file> — true when the file holds no answer at all:
+# a transient API/network error, or nothing. Such a file must be reported
+# INCONCLUSIVE, never graded: a dropped connection scored as FAIL is
+# indistinguishable in the report from a real capability gap, and that is how a
+# network blip becomes a bug report against the system. Observed — an ENOTFOUND
+# mid-run scored R5 as FAIL on a run where the drift logic was never invoked.
+RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded'
+retr_answer_broken() {
+  [ -f "$1" ] || return 0
+  [ -s "$1" ] || return 0
+  grep -qiE "$RETR_BROKEN_MARKERS" "$1" && return 0
+  return 1
+}
+
 retr_grade_answer() {
   local answer="$1" expects="$2" forbids="$3" refusal="$4" token OLD_IFS
   [ -f "$answer" ] || return 1

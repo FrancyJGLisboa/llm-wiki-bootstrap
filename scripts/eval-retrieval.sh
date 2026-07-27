@@ -220,6 +220,7 @@ r1_pass=0; r1_total=0
 r2_pass=0; r2_total=0
 r3_pass=0; r3_total=0
 r4_pass=0; r4_total=0
+inconclusive=0
 
 while IFS=$'\t' read -r qid question modality expects cite span forbids refusal; do
   [ -z "$qid" ] && continue
@@ -236,14 +237,18 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
       >"$answer" 2>"$WORK/$qid.err" </dev/null || true
   fi
 
-  if retr_grade_answer "$answer" "$expects" "$forbids" "$refusal"; then
+  if retr_answer_broken "$answer"; then
+    # No answer reached us — network/API failure, not a capability result.
+    a_verdict=INCONC
+    echo "[retr]   !! no answer (API/network) — excluded from the score" >&2
+  elif retr_grade_answer "$answer" "$expects" "$forbids" "$refusal"; then
     a_verdict=PASS
   else
     a_verdict=FAIL
   fi
 
   c_verdict=n/a
-  if [ -n "$cite" ]; then
+  if [ -n "$cite" ] && [ "$a_verdict" != INCONC ]; then
     r4_total=$((r4_total + 1))
     if retr_grade_citation "$answer" "$WIKI/raw" "$cite" "${span:-40}" "$CITE_SPAN"; then
       c_verdict=PASS; r4_pass=$((r4_pass + 1))
@@ -252,11 +257,15 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     fi
   fi
 
-  case "$qid" in
-    R1-*|H1-*) r1_total=$((r1_total + 1)); [ "$a_verdict" = PASS ] && r1_pass=$((r1_pass + 1)) ;;
-    R2-*)      r2_total=$((r2_total + 1)); [ "$a_verdict" = PASS ] && r2_pass=$((r2_pass + 1)) ;;
-    R3-*)      r3_total=$((r3_total + 1)); [ "$a_verdict" = PASS ] && r3_pass=$((r3_pass + 1)) ;;
-  esac
+  if [ "$a_verdict" = INCONC ]; then
+    inconclusive=$((inconclusive + 1))
+  else
+    case "$qid" in
+      R1-*|H1-*)  r1_total=$((r1_total + 1)); [ "$a_verdict" = PASS ] && r1_pass=$((r1_pass + 1)) ;;
+      R2-*|T2-*)  r2_total=$((r2_total + 1)); [ "$a_verdict" = PASS ] && r2_pass=$((r2_pass + 1)) ;;
+      R3-*)       r3_total=$((r3_total + 1)); [ "$a_verdict" = PASS ] && r3_pass=$((r3_pass + 1)) ;;
+    esac
+  fi
 
   # Which layer actually answered. A correct answer sourced only from raw/ is
   # the agent grepping files, not the wiki retrieving — it must stay visible in
@@ -302,7 +311,10 @@ if [ "$HOLDOUT" -eq 0 ]; then
         ( cd "$WIKI" && claude -p "/wiki-query \"What was sustained throughput as of 2026-04-15?\" --no-promote" ) \
           >"$answer" 2>"$WORK/R5.err" </dev/null || true
       fi
-      if grep -qiE 'drift|stale|changed since|no longer match|re-ingest|out of date' "$answer"; then
+      if retr_answer_broken "$answer"; then
+        r5_total=0
+        r5_note="inconclusive: no answer reached us (API/network), drift logic never exercised"
+      elif grep -qiE 'drift|stale|changed since|no longer match|re-ingest|out of date' "$answer"; then
         r5_pass=1; r5_note="answer flagged the drifted source"
       else
         r5_note="answer served the claim without flagging the drifted source"
@@ -334,7 +346,7 @@ R3 refusal on absence:  $r3_pass/$r3_total
 R4 citation locus:      $r4_pass/$r4_total
 R5 stale evidence:      $r5_pass/$r5_total   ($r5_note)
 
-retrieval score: $total_pass/$total
+retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 
 ## Per-question detail
 

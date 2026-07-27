@@ -69,7 +69,7 @@ max-span: 40
 forbids-pattern: ^[^a-zA-Z0-9]{0,4}(389|999)
 
 ### R2-current
-What is sustained throughput now, per the most recent capacity report?
+Per the most recently published capacity report, what is sustained throughput?
 modality: vintage
 expects: 389
 cite-contains: 389
@@ -85,7 +85,8 @@ max-span: 40
 forbids-pattern: ^[^a-zA-Z0-9]{0,4}(7|seven)\b
 
 ### T2-silent-current
-What is the ingest retry budget now, in attempts per message?
+According to the most recently published retry budget memo, what is the ingest
+retry budget in attempts per message?
 modality: vintage
 expects: 7 attempts
 cite-contains: 7 attempts

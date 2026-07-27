@@ -226,6 +226,15 @@ Q3
 # unsatisfiable, since /wiki-extract would correctly record `unknown`. What T2
 # proves is narrower and still worth having: as-of survives with no relational
 # scaffolding to lean on.
+#
+# Both dates are in the PAST, and the paired question asks for "the most recently
+# published memo" rather than "now". The first version got this wrong: the second
+# memo was dated 2026-09-22 while the run happened in July, so the honest answer
+# to "what is it now" was the FEBRUARY figure — the September memo had not been
+# published yet. The system got that right, explained the future date as an
+# anomaly, and was scored FAIL for it. A corpus with fixed dates cannot ask about
+# "now": the question must be answerable from the documents alone, with no
+# reference to when the eval happens to run.
 cat > "$TARGET/retry-budget-memo-feb.md" <<'FEB'
 # Retry Budget Memo
 
@@ -241,10 +250,10 @@ The budget trades tail latency against delivery. The figure was fixed at the
 platform review and has not been revisited since.
 FEB
 
-cat > "$TARGET/retry-budget-memo-sep.md" <<'SEP'
+cat > "$TARGET/retry-budget-memo-apr.md" <<'APR'
 # Retry Budget Memo
 
-Published: 2026-09-22
+Published: 2026-04-15
 
 The ingest retry budget is set at 7 attempts per message, with a 45 second
 backoff ceiling. Operators may not raise it without sign-off from the platform
@@ -254,6 +263,6 @@ owner. Exceeding the budget routes the message to the dead-letter queue.
 
 The budget trades tail latency against delivery. The figure was fixed at the
 platform review and has not been revisited since.
-SEP
+APR
 
 echo "corpus written to $TARGET (7 sources)" >&2

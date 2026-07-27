@@ -21,6 +21,14 @@
 #                              forbids-pattern fails
 #   E6 questions well-formed : every question parses with the fields its check
 #                              needs (a missing cite-contains silently skips R4)
+#   E7 empty wiki voids      : an unpopulated wiki is not scored, and nested
+#                              `claude -p` never inherits the loop's stdin
+#   E8 no answer = INCONC    : an API/network failure is excluded, not counted a
+#                              loss — a dropped connection scored as FAIL reads
+#                              exactly like a real capability gap
+#   E9 clock-free            : no question asks about "now". Fixed corpus dates
+#                              plus a present-tense question cannot both be
+#                              right, and mis-scored a correct answer once
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -127,6 +135,37 @@ retr_grade_answer "$TMP/refuse.md"    "" "$FORBIDS" true || { fail "E5 honest re
 retr_grade_answer "$TMP/fabricate.md" "" "$FORBIDS" true && { fail "E5 fabricated Q2 figure graded PASS"; e5=1; }
 [ "$e5" -eq 0 ] && ok "E5 refusal grader: decline passes, fabricated figure fails"
 
+# E8 — a file holding no answer must be INCONCLUSIVE, never graded. An ENOTFOUND
+# mid-run scored R5 as FAIL on a run where the drift logic was never invoked, and
+# in the report that is indistinguishable from a real capability gap. Also asserts
+# the eval excludes INCONC from the denominator rather than counting it as a loss.
+printf 'API Error: Unable to connect to API (ENOTFOUND)\n' > "$TMP/broken.md"
+printf 'API Error: 529 Overloaded.\n'                      > "$TMP/overloaded.md"
+: > "$TMP/empty.md"
+printf '**7 attempts per message**, per the April memo.\n' > "$TMP/real.md"
+e8=0
+retr_answer_broken "$TMP/broken.md"     || { fail "E8 ENOTFOUND answer would be graded as a real result"; e8=1; }
+retr_answer_broken "$TMP/overloaded.md" || { fail "E8 529 answer would be graded as a real result"; e8=1; }
+retr_answer_broken "$TMP/empty.md"      || { fail "E8 empty answer would be graded as a real result"; e8=1; }
+retr_answer_broken "$TMP/real.md"       && { fail "E8 a genuine answer was flagged as broken"; e8=1; }
+grep -q 'a_verdict=INCONC' "$SCRIPT_DIR/eval-retrieval.sh" \
+  || { fail "E8 eval does not mark unanswerable questions INCONC"; e8=1; }
+grep -q 'if \[ "\$a_verdict" = INCONC \]' "$SCRIPT_DIR/eval-retrieval.sh" \
+  || { fail "E8 eval counts INCONC into the score instead of excluding it"; e8=1; }
+[ "$e8" -eq 0 ] && ok "E8 no-answer files are INCONCLUSIVE and excluded, not scored as failures"
+
+# E9 — the corpus must not ask about "now". Fixed dates plus a question about the
+# present cannot both be right: a memo dated after the run date is not yet
+# published, so the honest "now" answer is the older figure. That mis-scored a
+# correct answer as FAIL once.
+e9=0
+grep -qE '^What is .*\bnow\b' "$QUESTIONS" \
+  && { fail "E9 a question asks about \"now\" — clock-dependent against a fixed corpus"; e9=1; }
+if grep -hoE 'Published: 20[0-9]{2}-[0-9]{2}-[0-9]{2}' "$GEN" | grep -qv 'Published: 2026-0[1-4]'; then
+  fail "E9 a corpus Published: date is late enough to fall after a plausible run date"; e9=1
+fi
+[ "$e9" -eq 0 ] && ok "E9 no \"now\" questions; corpus dates stay behind the run date"
+
 # E6 — questions parse with the fields their check needs
 e6=0
 for qf in "$QUESTIONS" "$HOLDOUT_Q"; do
@@ -176,5 +215,5 @@ echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E7 green — corpus fixed, needles deep, graders not fakeable, empty-wiki runs void.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E9 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free.\n" "$GREEN" "$RESET"
 exit 0
