@@ -143,7 +143,7 @@ Each source still produces its own `raw/<slug>.<ext>` (or sidecar). The batch is
 
    **Never copy `fetched_at` into `asserted_at`.** Stamping the fetch date makes every source look dated while encoding nothing, and silently defeats every as-of query. `scripts/wiki-lint-asserted-at.sh` rejects it by name, so it will fail the lint anyway. `unknown` is the honest answer when the body gives no date.
 
-5. **Verify** the file was written. Read it back, confirm frontmatter is valid YAML. Then run `./scripts/wiki-lint-asserted-at.sh raw/` — it is cheap and catches an unresolvable `asserted_at_source` while you still have the body in context. (Skip if the script is absent — older wiki.)
+5. **Verify** the file was written. Read it back, confirm frontmatter is valid YAML. Then run `./scripts/wiki-lint-asserted-at.sh raw/ --all` — cheap, and it catches an unresolvable `asserted_at_source` while you still have the body in context. **`--all` is required here:** everything you just wrote has `ingested_hash: ""`, and the default mode skips never-ingested sources, so without the flag the lint inspects nothing and reports a clean pass. (Skip if the script is absent — older wiki.)
 
 ## What you must NOT do
 

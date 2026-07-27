@@ -67,7 +67,7 @@ def is_sidecar_of(name: str, names: set[str]) -> bool:
     return name.endswith(".md") and name[: -len(".md")] in names
 
 
-def audit(raw_dir: str) -> list[str]:
+def audit(raw_dir: str, audit_all: bool = False) -> list[str]:
     problems: list[str] = []
     names = {
         e for e in os.listdir(raw_dir) if os.path.isfile(os.path.join(raw_dir, e))
@@ -87,7 +87,7 @@ def audit(raw_dir: str) -> list[str]:
         fm = parse_frontmatter([ln.rstrip("\r") for ln in lines])
         if not fm:
             continue  # no frontmatter at all is a different lint's business
-        if not fm.get("ingested_hash", "").strip().strip('"'):
+        if not audit_all and not fm.get("ingested_hash", "").strip().strip('"'):
             continue  # never ingested — /wiki-extract's job, not ours
 
         value = fm.get("asserted_at", "").strip().strip('"')
@@ -149,10 +149,12 @@ def audit(raw_dir: str) -> list[str]:
 
 
 def main(argv: list[str]) -> int:
-    if len(argv) != 2:
-        print("usage: asserted-at-audit.py <raw-dir>", file=sys.stderr)
+    args = [a for a in argv[1:] if not a.startswith("-")]
+    audit_all = "--all" in argv[1:]
+    if len(args) != 1:
+        print("usage: asserted-at-audit.py <raw-dir> [--all]", file=sys.stderr)
         return 2
-    problems = audit(argv[1])
+    problems = audit(args[0], audit_all=audit_all)
     for p in problems:
         print(p, file=sys.stderr)
     if problems:

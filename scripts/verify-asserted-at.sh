@@ -27,6 +27,10 @@
 #                            not audited (it has no frontmatter by design)
 #  A11 real raw/           : the repo's own raw/ is reported, advisory only —
 #                            these sources predate the field
+#  A12 --all mode           : never-ingested sources ARE audited with --all, and
+#                            still skipped without it. /wiki-extract needs --all:
+#                            everything it just wrote has ingested_hash "", so
+#                            default mode would inspect nothing and report clean
 #
 # Usage: ./scripts/verify-asserted-at.sh   Exit: 0 all green, 1 a check failed.
 
@@ -141,6 +145,24 @@ printf 'id,region\n1,west\n' > "$d/data.csv"
 if "$LINT" "$d" >/dev/null 2>&1; then ok "A10 sidecar pair audited once, on the .md that carries frontmatter"
 else fail "A10 sidecar pair flagged (the binary half has no frontmatter by design)"; fi
 
+# A12 — `--all` audits never-ingested sources. Without it, an extract-time check
+# inspects NOTHING (everything /wiki-extract just wrote has ingested_hash "")
+# and reports a clean pass. A check that silently audits nothing is worse than no
+# check: it reads as verification. This is a real observed failure, not a
+# hypothetical — the first T2 run reported "clean" on 7 unaudited files.
+d="$TMP/a12"; mkdir -p "$d"
+{ echo "---"; echo "source_type: note"; echo "fetched_at: 2026-07-24"
+  echo "ingested_hash: \"\""; echo "ingested_at: never"; echo "---"
+  echo ""; echo "Body with no asserted_at at all."
+} > "$d/doc.md"
+a12=0
+"$LINT" "$d" >/dev/null 2>&1 || { fail "A12 default mode flagged a never-ingested source"; a12=1; }
+if "$LINT" "$d" --all >/dev/null 2>&1; then
+  fail "A12 --all accepted a never-ingested source with no asserted_at (extract-time check would be vacuous)"
+  a12=1
+fi
+[ "$a12" -eq 0 ] && ok "A12 --all audits never-ingested sources; default mode still skips them"
+
 # A11 — the repo's own raw/, advisory: these sources predate the field
 if [ -d raw ]; then
   if "$LINT" raw >/dev/null 2>"$TMP/real.err"; then
@@ -154,5 +176,5 @@ echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d valid-time check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s A1-A10 green — dates traceable, unknowns explicit, fetch-date stamping blocked.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s A1-A12 green — dates traceable, unknowns explicit, fetch-date stamping blocked.\n" "$GREEN" "$RESET"
 exit 0

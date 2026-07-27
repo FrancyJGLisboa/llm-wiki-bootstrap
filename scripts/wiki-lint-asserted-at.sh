@@ -24,28 +24,40 @@
 # That last one is the reason the anchor is mandatory: a date that must resolve
 # to a real passage costs more to fake than to read off the page.
 #
-# Never-ingested sources (`ingested_hash: ""`) are skipped, same as the drift
-# lint — populating frontmatter is /wiki-extract's job, and noise there trains
-# users to ignore the lint.
+# Never-ingested sources (`ingested_hash: ""`) are skipped by default, same as
+# the drift lint — in a /wiki-lint pass, frontmatter that /wiki-extract has not
+# finished with yet is noise, and noise trains users to ignore the lint.
 #
-# Usage: ./scripts/wiki-lint-asserted-at.sh [raw-dir]   (default: raw)
-# Exit:  0 every ingested source satisfies the contract
+# `--all` audits them too, and is what /wiki-extract uses: right after extract
+# every file is by definition never-ingested, so the default mode would skip
+# all of them and report a vacuous "clean". That is not hypothetical — it was
+# the first thing a real run did, and an extract-time check that silently
+# inspects nothing is worse than no check, because it reads as verification.
+#
+# Usage: ./scripts/wiki-lint-asserted-at.sh [raw-dir] [--all]   (default: raw)
+# Exit:  0 every audited source satisfies the contract
 #        1 at least one violation (details on stderr)
 #        2 usage error
 
 set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RAW_DIR="${1:-raw}"
-
-if [ "$#" -gt 1 ]; then
-  echo "usage: wiki-lint-asserted-at.sh [raw-dir]" >&2
-  exit 2
-fi
+RAW_DIR=raw
+AUDIT_ALL=0
+for arg in "$@"; do
+  case "$arg" in
+    --all) AUDIT_ALL=1 ;;
+    -*)    echo "usage: wiki-lint-asserted-at.sh [raw-dir] [--all]" >&2; exit 2 ;;
+    *)     RAW_DIR="$arg" ;;
+  esac
+done
 if [ ! -d "$RAW_DIR" ]; then
   echo "error: no such directory: $RAW_DIR" >&2
   exit 2
 fi
 command -v python3 >/dev/null 2>&1 || { echo "error: python3 not on PATH" >&2; exit 2; }
 
+if [ "$AUDIT_ALL" -eq 1 ]; then
+  exec python3 "$SCRIPT_DIR/asserted-at-audit.py" "$RAW_DIR" --all
+fi
 exec python3 "$SCRIPT_DIR/asserted-at-audit.py" "$RAW_DIR"
