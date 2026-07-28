@@ -141,12 +141,17 @@ retr_grade_answer "$TMP/fabricate.md" "" "$FORBIDS" true && { fail "E5 fabricate
 # the eval excludes INCONC from the denominator rather than counting it as a loss.
 printf 'API Error: Unable to connect to API (ENOTFOUND)\n' > "$TMP/broken.md"
 printf 'API Error: 529 Overloaded.\n'                      > "$TMP/overloaded.md"
+printf "You've hit your session limit · resets 10:40am\n"   > "$TMP/caplimit.md"
 : > "$TMP/empty.md"
 printf '**7 attempts per message**, per the April memo.\n' > "$TMP/real.md"
 e8=0
 retr_answer_broken "$TMP/broken.md"     || { fail "E8 ENOTFOUND answer would be graded as a real result"; e8=1; }
 retr_answer_broken "$TMP/overloaded.md" || { fail "E8 529 answer would be graded as a real result"; e8=1; }
 retr_answer_broken "$TMP/empty.md"      || { fail "E8 empty answer would be graded as a real result"; e8=1; }
+# The session/usage cap is the one that actually bit: a full run's last two
+# questions came back as "You've hit your session limit" and were scored FAIL,
+# which in the report is indistinguishable from a refusal defect.
+retr_answer_broken "$TMP/caplimit.md"   || { fail "E8 session-limit answer would be graded as a real result"; e8=1; }
 retr_answer_broken "$TMP/real.md"       && { fail "E8 a genuine answer was flagged as broken"; e8=1; }
 grep -q 'a_verdict=INCONC' "$SCRIPT_DIR/eval-retrieval.sh" \
   || { fail "E8 eval does not mark unanswerable questions INCONC"; e8=1; }

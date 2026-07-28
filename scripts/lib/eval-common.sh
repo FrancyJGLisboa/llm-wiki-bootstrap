@@ -292,7 +292,7 @@ retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
 # indistinguishable in the report from a real capability gap, and that is how a
 # network blip becomes a bug report against the system. Observed — an ENOTFOUND
 # mid-run scored R5 as FAIL on a run where the drift logic was never invoked.
-RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded'
+RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded|session limit|usage limit|rate limit|quota exceeded|Please run /login|credit balance'
 retr_answer_broken() {
   [ -f "$1" ] || return 0
   [ -s "$1" ] || return 0

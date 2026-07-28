@@ -36,6 +36,20 @@ Re-graded verdicts (cached answers, no spend — the point of `--work`): R1 3/3,
 
 One process note worth more than any of the above: the first re-grade run reported R1 0/3, which was wrong — the ad-hoc loop ran under zsh, which does not word-split unquoted `$expects` on `IFS=','`, so multi-token expectations collapsed into one literal. The eval itself is `#!/usr/bin/env bash` and unaffected. Grader changes get verified by re-running the oracle or `bash -c`, never by a zsh one-liner.
 
+## 2026-07-27 — R4: 0/7 -> 7/7. The spec gap was the whole story.
+
+Re-ran after the `/wiki-query` citation-contract fix. 9 raw files, 14 wiki pages, every answer `via: wiki`.
+
+**R4 went from 0/7 to 7/7.** Three runs of zero had pointed at the model; the defect was an instruction that never asked for the citation. With the form stated, every answer emitted it, and the loci are tight and correct — `raw/sales-2026.csv#L948` for the CSV needle at row 947, `raw/thread-q3-planning.eml#L120-L127` for the email needle in message 11, `raw/field-report.md#instrumentation-debt-lines-1043-1098` for the report needle in section 21. Nothing about the model's retrieval changed between the 0/7 run and this one.
+
+Everything measured passed: **R1 3/3, R2 4/4 (both capacity legs and both silent-memo legs), R4 7/7 — 7/7 questions, 14/14 including citations.**
+
+**R3 and R5 are INCONCLUSIVE, not failures.** Both answer files contained `You've hit your session limit · resets 10:40am`. The run hit the account cap on its last two questions. The E8 machinery added earlier the same day caught the API-error family but not this phrasing, so both were scored FAIL — again indistinguishable in the report from a refusal defect and a drift-detection defect. `RETR_BROKEN_MARKERS` now covers session/usage/quota/credit-balance/login forms, and E8 asserts the exact string that bit. Re-graded from cached answers at no cost: 7/7 measured, 2 inconclusive.
+
+That is the third distinct way a non-answer has been scored as a capability failure (529 overload, ENOTFOUND, session cap). The pattern is worth stating plainly: any transport failure that returns text will be graded as text unless something explicitly recognises it, and every such mis-grade looks exactly like the system being bad at its job.
+
+**Entities remain unmeasured.** `eval-entities.sh` reports NO ENTITIES CAPTURED against this wiki, and the cause is timing, not capability: the run started 06:49:32 and Step 3.5 was committed 06:56:46. The run's own installed copy of `wiki-ingest.md` contains no Step 3.5, so entity capture was never requested. N6 earned itself here — reporting "the section was never written" instead of "E1 0% recall" is the difference between a scheduling note and a false bug report. Needs one fresh extract+ingest once the session cap resets.
+
 ## 2026-07-27 — R4 root cause was a spec gap; entity extraction (phase 2) instrumented
 
 **R4's 0/5, 0/5, 0/7 was never the model.** `/wiki-query`'s output template asked for `- Wiki:` and `- Web:` and never asked for an inline `(source: raw/<file>#<anchor>)` at all. Answers that emitted one were improvising, so the shape varied per run: a backticked path, the path merged into a wikilink parenthesis, or provenance listed only in the Sources block. Every one is unverifiable, because `citation-audit.py` locates evidence by grepping the literal `(source:` form. The provenance was real and tight every time — the last run cited `raw/retry-budget-memo-feb.md#L20-L22`, exactly right — it just was not in the contracted shape. Three runs of evidence pointed at the model; the defect was in the instruction.
