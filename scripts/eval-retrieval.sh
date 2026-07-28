@@ -9,7 +9,7 @@
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
 #
-# Loss function — 6 binary checks (approved):
+# Loss function — 8 binary checks (approved):
 #   R1  needle retrieval    per modality (csv / email / report), planted past
 #                           each extractor's truncation boundary
 #   R2  point-in-time       as-of and current answers, both correct in ONE run
@@ -22,6 +22,12 @@
 #   M1  multi-valued answer a question whose corpus support is genuinely
 #                           two-valued (disjoint scopes) surfaces BOTH figures
 #                           with their scopes, instead of picking one
+#   M2  supersession        "what replaced X" is answered correctly AND the
+#                           succession is machine-readable: wiki-to-kg.py emits
+#                           a supersedes edge inferred with no prose cue
+#   M4  clarify-on-ambiguity an underspecified question gets a clarification or
+#                           an enumeration of candidate readings, never a
+#                           confident single pick (anti-reflex control: holdout)
 #
 # retrieval score = passed / total, reported per check and per modality.
 #
@@ -224,6 +230,8 @@ r2_pass=0; r2_total=0
 r3_pass=0; r3_total=0
 r4_pass=0; r4_total=0
 m1_pass=0; m1_total=0
+m4_pass=0; m4_total=0
+m2_answer=MISSING
 inconclusive=0
 
 while IFS=$'\t' read -r qid question modality expects cite span forbids refusal; do
@@ -251,6 +259,10 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     a_verdict=FAIL
   fi
 
+  # M2 is scored after the loop (its verdict is ANDed with a structural check),
+  # so stash the answer verdict — including INCONC — instead of bucketing it.
+  case "$qid" in M2-*) m2_answer="$a_verdict" ;; esac
+
   c_verdict=n/a
   if [ -n "$cite" ] && [ "$a_verdict" != INCONC ]; then
     r4_total=$((r4_total + 1))
@@ -269,6 +281,7 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
       R2-*|T2-*)  r2_total=$((r2_total + 1)); [ "$a_verdict" = PASS ] && r2_pass=$((r2_pass + 1)) ;;
       R3-*)       r3_total=$((r3_total + 1)); [ "$a_verdict" = PASS ] && r3_pass=$((r3_pass + 1)) ;;
       M1-*)       m1_total=$((m1_total + 1)); [ "$a_verdict" = PASS ] && m1_pass=$((m1_pass + 1)) ;;
+      M4-*|H4-*)  m4_total=$((m4_total + 1)); [ "$a_verdict" = PASS ] && m4_pass=$((m4_pass + 1)) ;;
     esac
   fi
 
@@ -333,9 +346,44 @@ if [ "$HOLDOUT" -eq 0 ]; then
   fi
 fi
 
+# ── M2: the supersession must be machine-readable, not just answerable ────────
+#
+# A correct answer to M2-supersede proves date reasoning (the memo pair has no
+# relational prose to lean on — E11 enforces that). It does NOT prove the
+# succession exists as data: only a supersedes/superseded-by edge in the KG
+# does. M2 passes when BOTH legs hold; each leg failing alone is named in the
+# note so the report says which capability is missing.
+m2_pass=0; m2_total=0; m2_note="skipped (holdout run)"
+if [ "$HOLDOUT" -eq 0 ]; then
+  if [ "$m2_answer" = INCONC ]; then
+    m2_note="inconclusive: no answer reached us (API/network)"
+  elif [ "$m2_answer" = MISSING ]; then
+    m2_total=1
+    m2_note="M2-supersede question never ran (removed from the questions file?)"
+  else
+    m2_total=1
+    kg_out="$WORK/kg.jsonl"
+    python3 "$SCRIPT_DIR/wiki-to-kg.py" "$WIKI/wiki/" >"$kg_out" 2>/dev/null || : >"$kg_out"
+    if grep -E '"verb": "supersede(s|d-by)"' "$kg_out" | grep -q retry; then
+      m2_struct=1
+    else
+      m2_struct=0
+    fi
+    if [ "$m2_struct" -eq 1 ] && [ "$m2_answer" = PASS ]; then
+      m2_pass=1; m2_note="typed edge in KG and answer named the successor"
+    elif [ "$m2_struct" -eq 0 ] && [ "$m2_answer" = PASS ]; then
+      m2_note="answer right but NO supersedes edge in the KG — succession lives only in the model's reasoning"
+    elif [ "$m2_struct" -eq 1 ]; then
+      m2_note="edge exists but the answer failed"
+    else
+      m2_note="no supersedes edge and the answer failed"
+    fi
+  fi
+fi
+
 # ── Report ────────────────────────────────────────────────────────────────────
-total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass))
-total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total))
+total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass))
+total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total))
 
 cat <<EOF
 # retrieval eval report$([ "$HOLDOUT" -eq 1 ] && echo " — HELDOUT")
@@ -351,6 +399,8 @@ R3 refusal on absence:  $r3_pass/$r3_total
 R4 citation locus:      $r4_pass/$r4_total
 R5 stale evidence:      $r5_pass/$r5_total   ($r5_note)
 M1 multi-valued answer: $m1_pass/$m1_total
+M2 supersession:        $m2_pass/$m2_total   ($m2_note)
+M4 clarify-on-ambig:    $m4_pass/$m4_total
 
 retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 

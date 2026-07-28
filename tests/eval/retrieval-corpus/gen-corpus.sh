@@ -302,4 +302,26 @@ costs bounded.
 This policy covers sandbox workloads only.
 SBX
 
-echo "corpus written to $TARGET (9 sources)" >&2
+# ── 6. M4: a second "retention period" so the bare question is ambiguous ──────
+# With the log-retention pair above, "what is the retention period?" (no system
+# named) has candidate readings in two unrelated domains: application logs
+# (180/30 by environment) and database backups (35 days). M4 measures whether
+# an underspecified question is met with a clarification or an enumeration of
+# the candidate readings — not a confident single pick. The scope section
+# naming what it does NOT cover is realistic, not a leak: M4 is graded on
+# surfacing the ambiguity, not on cross-doc synthesis.
+cat > "$TARGET/backup-retention-policy.md" <<'BAK'
+# Backup Retention Policy
+
+Published: 2026-03-12
+
+Database backups are retained for 35 days from the time the snapshot
+completes, then expired. Restores older than the window require a support
+ticket against cold archive.
+
+## Scope
+
+This policy covers database backups only. It does not cover application logs.
+BAK
+
+echo "corpus written to $TARGET (10 sources)" >&2

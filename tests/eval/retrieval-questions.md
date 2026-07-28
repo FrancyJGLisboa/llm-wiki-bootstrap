@@ -14,12 +14,14 @@ agent can only produce one by actually reaching it.
 ```
 ### <check>-<id>
 Question text on one or more lines.
-modality: csv | email | report | vintage | absent | conflict
+modality: csv | email | report | vintage | absent | conflict | supersession | ambiguous
 expects: token1, token2          # all must appear in the answer  (scores R1/R2/R3)
 cite-contains: token             # the cited passage must contain this (scores R4)
 max-span: N                      # ...within N lines               (scores R4)
 forbids-pattern: <ERE>           # answer must NOT match this (fabrication guard)
 refusal: true                    # answer must decline (scores R3)
+refusal: clarify                 # answer must surface the ambiguity (marker) AND
+                                 # name every candidate reading via expects (M4)
 ```
 
 `forbids-pattern` is an ERE, not a bare token, on purpose. A *good* answer to
@@ -39,6 +41,19 @@ AND both scope words — a pick-one answer fails on the missing tokens. Its
 `forbids-pattern` guards the other false pass: reciting both figures while
 waving one off as stale/outdated, when the two docs are disjoint scopes, not
 vintages of each other.
+
+`M2-supersede` is only half its check: the eval also gates M2 on a structural
+leg — `wiki-to-kg.py` must emit a `supersedes`/`superseded-by` edge between the
+retry pages. The memo pair carries no supersession prose (E11 enforces that),
+so a right answer proves date reasoning, but only the typed edge proves the
+succession is machine-readable.
+
+`M4-ambiguous` deliberately has no `cite-contains`: a clarification needn't
+cite. Its `refusal: clarify` grading accepts either asking which reading is
+meant or enumerating all readings — both must name every candidate (expects).
+The anti-reflex control (a single-reading question that FORBIDS clarify
+markers) lives in the holdout file, so "clarify on everything" cannot be
+optimised into a safe default.
 
 ## Questions
 
@@ -101,6 +116,15 @@ cite-contains: 7 attempts
 max-span: 40
 forbids-pattern: ^[^a-zA-Z0-9]{0,4}(3|three)\b
 
+### M2-supersede
+Which memo superseded the February retry budget memo, and what retry budget
+did it set?
+modality: supersession
+expects: 7 attempts, apr
+cite-contains: 7 attempts
+max-span: 40
+forbids-pattern: ^[^a-zA-Z0-9]{0,4}(3|three)\b
+
 ### M1-conflict
 How long are application logs retained before being purged?
 modality: conflict
@@ -108,6 +132,12 @@ expects: 180 days, 30 days, production, sandbox
 cite-contains: 30 days
 max-span: 40
 forbids-pattern: [Oo]utdated|[Oo]bsolete|[Ss]tale
+
+### M4-ambiguous
+What is the retention period?
+modality: ambiguous
+expects: log, backup
+refusal: clarify
 
 ### R3-absent
 What was sustained throughput in Q2 2026?

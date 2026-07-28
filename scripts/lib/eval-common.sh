@@ -228,6 +228,13 @@ RETR_REFUSAL_MARKERS='not in the wiki|no answer in|not found in the wiki|nothing
 # `no .{0,40}(figure|report)[^.]{0,30}exist` and hung BSD grep by backtracking.
 RETR_REFUSAL_MARKERS="$RETR_REFUSAL_MARKERS"'|(figure|report|record|data) exists|does not exist|no report|will not (interpolate|fabricate|guess|invent)'
 
+# Markers for `refusal: clarify` (M4): an underspecified question must be met
+# with a clarification or an explicit ambiguity call-out, never a confident
+# single pick. An answer that ENUMERATES all candidate readings ("depends on
+# which system: ...") is as good as asking — the markers accept both shapes.
+# Bounded quantifiers only (see the backtracking incident above).
+RETR_CLARIFY_MARKERS='do you mean|which .{0,40}\?|ambiguous|could (refer|mean)|more than one|multiple .{0,30}(polic|figure|period|retention|reading)|depends on (which|whether|what|the)|clarify|specify which|underspecified'
+
 # retr_parse_questions <questions_file> <out_tsv>
 # Emit: qid<TAB>question<TAB>modality<TAB>expects<TAB>cite_contains<TAB>max_span<TAB>forbids<TAB>refusal
 #
@@ -311,6 +318,12 @@ retr_grade_answer() {
   if [ "$refusal" = "true" ]; then
     grep -qiE "$RETR_REFUSAL_MARKERS" "$answer" || return 1
     return 0
+  fi
+
+  # clarify: the ambiguity must be surfaced, AND the expects tokens (every
+  # candidate reading) must still appear — fall through to the expects loop.
+  if [ "$refusal" = "clarify" ]; then
+    grep -qiE "$RETR_CLARIFY_MARKERS" "$answer" || return 1
   fi
 
   OLD_IFS="$IFS"; IFS=','

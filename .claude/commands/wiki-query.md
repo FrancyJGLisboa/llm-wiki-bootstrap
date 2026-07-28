@@ -36,9 +36,11 @@ python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-w
 python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-walk.py --effects-of <node>
 # connection path between two pages (sign-agnostic, undirected):
 python3 scripts/wiki-to-kg.py wiki/ | python3 scripts/wiki-graph-walk.py --path <a> <b>
+# supersession (what replaced X / what did X replace):
+python3 scripts/wiki-to-kg.py wiki/ | grep -E '"verb": "supersede(s|d-by)"'
 ```
 
-`<node>`/`<a>`/`<b>` are page slugs. Use the returned chain as the spine of your answer, then cite each hop's page as `[[slug]]`. If the walk returns "no recorded …", the edges aren't in the wiki yet — fall back to reading pages, and note the gap (a missing causal edge is a good `## Open questions` item). This is the key-free path: it runs on the graph your wiki already encodes, no subscription call.
+`<node>`/`<a>`/`<b>` are page slugs. Use the returned chain as the spine of your answer, then cite each hop's page as `[[slug]]`. If the walk returns "no recorded …", the edges aren't in the wiki yet — fall back to reading pages, and note the gap (a missing causal edge is a good `## Open questions` item). This is the key-free path: it runs on the graph your wiki already encodes, no subscription call. The same applies to **replacement** questions — "what replaced X", "which document superseded X": filter the graph for `supersedes` / `superseded-by` edges (last line above) instead of hunting for supersession prose that may not exist.
 
 ### Step 2 — Try to answer from the wiki alone
 

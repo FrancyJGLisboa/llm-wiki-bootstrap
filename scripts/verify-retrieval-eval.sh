@@ -32,6 +32,10 @@
 #   E10 multi-valued honest  : the M1 pair leaks nothing across docs, and the
 #                              grader fails both false-pass routes (pick one
 #                              figure; recite both but dismiss one as stale)
+#   E11 supersession honest  : the M2 memo pair is cue-free (no supersession
+#                              prose) and M2 is gated on a KG edge, not answer
+#   E12 clarify honest       : M4 accepts ask-or-enumerate, fails a confident
+#                              pick; the anti-reflex control is held out (H4)
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -195,6 +199,42 @@ grep -q -F '30 days'  "$A/log-retention-production.md" && { fail "E10 production
 grep -q -F '180 days' "$A/log-retention-sandbox.md"    && { fail "E10 sandbox doc leaks the production figure (single read would pass M1)"; e10=1; }
 [ "$e10" -eq 0 ] && ok "E10 M1 grader: only both-figures-both-scopes passes; corpus docs don't leak each other"
 
+# E11 — M2 corpus honesty: the retry memo pair carries NO supersession prose, so
+# the typed edge can only come from same-subject + date inference (T2
+# discipline). If a cue word creeps into a memo body, the edge stops proving
+# inference. Also assert the eval gates M2 on the KG edge, not just the answer —
+# a right answer alone proves date reasoning, not machine-readable succession.
+e11=0
+for f in retry-budget-memo-feb.md retry-budget-memo-apr.md; do
+  if grep -qiE 'supersede|replace|obsolet|outdated|current|previous|newer|older' "$A/$f"; then
+    fail "E11 $f contains supersession prose (the edge would be authorable from a cue)"; e11=1
+  fi
+done
+grep -q '"verb": "supersede' "$SCRIPT_DIR/eval-retrieval.sh" \
+  || { fail "E11 eval does not gate M2 on a supersedes edge in the KG"; e11=1; }
+[ "$e11" -eq 0 ] && ok "E11 retry memos are cue-free and M2 is KG-gated, not answer-only"
+
+# E12 — M4 clarify grader: ambiguity must be surfaced with every candidate
+# reading named. Asking which is meant and enumerating all readings both pass
+# (enumeration is the better answer); a confident single pick fails on marker
+# and/or missing candidates. The anti-reflex control is held out: H4-direct has
+# one overwhelmingly likely reading and FORBIDS clarify markers, so "clarify on
+# everything" cannot become the safe default.
+M4_EXPECTS="log, backup"
+printf 'Ambiguous — do you mean application logs or database backups?\n' > "$TMP/m4-ask.md"
+printf 'It depends on which system: application logs (180/30 days by environment) or database backups (35 days).\n' > "$TMP/m4-enum.md"
+printf '35 days.\n' > "$TMP/m4-guess.md"
+printf 'The retention period for application logs is 180 days.\n' > "$TMP/m4-pick.md"
+e12=0
+retr_grade_answer "$TMP/m4-ask.md"   "$M4_EXPECTS" "" clarify || { fail "E12 clarifying question graded FAIL"; e12=1; }
+retr_grade_answer "$TMP/m4-enum.md"  "$M4_EXPECTS" "" clarify || { fail "E12 enumerate-all-readings answer graded FAIL"; e12=1; }
+retr_grade_answer "$TMP/m4-guess.md" "$M4_EXPECTS" "" clarify && { fail "E12 bare confident figure graded PASS"; e12=1; }
+retr_grade_answer "$TMP/m4-pick.md"  "$M4_EXPECTS" "" clarify && { fail "E12 confident single pick graded PASS"; e12=1; }
+grep -q 'refusal: clarify' "$QUESTIONS" || { fail "E12 no clarify question in $QUESTIONS"; e12=1; }
+grep -qE 'forbids-pattern:.*mean' "$HOLDOUT_Q" \
+  || { fail "E12 holdout lacks the anti-reflex control (clarify markers must be forbidden there)"; e12=1; }
+[ "$e12" -eq 0 ] && ok "E12 M4 grader: ask or enumerate passes, confident pick fails; anti-reflex held out"
+
 # E6 — questions parse with the fields their check needs
 e6=0
 for qf in "$QUESTIONS" "$HOLDOUT_Q"; do
@@ -211,6 +251,10 @@ for qf in "$QUESTIONS" "$HOLDOUT_Q"; do
     [ -z "$modality" ] && { fail "E6 $qid has no modality"; e6=1; }
     if [ "$refusal" = "true" ]; then
       [ -z "$forbids" ] && { fail "E6 $qid is a refusal check with no forbids-pattern (nothing guards fabrication)"; e6=1; }
+    elif [ "$refusal" = "clarify" ]; then
+      # A clarify check needs the candidate readings in expects; a citation is
+      # not required (a clarification needn't cite).
+      [ -z "$expects" ] && { fail "E6 $qid is a clarify check with no expects (candidate readings unguarded)"; e6=1; }
     else
       [ -z "$expects" ] && { fail "E6 $qid has no expects tokens"; e6=1; }
       [ -z "$cite" ] && { fail "E6 $qid has no cite-contains (R4 would silently skip it)"; e6=1; }
@@ -244,5 +288,5 @@ echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E10 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free, multi-valued honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E12 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free, multi-valued/supersession/clarify honest.\n" "$GREEN" "$RESET"
 exit 0
