@@ -9,7 +9,7 @@
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
 #
-# Loss function — 5 binary checks (approved):
+# Loss function — 6 binary checks (approved):
 #   R1  needle retrieval    per modality (csv / email / report), planted past
 #                           each extractor's truncation boundary
 #   R2  point-in-time       as-of and current answers, both correct in ONE run
@@ -19,6 +19,9 @@
 #                           <= max-span lines (provenance that is real AND tight)
 #   R5  stale evidence      after a raw body is mutated post-ingest, the answer
 #                           flags it instead of serving the stale claim
+#   M1  multi-valued answer a question whose corpus support is genuinely
+#                           two-valued (disjoint scopes) surfaces BOTH figures
+#                           with their scopes, instead of picking one
 #
 # retrieval score = passed / total, reported per check and per modality.
 #
@@ -220,6 +223,7 @@ r1_pass=0; r1_total=0
 r2_pass=0; r2_total=0
 r3_pass=0; r3_total=0
 r4_pass=0; r4_total=0
+m1_pass=0; m1_total=0
 inconclusive=0
 
 while IFS=$'\t' read -r qid question modality expects cite span forbids refusal; do
@@ -264,6 +268,7 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
       R1-*|H1-*)  r1_total=$((r1_total + 1)); [ "$a_verdict" = PASS ] && r1_pass=$((r1_pass + 1)) ;;
       R2-*|T2-*)  r2_total=$((r2_total + 1)); [ "$a_verdict" = PASS ] && r2_pass=$((r2_pass + 1)) ;;
       R3-*)       r3_total=$((r3_total + 1)); [ "$a_verdict" = PASS ] && r3_pass=$((r3_pass + 1)) ;;
+      M1-*)       m1_total=$((m1_total + 1)); [ "$a_verdict" = PASS ] && m1_pass=$((m1_pass + 1)) ;;
     esac
   fi
 
@@ -329,8 +334,8 @@ if [ "$HOLDOUT" -eq 0 ]; then
 fi
 
 # ── Report ────────────────────────────────────────────────────────────────────
-total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass))
-total=$((r1_total + r2_total + r3_total + r4_total + r5_total))
+total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass))
+total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total))
 
 cat <<EOF
 # retrieval eval report$([ "$HOLDOUT" -eq 1 ] && echo " — HELDOUT")
@@ -345,6 +350,7 @@ R2 point-in-time:       $r2_pass/$r2_total
 R3 refusal on absence:  $r3_pass/$r3_total
 R4 citation locus:      $r4_pass/$r4_total
 R5 stale evidence:      $r5_pass/$r5_total   ($r5_note)
+M1 multi-valued answer: $m1_pass/$m1_total
 
 retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 

@@ -265,4 +265,41 @@ The budget trades tail latency against delivery. The figure was fixed at the
 platform review and has not been revisited since.
 APR
 
-echo "corpus written to $TARGET (7 sources)" >&2
+# ── 5. M1: one question, two coequal scoped answers ───────────────────────────
+# Vector-RAG playbooks resolve a two-valued corpus by deleting one document.
+# Here both documents are CURRENT and both are correct — they cover disjoint
+# scopes (production vs sandbox), published a week apart so neither reads as a
+# vintage of the other. The M1 question asks for "the" retention period with no
+# scope named; the honest answer surfaces both figures with their scopes.
+# Each doc states ONLY its own figure (verified by E10 in
+# verify-retrieval-eval.sh): a pick-one answer proves the other doc was never
+# surfaced, and an answer with both figures proves synthesis across documents.
+cat > "$TARGET/log-retention-production.md" <<'PROD'
+# Log Retention Policy — Production
+
+Published: 2026-02-20
+
+Application logs for production workloads are retained for 180 days from time
+of write, then purged. Retention is enforced at the storage layer and cannot
+be extended per-service without a platform waiver.
+
+## Scope
+
+This policy covers production workloads only.
+PROD
+
+cat > "$TARGET/log-retention-sandbox.md" <<'SBX'
+# Log Retention Policy — Sandbox
+
+Published: 2026-02-27
+
+Application logs for sandbox workloads are retained for 30 days from time of
+write, then purged. Sandbox retention is deliberately short to keep storage
+costs bounded.
+
+## Scope
+
+This policy covers sandbox workloads only.
+SBX
+
+echo "corpus written to $TARGET (9 sources)" >&2

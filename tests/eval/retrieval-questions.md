@@ -14,7 +14,7 @@ agent can only produce one by actually reaching it.
 ```
 ### <check>-<id>
 Question text on one or more lines.
-modality: csv | email | report | vintage | absent
+modality: csv | email | report | vintage | absent | conflict
 expects: token1, token2          # all must appear in the answer  (scores R1/R2/R3)
 cite-contains: token             # the cited passage must contain this (scores R4)
 max-span: N                      # ...within N lines               (scores R4)
@@ -30,7 +30,15 @@ has no report for), not the mention of a real neighbouring fact.
 
 `cite-contains` / `max-span` are omitted on questions where no citation is
 expected (the refusal check). A question with `refusal: true` scores R3; all
-others score R1 (needle) or R2 (vintage) on `expects`, and R4 on the citation.
+others score R1 (needle), R2 (vintage), or M1 (conflict) on `expects`, and R4
+on the citation.
+
+`M1-conflict` is graded on synthesis: the corpus holds two coequal scoped
+answers (production vs sandbox retention), and `expects:` lists both figures
+AND both scope words — a pick-one answer fails on the missing tokens. Its
+`forbids-pattern` guards the other false pass: reciting both figures while
+waving one off as stale/outdated, when the two docs are disjoint scopes, not
+vintages of each other.
 
 ## Questions
 
@@ -92,6 +100,14 @@ expects: 7 attempts
 cite-contains: 7 attempts
 max-span: 40
 forbids-pattern: ^[^a-zA-Z0-9]{0,4}(3|three)\b
+
+### M1-conflict
+How long are application logs retained before being purged?
+modality: conflict
+expects: 180 days, 30 days, production, sandbox
+cite-contains: 30 days
+max-span: 40
+forbids-pattern: [Oo]utdated|[Oo]bsolete|[Ss]tale
 
 ### R3-absent
 What was sustained throughput in Q2 2026?

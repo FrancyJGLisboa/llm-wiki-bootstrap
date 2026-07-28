@@ -29,6 +29,9 @@
 #   E9 clock-free            : no question asks about "now". Fixed corpus dates
 #                              plus a present-tense question cannot both be
 #                              right, and mis-scored a correct answer once
+#   E10 multi-valued honest  : the M1 pair leaks nothing across docs, and the
+#                              grader fails both false-pass routes (pick one
+#                              figure; recite both but dismiss one as stale)
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -171,6 +174,27 @@ if grep -hoE 'Published: 20[0-9]{2}-[0-9]{2}-[0-9]{2}' "$GEN" | grep -qv 'Publis
 fi
 [ "$e9" -eq 0 ] && ok "E9 no \"now\" questions; corpus dates stay behind the run date"
 
+# E10 — M1 multi-valued grader: the corpus holds two coequal scoped answers, and
+# only an answer surfacing BOTH figures WITH their scopes may pass. The two
+# false-pass routes are probed directly: pick-one (missing tokens) and
+# recite-both-but-dismiss-one-as-stale (forbids-pattern). Each corpus doc must
+# also state ONLY its own figure — if either leaks the other's, a single read
+# yields all tokens and M1 stops measuring synthesis across documents.
+M1_EXPECTS="180 days, 30 days, production, sandbox"
+M1_FORBIDS='[Oo]utdated|[Oo]bsolete|[Ss]tale'
+printf 'Depends on scope: production logs are kept 180 days, sandbox logs 30 days.\n' > "$TMP/m1-both.md"
+printf 'Application logs are retained for 180 days before purge.\n' > "$TMP/m1-one.md"
+printf '180 days for production; a sandbox doc says 30 days but looks stale.\n' > "$TMP/m1-dismiss.md"
+e10=0
+retr_grade_answer "$TMP/m1-both.md"    "$M1_EXPECTS" "$M1_FORBIDS" false || { fail "E10 both-figures-with-scopes answer graded FAIL"; e10=1; }
+retr_grade_answer "$TMP/m1-one.md"     "$M1_EXPECTS" "$M1_FORBIDS" false && { fail "E10 pick-one answer graded PASS"; e10=1; }
+retr_grade_answer "$TMP/m1-dismiss.md" "$M1_EXPECTS" "$M1_FORBIDS" false && { fail "E10 dismissive answer graded PASS (one value waved off as stale)"; e10=1; }
+grep -q -F '180 days' "$A/log-retention-production.md" || { fail "E10 production doc missing its figure"; e10=1; }
+grep -q -F '30 days'  "$A/log-retention-sandbox.md"    || { fail "E10 sandbox doc missing its figure"; e10=1; }
+grep -q -F '30 days'  "$A/log-retention-production.md" && { fail "E10 production doc leaks the sandbox figure (single read would pass M1)"; e10=1; }
+grep -q -F '180 days' "$A/log-retention-sandbox.md"    && { fail "E10 sandbox doc leaks the production figure (single read would pass M1)"; e10=1; }
+[ "$e10" -eq 0 ] && ok "E10 M1 grader: only both-figures-both-scopes passes; corpus docs don't leak each other"
+
 # E6 — questions parse with the fields their check needs
 e6=0
 for qf in "$QUESTIONS" "$HOLDOUT_Q"; do
@@ -220,5 +244,5 @@ echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E9 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E10 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free, multi-valued honest.\n" "$GREEN" "$RESET"
 exit 0
