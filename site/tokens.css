@@ -1,0 +1,49 @@
+/* Hallmark · genre: modern-minimal · macrostructure: Narrative Workflow · theme: Cobalt · enrichment: none (real screenshot) · nav: N9 · footer: Ft5
+ * paper-band: light · display-style: grotesk-sans · accent-hue: cool
+ * H2 diptych knobs: ratio=7/5, right=product-capture, divider=negative-space
+ * F4 step knobs: numbering=01/02/03, layout=vertical-stack, connector=line
+ * T4 stat knobs: layout=4-up, number-weight=display, qualifier=under
+ * Hallmark · pre-emit critique: P4 H5 E4 S5 R5 V4 */
+
+:root {
+  /* Cobalt — cool engineered near-white, one electric cobalt signal */
+  --color-paper:    oklch(97.5% 0.006 250);
+  --color-paper-2:  oklch(94.8% 0.009 250);
+  --color-panel:    oklch(21% 0.025 258);   /* code/terminal surfaces */
+  --color-panel-ink: oklch(93% 0.008 250);
+  --color-rule:     oklch(86% 0.012 250);
+  --color-neutral:  oklch(46% 0.018 252);
+  --color-muted:    oklch(48% 0.012 252);
+  --color-ink:      oklch(20% 0.022 256);
+  --color-accent:   oklch(50% 0.20 262);
+  --color-accent-soft: oklch(92% 0.03 262);
+  --color-focus:    oklch(50% 0.20 262);
+
+  --font-display: "Space Grotesk", ui-sans-serif, system-ui, sans-serif;
+  --font-body:    "IBM Plex Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", ui-monospace, monospace; /* outlier: CLI/code content only */
+
+  --text-sm:   0.8rem;
+  --text-base: 1rem;
+  --text-md:   1.25rem;
+  --text-lg:   1.5625rem;
+  --text-xl:   1.9531rem;
+  --text-2xl:  2.4414rem;
+  --text-3xl:  3.0518rem;
+  --text-display: clamp(2.5rem, 4.5vw + 0.75rem, 4.5rem);
+
+  --space-2xs: 0.25rem;
+  --space-xs:  0.5rem;
+  --space-sm:  0.75rem;
+  --space-md:  1rem;
+  --space-lg:  1.5rem;
+  --space-xl:  2.5rem;
+  --space-2xl: 4rem;
+  --space-3xl: 6rem;
+
+  --radius: 6px;   /* Cobalt: tight instrument-panel radii */
+  --rule-hair: 1px solid var(--color-rule);
+
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-micro: 120ms;
+}
