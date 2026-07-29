@@ -39,6 +39,9 @@ scripts/verify-extract.sh
 scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
+scripts/wiki-lint-hash-drift.sh
+scripts/wiki-lint-asserted-at.sh
+scripts/asserted-at-audit.py
 scripts/wiki-to-kg.py
 scripts/wiki-graph-walk.py
 scripts/wiki-discover.py

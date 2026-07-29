@@ -1,5 +1,5 @@
 ---
-description: Health-check the wiki. Find broken links, orphans, contradictions, stale claims, unresolved open questions, and gaps.
+description: Health-check the wiki. Find broken links, orphans, contradictions, stale claims, unresolved open questions, gaps, drifted raw sources, and sources missing valid time.
 allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [--apply]
 ---
@@ -88,6 +88,38 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - Report violations.
 - Fix proposal: normalize.
 
+### 8. Hash drift (broken ingest commitments)
+
+`ingested_hash` is a commitment: the wiki pages in `ingested_pages` were written against *that* body. If a raw source is re-extracted or hand-edited afterwards, every `(source: raw/<file>#<anchor>)` citation still resolves — but to text that no longer says what the page claims. Check 4 (page age) and check 7 (frontmatter fields) do not catch this; `citation-audit.py` only proves the target exists.
+
+Run the deterministic lint:
+
+```bash
+./scripts/wiki-lint-hash-drift.sh raw/
+```
+
+(Skip silently if the script is absent — older wiki.)
+
+- Report each drifted source: `raw/<file>: body changed since ingest — recorded <hash>, now <hash>; at-risk pages: <ingested_pages>`.
+- Fix proposal (if `--apply`): **do not edit the wiki pages by hand and do not restamp `ingested_hash`** — that would launder the drift. The only correct fix is re-running `/wiki-ingest <raw-file>` so the claims are re-derived from the current body and the hash is re-stamped as part of that pass. Report it as a required follow-up action, not an applied fix.
+- An `unhashable` result (recorded hash + malformed frontmatter) means the commitment can't be verified at all — surface it at the same severity.
+
+### 9. Missing valid time (no as-of axis)
+
+`fetched_at` says when a snapshot entered the wiki. It does **not** say what date the document claims for its own content. Without `asserted_at`, an as-of question ("what was throughput in April?") has nothing structured to resolve against, and the wiki answers with whatever the file says now.
+
+Run the deterministic lint:
+
+```bash
+./scripts/wiki-lint-asserted-at.sh raw/
+```
+
+(Skip silently if the script is absent — older wiki.)
+
+- Report each violation as emitted: missing field, `unknown` without `asserted_at_note`, a non-ISO value, an `asserted_at_source` that does not resolve, or a date absent from the passage its anchor resolves to.
+- Fix proposal (if `--apply`): read the source body, find where it states its own date, and write `asserted_at` + `asserted_at_source` pointing at that passage. **This is the one sanctioned exception to never writing to `raw/`** — it is the same class of write as the three `ingested_*` fields, and it is frontmatter only, so the body hash is unchanged.
+- **Never infer the date from `fetched_at`.** Stamping the fetch date makes every source look dated while encoding nothing and silently defeats every as-of query. The lint rejects it by name. When the body gives no date, write `unknown` with a reason — that is a legitimate outcome, not a failure.
+
 ## Output (report mode)
 
 ```
@@ -101,6 +133,8 @@ Verify links use `[[kebab-case]]` form (not `[[Title Case]]` or path-relative).
 - N unresolved open questions
 - N gaps
 - N schema-drift issues
+- N drifted raw sources (broken ingest commitments)
+- N sources missing valid time (no as-of axis)
 
 # Details
 [grouped output by check]

@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R21) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R26) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 26 checks pass.
+# Exit 0 iff all 31 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 26 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R21 guards). This is the CI path — the build phase is a precondition that
+#   only the 31 deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R26 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -53,8 +53,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R21 ────
-section "Regression guards (R1–R21)"
+# ──── REGRESSION GUARDS R1–R26 ────
+section "Regression guards (R1–R26)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -258,6 +258,58 @@ else
   record_fail "R21 verify-wiki-to-okf.sh exits non-zero (OKF export regression)"
 fi
 
+# R22 — hash-drift lint oracle (H1–H5): the ingest commitment is enforced —
+# a raw body edited after ingest is caught and attributed to the wiki pages
+# citing it, never-ingested sources stay quiet, and an unhashable body with a
+# recorded hash cannot pass green. H5 gates the repo's REAL raw/.
+if "$SCRIPT_DIR/verify-hash-drift.sh" >/dev/null 2>&1; then
+  ok "R22 verify-hash-drift.sh exits 0 (drift caught + attributed; real raw/ committed)"
+else
+  record_fail "R22 verify-hash-drift.sh exits non-zero (hash-drift lint regression)"
+fi
+
+# R23 — retrieval-eval oracle (E1–E6): the cross-modality eval's corpus is
+# deterministic, its needles sit past every preview boundary, and its graders
+# can't be faked (whole-file/wrong-line/oversized citations all fail). Guards the
+# measuring instrument itself — no LLM, no spend.
+if "$SCRIPT_DIR/verify-retrieval-eval.sh" >/dev/null 2>&1; then
+  ok "R23 verify-retrieval-eval.sh exits 0 (corpus fixed, needles deep, graders honest)"
+else
+  record_fail "R23 verify-retrieval-eval.sh exits non-zero (retrieval-eval instrument regression)"
+fi
+
+# R24 — the valid-time contract. `fetched_at` alone is transaction time; without
+# `asserted_at` an as-of question has nothing structured to resolve against, and
+# the eval's as-of leg passes only while the corpus states its vintage in prose.
+# A5 is the check that matters: stamping fetched_at as the document date is the
+# cheapest way to fake full coverage, so it must be rejected by name.
+if "$SCRIPT_DIR/verify-asserted-at.sh" >/dev/null 2>&1; then
+  ok "R24 verify-asserted-at.sh exits 0 (dates traceable, unknowns explicit, fetch-stamping blocked)"
+else
+  record_fail "R24 verify-asserted-at.sh exits non-zero (valid-time contract regression)"
+fi
+
+# R25 — /wiki-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
+# three eval runs and the cause was a spec gap, not the model: the output
+# template never asked for an inline `(source: raw/...)` at all, so the shape
+# varied per run and nothing could verify it. Q5 is the load-bearing one — the
+# form the doc teaches must stay identical to the form the audit extracts.
+if "$SCRIPT_DIR/verify-query-citation-contract.sh" >/dev/null 2>&1; then
+  ok "R25 verify-query-citation-contract.sh exits 0 (citation form stated + grader-compatible)"
+else
+  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/wiki-query citation contract regression)"
+fi
+
+# R26 — the entity eval's graders. E1 recall and E2 precision are each trivially
+# gameable alone (dump every Title Case phrase / emit only the two obvious
+# names), so this asserts each strategy actually LOSES. N7 guards a BSD-sed trap
+# that once made E3 read 0% on correct data.
+if "$SCRIPT_DIR/verify-entity-eval.sh" >/dev/null 2>&1; then
+  ok "R26 verify-entity-eval.sh exits 0 (recall/precision each punish the other's false pass)"
+else
+  record_fail "R26 verify-entity-eval.sh exits non-zero (entity-eval grader regression)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
@@ -268,7 +320,7 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 26 checks green.%s\n" "$GREEN" "$RESET"
+  printf "%sAll 31 checks green.%s\n" "$GREEN" "$RESET"
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"

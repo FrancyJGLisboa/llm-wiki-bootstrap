@@ -70,6 +70,34 @@ Create or update `wiki/<source-slug>-summary.md` with `type: summary`, `source: 
 
 **For a segmented source** (`segmented: true`): write the summary `## Body` as a **section tree** — a nested bullet outline mirroring the sidecar's heading hierarchy, **one line per node** summarizing that section, each ending with its anchor `(source: raw/<slug>.<ext>.md#<section-slug>)`. The `<section-slug>` is the kebab-case of the heading title **with the `(lines …)`/`(pages …)` range dropped** (e.g. `## Power Envelope (lines 13-19)` → `#power-envelope`). This compact tree — not a wall of prose — is what `/wiki-query` later walks to fetch only the relevant section. Every leaf's anchor MUST correspond to a real heading in the sidecar (no invented anchors).
 
+### Step 3.5 — Capture entities on the summary page
+
+Every summary page carries an `## Entities` section listing the **named things** the source refers to, each with its own citation:
+
+```markdown
+## Entities
+
+- Dan Okafor — closed out the cutover date decision (source: raw/thread-q3-planning.eml#L118-L125)
+- NEEDLE-EML-4c2d80 — ticket the cutover date was filed under (source: raw/thread-q3-planning.eml#L118-L125)
+```
+
+This is what makes a source *contextualizable* rather than just summarized: who acted, which org, which ticket, which dataset. Step 4's "2+ raws OR structurally important" threshold governs whether an entity earns its own `type: entity` page — but capture is not optional, and it happens here even for a name that appears exactly once. A person who made a decision in one email is the reason that decision can later be attributed at all.
+
+**What counts as an entity:** people, organizations, named tools and systems, datasets, identifiers (ticket/issue/order IDs), named places, named events. Something a reader could point at outside this document.
+
+**What does NOT**, no matter how it is capitalized:
+
+| not an entity | why |
+|---|---|
+| `## Instrumentation Debt`, `## Capacity Headroom` | section headings — Title Case is formatting, not a name |
+| "Sustained Throughput", "Batch Window" | metrics and concepts; these are `type: concept` if anything |
+| the document's own title | it is the source, not a thing the source mentions |
+| "The Platform Team" with no proper name | unnamed group; capture the named owner if one exists |
+
+Listing every capitalized phrase is the failure mode this table exists to prevent. It looks thorough, doubles the wiki's noise, and makes entity retrieval useless — a list where everything is an entity identifies nothing. When unsure, leave it out: a missed entity is recoverable by re-ingest, a wiki full of phantom entities is not.
+
+Every line needs a real `(source: raw/<file>#<anchor>)` anchored at the passage that names the entity — same form and same narrowness rule as every other citation. An uncited entity is an assertion that something was mentioned, which is exactly what the wiki exists not to do.
+
 ### Step 4 — Update existing entity / concept pages
 
 For each concept and entity from step 2:
@@ -78,6 +106,7 @@ For each concept and entity from step 2:
 - If no AND the concept/entity is referenced by 2+ raws OR is structurally important: create a new `wiki/<slug>.md` with `type: concept` or `type: entity`.
 - Cross-link: every page that mentions another covered page should `[[wiki-link]]` to it.
 - **Encode causation, don't bury it.** When the source states that one thing *causes / leads to / enables / prevents / contributes to* another, write that `## Related` link with a **canonical causal verb** — `causes`, `caused-by`, `enables`, `prevents`, or `contributes-to` (form: `- [[effect]] causes — <prose>`; put the inverse on the effect's page as `- [[cause]] caused-by — <prose>`). Do NOT flatten cause→effect into a plain `related-to`, and do NOT invent synonyms (`results-in`, `due-to`, `enabled-by`) — `scripts/wiki-lint-causal.sh` rejects those. These canonical edges are what let `/wiki-query` answer "what caused X / what does X enable / how does A connect to B" by graph traversal (see `AGENTS.md` → "Causal relations"). A multi-step causal story should become a *chain* of canonical edges across pages, not one lump.
+- **Encode supersession, don't bury it.** When a newer source replaces an older same-subject source's claim as the current value — even when no prose says so and the only evidence is two same-titled sources with different `Published:`/valid-time dates — author the typed edge on the newer source's page: `- [[old-page]] supersedes — <prose, name both dates>`, and the inverse on the older page: `- [[new-page]] superseded-by — <prose>`. Exactly these two verbs — no synonyms (`replaces`, `obsoletes`, `deprecates`, `replaced-by`), or the edge is invisible to traversal. Supersession is NOT contradiction: the older claim stays correct for its own period, so a clean vintage succession is never CONTRADICTION-flagged and neither body is rewritten. These edges are what let `/wiki-query` answer "what replaced X" by graph walk instead of prose-hunting.
 
 ### Step 5 — Flag contradictions
 

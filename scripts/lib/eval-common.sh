@@ -205,3 +205,166 @@ eval_verdict() {
     echo "null-result"
   fi
 }
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Retrieval eval (scripts/eval-retrieval.sh) — parsing + graders.
+#
+# Kept here, not in the eval script, so scripts/verify-retrieval-eval.sh can
+# source and exercise them against synthetic answers with no LLM and no spend.
+# An eval whose graders are themselves unverified measures nothing: a grader
+# that always returns PASS produces a perfect score on a broken system.
+# ─────────────────────────────────────────────────────────────────────────────
+
+# Phrases that count as declining to answer. Deliberately narrow: "not in the
+# wiki" is a refusal, "not clear" is hedging inside an answer.
+RETR_REFUSAL_MARKERS='not in the wiki|no answer in|not found in the wiki|nothing in the wiki|is not covered|no .{0,20}(figure|report|data|record) (for|in) |cannot answer|can'"'"'t answer|no such (figure|report|record)|not present in the wiki|the wiki does not'
+# Second family of acknowledgements, added after a textbook refusal graded FAIL:
+# "No Q2 2026 sustained throughput figure exists in this wiki" matched none of
+# the above (they all require "for"/"in" immediately after the noun). Broadening
+# the acknowledgement side is safe because the teeth of a refusal check are the
+# forbids-pattern — the answer still fails if it states a number it cannot know.
+#
+# Kept free of nested bounded quantifiers on purpose: an earlier version used
+# `no .{0,40}(figure|report)[^.]{0,30}exist` and hung BSD grep by backtracking.
+RETR_REFUSAL_MARKERS="$RETR_REFUSAL_MARKERS"'|(figure|report|record|data) exists|does not exist|no report|will not (interpolate|fabricate|guess|invent)'
+
+# Markers for `refusal: clarify` (M4): an underspecified question must be met
+# with a clarification or an explicit ambiguity call-out, never a confident
+# single pick. An answer that ENUMERATES all candidate readings ("depends on
+# which system: ...") is as good as asking — the markers accept both shapes.
+# Bounded quantifiers only (see the backtracking incident above).
+RETR_CLARIFY_MARKERS='do you mean|which .{0,40}\?|ambiguous|could (refer|mean)|more than one|multiple .{0,30}(polic|figure|period|retention|reading)|depends on (which|whether|what|the)|clarify|specify which|underspecified'
+
+# retr_parse_questions <questions_file> <out_tsv>
+# Emit: qid<TAB>question<TAB>modality<TAB>expects<TAB>cite_contains<TAB>max_span<TAB>forbids<TAB>refusal
+#
+# Absent fields are emitted as `-`, never as an empty string: tab is IFS
+# whitespace, so bash `read` collapses consecutive tabs and every field after an
+# empty one shifts left. Consumers normalise `-` back to "" via retr_field.
+retr_parse_questions() {
+  awk '
+    function dash(s) { return (s == "" ? "-" : s) }
+    function emit() {
+      if (qid != "") {
+        gsub(/\t/, " ", question)
+        printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n",
+               qid, dash(question), dash(modality), dash(expects),
+               dash(cite), dash(span), dash(forbids), dash(refusal)
+      }
+    }
+    # The per-question FORMAT block is a fenced example that looks exactly like a
+    # question. Skip fenced regions entirely or the template parses as a question.
+    /^```/ { in_fence = !in_fence; next }
+    in_fence { next }
+    /^### / {
+      emit()
+      qid = $0; sub(/^### /, "", qid)
+      question = ""; modality = ""; expects = ""; cite = ""
+      span = ""; forbids = ""; refusal = "false"
+      next
+    }
+    qid == "" { next }
+    /^modality:/        { modality = $0; sub(/^modality:[[:space:]]*/, "", modality); next }
+    /^expects:/         { expects  = $0; sub(/^expects:[[:space:]]*/, "", expects); next }
+    /^cite-contains:/   { cite     = $0; sub(/^cite-contains:[[:space:]]*/, "", cite); next }
+    /^max-span:/        { span     = $0; sub(/^max-span:[[:space:]]*/, "", span); next }
+    /^forbids-pattern:/ { forbids  = $0; sub(/^forbids-pattern:[[:space:]]*/, "", forbids); next }
+    /^refusal:/         { refusal  = $0; sub(/^refusal:[[:space:]]*/, "", refusal); next }
+    /^```/ { next }
+    /^#/   { next }
+    /^$/   { next }
+    { question = (question == "" ? $0 : question " " $0) }
+    END { emit() }
+  ' "$1" > "$2"
+}
+
+# retr_field <value> — echo "" for the `-` placeholder, the value otherwise.
+retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
+
+# retr_grade_answer <answer_file> <expects_csv> <forbids_ere> <refusal true|false>
+# 0 = PASS. Scores the R1/R2/R3 bit: did the answer carry the fact (or decline
+# when it should have), without matching the fabrication pattern.
+#
+# `expects` is a document-wide substring search, which is NOT enough on its own:
+# an as-of answer once led with the wrong figure and still passed because the
+# right one appeared further down in a caveat explaining why the headline was
+# suspect. Scoping `expects` to the first N lines was tried and is worse — it
+# fails answers that open with a preamble while still passing that same buried
+# case. The working guard is per-question: a question with a plausible wrong
+# answer carries a `forbids-pattern` that matches the wrong answer in headline
+# position. Location is the question author's problem, not the grader's.
+# retr_answer_broken <answer_file> — true when the file holds no answer at all:
+# a transient API/network error, or nothing. Such a file must be reported
+# INCONCLUSIVE, never graded: a dropped connection scored as FAIL is
+# indistinguishable in the report from a real capability gap, and that is how a
+# network blip becomes a bug report against the system. Observed — an ENOTFOUND
+# mid-run scored R5 as FAIL on a run where the drift logic was never invoked.
+RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded|session limit|usage limit|rate limit|quota exceeded|Please run /login|credit balance'
+retr_answer_broken() {
+  [ -f "$1" ] || return 0
+  [ -s "$1" ] || return 0
+  grep -qiE "$RETR_BROKEN_MARKERS" "$1" && return 0
+  return 1
+}
+
+retr_grade_answer() {
+  local answer="$1" expects="$2" forbids="$3" refusal="$4" token OLD_IFS
+  [ -f "$answer" ] || return 1
+
+  if [ -n "$forbids" ] && grep -qE "$forbids" "$answer"; then
+    return 1
+  fi
+
+  if [ "$refusal" = "true" ]; then
+    grep -qiE "$RETR_REFUSAL_MARKERS" "$answer" || return 1
+    return 0
+  fi
+
+  # clarify: the ambiguity must be surfaced, AND the expects tokens (every
+  # candidate reading) must still appear — fall through to the expects loop.
+  if [ "$refusal" = "clarify" ]; then
+    grep -qiE "$RETR_CLARIFY_MARKERS" "$answer" || return 1
+  fi
+
+  OLD_IFS="$IFS"; IFS=','
+  for token in $expects; do
+    token=$(printf '%s' "$token" | sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')
+    [ -z "$token" ] && continue
+    if ! grep -q -F -i "$token" "$answer"; then IFS="$OLD_IFS"; return 1; fi
+  done
+  IFS="$OLD_IFS"
+  return 0
+}
+
+# retr_citations <answer_file>
+# Print every `raw/<file>[#anchor]` target cited in the answer, one per line.
+retr_citations() {
+  grep -oE '\(source:[[:space:]]*raw/[^)]+\)' "$1" 2>/dev/null \
+    | sed -e 's/^(source:[[:space:]]*//' -e 's/)$//' \
+    | sed -e 's/[[:space:]]*$//' \
+    | sort -u
+}
+
+# retr_grade_citation <answer_file> <raw_dir> <cite_contains> <max_span> <cite_span_py>
+# 0 = PASS. Scores the R4 bit: at least ONE cited passage both CONTAINS the fact
+# and spans <= max_span lines. Containment alone is not enough — a whole-file
+# cite "contains" everything; span alone is not enough — a tight cite of the
+# wrong lines proves nothing. Both, on the same citation, or it fails.
+retr_grade_citation() {
+  local answer="$1" raw_dir="$2" needle="$3" max_span="$4" py="$5"
+  local target evidence span
+  [ -n "$needle" ] || return 0
+
+  while IFS= read -r target; do
+    [ -z "$target" ] && continue
+    evidence=$(python3 "$py" "$raw_dir" "$target" 2>"$answer.span") || continue
+    span=$(sed -n 's/^span: \([0-9]*\) lines$/\1/p' "$answer.span")
+    [ -z "$span" ] && continue
+    if [ "$span" -le "$max_span" ] && printf '%s' "$evidence" | grep -q -F -i "$needle"; then
+      rm -f "$answer.span"
+      return 0
+    fi
+  done < <(retr_citations "$answer")
+  rm -f "$answer.span"
+  return 1
+}
