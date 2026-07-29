@@ -62,15 +62,21 @@ DRY_RUN=0
 HOLDOUT=0
 GEN_MODE=main
 WORK=
+SCALE=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --holdout) HOLDOUT=1; GEN_MODE=--holdout
                QUESTIONS="$REPO_ROOT/tests/eval/retrieval-questions-holdout.md" ;;
     --work=*)  WORK="${arg#--work=}" ;;
-    *) echo "usage: eval-retrieval.sh [--dry-run] [--holdout] [--work=DIR]" >&2; exit 2 ;;
+    --scale=*) SCALE="${arg#--scale=}"
+               case "$SCALE" in ''|*[!0-9]*)
+                 echo "error: --scale needs an integer" >&2; exit 2 ;; esac ;;
+    *) echo "usage: eval-retrieval.sh [--dry-run] [--holdout] [--work=DIR] [--scale=N]" >&2; exit 2 ;;
   esac
 done
+FILLER_GEN="$REPO_ROOT/tests/eval/retrieval-corpus/gen-scale-filler.sh"
+QUERY_TRACE="$SCRIPT_DIR/lib/query-trace.py"
 
 for f in "$GEN" "$QUESTIONS" "$CITE_SPAN" "$INSTALLER" "$LIB"; do
   [ -e "$f" ] || { echo "error: missing $f" >&2; exit 1; }
@@ -171,6 +177,19 @@ else
   mark_done install
 fi
 
+# ── Scale filler: pre-populate the wiki BEFORE the real extract/ingest, so the
+# librarian meets a big index and retrieval must discriminate among distractors.
+if [ "$SCALE" -gt 0 ]; then
+  if staged filler; then
+    echo "[retr] skip scale filler (done)" >&2
+  else
+    echo "[retr] injecting $SCALE deterministic filler pages" >&2
+    "$FILLER_GEN" "$WIKI" "$SCALE" >&2 \
+      || { echo "error: scale filler generation failed" >&2; exit 1; }
+    mark_done filler
+  fi
+fi
+
 sources=()
 for f in "$CORPUS"/*; do sources+=("$f"); done
 
@@ -203,7 +222,9 @@ echo "[retr] raw/: $extracted files, wiki/: $pages pages" >&2
 # route, and a scored report is worse than no report because it looks like
 # evidence. Abort loudly instead, and do not spend on queries that cannot
 # measure the thing.
-ingested=$(grep -rlc 'ingested_hash: "[0-9a-f]' "$WIKI/raw" 2>/dev/null | wc -l | tr -d ' ')
+# Filler raws carry ingested_hash by construction — exclude them or a failed
+# needle ingest at scale would still clear the gate and score a void run.
+ingested=$(grep -rlc 'ingested_hash: "[0-9a-f]' "$WIKI/raw" 2>/dev/null | grep -vc '/scale-' || true)
 if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
   {
     echo "# retrieval eval — VOID (not a score)"
@@ -245,8 +266,21 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     echo "[retr] $qid ($modality) — cached, regrading" >&2
   else
     echo "[retr] $qid ($modality)" >&2
-    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" ) \
-      >"$answer" 2>"$WORK/$qid.err" </dev/null || true
+    # stream-json so the transcript records WHAT the agent read — the scale
+    # eval's cost metric. query-trace.py distils answer text + read counts;
+    # if the stream is unparseable the raw bytes become the answer so the
+    # API-error markers stay visible to retr_answer_broken.
+    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" \
+        --output-format stream-json --verbose ) \
+      >"$WORK/$qid.stream" 2>"$WORK/$qid.err" </dev/null || true
+    python3 "$QUERY_TRACE" "$WORK/$qid.stream" --counts "$WORK/$qid.reads" \
+      >"$answer" 2>>"$WORK/$qid.err" || cp "$WORK/$qid.stream" "$answer"
+  fi
+  reads="?"
+  if [ -f "$WORK/$qid.reads" ]; then
+    reads=$(awk '{ for (i=1;i<=NF;i++) { split($i,kv,"="); c[kv[1]]=kv[2] }
+                   printf "%d+g%d", c["reads_wiki"]+c["reads_raw"], c["greps"] }' \
+            "$WORK/$qid.reads")
   fi
 
   if retr_answer_broken "$answer"; then
@@ -293,9 +327,24 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
   elif grep -qE '^- Wiki: *[^(]' "$answer" 2>/dev/null; then via=wiki
   else via=unknown; fi
 
-  detail+=("$qid|$modality|$a_verdict|$c_verdict|$via|$(retr_citations "$answer" | tr '\n' ' ')")
-  echo "[retr]   answer: $a_verdict  citation: $c_verdict  via: $via" >&2
+  detail+=("$qid|$modality|$a_verdict|$c_verdict|$via|$reads|$(retr_citations "$answer" | tr '\n' ' ')")
+  echo "[retr]   answer: $a_verdict  citation: $c_verdict  via: $via  reads: $reads" >&2
 done < "$tmp_q"
+
+# Reads summary over answered (non-INCONC) questions with a recorded trace.
+reads_summary="n/a (no traces)"
+reads_list=$(for row in "${detail[@]}"; do
+  IFS='|' read -r _ _ v _ _ r _ <<< "$row"
+  [ "$v" != INCONC ] && [ "$r" != "?" ] && printf '%s\n' "${r%%+*}"
+done | sort -n)
+if [ -n "$reads_list" ]; then
+  reads_summary=$(printf '%s\n' "$reads_list" | awk '
+    { a[NR] = $1 } END {
+      if (NR == 0) { print "n/a"; exit }
+      m = (NR % 2) ? a[(NR+1)/2] : a[NR/2]
+      printf "median=%d max=%d (wiki+raw file reads per answer)", m, a[NR]
+    }')
+fi
 
 # ── R5: mutate a raw body post-ingest; the answer must flag it ────────────────
 r5_pass=0; r5_total=0; r5_note="skipped (holdout run)"
@@ -337,7 +386,7 @@ if [ "$HOLDOUT" -eq 0 ]; then
       else
         r5_note="answer served the claim without flagging the drifted source"
       fi
-      detail+=("R5-drift|vintage|$([ "$r5_pass" -eq 1 ] && echo PASS || echo FAIL)|n/a|n/a|")
+      detail+=("R5-drift|vintage|$([ "$r5_pass" -eq 1 ] && echo PASS || echo FAIL)|n/a|n/a|?|")
     fi
     # Undo the corruption so this work dir stays resumable.
     if [ -f "$WORK/.r5-pristine" ]; then
@@ -391,7 +440,8 @@ cat <<EOF
 Corpus: tests/eval/retrieval-corpus/gen-corpus.sh (generated, deterministic)
 Questions: $QUESTIONS ($n_q)
 Wiki: built by create-llm-wiki.sh, loaded via /wiki-extract + /wiki-ingest
-Loaded: $extracted raw files, $pages wiki pages
+Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
+Reads: $reads_summary
 
 R1 needle retrieval:    $r1_pass/$r1_total
 R2 point-in-time:       $r2_pass/$r2_total
@@ -406,12 +456,12 @@ retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inc
 
 ## Per-question detail
 
-| question | modality | answer | citation | via | cited |
-|---|---|---|---|---|---|
+| question | modality | answer | citation | via | reads | cited |
+|---|---|---|---|---|---|---|
 EOF
 for row in "${detail[@]}"; do
-  IFS='|' read -r a b c d e f <<< "$row"
-  printf '| %s | %s | %s | %s | %s | %s |\n' "$a" "$b" "$c" "$d" "$e" "$f"
+  IFS='|' read -r a b c d e f g <<< "$row"
+  printf '| %s | %s | %s | %s | %s | %s | %s |\n' "$a" "$b" "$c" "$d" "$e" "$f" "$g"
 done
 
 if [ "$HOLDOUT" -eq 1 ]; then
