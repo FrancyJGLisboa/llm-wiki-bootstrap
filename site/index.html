@@ -1,0 +1,105 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>llm-wiki-bootstrap — an LLM builds your wiki for you</title>
+  <meta name="description" content="A persistent, interlinked markdown knowledge base your AI coding agent builds and maintains. Five slash commands, no UI, no SaaS, no vector database.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="tokens.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="wrap nav">
+  <a class="wordmark" href="#">llm-wiki-bootstrap</a>
+  <a class="cta" href="https://github.com/FrancyJGLisboa/llm-wiki-bootstrap">GitHub&nbsp;→</a>
+</header>
+
+<main>
+  <section class="wrap hero">
+    <div>
+      <h1>An LLM builds your wiki for&nbsp;you.</h1>
+      <p class="lede">You curate raw sources and ask questions; the LLM does the writing, linking, and upkeep. <strong>Five slash commands in your coding agent — no UI, no SaaS, no vector database.</strong> The pattern is Andrej Karpathy&rsquo;s.</p>
+      <div class="actions">
+        <a class="btn-fill" href="https://github.com/FrancyJGLisboa/llm-wiki-bootstrap">Clone the repo</a>
+        <a class="link-cta" href="#start">Quick start ↓</a>
+      </div>
+    </div>
+    <figure>
+      <img src="demo.gif" alt="A terminal running /wiki-query and returning a cited answer from the demo wiki" width="927" height="451" fetchpriority="high">
+      <figcaption>A real <code>/wiki-query</code> against the demo wiki that ships in the repo — answer text verbatim.</figcaption>
+    </figure>
+  </section>
+
+  <section class="wrap stats" aria-label="Verification numbers">
+    <p class="stat"><b>5</b><span>slash commands — the whole interface</span></p>
+    <p class="stat"><b>31</b><span>deterministic smoke checks, wired into CI</span></p>
+    <p class="stat"><b>21 / 21</b><span>retrieval eval — 8 binary checks, no LLM grader</span></p>
+    <p class="stat"><b>4 / 4</b><span>held-out control — the anti-Goodhart run</span></p>
+  </section>
+
+  <section class="wrap flow">
+    <h2>Three commands are the whole loop.</h2>
+    <p>Everything runs inside your coding agent. Sources land in an immutable <code>raw/</code> layer; the wiki is rebuilt knowledge on top; every claim cites its way back.</p>
+    <ol class="steps">
+      <li class="step">
+        <span class="stage">01 · /wiki-extract</span>
+        <h3>Acquire the source</h3>
+        <p>A URL, PDF, DOCX, spreadsheet, image, or YouTube transcript is parsed to markdown and captured in <code>raw/</code> with provenance frontmatter — publisher, date, hash. Raw files are never edited again.</p>
+        <pre class="term">/wiki-extract https://example.com/some-article</pre>
+      </li>
+      <li class="step">
+        <span class="stage">02 · /wiki-ingest</span>
+        <h3>Integrate into the wiki</h3>
+        <p>A seven-step pipeline turns raw sources into interlinked pages: entities with provenance, typed relations (<code>supersedes</code>, <code>causes</code>, …), valid-time dates, and inline citations back to <code>raw/&lt;file&gt;#&lt;anchor&gt;</code>. Idempotent via body hash.</p>
+        <pre class="term">/wiki-ingest</pre>
+      </li>
+      <li class="step">
+        <span class="stage">03 · /wiki-query</span>
+        <h3>Ask — with receipts</h3>
+        <p>Answers come from structure, not similarity: dates for point-in-time questions, a graph walk for “what replaced X”, an explicit refusal when the answer isn’t in the wiki. Every claim carries its raw citation.</p>
+        <pre class="term">/wiki-query "what changed in the April memo?"</pre>
+      </li>
+    </ol>
+    <p style="margin-top: var(--space-xl); color: var(--color-neutral); max-width: 62ch;">Two more commands keep it healthy: <code>/wiki-lint</code> finds broken links, contradictions, and stale claims; <code>/wiki-visualize</code> renders the link graph.</p>
+  </section>
+
+  <section class="wrap why">
+    <h2>Why not a vector database?</h2>
+    <div class="col">
+      <p><strong>Embedding flattens exactly the metadata that distinguishes true from stale from out-of-scope</strong> — time, scope, succession, source. The hardest retrieval cases are the ones where the wrong chunks are the <em>most similar</em> ones: a February memo and the April memo that superseded it are near-duplicates in embedding space.</p>
+      <p>This wiki keeps that metadata as first-class structure the agent traverses with reasoning instead of cosine distance. The retrieval eval checks it, deterministically:</p>
+      <ul>
+        <li><b>Point-in-time</b> — “what did we believe in March?” answered from dated sources</li>
+        <li><b>Supersession</b> — “what replaced X?” answered by a typed-edge graph walk</li>
+        <li><b>Refusal on absence</b> — no nearest-neighbour guess when the answer isn’t there</li>
+        <li><b>Citation locus</b> — every answer resolves to a real span of a real source</li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="wrap start" id="start">
+    <h2>Quick start — first answer in one block</h2>
+    <p>You need one thing: an agentic AI tool on your <code>$PATH</code>. The reference path is Claude Code; Cursor, Cline, Copilot, Gemini, and Codex shims ship in the repo.</p>
+    <pre class="term">git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+cd my-wiki &amp;&amp; claude</pre>
+    <p class="after">The repo ships with a working demo wiki, so the very first command already returns a cited answer — zero setup:</p>
+    <pre class="term">/wiki-query "what is an llm-wiki, and why not just use RAG?"</pre>
+    <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/llm-wiki-bootstrap#quick-start--first-answer-in-one-block">Read the full quick start →</a></p>
+  </section>
+</main>
+
+<footer class="wrap foot">
+  <p class="statement">You curate. The LLM writes. The citations keep it honest.</p>
+  <p class="meta">
+    <span>MIT license</span>
+    <a href="https://github.com/FrancyJGLisboa/llm-wiki-bootstrap">Source on GitHub</a>
+    <span>Built and verified with Claude Code</span>
+  </p>
+</footer>
+
+</body>
+</html>
