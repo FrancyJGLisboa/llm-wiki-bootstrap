@@ -16,13 +16,15 @@ You are executing `/wiki-discover` from the `llm-wiki-bootstrap` system. Your jo
 
    ```bash
    python3 scripts/wiki-to-kg.py wiki/ | python3 scripts/wiki-discover.py
+   python3 scripts/wiki-to-kg.py wiki/ | python3 scripts/wiki-loops.py
    ```
 
-   This prints a report with three lenses: **Causal chains** (multi-step cause→effect stories), **Most-connected concepts** (the load-bearing ideas), and **Widest connection** (the two most distantly-linked ideas and the path between them).
+   This prints a report with four lenses: **Causal chains** (multi-step cause→effect stories), **Most-connected concepts** (the load-bearing ideas), **Widest connection** (the two most distantly-linked ideas and the path between them), and **Feedback loops** (cycles in the causal graph, classified reinforcing vs balancing by edge polarity — an odd number of `prevents` links flips a loop to balancing). A loop is a composed claim: treat one marked "contains uncited edge" as a hypothesis to verify, never as fact.
 
 2. **Add the standing dashboards** the synthesis layer already maintains, if present — these are the other half of "what to look at":
    - `wiki/tensions.md` — flagged contradictions across sources
    - `wiki/open-questions-dashboard.md` — open questions per page
+   - `bash scripts/wiki-flows.sh` — the wiki as stocks (pages, sources, open questions, tensions) and flows (log.md operations per month); a month with zero entries means the maintenance loop stalled
 
    Read them (if they exist) and pull the top few items.
 
