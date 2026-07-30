@@ -69,6 +69,13 @@ For each notable piece, **snapshot the web source into `raw/` before citing it**
 - If a relevant page exists: append the new claim with a `(source: raw/<slug>...#<anchor>)` citation pointing at the snapshot. Update `updated:` in frontmatter.
 - If no page exists and the concept is non-trivial: create a new `wiki/<slug>.md` with `type: concept` or `type: entity`, `source: external`, and cite the raw snapshot with an anchor.
 - Update `wiki/index.md` to list the new page(s).
+- Record the integrity numbers for this answer (run it; never hand-write the line). Write the answer you are about to give to a scratch file, then:
+
+  ```bash
+  bash scripts/wiki-metrics.sh query /tmp/wiki-answer.md
+  ```
+
+  This appends `cites=OK/TOTAL via=wiki|raw-only|unknown` to `log.md`, so citation resolution becomes a trend rather than a per-run accident. If `OK < TOTAL`, at least one of your citations does not resolve — fix the citation before answering rather than logging a broken receipt.
 - Append a `log.md` entry:
 
   ```markdown

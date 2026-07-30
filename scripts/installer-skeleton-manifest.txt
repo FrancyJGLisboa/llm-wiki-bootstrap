@@ -51,6 +51,10 @@ scripts/wiki-to-anki.sh
 scripts/wipe-meta-wiki.sh
 scripts/mcp-server.sh
 scripts/eval-multi-hop.sh
+scripts/cite-span.py
+scripts/wiki-metrics.sh
+scripts/wiki-flows.sh
+scripts/wiki-loops.py
 templates/journal-entry.md
 templates/causal-vocab.txt
 templates/causal-synonyms.txt
