@@ -84,10 +84,28 @@ for src in "$WIKI"/raw/*.md; do
   words=$(wc -w < "$src" | tr -d ' ')
   find "$WIKI/wiki" -name '*.md' -print0 2>/dev/null | sort -z > "$WIKI/.pages-before"
 
+  # Beyond GATE_N, tell the agent to skip Step 5.5 outright. This is not a
+  # weakening: the agent demonstrably CANNOT complete that step headlessly — it
+  # backgrounds the multi-minute serial gate and ends its turn ("Waiting on the
+  # gate — I'll pick up Steps 6-8 automatically when it completes"), which in -p
+  # mode never happens. Skipping it removes a step the agent fails at, while the
+  # harness runs the same gate to completion immediately after, in a shell that
+  # can actually wait. Net effect is a gate that runs MORE reliably, not less.
+  prompt="/wiki-ingest $rel"
+  if [ "$idx" -gt "$GATE_N" ]; then
+    prompt="$prompt
+
+Skip Step 5.5 (the faithfulness gate) in this turn: the harness runs it to
+completion immediately after you finish, in a shell that can wait for it. Do
+not start it and do not wait on it. Complete Steps 6, 7 and 8 as normal —
+especially Step 7's ingested_hash commitment, which is what makes this source
+idempotent."
+  fi
+
   start=$(date +%s)
   # stdin pinned to /dev/null: without it `claude -p` waits 3s per call for input
   # that never comes. Same trap verify-retrieval-eval.sh E7 pins at all 3 sites.
-  if ( cd "$WIKI" && claude -p "/wiki-ingest $rel" </dev/null ) >"$WIKI/.ingest-last.log" 2>&1; then
+  if ( cd "$WIKI" && claude -p "$prompt" </dev/null ) >"$WIKI/.ingest-last.log" 2>&1; then
     status=ok
   else
     status="FAIL"
