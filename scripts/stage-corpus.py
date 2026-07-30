@@ -194,12 +194,19 @@ def stratified_sample(sources, n, seed):
     return picked
 
 
-def pick_reserved(sources, k, seed):
-    """K whole upload-months held back for the sealed holdout question set."""
-    months = sorted({s["uploaded"][:7] for s in sources if DATE_RE.match(s["uploaded"])})
-    if k <= 0 or not months:
+def pick_reserved(picked, frac, seed):
+    """A seeded fraction of the SAMPLE held back for the sealed holdout set.
+
+    Reserving whole upload-months reads better but does not survive a sparse
+    stratified sample: at n=50 over ~24 quarters, three whole months caught 2
+    files — too thin to author a holdout from. Reserving a fraction of the
+    sampled files keeps the slice disjoint from the gold set (which is all the
+    holdout needs) and scales with n instead of against it.
+    """
+    if frac <= 0 or not picked:
         return set()
-    return set(random.Random(seed + 1).sample(months, min(k, len(months))))
+    k = max(1, int(round(len(picked) * frac)))
+    return set(random.Random(seed + 1).sample([s["path"] for s in picked], min(k, len(picked))))
 
 
 def main():
@@ -209,7 +216,7 @@ def main():
     ap.add_argument("--n", type=int, default=150)
     ap.add_argument("--all", action="store_true")
     ap.add_argument("--seed", type=int, default=20260730)
-    ap.add_argument("--reserved-months", type=int, default=3)
+    ap.add_argument("--reserved-frac", type=float, default=0.2)
     ap.add_argument("--manifest")
     ap.add_argument("--fetched-at", default="2026-07-30")
     ap.add_argument("--dry-run", action="store_true")
@@ -224,8 +231,8 @@ def main():
         print("error: no transcripts found in %s" % args.src_dir, file=sys.stderr)
         return 2
 
-    reserved = pick_reserved(sources, args.reserved_months, args.seed)
     picked = sources if args.all else stratified_sample(sources, args.n, args.seed)
+    reserved = pick_reserved(picked, args.reserved_frac, args.seed)
 
     raw_dir = os.path.join(args.wiki_root, "raw")
     if not args.dry_run:
@@ -244,17 +251,17 @@ def main():
                 name,
                 src["uploaded"],
                 src["quarter"],
-                "reserved" if src["uploaded"][:7] in reserved else "main",
+                "reserved" if src["path"] in reserved else "main",
                 digest,
                 os.path.basename(src["path"]),
             )
         )
 
-    header = "# staged: %d of %d source(s)  seed=%d  reserved-months=%s\n" % (
+    header = "# staged: %d of %d source(s)  seed=%d  reserved-frac=%s\n" % (
         len(rows),
         len(sources),
         args.seed,
-        ",".join(sorted(reserved)) or "none",
+        args.reserved_frac,
     )
     body = "".join("\t".join(r) + "\n" for r in rows)
     if args.manifest and not args.dry_run:
@@ -267,7 +274,7 @@ def main():
     sys.stdout.write(header)
     n_reserved = sum(1 for r in rows if r[3] == "reserved")
     print("quarters covered: %d" % len({r[2] for r in rows}))
-    print("reserved slice:   %d file(s) in %s" % (n_reserved, ",".join(sorted(reserved)) or "none"))
+    print("reserved slice:   %d file(s) sealed for the holdout" % n_reserved)
     print("manifest sha256:  %s" % hashlib.sha256((header + body).encode()).hexdigest())
     return 0
 
