@@ -9,7 +9,7 @@
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
 #
-# Loss function — 9 binary checks (approved):
+# Loss function — 10 binary checks (approved):
 #   R1  needle retrieval    per modality (csv / email / report), planted past
 #                           each extractor's truncation boundary
 #   R2  point-in-time       as-of and current answers, both correct in ONE run
@@ -275,6 +275,7 @@ r3_pass=0; r3_total=0
 r4_pass=0; r4_total=0
 m1_pass=0; m1_total=0
 m4_pass=0; m4_total=0
+m6_pass=0; m6_total=0; m6_bad=""; m6_cites=0
 m2_answer=MISSING
 m5_answer=MISSING
 inconclusive=0
@@ -323,6 +324,22 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     M2-*) m2_answer="$a_verdict" ;;
     M5-*) m5_answer="$a_verdict" ;;
   esac
+
+  # M6: does every citation this answer offers actually resolve? Scored on any
+  # answer that cited anything, independent of whether the question carries a
+  # cite-contains — a fabricated target is a defect wherever it appears.
+  if [ "$a_verdict" != INCONC ]; then
+    if retr_cite_integrity "$answer" "$WIKI/raw" "$CITE_SPAN"; then
+      if [ "${RETR_CITE_TOTAL:-0}" -gt 0 ]; then
+        m6_total=$((m6_total + 1)); m6_pass=$((m6_pass + 1))
+        m6_cites=$((m6_cites + RETR_CITE_TOTAL))
+      fi
+    else
+      m6_total=$((m6_total + 1))
+      m6_cites=$((m6_cites + RETR_CITE_TOTAL))
+      m6_bad="$m6_bad $qid:${RETR_CITE_BAD}/${RETR_CITE_TOTAL}(${RETR_CITE_BAD_LIST# })"
+    fi
+  fi
 
   c_verdict=n/a
   if [ -n "$cite" ] && [ "$a_verdict" != INCONC ]; then
@@ -505,8 +522,8 @@ if [ "$HOLDOUT" -eq 0 ]; then
 fi
 
 # ── Report ────────────────────────────────────────────────────────────────────
-total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass + m5_pass))
-total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total + m5_total))
+total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass + m5_pass + m6_pass))
+total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total + m5_total + m6_total))
 
 cat <<EOF
 # retrieval eval report$([ "$HOLDOUT" -eq 1 ] && echo " — HELDOUT")
@@ -527,6 +544,7 @@ M1 multi-valued answer: $m1_pass/$m1_total
 M2 supersession:        $m2_pass/$m2_total   ($m2_note)
 M4 clarify-on-ambig:    $m4_pass/$m4_total
 M5 feedback loop:       $m5_pass/$m5_total   ($m5_note)
+M6 citation integrity:  $m6_pass/$m6_total   ($m6_cites citations offered$([ -n "$m6_bad" ] && echo "; UNRESOLVABLE:$m6_bad" || echo ", all resolve"))
 
 retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 

@@ -447,9 +447,60 @@ retr_grade_answer "$TMP/bold-wrong.md" "412" '^[^a-zA-Z0-9]{0,4}(389|999)' false
   && { fail "E15 emphasised wrong headline slipped past its forbids-pattern"; e15=1; }
 [ "$e15" -eq 0 ] && ok "E15 error codes matched as tokens, markdown emphasis normalised, guards intact"
 
+# ── E16: M6 citation integrity — a receipt that cannot be checked ────────────
+# R4 asks whether ONE citation is good; M6 asks whether ANY citation is a lie.
+# The observed failure: an answer cited `field-report.md#instrumentation-debt`,
+# an anchor absent from that file, and passed everything else on its question.
+e16=0
+printf 'Answer. (source: raw/sales-2026.csv#L948)\n' > "$TMP/i-good.md"
+retr_cite_integrity "$TMP/i-good.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 a resolving citation graded as unresolvable"; e16=1; }
+[ "${RETR_CITE_TOTAL:-0}" -eq 1 ] || { fail "E16 citation count wrong (got ${RETR_CITE_TOTAL:-unset}, want 1)"; e16=1; }
+
+printf 'Answer. (source: raw/field-report.md#no-such-anchor-here)\n' > "$TMP/i-anchor.md"
+retr_cite_integrity "$TMP/i-anchor.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a non-existent ANCHOR graded as resolving (the observed defect)"; e16=1; }
+
+printf 'Answer. (source: raw/not-a-real-file.md#L1)\n' > "$TMP/i-file.md"
+retr_cite_integrity "$TMP/i-file.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a non-existent FILE graded as resolving"; e16=1; }
+
+# One bad target among several good ones must still fail, and be named.
+printf 'A. (source: raw/sales-2026.csv#L948) (source: raw/field-report.md#nope-not-here)\n' > "$TMP/i-mixed.md"
+retr_cite_integrity "$TMP/i-mixed.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 one unresolvable target among good ones still passed"; e16=1; }
+[ "${RETR_CITE_BAD:-0}" -eq 1 ] || { fail "E16 bad-citation count wrong (got ${RETR_CITE_BAD:-unset}, want 1)"; e16=1; }
+case "${RETR_CITE_BAD_LIST:-}" in *nope-not-here*) ;; *) fail "E16 offending target not named in the report list"; e16=1 ;; esac
+
+# The false-pass route: cite NOTHING. It must not score M6 at all — and the
+# eval must only count answers that offered a citation, so silence buys nothing
+# here while still failing R4, which is what forces a citation to exist.
+printf 'The wiki does not cover Q2 2026.\n' > "$TMP/i-none.md"
+retr_cite_integrity "$TMP/i-none.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 an uncited answer treated as a citation failure"; e16=1; }
+[ "${RETR_CITE_TOTAL:-1}" -eq 0 ] || { fail "E16 uncited answer reported citations"; e16=1; }
+grep -q 'RETR_CITE_TOTAL:-0}" -gt 0' "$EVAL" \
+  || { fail "E16 eval scores M6 on answers that cited nothing (silence would pass)"; e16=1; }
+grep -q 'M6 citation integrity' "$EVAL" \
+  || { fail "E16 report has no M6 line"; e16=1; }
+# Two receipts in ONE parenthetical must extract as TWO targets. Grabbing up to
+# the closing paren produced a single comma-joined string that resolves to
+# nothing, inventing citation failures on correct answers.
+printf 'A. (source: raw/sales-2026.csv#L948, source: raw/sales-2026.csv#L949)\n' > "$TMP/i-pair.md"
+n_pair=$(retr_citations "$TMP/i-pair.md" | wc -l | tr -d ' ')
+[ "$n_pair" -eq 2 ] || { fail "E16 comma-joined citations extracted as $n_pair target(s), want 2"; e16=1; }
+retr_cite_integrity "$TMP/i-pair.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 two valid receipts in one paren graded unresolvable"; e16=1; }
+# A line range that lands inside frontmatter cites METADATA, not content — the
+# resolver rejects it and M6 must surface that as the real defect it is.
+printf 'A. (source: raw/sales-2026.csv.md#L2-L4)\n' > "$TMP/i-fm.md"
+retr_cite_integrity "$TMP/i-fm.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a citation pointing into frontmatter graded as resolving"; e16=1; }
+[ "$e16" -eq 0 ] && ok "E16 M6 catches unresolvable files/anchors + frontmatter cites, splits paired receipts, silence cannot pass"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E15 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E16 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
 exit 0

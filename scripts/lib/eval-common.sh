@@ -385,11 +385,46 @@ retr_grade_answer_raw() {
 
 # retr_citations <answer_file>
 # Print every `raw/<file>[#anchor]` target cited in the answer, one per line.
+#
+# Match each `source: raw/<target>` on its own rather than the enclosing
+# parenthetical: models legitimately pack two receipts into one paren —
+# `(source: raw/a.md#L26, source: raw/a.md#L22)` — and grabbing everything up
+# to the closing `)` yielded ONE target with a comma and a second "source:"
+# inside it, which resolves to nothing. That fabricated two citation failures
+# out of correct answers on M6's first run.
 retr_citations() {
-  grep -oE '\(source:[[:space:]]*raw/[^)]+\)' "$1" 2>/dev/null \
-    | sed -e 's/^(source:[[:space:]]*//' -e 's/)$//' \
-    | sed -e 's/[[:space:]]*$//' \
+  grep -oE 'source:[[:space:]]*raw/[^),;[:space:]]+' "$1" 2>/dev/null \
+    | sed -e 's/^source:[[:space:]]*//' -e 's/[[:space:]]*$//' \
     | sort -u
+}
+
+# retr_cite_integrity <answer_file> <raw_dir> <cite_span_py>
+# 0 = every citation in the answer resolves to a real file and, where it carries
+# an anchor, a real anchor. Sets RETR_CITE_TOTAL / RETR_CITE_BAD / RETR_CITE_BAD_LIST.
+#
+# R4 asks "is there ONE good citation?" — this asks "is any citation a lie?".
+# They are different failures and the second is the worse one: an unresolvable
+# target is a hallucinated receipt, and a receipt that cannot be checked is more
+# corrosive than a missing one, because it *looks* verifiable. Observed — an
+# answer cited `field-report.md#instrumentation-debt`, an anchor that does not
+# exist in that file, while passing every other check on the question.
+#
+# Answers with no citations set RETR_CITE_TOTAL=0 and return 0: "cite nothing"
+# must not be a way to pass this, and it isn't a way to pass R4 either, which is
+# what actually forces a citation to exist.
+retr_cite_integrity() {
+  local answer="$1" raw_dir="$2" py="$3" target
+  RETR_CITE_TOTAL=0; RETR_CITE_BAD=0; RETR_CITE_BAD_LIST=""
+  [ -f "$answer" ] || return 0
+  while IFS= read -r target; do
+    [ -z "$target" ] && continue
+    RETR_CITE_TOTAL=$((RETR_CITE_TOTAL + 1))
+    if ! python3 "$py" "$raw_dir" "$target" >/dev/null 2>&1; then
+      RETR_CITE_BAD=$((RETR_CITE_BAD + 1))
+      RETR_CITE_BAD_LIST="$RETR_CITE_BAD_LIST $target"
+    fi
+  done < <(retr_citations "$answer")
+  [ "$RETR_CITE_BAD" -eq 0 ]
 }
 
 # retr_grade_citation <answer_file> <raw_dir> <cite_contains> <max_span> <cite_span_py>
