@@ -42,9 +42,9 @@ checks:
 
   - id: A4
     name: synthesis, not transcription
-    check: "Wiki body words <=30% of ingested raw words, orphan rate <=5%, every content page carries >=2 links under ## Related, entity pages exist for the top recurring corpus entities, and contradiction flags are present on A2 topics."
-    false_pass: "Hit the compression target by discarding content rather than condensing it, or hit the linkage target with one hub page linking everything, which satisfies '>=2 links' everywhere while encoding no real structure."
-    mitigation: "Content loss is caught by A1 and A2 because you cannot retrieve from a gutted wiki, putting compression and recall in deliberate tension so no single strategy satisfies both without doing the real work; star topology is caught by reporting graph diameter and max node degree from wiki-discover.py, where a hub of degree ~N with diameter 2 is visible on its face."
+    check: "Verbatim overlap <=25% (share of wiki 12-word shingles appearing in raw, per corpus-health.py), orphan rate <=5%, every content page carries >=2 links under ## Related, entity pages exist for the top recurring corpus entities, and contradiction flags are present on A2 topics."
+    false_pass: "Two ways. Pass a SIZE-ratio target by discarding content rather than condensing it — which is why size ratio is reported as directional only and is not the check: the shipped meta-wiki sits at 372% of its raw words because it legitimately expands six tiny sources, so a flat size threshold scores good synthesis as failure and copying-but-shorter as success. Or pass the linkage target with one hub page linking everything, which satisfies '>=2 links' everywhere while encoding no structure."
+    mitigation: "Transcription is measured directly rather than proxied: 12-gram overlap against the raw bodies catches lifted text at any page size, and it calibrates — the hand-curated meta-wiki reads 4.7% overall while its two closest-paraphrase smoke pages read 30.3% and 28.9%, so the metric discriminates rather than merely ranking. Content loss is separately caught by A1 and A2 because you cannot retrieve from a gutted wiki. Star topology is caught by reporting max node degree and graph diameter, where a hub of degree ~N with diameter 2 is visible on its face."
 
   - id: A5
     name: cost and scale, measured not assumed
