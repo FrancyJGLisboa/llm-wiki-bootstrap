@@ -32,7 +32,16 @@ printf -- '---\ningested_hash: ""\n---\nbody\n'         > "$W/raw/skipped-b.md"
 printf 'a,b\n1,2\n'                                      > "$W/raw/data.csv"
 printf -- '---\ningested_hash: "cafe9999"\n---\nparsed\n' > "$W/raw/data.csv.md"
 : > "$W/raw/.gitkeep"
-printf 'x\n' > "$W/wiki/index.md"; printf 'x\n' > "$W/wiki/page-a.md"
+printf -- '---\ningested_hash: "d00d1234"\n---\nbody\n' > "$W/raw/orphan.md"
+printf 'x\n' > "$W/wiki/index.md"
+# Citations decide the denominator, so the fixture must carry real ones:
+# committed-a and skipped-b cited directly, data.csv cited only through its
+# SIDECAR path (the held-out shape — the pair must still count as one cited,
+# committed source), and orphan.md cited by nobody.
+{ printf 'Page.\n\n'
+  printf 'A (source: raw/committed-a.md#L3) and again (source: raw/committed-a.md#L4).\n'
+  printf 'B (source: raw/skipped-b.md#L3).\n'
+  printf 'C (source: raw/data.csv.md#L3).\n'; } > "$W/wiki/page-a.md"
 printf '# log.md\n\nAppend-only log. Newest at top.\n\n## 2026-06-01 — hand-written entry\n\nprose\n' > "$W/log.md"
 raw_before=$(find "$W/raw" -type f | sort | xargs cat 2>/dev/null | openssl dgst -sha256 | awk '{print $NF}')
 log_before=$(cat "$W/log.md")
@@ -43,11 +52,18 @@ WIKI_METRICS_DATE=2026-06-15 "$METRICS" ingest "$W" >/dev/null 2>&1 \
 rec=$(grep -m1 '^- metrics: op=ingest' "$W/log.md")
 [ -n "$rec" ] && ok "record written: ${rec#- metrics: }" || fail "no ingest record in log.md"
 # Recount here, independently of the script's own loop.
-exp_total=3   # committed-a, skipped-b, data.csv (sidecar folds into its parent)
-exp_ok=2      # committed-a + data.csv via its sidecar
+# Denominator is CITED sources only: committed-a, skipped-b, data.csv (cited
+# via its sidecar). orphan.md is cited by nobody and must be excluded from the
+# rate but still counted as uncited — an exemption that stays visible.
+exp_total=3
+exp_ok=2      # committed-a + data.csv (commitment lives on its sidecar)
 case "$rec" in
-  *"committed=$exp_ok/$exp_total"*) ok "committed=$exp_ok/$exp_total matches the recount" ;;
+  *"committed=$exp_ok/$exp_total"*) ok "committed=$exp_ok/$exp_total over CITED sources" ;;
   *) fail "commitment count wrong — want committed=$exp_ok/$exp_total, got: $rec" ;;
+esac
+case "$rec" in
+  *"uncited=1"*) ok "the uncited source is reported, not silently dropped" ;;
+  *) fail "uncited count missing or wrong (want uncited=1): $rec" ;;
 esac
 case "$rec" in *"pages=2"*) ok "page count correct" ;; *) fail "page count wrong: $rec" ;; esac
 
@@ -134,9 +150,39 @@ printf '%s\n' "$out2" | grep -q 'citation(s) unchecked' \
 printf '%s\n' "$out2" | grep -q 'citations 0/3' \
   && { fail "unknown count invented a 0% citation rate"; } || ok "no fabricated 0% rate"
 
+echo "P7: the commitment lint names offenders, and the denominator cannot be gamed"
+LINT="$SCRIPT_DIR/wiki-lint-commitment.sh"
+lint_out=$("$LINT" "$W" 2>&1); lint_rc=$?
+[ "$lint_rc" -eq 1 ] && ok "exits 1 when a cited source lacks a commitment" \
+  || fail "expected exit 1, got $lint_rc"
+printf '%s\n' "$lint_out" | grep -q 'raw/skipped-b.md: cited 1 time' \
+  && ok "names the offender with its citation count" || fail "offender not named: $lint_out"
+printf '%s\n' "$lint_out" | grep -q 'raw/committed-a.md:' \
+  && fail "flagged a source that IS committed" || ok "committed sources not flagged"
+printf '%s\n' "$lint_out" | grep -q 'raw/data.csv' \
+  && fail "flagged the .csv whose commitment lives on its sidecar (holdout shape)" \
+  || ok "sidecar-committed pair not flagged (holdout: cited only via the .md path)"
+printf '%s\n' "$lint_out" | grep -q 'uncited source(s) not checked.*orphan.md' \
+  && ok "the uncited exemption is stated out loud, not hidden" || fail "uncited exemption not surfaced"
+
+# The false_pass route for check 3: shrink the denominator to look clean. Adding
+# an UNCITED uncommitted source must not improve the rate, and must not go green.
+printf -- '---\ningested_hash: ""\n---\nbody\n' > "$W/raw/padding.md"
+"$LINT" "$W" >/dev/null 2>&1 && { fail "P7 adding uncited junk turned the lint green"; } \
+  || ok "uncited junk cannot pad the rate green"
+# …and a source that BECOMES cited must start counting immediately.
+printf 'D (source: raw/padding.md#L3).\n' >> "$W/wiki/page-a.md"
+# Capture, THEN match: under `set -o pipefail` a pipeline takes the lint's
+# exit 1, so a successful grep still reads as failure.
+newly=$("$LINT" "$W" 2>&1 || true)
+printf '%s\n' "$newly" | grep -q 'raw/padding.md: cited 1 time' \
+  && ok "a newly cited source is flagged the moment a page cites it" \
+  || fail "newly cited uncommitted source not flagged"
+rm -f "$W/raw/padding.md"
+
 echo ""
 if [ "$fails" -eq 0 ]; then
-  echo "verify-metrics: P1–P6 all green — records are measured, append-only, and trendable."
+  echo "verify-metrics: P1–P7 all green — records are measured over what they protect, append-only, and trendable."
   exit 0
 fi
 echo "verify-metrics: $fails failure(s)" >&2

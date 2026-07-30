@@ -143,6 +143,68 @@ else
   failures=$((failures + 1))
 fi
 
+# I6 — every shipped script RUNS in the installed skeleton, rather than merely
+# existing in it. The manifest is a hand-maintained list, so it happily ships a
+# script while leaving the module that script imports behind: four core scripts
+# (citation-audit.py, wiki-to-kg.py, asserted-at-audit.py, wiki-to-okf.py) all
+# import scripts/lib/wikitext.py, which was never listed — so `/wiki-lint` and
+# `/wiki-discover` crashed on import in EVERY fresh install while the file-level
+# manifest check stayed green. Exit codes alone can't catch it either: a Python
+# ModuleNotFoundError exits 1, which is indistinguishable from "the lint found
+# issues". So this asserts a real verdict — bounded exit code AND stderr free of
+# crash markers.
+CRASH_MARKERS='Traceback|ModuleNotFoundError|ImportError|No such file or directory|command not found|cannot open'
+i6=0
+i6_probe() {  # <label> <command...> — run in the target, demand a verdict
+  local label="$1"; shift
+  local err rc
+  err="$REPO_ROOT/$TGT/.probe.err"
+  # `set -e` is active: a bare subshell returning non-zero would kill the
+  # verifier before rc is read, and these lints exit 1 BY DESIGN when they find
+  # issues. Capture the status without letting it abort the run.
+  ( cd "$TGT" && "$@" >/dev/null 2>"$err" ) && rc=0 || rc=$?
+  if [ "$rc" -gt 1 ] || grep -qE "$CRASH_MARKERS" "$err" 2>/dev/null; then
+    fail "I6 $label did not return a verdict (exit $rc): $(head -1 "$err" 2>/dev/null)"
+    i6=1
+  fi
+}
+for lint in "$TGT"/scripts/wiki-lint-*.sh; do
+  [ -f "$lint" ] || continue
+  # No argument on purpose: each lint has its own default target (raw/ for the
+  # drift lint, the wiki root for the commitment lint), and the default path is
+  # the one a user actually hits. Passing a blanket `raw/` tested a call nobody
+  # makes and failed the lint whose contract differs.
+  i6_probe "$(basename "$lint")" bash "scripts/$(basename "$lint")"
+done
+if command -v python3 >/dev/null 2>&1; then
+  for py in citation-audit.py wiki-to-kg.py asserted-at-audit.py wiki-to-okf.py; do
+    [ -f "$TGT/scripts/$py" ] || continue
+    i6_probe "$py (import)" python3 -c "import importlib.util,sys,os
+sys.path.insert(0, os.path.join('scripts','lib'))
+spec = importlib.util.spec_from_file_location('probe', os.path.join('scripts','$py'))
+m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)"
+  done
+fi
+rm -f "$TGT/.probe.err"
+[ "$i6" -eq 0 ] && ok "I6 every shipped lint and python module runs in the installed skeleton" \
+  || failures=$((failures + 1))
+
+# I7 — the negative control for I6. A check that cannot go red proves nothing,
+# so break the skeleton on purpose (hide the shared module) and require I6's
+# probe to notice. Restored immediately either way.
+if command -v python3 >/dev/null 2>&1 && [ -f "$TGT/scripts/lib/wikitext.py" ]; then
+  mv "$TGT/scripts/lib/wikitext.py" "$TGT/scripts/lib/.wikitext.hidden"
+  if ( cd "$TGT" && python3 scripts/citation-audit.py wiki/ ) >/dev/null 2>"$REPO_ROOT/$TGT/.neg.err" \
+     && ! grep -qE "$CRASH_MARKERS" "$REPO_ROOT/$TGT/.neg.err"; then
+    fail "I7 removing scripts/lib/wikitext.py did NOT break citation-audit.py — I6 cannot detect a missing dependency"
+    failures=$((failures + 1))
+  else
+    ok "I7 negative control: a missing shared module is detected, not silently tolerated"
+  fi
+  mv "$TGT/scripts/lib/.wikitext.hidden" "$TGT/scripts/lib/wikitext.py"
+  rm -f "$REPO_ROOT/$TGT/.neg.err"
+fi
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d installer check(s) red.\n" "$RED" "$RESET" "$failures"
@@ -150,7 +212,7 @@ if [ "$failures" -gt 0 ]; then
   exit 1
 fi
 
-printf "%sPassed.%s All 5 installer checks green.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s All 7 installer checks green.\n" "$GREEN" "$RESET"
 # Cleanup temp target on green.
 rm -rf "$TARGET_PARENT"
 exit 0
