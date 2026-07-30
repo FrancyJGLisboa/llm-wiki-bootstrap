@@ -36,9 +36,9 @@
 
   <section class="wrap stats" aria-label="Verification numbers">
     <p class="stat"><b>5</b><span>slash commands — the whole interface</span></p>
-    <p class="stat"><b>31</b><span>deterministic smoke checks, wired into CI</span></p>
-    <p class="stat"><b>21 / 21</b><span>retrieval eval — 8 binary checks, no LLM grader</span></p>
-    <p class="stat"><b>4 / 4</b><span>held-out control — the anti-Goodhart run</span></p>
+    <p class="stat"><b>495</b><span>pages, and reads per answer still fell 3 → 0</span></p>
+    <p class="stat"><b>10</b><span>binary retrieval checks, no LLM grader</span></p>
+    <p class="stat"><b>29</b><span>deterministic smoke checks, wired into CI</span></p>
   </section>
 
   <section class="wrap flow">
@@ -77,7 +77,11 @@
         <li><b>Supersession</b> — “what replaced X?” answered by a typed-edge graph walk</li>
         <li><b>Refusal on absence</b> — no nearest-neighbour guess when the answer isn’t there</li>
         <li><b>Citation locus</b> — every answer resolves to a real span of a real source</li>
+        <li><b>Citation integrity</b> — a receipt that doesn’t resolve is caught, not trusted</li>
+        <li><b>Feedback loops</b> — cycles in the causal graph, classified reinforcing or balancing</li>
       </ul>
+      <p style="margin-top: var(--space-lg);">And it holds as the wiki grows. The same eval re-run against a corpus padded to <strong>495 pages</strong> with deliberate distractors — written in the needles’ own vocabulary, for other services — scored <strong>21 / 21</strong>, up from 20 / 21 at 19 pages, while median file reads per answer <strong>fell from 3 to 0</strong>. The held-out question set, never run by default and never in CI, passed 4 / 4 at that size. Retrieval cost tracks hops, not corpus size.</p>
+      <p style="margin-top: var(--space-md);">Three tiers, each checking the one below: the wiki is written by an LLM, the eval grades it with no LLM in the grading path, and a suite of oracles grades the eval. Latest full run <strong>32 / 35</strong> (2026-07-30) — the losses were one fabricated citation anchor and one citation pointing into frontmatter instead of body text, both caught by the checks rather than by luck.</p>
     </div>
   </section>
 
