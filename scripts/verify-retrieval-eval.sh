@@ -43,6 +43,11 @@
 #   E14 loop corpus honest   : M5's three legs are separately dated and never
 #                              name the cycle, so a closed loop can only come
 #                              from composition; graded on a graph cycle
+#   E15 prose is not a log   : an uppercase transport code is matched as a
+#                              TOKEN (ENOTFOUND fired inside
+#                              ModuleNotFoundError and voided a good answer),
+#                              and markdown emphasis is normalised before any
+#                              prose match (**three** retention windows)
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -405,9 +410,46 @@ if [ "$e14" -eq 0 ]; then
 fi
 [ "$e14" -eq 0 ] && ok "E14 M5 loop corpus states legs not loops, three vintages, graded on a closed cycle"
 
+# ── E15: prose is not a log, and markdown is not plain text ──────────────────
+# Two misgradings from one real run, both the same species — a pattern matching
+# inside ordinary writing instead of against the thing it names.
+e15=0
+
+# (a) An uppercase transport code is a TOKEN. Matched case-insensitively as a
+# substring, `ENOTFOUND` fires inside `ModuleNotFoundError`, and a complete
+# correct answer is reported as "no answer reached us".
+printf 'The lint crashes with ModuleNotFoundError because scripts/lib/wikitext.py is absent.\n' > "$TMP/prose-err.md"
+retr_answer_broken "$TMP/prose-err.md" \
+  && { fail "E15 answer mentioning ModuleNotFoundError misread as a transport failure"; e15=1; }
+printf 'request to api.anthropic.com failed: ENOTFOUND\n' > "$TMP/real-err.md"
+retr_answer_broken "$TMP/real-err.md" \
+  || { fail "E15 a real ENOTFOUND is no longer recognised"; e15=1; }
+printf 'The socket was closed: ECONNRESET.\n' > "$TMP/real-err2.md"
+retr_answer_broken "$TMP/real-err2.md" \
+  || { fail "E15 a real ECONNRESET is no longer recognised"; e15=1; }
+
+# (b) Markdown emphasis must not defeat prose matching. The model bolds its
+# count; the marker looking for "three retention window" then sees
+# "three** retention" and the best answer in the run grades FAIL.
+printf 'The question is under-specified — the wiki holds **three** retention windows: production logs, sandbox logs, and database backups.\n' > "$TMP/m4-bold.md"
+retr_grade_answer "$TMP/m4-bold.md" "log, backup" "" clarify \
+  || { fail "E15 bolded-count clarification graded FAIL (markdown defeated the markers)"; e15=1; }
+# …and an emphasised expects token must still be found.
+printf 'The current budget is **7** attempts per message.\n' > "$TMP/bold-token.md"
+retr_grade_answer "$TMP/bold-token.md" "7 attempts" "" false \
+  || { fail "E15 emphasised expects token not matched after normalisation"; e15=1; }
+# …while a confident single pick still fails, so (b) loosened nothing.
+retr_grade_answer "$TMP/m4-pick.md" "log, backup" "" clarify \
+  && { fail "E15 normalisation let a confident single pick pass M4"; e15=1; }
+# …and a headline-anchored forbids still fires through emphasis.
+printf '**999 GB/day** was the figure.\n' > "$TMP/bold-wrong.md"
+retr_grade_answer "$TMP/bold-wrong.md" "412" '^[^a-zA-Z0-9]{0,4}(389|999)' false \
+  && { fail "E15 emphasised wrong headline slipped past its forbids-pattern"; e15=1; }
+[ "$e15" -eq 0 ] && ok "E15 error codes matched as tokens, markdown emphasis normalised, guards intact"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E14 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E15 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
 exit 0
