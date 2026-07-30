@@ -269,6 +269,51 @@ else
   cat "$COUT" >&2
 fi
 
+# ── V6 commit-source writes ONLY the three permitted fields ───────────────────
+# This is the one script here that writes to raw/, which AGENTS.md hard rule 1
+# otherwise forbids entirely. If it can touch anything else, the raw layer stops
+# being an immutable snapshot and every citation into it becomes unfalsifiable.
+COMMIT="$SCRIPT_DIR/commit-source.py"
+if [ -f "$COMMIT" ]; then
+  ORIG="$W/raw/$DASHED"
+  cp "$ORIG" "$TMP/commit-before.md"
+  FAKEHASH=$(printf '%064d' 7 | tr '0-9' 'a-f0-3')
+  FAKEHASH=$(printf '%s' "$FAKEHASH" | cut -c1-64)
+  python3 "$COMMIT" "$ORIG" --hash "$FAKEHASH" --at "2026-07-30 00:00" \
+          --pages "wiki/one.md,wiki/two.md" >/dev/null 2>&1
+  if python3 - "$TMP/commit-before.md" "$ORIG" <<'PY'
+import sys
+TRI = ("ingested_hash", "ingested_at", "ingested_pages")
+def parts(p):
+    t = open(p, encoding="utf-8").read().split("\n")
+    e = t.index("---", 1)
+    return t[1:e], t[e:]
+fb, bb = parts(sys.argv[1]); fa, ba = parts(sys.argv[2])
+strip = lambda fm: [l for l in fm
+                    if not any(l.startswith(k) for k in TRI) and not l.startswith("  - wiki/")]
+sys.exit(0 if (bb == ba and strip(fb) == strip(fa)) else 1)
+PY
+  then
+    ok "V6 commit-source.py leaves body and all other frontmatter byte-identical"
+  else
+    bad "V6 commit-source.py altered raw/ beyond the three permitted fields"
+  fi
+
+  python3 "$COMMIT" "$ORIG" --check >/dev/null 2>&1 \
+    && ok "V6b --check reports a committed source as committed" \
+    || bad "V6b --check failed to see a written ingested_hash"
+
+  python3 "$COMMIT" "$W2/raw/$DASHED" --check >/dev/null 2>&1 \
+    && bad "V6c --check called an UNcommitted source committed" \
+    || ok "V6c --check reports an uncommitted source as uncommitted"
+
+  python3 "$COMMIT" "$ORIG" --hash "not-a-sha" >/dev/null 2>&1 \
+    && bad "V6d a non-sha256 hash was accepted into raw/" \
+    || ok "V6d a non-sha256 --hash is rejected"
+else
+  bad "V6 scripts/commit-source.py is missing"
+fi
+
 if grep -q 'the real claude must never run' "$TMP/eval.err" "$TMP/control.err" 2>/dev/null; then
   bad "V0 a cached answer was re-queried — the oracle is spending money"
 else

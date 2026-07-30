@@ -29,17 +29,22 @@
 
 set -uo pipefail
 
-WIKI=; LOG=; LIMIT=0; HALT=1
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+COMMIT="$SCRIPT_DIR/commit-source.py"
+
+WIKI=; LOG=; LIMIT=0; HALT=1; GATE_N=6
 while [ $# -gt 0 ]; do
   case "$1" in
     --log)     LOG="${2:-}"; shift 2 ;;
     --limit)   LIMIT="${2:-0}"; shift 2 ;;
+    --gate-n)  GATE_N="${2:-0}"; shift 2 ;;
     --no-halt) HALT=0; shift ;;
-    -h|--help) sed -n '2,30p' "$0"; exit 0 ;;
-    -*) echo "usage: ingest-corpus.sh <wiki-root> [--log FILE] [--limit N] [--no-halt]" >&2; exit 2 ;;
+    -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
+    -*) echo "usage: ingest-corpus.sh <wiki-root> [--log FILE] [--limit N] [--gate-n K] [--no-halt]" >&2; exit 2 ;;
     *)  WIKI="$1"; shift ;;
   esac
 done
+[ -f "$COMMIT" ] || { echo "error: missing $COMMIT" >&2; exit 2; }
 
 [ -n "$WIKI" ] || { echo "usage: ingest-corpus.sh <wiki-root> [--log FILE] [--limit N] [--no-halt]" >&2; exit 2; }
 [ -d "$WIKI/raw" ] || { echo "error: no raw/ under $WIKI" >&2; exit 2; }
@@ -47,7 +52,14 @@ command -v claude >/dev/null 2>&1 || { echo "error: claude not on PATH" >&2; exi
 WIKI="$(cd "$WIKI" && pwd)"
 [ -n "$LOG" ] || LOG="$WIKI/.ingest-timing.tsv"
 
-[ -f "$LOG" ] || printf '# idx\tsource\twords\tseconds\tstatus\tpages_after\tcommitted\n' > "$LOG"
+[ -f "$LOG" ] || printf '# idx\tsource\twords\tseconds\tstatus\tpages_after\tcommitted\tturn_s\tgate_s\n' > "$LOG"
+
+# A PATH with claude's directory removed, for floor-mode gate runs (see below).
+CLAUDE_DIR="$(dirname "$(command -v claude)")"
+FLOOR_PATH="$(printf '%s' "$PATH" | tr ':' '\n' | grep -vxF "$CLAUDE_DIR" | paste -sd: -)"
+if PATH="$FLOOR_PATH" command -v claude >/dev/null 2>&1; then
+  echo "warning: claude still visible on the floor-mode PATH; floor runs will judge" >&2
+fi
 
 # A source is done when its frontmatter carries a non-empty ingested_hash. That
 # is the same signal /wiki-ingest itself uses to skip, so a resumed run agrees
@@ -70,6 +82,8 @@ for src in "$WIKI"/raw/*.md; do
   fi
 
   words=$(wc -w < "$src" | tr -d ' ')
+  find "$WIKI/wiki" -name '*.md' -print0 2>/dev/null | sort -z > "$WIKI/.pages-before"
+
   start=$(date +%s)
   # stdin pinned to /dev/null: without it `claude -p` waits 3s per call for input
   # that never comes. Same trap verify-retrieval-eval.sh E7 pins at all 3 sites.
@@ -79,16 +93,69 @@ for src in "$WIKI"/raw/*.md; do
     status="FAIL"
     failed=$((failed + 1))
   fi
-  elapsed=$(( $(date +%s) - start ))
+  turn_s=$(( $(date +%s) - start ))
+
+  # Pages this turn created or touched. The agent may have ended its turn with
+  # the gate still running, so the driver finishes the pipeline itself rather
+  # than trusting the turn to have completed Steps 5.5-7.
+  changed=$(find "$WIKI/wiki" -name '*.md' -newer "$WIKI/.pages-before" 2>/dev/null | tr '\n' ' ')
+
+  gate_start=$(date +%s)
+  gate=skipped
+  if [ -n "$changed" ]; then
+    # FULL judging on the first GATE_N sources characterizes the write-time
+    # guarantee and its true cost; the rest run the deterministic citation floor
+    # only, and entailment is measured post-hoc by sampling with
+    # eval-citation-faithfulness.sh, which is what that tool is for. Judging
+    # every source costs ~15 min/source to measure the same rate.
+    #
+    # --allow-unjudged alone does NOT skip judging: it only permits proceeding
+    # when no judge is AVAILABLE. With claude on PATH the gate judges regardless.
+    # Floor mode therefore runs it on a PATH without claude — the gate's own
+    # documented offline/CI path — rather than by weakening the gate itself.
+    # shellcheck disable=SC2086
+    if [ "$idx" -gt "$GATE_N" ]; then
+      if ( cd "$WIKI" && PATH="$FLOOR_PATH" bash scripts/wiki-faithfulness-gate.sh \
+             --mode ingest --allow-unjudged $changed </dev/null ) \
+           >"$WIKI/.gate-last.log" 2>&1; then
+        gate=floor
+      else
+        gate=BLOCKED
+      fi
+    else
+      if ( cd "$WIKI" && bash scripts/wiki-faithfulness-gate.sh --mode ingest $changed </dev/null ) \
+           >"$WIKI/.gate-last.log" 2>&1; then
+        gate=judged
+      else
+        gate=BLOCKED
+      fi
+    fi
+  fi
+  gate_s=$(( $(date +%s) - gate_start ))
+
+  # Step 7's commitment, which the headless turn drops. Hash MUST come from
+  # body-hash.sh (AGENTS.md forbids recomputing it inline: divergent newline
+  # handling silently breaks idempotence).
+  if [ "$status" = ok ]; then
+    h=$(cd "$WIKI" && bash scripts/body-hash.sh "$rel" 2>/dev/null | awk '{print $1}')
+    if [ -n "$h" ]; then
+      pages_csv=$(printf '%s' "$changed" | tr ' ' '\n' | sed "s|^$WIKI/||" | paste -sd, -)
+      python3 "$COMMIT" "$src" --hash "$h" --at "$(date '+%Y-%m-%d %H:%M')" \
+              --pages "$pages_csv" || echo "[ingest] !! commit-source failed on $rel" >&2
+    fi
+  fi
+
+  elapsed=$(( turn_s + gate_s ))
 
   pages=$(find "$WIKI/wiki" -name '*.md' 2>/dev/null | wc -l | tr -d ' ')
   metrics=$(cd "$WIKI" && bash scripts/wiki-metrics.sh ingest . 2>/dev/null | tail -1)
   committed=$(printf '%s' "$metrics" | sed -n 's/.*committed=\([0-9]*\/[0-9]*\).*/\1/p')
   [ -n "$committed" ] || committed="?"
 
-  printf '%d\t%s\t%s\t%s\t%s\t%s\t%s\n' \
-    "$idx" "$(basename "$src")" "$words" "$elapsed" "$status" "$pages" "$committed" >> "$LOG"
-  echo "[ingest] $idx $rel  ${words}w  ${elapsed}s  $status  pages=$pages  committed=$committed" >&2
+  printf '%d\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n' \
+    "$idx" "$(basename "$src")" "$words" "$elapsed" "$status" "$pages" "$committed" \
+    "$turn_s" "$gate_s" >> "$LOG"
+  echo "[ingest] $idx $rel  ${words}w  turn=${turn_s}s gate=${gate_s}s($gate)  $status  pages=$pages  committed=$committed" >&2
 
   if [ "$status" = FAIL ]; then
     echo "[ingest] !! ingest failed on $rel — see $WIKI/.ingest-last.log" >&2
