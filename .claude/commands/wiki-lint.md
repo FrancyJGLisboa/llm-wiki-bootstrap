@@ -104,6 +104,18 @@ Run the deterministic lint:
 - Fix proposal (if `--apply`): **do not edit the wiki pages by hand and do not restamp `ingested_hash`** — that would launder the drift. The only correct fix is re-running `/wiki-ingest <raw-file>` so the claims are re-derived from the current body and the hash is re-stamped as part of that pass. Report it as a required follow-up action, not an applied fix.
 - An `unhashable` result (recorded hash + malformed frontmatter) means the commitment can't be verified at all — surface it at the same severity.
 
+Then check the *precondition* that lint depends on — a source with no commitment at all cannot drift-check, so the check above passes it silently:
+
+```bash
+./scripts/wiki-lint-commitment.sh .
+```
+
+(Skip silently if absent — older wiki.)
+
+- Report each cited-but-uncommitted source with its citation count: those citations resolve but cannot be verified, and drift detection is disabled for that body.
+- Uncited sources are exempt and listed separately — nothing depends on their stability yet.
+- Fix proposal (if `--apply`): **never hand-write `ingested_hash`.** A commitment nobody derived is a fabricated receipt, and it would make the drift lint report clean forever. The only correct fix is re-running `/wiki-ingest` on each named source. Report it as a required follow-up, not an applied fix.
+
 ### 9. Missing valid time (no as-of axis)
 
 `fetched_at` says when a snapshot entered the wiki. It does **not** say what date the document claims for its own content. Without `asserted_at`, an as-of question ("what was throughput in April?") has nothing structured to resolve against, and the wiki answers with whatever the file says now.

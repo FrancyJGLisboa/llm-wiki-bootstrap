@@ -51,20 +51,34 @@ record=
 
 if [ "$OP" = ingest ]; then
   pages=$(find "$ROOT/wiki" -name '*.md' -type f 2>/dev/null | wc -l | tr -d ' ')
-  committed=0; total=0
+  # Commitment is measured over CITED sources, because that is what a commitment
+  # is FOR: `ingested_hash` is the promise "the pages citing this were written
+  # against this body", so a source nothing cites has no citations at risk, while
+  # a heavily-cited source without one leaves every citation into it unverifiable.
+  # Counting all of raw/ blurred both directions at once — the shipped demo wiki
+  # read 2/7 while the real defect was four sources carrying 61 citations between
+  # them and no commitment at all.
+  #
+  # Note this denominator is STRICTER, not laxer: uncited files cannot pad the
+  # rate, and they are reported separately rather than dropped silently.
+  committed=0; cited_total=0; uncited=0
   while IFS= read -r f; do
     base=$(basename "$f")
     case "$base" in .*) continue ;; esac
     # A sidecar keeps its commitment with its parent (a .csv's hash lives on
-    # the parsed <name>.md beside it), so count the pair once.
+    # the parsed <name>.md beside it), so count the pair once — and treat a
+    # citation to EITHER path as citing the pair.
     case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac
-    total=$((total + 1))
+    n_cite=$(grep -ro "(source: raw/$base" "$ROOT/wiki" 2>/dev/null | wc -l | tr -d ' ')
+    n_side=$(grep -ro "(source: raw/$base.md" "$ROOT/wiki" 2>/dev/null | wc -l | tr -d ' ')
+    if [ "$((n_cite + n_side))" -eq 0 ]; then uncited=$((uncited + 1)); continue; fi
+    cited_total=$((cited_total + 1))
     if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
        || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
       committed=$((committed + 1))
     fi
   done < <(find "$ROOT/raw" -type f 2>/dev/null | sort)
-  record="- metrics: op=ingest date=$DATE sources=$total pages=$pages committed=$committed/$total"
+  record="- metrics: op=ingest date=$DATE sources=$((cited_total + uncited)) pages=$pages committed=$committed/$cited_total uncited=$uncited"
 
 else
   [ -f "$ANSWER" ] || { echo "wiki-metrics: answer file not found: $ANSWER" >&2; exit 1; }

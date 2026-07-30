@@ -31,6 +31,7 @@ scripts/extract/segment-doc.py
 scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
 scripts/lib/eval-common.sh
+scripts/lib/wikitext.py
 scripts/preflight.sh
 scripts/auto-ingest.sh
 scripts/package-wiki.sh
@@ -40,6 +41,7 @@ scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
 scripts/wiki-lint-hash-drift.sh
+scripts/wiki-lint-commitment.sh
 scripts/wiki-lint-asserted-at.sh
 scripts/asserted-at-audit.py
 scripts/wiki-to-kg.py
