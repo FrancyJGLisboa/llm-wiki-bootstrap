@@ -222,20 +222,40 @@ echo "[retr] raw/: $extracted files, wiki/: $pages pages" >&2
 # route, and a scored report is worse than no report because it looks like
 # evidence. Abort loudly instead, and do not spend on queries that cannot
 # measure the thing.
-# Filler raws carry ingested_hash by construction — exclude them or a failed
-# needle ingest at scale would still clear the gate and score a void run.
-ingested=$(grep -rlc 'ingested_hash: "[0-9a-f]' "$WIKI/raw" 2>/dev/null | grep -vc '/scale-' || true)
-# Denominator for the Commitment line: needle raws only (filler carries hashes
-# by construction, so including it would dilute the rate to near-100%).
-needle_raws=$(find "$WIKI/raw" -type f 2>/dev/null | grep -vc '/scale-' || true)
-if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
+# NEVER count commitments with `grep -rlc`: mixing -l and -c makes grep emit a
+# line for EVERY file, non-matches included, so the count becomes "how many raw
+# files exist" instead of "how many carry a hash". Measured: at 100 filler pages
+# it reported 13 while the true number of committed needle sources was 0 — the
+# gate cleared and the run was scored on a wiki whose entire provenance layer
+# was missing. That is the void-run lesson repeating in a new disguise, so the
+# gate now consumes the explicit loop below and nothing else.
+# Commitment rate over REAL needle sources. Three false-alarm routes this
+# closes, all found the first time the line printed ("22/12" — a numerator
+# above its own denominator): filler raws carry hashes by construction;
+# `.gitkeep` is scaffolding, not a source; and a binary/tabular source (a .csv)
+# keeps its commitment on the parsed `<name>.md` sidecar extract wrote beside
+# it, so checking only the .csv reports a gap that isn't one. A sensor that
+# cries wolf gets ignored, which is worse than not having it.
+committed=0; needle_raws=0
+while IFS= read -r f; do
+  base=$(basename "$f")
+  case "$base" in .*|scale-*) continue ;; esac
+  case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac  # sidecar counted with its parent
+  needle_raws=$((needle_raws + 1))
+  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
+     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+    committed=$((committed + 1))
+  fi
+done < <(find "$WIKI/raw" -type f 2>/dev/null | sort)
+if [ "$pages" -le 1 ] || [ "$committed" -eq 0 ]; then
   {
     echo "# retrieval eval — VOID (not a score)"
     echo ""
-    echo "The wiki was never populated, so no question can measure wiki retrieval."
+    echo "The wiki was never populated, or ingest never committed its sources, so"
+    echo "no question here can measure verifiable wiki retrieval."
     echo ""
     echo "- wiki pages:      $pages (need > 1)"
-    echo "- ingested raw:    $ingested of $extracted (need > 0)"
+    echo "- committed raw:   $committed of $needle_raws needle sources carry an ingested_hash (need > 0)"
     echo "- ingest log tail: $(tail -3 "$WORK/ingest.log" 2>/dev/null | tr '\n' ' ')"
     echo ""
     echo "With an empty wiki, /wiki-query falls back to reading raw/ directly and"
@@ -243,7 +263,7 @@ if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
     echo "  scripts/eval-retrieval.sh --work=$WORK"
     echo "(extract is cached; delete \$WORK/.done-ingest to retry just ingest)"
   }
-  echo "[retr] VOID: wiki unpopulated ($pages pages, $ingested ingested) — not scoring" >&2
+  echo "[retr] VOID: $pages pages, $committed/$needle_raws sources committed — not scoring" >&2
   exit 3
 fi
 
@@ -454,7 +474,7 @@ Questions: $QUESTIONS ($n_q)
 Wiki: built by create-llm-wiki.sh, loaded via /wiki-extract + /wiki-ingest
 Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
 Reads: $reads_summary
-Commitment: $ingested/$needle_raws needle raw sources carry an ingested_hash$([ "$ingested" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - ingested)); every citation into those bodies is unverifiable")
+Commitment: $committed/$needle_raws needle raw sources carry an ingested_hash$([ "$committed" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - committed)); every citation into those bodies is unverifiable")
 
 R1 needle retrieval:    $r1_pass/$r1_total
 R2 point-in-time:       $r2_pass/$r2_total

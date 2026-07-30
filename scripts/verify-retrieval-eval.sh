@@ -273,8 +273,8 @@ EVAL="$SCRIPT_DIR/eval-retrieval.sh"
 e7=0
 grep -q 'VOID (not a score)' "$EVAL" \
   || { fail "E7 eval has no VOID gate (an empty wiki would be scored)"; e7=1; }
-grep -q 'ingested" -eq 0' "$EVAL" \
-  || { fail "E7 VOID gate does not check that any raw source was actually ingested"; e7=1; }
+grep -q 'committed" -eq 0' "$EVAL" \
+  || { fail "E7 VOID gate does not check that any raw source was actually committed"; e7=1; }
 # Every nested invocation must pin stdin: the /dev/null is on the same line as
 # the redirect, within two lines of the call.
 sites=$(grep -c 'claude -p "' "$EVAL")
@@ -311,8 +311,46 @@ retr_grade_answer "$TMP/m4-pick.md" "$M4_EXPECTS" "" clarify \
 # (c) An inconclusive R5 precondition must not be scored as a failed check.
 grep -q 'r5_total=0' "$EVAL" \
   || { fail "E13 eval never zeroes r5_total — an unexercised R5 is counted as a loss"; e13=1; }
-grep -q 'Commitment: \$ingested' "$EVAL" \
+grep -q 'Commitment: \$committed' "$EVAL" \
   || { fail "E13 report lacks the ingest-commitment line (the real signal behind R5 inconclusives)"; e13=1; }
+
+# (d) The commitment sensor must not cry wolf. Replay its exact loop over a
+# fixture raw/ holding: a committed source, an UNcommitted one (the real
+# signal), scaffolding, filler, and a .csv whose hash lives on its .md sidecar.
+# Truth is 2/3 — the first run of this line printed "22/12", a numerator above
+# its own denominator, by counting all four wrong things.
+fx="$TMP/rawfx"; mkdir -p "$fx"
+printf -- '---\ningested_hash: "abc123def"\n---\nbody\n' > "$fx/committed.md"
+printf -- '---\ningested_hash: ""\n---\nbody\n'          > "$fx/uncommitted.md"
+printf -- '---\ningested_hash: "9f9f9f9f"\n---\nbody\n'  > "$fx/scale-billing-ops-notes.md"
+: > "$fx/.gitkeep"
+printf 'a,b\n1,2\n'                                       > "$fx/sales.csv"
+printf -- '---\ningested_hash: "cafe1234"\n---\nparsed\n' > "$fx/sales.csv.md"
+fx_committed=0; fx_total=0
+while IFS= read -r f; do
+  base=$(basename "$f")
+  case "$base" in .*|scale-*) continue ;; esac
+  case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac
+  fx_total=$((fx_total + 1))
+  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
+     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+    fx_committed=$((fx_committed + 1))
+  fi
+done < <(find "$fx" -type f | sort)
+[ "$fx_total" -eq 3 ] \
+  || { fail "E13 commitment denominator counts non-sources (got $fx_total, want 3: committed, uncommitted, sales.csv)"; e13=1; }
+[ "$fx_committed" -eq 2 ] \
+  || { fail "E13 commitment numerator wrong (got $fx_committed, want 2 — the .csv is committed via its .md sidecar)"; e13=1; }
+[ "$fx_committed" -le "$fx_total" ] \
+  || { fail "E13 numerator exceeds denominator — the original 22/12 bug"; e13=1; }
+# (e) The VOID gate must consume the counted loop, never a `grep -rlc` pipeline:
+# -l mixed with -c emits a line per file (non-matches included), so the gate
+# counted FILES and scored a run whose provenance layer was entirely missing.
+grep -q 'if \[ "\$pages" -le 1 \] || \[ "\$committed" -eq 0 \]' "$EVAL" \
+  || { fail "E13 VOID gate does not gate on \$committed"; e13=1; }
+# Code lines only — the comment above the fix names the banned form on purpose.
+grep -v '^[[:space:]]*#' "$EVAL" | grep -q 'grep -rlc' \
+  && { fail "E13 'grep -rlc' is back in code — it counts files, not commitments"; e13=1; }
 [ "$e13" -eq 0 ] && ok "E13 model caps excluded, count-and-refuse clarifications pass, unexercised R5 not a loss"
 
 echo
