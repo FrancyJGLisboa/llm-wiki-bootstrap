@@ -284,9 +284,40 @@ if [ "$pinned" -lt "$sites" ]; then
 fi
 [ "$e7" -eq 0 ] && ok "E7 eval voids an unpopulated wiki and pins nested-claude stdin ($sites sites)"
 
+# ── E13: the two misgradings a real 500-page run produced ────────────────────
+# Both were scored as capability failures when neither was one. Locked in here
+# because each cost a whole scored run: the first read as "quality collapses at
+# scale" (it was a model cap), the second as "clarify-on-ambiguity regressed"
+# (it was the best answer in the run, phrased in a shape the markers missed).
+e13=0
+
+# (a) A model-cap message is NO ANSWER — excluded, never graded FAIL.
+printf "You've reached your Fable 5 limit. Run /usage-credits to continue or switch models with /model.\n" > "$TMP/cap.md"
+retr_answer_broken "$TMP/cap.md" || { fail "E13 model-cap message not recognised as a non-answer"; e13=1; }
+printf 'You have reached your weekly limit. Upgrade to continue.\n' > "$TMP/cap2.md"
+retr_answer_broken "$TMP/cap2.md" || { fail "E13 alternate cap phrasing not recognised"; e13=1; }
+# A real answer that merely mentions a limit is NOT broken (no over-broadening).
+printf 'The retry budget is 7 attempts, the documented per-message limit.\n' > "$TMP/notcap.md"
+retr_answer_broken "$TMP/notcap.md" && { fail "E13 real answer mentioning a limit misread as broken"; e13=1; }
+
+# (b) Counting the readings and refusing the single pick IS a clarification.
+printf 'There are three retention periods, not one: production logs 180 days, sandbox logs 30 days, database backup 35 days.\n' > "$TMP/m4-count.md"
+retr_grade_answer "$TMP/m4-count.md" "$M4_EXPECTS" "" clarify \
+  || { fail "E13 count-and-refuse enumeration graded FAIL (the strongest M4 shape)"; e13=1; }
+# …and the confident single pick still fails, so (b) did not loosen the check.
+retr_grade_answer "$TMP/m4-pick.md" "$M4_EXPECTS" "" clarify \
+  && { fail "E13 broadened markers let a confident single pick through"; e13=1; }
+
+# (c) An inconclusive R5 precondition must not be scored as a failed check.
+grep -q 'r5_total=0' "$EVAL" \
+  || { fail "E13 eval never zeroes r5_total — an unexercised R5 is counted as a loss"; e13=1; }
+grep -q 'Commitment: \$ingested' "$EVAL" \
+  || { fail "E13 report lacks the ingest-commitment line (the real signal behind R5 inconclusives)"; e13=1; }
+[ "$e13" -eq 0 ] && ok "E13 model caps excluded, count-and-refuse clarifications pass, unexercised R5 not a loss"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E12 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free, multi-valued/supersession/clarify honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E13 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify honest.\n" "$GREEN" "$RESET"
 exit 0

@@ -234,6 +234,15 @@ RETR_REFUSAL_MARKERS="$RETR_REFUSAL_MARKERS"'|(figure|report|record|data) exists
 # which system: ...") is as good as asking — the markers accept both shapes.
 # Bounded quantifiers only (see the backtracking incident above).
 RETR_CLARIFY_MARKERS='do you mean|which .{0,40}\?|ambiguous|could (refer|mean)|more than one|multiple .{0,30}(polic|figure|period|retention|reading)|depends on (which|whether|what|the)|clarify|specify which|underspecified'
+# The strongest shape an answer can take on an underspecified question is to
+# COUNT the readings and refuse the single pick outright — "There are three
+# retention periods, not one" — which matched none of the markers above and so
+# graded FAIL on the best answer in the run. Broadening the acknowledgement
+# side stays safe for the same reason it does for refusals: the teeth are
+# elsewhere. `expects` still requires every candidate reading to be named, and
+# the H4 holdout still fails an answer that hedges when one reading is
+# overwhelmingly likely, so "clarify on everything" cannot pass by phrasing.
+RETR_CLARIFY_MARKERS="$RETR_CLARIFY_MARKERS"'|, not (just )?one|not one but|there are (two|three|four|five|[2-9]) |(two|three|four|[2-9]) (different |distinct |separate )?(retention |backup )?(polic|period|figure|window|answer)'
 
 # retr_parse_questions <questions_file> <out_tsv>
 # Emit: qid<TAB>question<TAB>modality<TAB>expects<TAB>cite_contains<TAB>max_span<TAB>forbids<TAB>refusal
@@ -300,6 +309,14 @@ retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
 # network blip becomes a bug report against the system. Observed — an ENOTFOUND
 # mid-run scored R5 as FAIL on a run where the drift logic was never invoked.
 RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded|session limit|usage limit|rate limit|quota exceeded|Please run /login|credit balance'
+# Model-cap phrasing is NOT stable across releases and every miss is expensive:
+# an unmatched cap message is graded as a wrong ANSWER, so a run that never
+# reached the model reads in the report as a capability collapse. Observed — a
+# 500-page scale run scored 0/21 on "You've reached your <Model> limit. Run
+# /usage-credits ...", which matched none of the markers above ("usage limit"
+# and "rate limit" are both absent from that string). Match the SHAPE (reached
+# a limit / the remedy the CLI offers), not one release's wording.
+RETR_BROKEN_MARKERS="$RETR_BROKEN_MARKERS"'|reached your .{0,40}limit|/usage-credits|switch models with|upgrade to continue'
 retr_answer_broken() {
   [ -f "$1" ] || return 0
   [ -s "$1" ] || return 0

@@ -225,6 +225,9 @@ echo "[retr] raw/: $extracted files, wiki/: $pages pages" >&2
 # Filler raws carry ingested_hash by construction — exclude them or a failed
 # needle ingest at scale would still clear the gate and score a void run.
 ingested=$(grep -rlc 'ingested_hash: "[0-9a-f]' "$WIKI/raw" 2>/dev/null | grep -vc '/scale-' || true)
+# Denominator for the Commitment line: needle raws only (filler carries hashes
+# by construction, so including it would dilute the rate to near-100%).
+needle_raws=$(find "$WIKI/raw" -type f 2>/dev/null | grep -vc '/scale-' || true)
 if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
   {
     echo "# retrieval eval — VOID (not a score)"
@@ -368,7 +371,16 @@ if [ "$HOLDOUT" -eq 0 ]; then
     LC_ALL=C sed -i '' 's/412 GB\/day/999 GB\/day/' "$target" 2>/dev/null \
       || LC_ALL=C sed -i 's/412 GB\/day/999 GB\/day/' "$target"
     if "$DRIFT_LINT" "$WIKI/raw" >/dev/null 2>&1; then
-      r5_note="inconclusive: drift lint did not fire on a mutated body"
+      # No drift detected on a body we just mutated means the precondition is
+      # missing, not that the answer was wrong: ingest never committed an
+      # `ingested_hash` for this source, so there is no commitment to drift
+      # FROM. Scoring that 0/1 blames the answer for a gap in ingest. Exclude
+      # it (like an API failure) and let the Commitment line below carry the
+      # real signal — observed at 100 filler pages, where capacity-report-q1
+      # came back with `ingested_hash: ""` while the same ingest at 0 filler
+      # committed it. That degradation is a scale finding worth seeing plainly.
+      r5_total=0
+      r5_note="inconclusive: no ingest commitment on the mutated source (ingested_hash empty) — drift undetectable, R5 not exercised"
     else
       answer="$WORK/R5.answer.md"
       if [ -s "$answer" ]; then
@@ -442,6 +454,7 @@ Questions: $QUESTIONS ($n_q)
 Wiki: built by create-llm-wiki.sh, loaded via /wiki-extract + /wiki-ingest
 Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
 Reads: $reads_summary
+Commitment: $ingested/$needle_raws needle raw sources carry an ingested_hash$([ "$ingested" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - ingested)); every citation into those bodies is unverifiable")
 
 R1 needle retrieval:    $r1_pass/$r1_total
 R2 point-in-time:       $r2_pass/$r2_total

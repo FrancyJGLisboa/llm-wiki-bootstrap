@@ -95,7 +95,12 @@ for label in $CHECKS; do
   lp="${large_v%%/*}"; lt="${large_v##*/}"
   if [ -n "$st" ] && [ "$st" != "0" ] && [ "$sp" = "$st" ]; then
     if [ -z "$lt" ] || [ "$lt" = "0" ] || [ "$lp" != "$lt" ]; then
-      g1=FAIL; g1_note="$g1_note $label:$small_v→${large_v:-absent}"
+      # Brace EVERY expansion touching the arrow: `$small_v→` makes bash read
+      # the multibyte arrow's bytes as part of the variable NAME, so under
+      # `set -u` the gate section died with "small_v<mojibake>: unbound
+      # variable" after a completed 3-size run — the measurement was done and
+      # the report crashed on the way out.
+      g1=FAIL; g1_note="${g1_note} ${label}:${small_v}→${large_v:-absent}"
     fi
   fi
   IFS='|'

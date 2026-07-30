@@ -83,9 +83,45 @@ echo "F6: harness flags — --scale validated, advertised in usage"
 if "$EVAL" --scale=abc >/dev/null 2>&1; then fail "--scale=abc accepted"; else ok "--scale=abc rejected"; fi
 ("$EVAL" --bogus 2>&1 || true) | grep -q -- '--scale=N' && ok "usage names --scale" || fail "usage does not name --scale"
 
+echo "F7: gate section survives a parity FAIL (the crash that ate a finished 3-size run)"
+# eval-scale.sh skips any size whose report is already cached, so fixture
+# reports exercise the curve + gate logic with zero LLM spend. The regression:
+# `$small_v→` had bash reading the arrow's bytes as part of the variable name,
+# so `set -u` killed the report AFTER the measurement completed.
+SCALE_EVAL="$SCRIPT_DIR/eval-scale.sh"
+mkfix() {  # $1=file $2=pages $3=R4 pass $4=score
+  cat > "$1" <<EOF
+Loaded: 12 raw files, $2 wiki pages
+Reads: median=3 max=4 (wiki+raw file reads per answer)
+R1 needle retrieval:    3/3
+R2 point-in-time:       4/4
+R3 refusal on absence:  1/1
+R4 citation locus:      $3/9
+R5 stale evidence:      1/1   (answer flagged the drifted source)
+M1 multi-valued answer: 1/1
+M2 supersession:        1/1   (typed edge in KG and answer named the successor)
+M4 clarify-on-ambig:    1/1
+retrieval score: $4
+EOF
+}
+mkdir -p "$tmp/sc"
+mkfix "$tmp/sc/s0.report.md"   19  9 "21/21"
+mkfix "$tmp/sc/s480.report.md" 495 4 "16/21"   # R4 regresses → G1 must FAIL, not crash
+gate_out=$("$SCALE_EVAL" --work="$tmp/sc" --sizes="0 480" 2>&1); gate_rc=$?
+[ "$gate_rc" -eq 0 ] && ok "gate section exits 0 on a parity failure" \
+  || fail "gate section crashed (rc=$gate_rc): $(printf '%s' "$gate_out" | tail -2)"
+printf '%s\n' "$gate_out" | grep -q '^G1 scale-parity.*FAIL' \
+  && ok "G1 reports FAIL when a green check regresses at the largest size" \
+  || fail "G1 did not flag the regression: $gate_out"
+printf '%s\n' "$gate_out" | grep -q 'R4 citation locus:9/9→4/9' \
+  && ok "G1 names the regressed check and both values" \
+  || fail "G1 note missing the check/values: $(printf '%s' "$gate_out" | grep '^G1')"
+printf '%s\n' "$gate_out" | grep -q '| 480 | 495 | 16/21 |' \
+  && ok "curve table populated from cached reports" || fail "curve table wrong: $gate_out"
+
 echo ""
 if [ "$fails" -eq 0 ]; then
-  echo "verify-scale-eval: F1–F6 all green — the scale eval's oracle holds."
+  echo "verify-scale-eval: F1–F7 all green — the scale eval's oracle holds."
   exit 0
 fi
 echo "verify-scale-eval: $fails failure(s)" >&2
