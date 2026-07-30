@@ -9,7 +9,7 @@
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
 #
-# Loss function — 8 binary checks (approved):
+# Loss function — 9 binary checks (approved):
 #   R1  needle retrieval    per modality (csv / email / report), planted past
 #                           each extractor's truncation boundary
 #   R2  point-in-time       as-of and current answers, both correct in ONE run
@@ -276,6 +276,7 @@ r4_pass=0; r4_total=0
 m1_pass=0; m1_total=0
 m4_pass=0; m4_total=0
 m2_answer=MISSING
+m5_answer=MISSING
 inconclusive=0
 
 while IFS=$'\t' read -r qid question modality expects cite span forbids refusal; do
@@ -318,7 +319,10 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
 
   # M2 is scored after the loop (its verdict is ANDed with a structural check),
   # so stash the answer verdict — including INCONC — instead of bucketing it.
-  case "$qid" in M2-*) m2_answer="$a_verdict" ;; esac
+  case "$qid" in
+    M2-*) m2_answer="$a_verdict" ;;
+    M5-*) m5_answer="$a_verdict" ;;
+  esac
 
   c_verdict=n/a
   if [ -n "$cite" ] && [ "$a_verdict" != INCONC ]; then
@@ -462,9 +466,47 @@ if [ "$HOLDOUT" -eq 0 ]; then
   fi
 fi
 
+# ── M5: the feedback loop must exist as data, not only as narration ───────────
+#
+# Same two-leg shape as M2, for the same reason. A correct walk of the cycle
+# proves the model can compose three separately-dated causal claims; it does
+# NOT prove the cycle exists as machine-readable structure. Only a closed cycle
+# in the materialised graph does — and closing it requires ingest to have typed
+# every leg with a canonical causal verb, which is exactly what the "let loops
+# close" instruction asks for. Each failing leg is named in the note.
+m5_pass=0; m5_total=0; m5_note="skipped (holdout run)"
+if [ "$HOLDOUT" -eq 0 ]; then
+  if [ "$m5_answer" = INCONC ]; then
+    m5_note="inconclusive: no answer reached us (API/network)"
+  elif [ "$m5_answer" = MISSING ]; then
+    m5_total=1
+    m5_note="M5-loop question never ran (removed from the questions file?)"
+  else
+    m5_total=1
+    loops_out="$WORK/loops.txt"
+    python3 "$SCRIPT_DIR/wiki-to-kg.py" "$WIKI/wiki/" 2>/dev/null \
+      | python3 "$SCRIPT_DIR/wiki-loops.py" >"$loops_out" 2>/dev/null || : >"$loops_out"
+    # Require a REINFORCING cycle touching at least two of the three topics.
+    # Slug-agnostic on purpose: the librarian names its own pages, so pinning
+    # exact slugs would fail the check for a correct wiki.
+    topics=$(grep '^reinforcing:' "$loops_out" 2>/dev/null \
+      | grep -oiE 'queue|backlog|pag(er|ing)|mut(e|ed|ing)|silenc' | sort -u | wc -l | tr -d ' ')
+    if [ "${topics:-0}" -ge 2 ]; then m5_struct=1; else m5_struct=0; fi
+    if [ "$m5_struct" -eq 1 ] && [ "$m5_answer" = PASS ]; then
+      m5_pass=1; m5_note="reinforcing cycle closed in the graph and the answer walked it"
+    elif [ "$m5_struct" -eq 0 ] && [ "$m5_answer" = PASS ]; then
+      m5_note="answer walked the cycle but the graph has NO closed loop — the feedback lives only in the model's reasoning, not in the wiki"
+    elif [ "$m5_struct" -eq 1 ]; then
+      m5_note="cycle exists in the graph but the answer failed to walk it"
+    else
+      m5_note="no closed cycle in the graph and the answer failed"
+    fi
+  fi
+fi
+
 # ── Report ────────────────────────────────────────────────────────────────────
-total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass))
-total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total))
+total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass + m5_pass))
+total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total + m5_total))
 
 cat <<EOF
 # retrieval eval report$([ "$HOLDOUT" -eq 1 ] && echo " — HELDOUT")
@@ -484,6 +526,7 @@ R5 stale evidence:      $r5_pass/$r5_total   ($r5_note)
 M1 multi-valued answer: $m1_pass/$m1_total
 M2 supersession:        $m2_pass/$m2_total   ($m2_note)
 M4 clarify-on-ambig:    $m4_pass/$m4_total
+M5 feedback loop:       $m5_pass/$m5_total   ($m5_note)
 
 retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 

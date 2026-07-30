@@ -324,4 +324,55 @@ ticket against cold archive.
 This policy covers database backups only. It does not cover application logs.
 BAK
 
-echo "corpus written to $TARGET (10 sources)" >&2
+# ── 7. M5: a feedback loop that exists ONLY as composition ────────────────────
+#
+# Three sources, three legs of one cycle, each stating its own leg with an
+# explicit causal verb — and NONE naming the cycle. No source contains "loop",
+# "cycle", "feedback", "reinforcing", "spiral", or "vicious" (blocklist enforced
+# by verify-retrieval-eval.sh E14), so the loop cannot be lifted from any single
+# body: it only exists once ingest types all three legs and the graph closes.
+# Same design as T2/M2 — strip the word the model could otherwise pattern-match,
+# and what remains measures composition instead of recall.
+cat > "$TARGET/alerting-queue-depth-note.md" <<'AQ'
+# Alerting Note — Queue Depth
+
+Published: 2026-03-05
+
+Growth in ingest queue depth causes a rise in pager volume: each backlog
+threshold crossed fires its own page, so a queue that keeps growing drives the
+number of pages up with it.
+
+## Thresholds
+
+Pages fire at 5,000, 20,000, and 50,000 queued entries.
+AQ
+
+cat > "$TARGET/oncall-rotation-note.md" <<'OC'
+# On-Call Rotation Note
+
+Published: 2026-03-19
+
+Sustained pager volume causes the on-call rotation to mute the noisiest alert
+rules: when paged repeatedly for the same backlog, engineers silence the rule
+rather than the cause.
+
+## Practice
+
+Muting is applied per rule for the remainder of the shift and is not logged.
+OC
+
+cat > "$TARGET/incident-review-backlog.md" <<'IR'
+# Incident Review — Unattended Backlog
+
+Published: 2026-04-02
+
+Muted alert rules cause further growth in ingest queue depth: with the rule
+silenced, nobody sheds load, so the backlog that triggered the muting keeps
+climbing unattended.
+
+## Finding
+
+The longest unattended backlog in the review period ran for 31 hours.
+IR
+
+echo "corpus written to $TARGET (13 sources)" >&2

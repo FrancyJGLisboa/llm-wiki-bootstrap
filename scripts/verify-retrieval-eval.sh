@@ -36,6 +36,13 @@
 #                              prose) and M2 is gated on a KG edge, not answer
 #   E12 clarify honest       : M4 accepts ask-or-enumerate, fails a confident
 #                              pick; the anti-reflex control is held out (H4)
+#   E13 caps + misgradings   : a model-cap message is no-answer (not a wrong
+#                              answer), count-and-refuse is a clarification, an
+#                              unexercised R5 is not a loss, and the VOID gate
+#                              counts commitments rather than files
+#   E14 loop corpus honest   : M5's three legs are separately dated and never
+#                              name the cycle, so a closed loop can only come
+#                              from composition; graded on a graph cycle
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -353,9 +360,54 @@ grep -v '^[[:space:]]*#' "$EVAL" | grep -q 'grep -rlc' \
   && { fail "E13 'grep -rlc' is back in code — it counts files, not commitments"; e13=1; }
 [ "$e13" -eq 0 ] && ok "E13 model caps excluded, count-and-refuse clarifications pass, unexercised R5 not a loss"
 
+# ── E14: M5's loop corpus states the legs and never the loop ─────────────────
+e14=0
+m5_files="$A/alerting-queue-depth-note.md $A/oncall-rotation-note.md $A/incident-review-backlog.md"
+for f in $m5_files; do
+  [ -f "$f" ] || { fail "E14 M5 source missing: $(basename "$f")"; e14=1; }
+done
+if [ "$e14" -eq 0 ]; then
+  # The cycle must be unliftable from any single body: no loop vocabulary at all.
+  if grep -qiE 'loop|cycle|feedback|reinforc|spiral|vicious|self-sustain' $m5_files; then
+    fail "E14 M5 corpus names the cycle — the answer could be lifted from one source"; e14=1
+  fi
+  # Each source must state exactly one leg with an explicit causal verb, so the
+  # check measures whether ingest TYPES narrated causation (not whether it can
+  # infer causation from nothing).
+  for pair in "alerting-queue-depth-note.md:causes a rise in pager volume" \
+              "oncall-rotation-note.md:causes the on-call rotation to mute" \
+              "incident-review-backlog.md:cause further growth in ingest queue depth"; do
+    f="$A/${pair%%:*}"; needle="${pair#*:}"
+    grep -qF "$needle" "$f" || { fail "E14 $(basename "$f") lost its causal leg ('$needle')"; e14=1; }
+  done
+  # Three distinct vintages: the legs are separately dated, so composing them
+  # is cross-source work, not one document's narrative.
+  n_dates=$(grep -h '^Published:' $m5_files | sort -u | wc -l | tr -d ' ')
+  [ "$n_dates" -eq 3 ] || { fail "E14 M5 legs are not three distinct vintages (got $n_dates)"; e14=1; }
+  # The eval must gate M5 on a REINFORCING cycle in the materialised graph.
+  grep -q 'wiki-loops.py' "$EVAL" \
+    || { fail "E14 eval never materialises loops — M5's structural leg is missing"; e14=1; }
+  grep -q "grep '\^reinforcing:'" "$EVAL" \
+    || { fail "E14 eval does not require a reinforcing cycle for M5"; e14=1; }
+  # Grading: a correct walk passes; denying the loop fails on the forbids.
+  M5_EXPECTS="pager, mut, queue"
+  M5_FORBIDS='no (such )?(feedback|self-reinforcing|reinforcing) (loop|cycle|dynamic)'
+  printf 'Queue depth growth raises pager volume; sustained paging leads the on-call to mute the noisiest rules; muted rules let the queue grow further.\n' > "$TMP/m5-walk.md"
+  retr_grade_answer "$TMP/m5-walk.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    || { fail "E14 a correct cycle walk graded FAIL"; e14=1; }
+  printf 'There is no self-reinforcing loop between queue depth and paging in this wiki.\n' > "$TMP/m5-deny.md"
+  retr_grade_answer "$TMP/m5-deny.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    && { fail "E14 denying the loop graded PASS"; e14=1; }
+  # A partial walk (one leg only) must not pass — every node is required.
+  printf 'Growing queue depth raises pager volume.\n' > "$TMP/m5-partial.md"
+  retr_grade_answer "$TMP/m5-partial.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    && { fail "E14 a one-leg partial walk graded PASS"; e14=1; }
+fi
+[ "$e14" -eq 0 ] && ok "E14 M5 loop corpus states legs not loops, three vintages, graded on a closed cycle"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E13 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E14 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
 exit 0
