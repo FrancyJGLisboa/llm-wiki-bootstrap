@@ -84,6 +84,22 @@ if [ -z "$WORK" ]; then
 else
   mkdir -p "$WORK"
 fi
+WORK="$(cd "$WORK" && pwd)"
+
+# The work dir MUST live outside the wiki root. The agent under test can list
+# and read anything beneath the wiki, and the work dir is named after the
+# questions: A1-2021-march-madness.answer.md hands over both the question id and
+# its answer text. Observed on a real control run — an empty wiki "answered"
+# A1-2021-march-madness because it had listed .work/ and the phrase came back in
+# its own commentary, scoring a PASS that had nothing to do with retrieval. The
+# agent happened to flag the temptation rather than exploit it; the grader
+# cannot rely on that.
+case "$WORK/" in
+  "$WIKI"/*)
+    echo "error: --work must be OUTSIDE the wiki root ($WIKI)" >&2
+    echo "       the agent can read it, and the filenames leak question ids." >&2
+    exit 2 ;;
+esac
 
 # cite_file_matches <answer_file> <ere> — 0 if some citation's raw FILENAME
 # matches. Answers cite `raw/<name>[#anchor]`; strip dir and anchor, then test.

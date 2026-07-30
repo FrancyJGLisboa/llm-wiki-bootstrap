@@ -269,6 +269,28 @@ else
   cat "$COUT" >&2
 fi
 
+# ── V7 the work dir must live outside the wiki root ───────────────────────────
+# The agent under test can list anything beneath the wiki, and work-dir files
+# are named after the questions (A1-<slug>.answer.md), so a work dir inside the
+# wiki hands over both the question ids and every answer already collected.
+# Observed for real: an EMPTY wiki scored PASS on A1-2021-march-madness because
+# it had listed .work/ and echoed the phrase back. It flagged the temptation
+# instead of exploiting it; a grader cannot depend on that restraint.
+INSIDE="$W/.work-inside"
+mkdir -p "$INSIDE"
+if bash "$EVAL" --wiki "$W" --questions "$Q" --work "$INSIDE" --label leak >/dev/null 2>&1; then
+  bad "V7 a work dir INSIDE the wiki root was accepted (question ids leak to the agent)"
+else
+  ok "V7 a work dir inside the wiki root is refused"
+fi
+OUTSIDE="$TMP/work-outside"; mkdir -p "$OUTSIDE"
+cp "$WORK"/*.answer.md "$OUTSIDE"/ 2>/dev/null
+if bash "$EVAL" --wiki "$W" --questions "$Q" --work "$OUTSIDE" --label ok >/dev/null 2>&1; then
+  ok "V7b a work dir outside the wiki root is accepted"
+else
+  bad "V7b a legitimate outside work dir was refused"
+fi
+
 # ── V6 commit-source writes ONLY the three permitted fields ───────────────────
 # This is the one script here that writes to raw/, which AGENTS.md hard rule 1
 # otherwise forbids entirely. If it can touch anything else, the raw layer stops
