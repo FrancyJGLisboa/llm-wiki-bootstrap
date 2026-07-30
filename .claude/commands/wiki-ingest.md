@@ -164,7 +164,15 @@ Read `wiki/index.md`. Add new pages to the appropriate section. Remove links to 
 
 ### Step 7 — Append to the changelog
 
-Append (newest at top) to `log.md`:
+**First, record the integrity numbers — by running the script, not by writing them from memory:**
+
+```bash
+bash scripts/wiki-metrics.sh ingest
+```
+
+That appends one machine-readable line to `log.md` (`committed=N/M`, pages, sources) which `scripts/wiki-flows.sh` later trends per month. **Read its output.** If `committed` is below `N/N`, you skipped the frontmatter commitment on some source in Step 6 — go back and finish it, because every citation into an uncommitted body is unverifiable and the drift lint is blind to it. Never hand-write this line: a number the model recalled is an assertion, not a measurement.
+
+Then append your prose entry (newest at top) to `log.md`:
 
 ```markdown
 ## YYYY-MM-DD HH:MM — /wiki-ingest

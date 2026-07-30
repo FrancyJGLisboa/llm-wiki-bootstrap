@@ -29,6 +29,56 @@ if [ -f "$ROOT/log.md" ]; then
   echo ""
   echo "total logged operations: ${total:-0}"
   [ "${total:-0}" -eq 0 ] && echo "note: log.md has no dated entries — either a fresh wiki or the log discipline lapsed."
+
+  # ── integrity trend, from the records scripts/wiki-metrics.sh appends ────────
+  #
+  # Rates PER MONTH, oldest first — the point is the shape, not the latest
+  # value. A single current number cannot answer "has this wiki degraded since
+  # March?", which is the only question a monitoring surface owes you.
+  # Unknown counts (`cites=?/7`, written when no resolver was available) are
+  # excluded from the rate rather than counted as zero: a fabricated defect is
+  # worse than a gap.
+  echo ""
+  echo "== integrity trend (per month, oldest first) =="
+  if grep -q '^- metrics: ' "$ROOT/log.md"; then
+    grep '^- metrics: ' "$ROOT/log.md" | awk '
+      {
+        month = ""; op = ""; com_ok = com_tot = cit_ok = cit_tot = -1
+        for (i = 1; i <= NF; i++) {
+          if ($i ~ /^date=/)      { d = substr($i, 6); month = substr(d, 1, 7) }
+          else if ($i ~ /^op=/)   { op = substr($i, 4) }
+          else if ($i ~ /^committed=/) { split(substr($i, 11), a, "/"); com_ok = a[1]; com_tot = a[2] }
+          else if ($i ~ /^cites=/)     { split(substr($i, 7), b, "/"); cit_ok = b[1]; cit_tot = b[2] }
+        }
+        if (month == "") next
+        ops[month]++
+        if (com_tot > 0) { c_ok[month] += com_ok; c_tot[month] += com_tot }
+        if (cit_tot > 0 && cit_ok != "?") { q_ok[month] += cit_ok; q_tot[month] += cit_tot }
+        else if (cit_tot > 0) { q_unknown[month] += cit_tot }
+        seen[month] = 1
+      }
+      END {
+        n = 0
+        for (m in seen) months[++n] = m
+        for (i = 1; i < n; i++) for (j = i + 1; j <= n; j++)
+          if (months[i] > months[j]) { t = months[i]; months[i] = months[j]; months[j] = t }
+        for (i = 1; i <= n; i++) {
+          m = months[i]
+          line = m ": " ops[m] " op(s)"
+          if (c_tot[m] > 0) line = line sprintf("  commitment %d/%d (%.0f%%)", c_ok[m], c_tot[m], 100 * c_ok[m] / c_tot[m])
+          if (q_tot[m] > 0) line = line sprintf("  citations %d/%d (%.0f%%)", q_ok[m], q_tot[m], 100 * q_ok[m] / q_tot[m])
+          if (q_unknown[m] > 0) line = line sprintf("  [%d citation(s) unchecked]", q_unknown[m])
+          print line
+          if (c_tot[m] > 0) { rate = 100 * c_ok[m] / c_tot[m]; if (prev_c != "" && rate < prev_c) degraded = degraded " commitment(" m ")" ; prev_c = rate }
+          if (q_tot[m] > 0) { rate = 100 * q_ok[m] / q_tot[m]; if (prev_q != "" && rate < prev_q) degraded = degraded " citations(" m ")" ; prev_q = rate }
+        }
+        if (degraded != "") print "\nDEGRADED vs the preceding month:" degraded
+      }'
+  else
+    echo "no metrics records yet — /wiki-ingest and /wiki-query append them via"
+    echo "scripts/wiki-metrics.sh; without those lines this stays a page count,"
+    echo "not a trend."
+  fi
 else
   echo "log.md missing — the flow record does not exist."
 fi

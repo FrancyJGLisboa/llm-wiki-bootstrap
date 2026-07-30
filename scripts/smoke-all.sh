@@ -29,7 +29,12 @@ else
 fi
 
 section() { printf "\n%s== %s ==%s\n" "$DIM" "$1" "$RESET"; }
-ok()   { printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
+# passes is counted, not narrated. The summary used to print a hardcoded "All 31
+# checks green" — so adding two checks left it still claiming 31, and REMOVING a
+# check would have left it claiming 31 too. A suite that reports a literal
+# instead of its own tally can lose coverage without the number ever moving.
+passes=0
+ok()   { passes=$((passes + 1)); printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
 fail() { printf "%s✗%s %s\n" "$RED"   "$RESET" "$1"; }
 
 failures=0
@@ -278,6 +283,26 @@ else
   record_fail "R23 verify-retrieval-eval.sh exits non-zero (retrieval-eval instrument regression)"
 fi
 
+# R23b — the passive-record monitoring path. Integrity numbers logged on every
+# REAL operation are what let wiki-flows.sh trend commitment and citation
+# resolution; an unverified recorder would silently log a plausible fiction, and
+# a fabricated trend is worse than no trend. Also asserts the recorder never
+# writes raw/ and never rewrites prior log.md bytes.
+if "$SCRIPT_DIR/verify-metrics.sh" >/dev/null 2>&1; then
+  ok "R23b verify-metrics.sh exits 0 (records measured, append-only, trendable)"
+else
+  record_fail "R23b verify-metrics.sh exits non-zero (monitoring recorder regression)"
+fi
+
+# R23c — the feedback-loop lens. Polarity is the whole value (an odd number of
+# `prevents` legs flips a loop's sign), and it must survive renaming/reordering
+# and report an uncited edge instead of laundering it into fact.
+if "$SCRIPT_DIR/verify-loops.sh" >/dev/null 2>&1; then
+  ok "R23c verify-loops.sh exits 0 (loop detection, polarity, provenance, flows)"
+else
+  record_fail "R23c verify-loops.sh exits non-zero (systems-lens regression)"
+fi
+
 # R24 — the valid-time contract. `fetched_at` alone is transaction time; without
 # `asserted_at` an as-of question has nothing structured to resolve against, and
 # the eval's as-of leg passes only while the corpus states its vintage in prose.
@@ -320,7 +345,11 @@ section "Advisory (does not fail the build)"
 # ──── SUMMARY ────
 section "Summary"
 if [ "$failures" -eq 0 ]; then
-  printf "%sAll 31 checks green.%s\n" "$GREEN" "$RESET"
+  if [ "$BUILD" = 1 ]; then
+    printf "%sAll %d checks green here, plus the build phase's own checks above.%s\n" "$GREEN" "$passes" "$RESET"
+  else
+    printf "%sAll %d checks green (--no-build: the LLM build phase and its checks did not run).%s\n" "$GREEN" "$passes" "$RESET"
+  fi
   exit 0
 fi
 printf "%s%d check(s) failed.%s See diagnostics above.\n" "$RED" "$failures" "$RESET"
