@@ -294,6 +294,16 @@ else
   record_fail "R23b verify-metrics.sh exits non-zero (monitoring recorder regression)"
 fi
 
+# R23d — the published page makes claims to strangers. It was the one artifact
+# here with nothing verifying it, and it rotted within hours of publication
+# (advertising 31 smoke checks while the CI configuration ran 26). Structural
+# numbers are recomputed from the repo; scores must carry a date.
+if "$SCRIPT_DIR/verify-site-claims.sh" >/dev/null 2>&1; then
+  ok "R23d verify-site-claims.sh exits 0 (site/index.html's numbers still true)"
+else
+  record_fail "R23d verify-site-claims.sh exits non-zero (the published page states a stale number)"
+fi
+
 # R23c — the feedback-loop lens. Polarity is the whole value (an odd number of
 # `prevents` legs flips a loop's sign), and it must survive renaming/reordering
 # and report an uncited edge instead of laundering it into fact.
