@@ -234,6 +234,18 @@ RETR_REFUSAL_MARKERS="$RETR_REFUSAL_MARKERS"'|(figure|report|record|data) exists
 # which system: ...") is as good as asking — the markers accept both shapes.
 # Bounded quantifiers only (see the backtracking incident above).
 RETR_CLARIFY_MARKERS='do you mean|which .{0,40}\?|ambiguous|could (refer|mean)|more than one|multiple .{0,30}(polic|figure|period|retention|reading)|depends on (which|whether|what|the)|clarify|specify which|underspecified'
+# The strongest shape an answer can take on an underspecified question is to
+# COUNT the readings and refuse the single pick outright — "There are three
+# retention periods, not one" — which matched none of the markers above and so
+# graded FAIL on the best answer in the run. Broadening the acknowledgement
+# side stays safe for the same reason it does for refusals: the teeth are
+# elsewhere. `expects` still requires every candidate reading to be named, and
+# the H4 holdout still fails an answer that hedges when one reading is
+# overwhelmingly likely, so "clarify on everything" cannot pass by phrasing.
+RETR_CLARIFY_MARKERS="$RETR_CLARIFY_MARKERS"'|, not (just )?one|not one but|there are (two|three|four|five|[2-9]) |(two|three|four|[2-9]) (different |distinct |separate )?(retention |backup )?(polic|period|figure|window|answer)'
+# Hyphenation is a style choice, not a semantic one: "under-specified" and
+# "underspecified" mean the same thing and one of them graded FAIL.
+RETR_CLARIFY_MARKERS="$RETR_CLARIFY_MARKERS"'|under.?specified|no single|not a single (retention|figure|value|answer)|which (one|of these)'
 
 # retr_parse_questions <questions_file> <out_tsv>
 # Emit: qid<TAB>question<TAB>modality<TAB>expects<TAB>cite_contains<TAB>max_span<TAB>forbids<TAB>refusal
@@ -299,15 +311,50 @@ retr_field() { [ "$1" = "-" ] && echo "" || echo "$1"; }
 # indistinguishable in the report from a real capability gap, and that is how a
 # network blip becomes a bug report against the system. Observed — an ENOTFOUND
 # mid-run scored R5 as FAIL on a run where the drift logic was never invoked.
-RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|ENOTFOUND|ECONNRESET|^error: |Overloaded|session limit|usage limit|rate limit|quota exceeded|Please run /login|credit balance'
+RETR_BROKEN_MARKERS='^API Error|Unable to connect to API|^error: |Overloaded|session limit|usage limit|rate limit|quota exceeded|Please run /login|credit balance'
+# Uppercase transport codes live in their OWN list, matched case-SENSITIVELY and
+# word-bounded. Case-insensitive substring matching on `ENOTFOUND` classified a
+# complete, correct answer as "no answer reached us" because the answer
+# mentioned `ModuleNotFoundError` — which contains the letters e-n-o-t-f-o-u-n-d.
+# An error CODE is a token, not a phrase; never fold its case into prose.
+RETR_BROKEN_CODES='ENOTFOUND|ECONNRESET|ECONNREFUSED|ETIMEDOUT|EAI_AGAIN'
+# Model-cap phrasing is NOT stable across releases and every miss is expensive:
+# an unmatched cap message is graded as a wrong ANSWER, so a run that never
+# reached the model reads in the report as a capability collapse. Observed — a
+# 500-page scale run scored 0/21 on "You've reached your <Model> limit. Run
+# /usage-credits ...", which matched none of the markers above ("usage limit"
+# and "rate limit" are both absent from that string). Match the SHAPE (reached
+# a limit / the remedy the CLI offers), not one release's wording.
+RETR_BROKEN_MARKERS="$RETR_BROKEN_MARKERS"'|reached your .{0,40}limit|/usage-credits|switch models with|upgrade to continue'
 retr_answer_broken() {
   [ -f "$1" ] || return 0
   [ -s "$1" ] || return 0
   grep -qiE "$RETR_BROKEN_MARKERS" "$1" && return 0
+  grep -qE "(^|[^A-Za-z])($RETR_BROKEN_CODES)([^A-Za-z]|$)" "$1" && return 0
   return 1
 }
 
+
+# retr_grade_answer normalises markdown emphasis before ANY matching, then
+# delegates. Emphasis is the single most common reason a correct answer grades
+# FAIL: the model writes "the wiki holds **three** retention windows" and every
+# prose marker looking for `three retention window` misses, because the literal
+# bytes are `three** retention`. Same trap for an expects token — `**7**
+# attempts` does not contain `7 attempts`. Answers are prose written for humans;
+# the grader has to read them as prose. Headline-anchored forbids-patterns keep
+# working (they allow leading punctuation), and stripping emphasis only makes
+# their anchors more reliable.
 retr_grade_answer() {
+  local answer="$1" norm rc
+  [ -f "$answer" ] || return 1
+  norm=$(mktemp) || return 1
+  sed 's/[*_`]//g' "$answer" > "$norm" 2>/dev/null || cp "$answer" "$norm"
+  retr_grade_answer_raw "$norm" "$2" "$3" "$4"; rc=$?
+  rm -f "$norm"
+  return "$rc"
+}
+
+retr_grade_answer_raw() {
   local answer="$1" expects="$2" forbids="$3" refusal="$4" token OLD_IFS
   [ -f "$answer" ] || return 1
 
@@ -338,11 +385,46 @@ retr_grade_answer() {
 
 # retr_citations <answer_file>
 # Print every `raw/<file>[#anchor]` target cited in the answer, one per line.
+#
+# Match each `source: raw/<target>` on its own rather than the enclosing
+# parenthetical: models legitimately pack two receipts into one paren —
+# `(source: raw/a.md#L26, source: raw/a.md#L22)` — and grabbing everything up
+# to the closing `)` yielded ONE target with a comma and a second "source:"
+# inside it, which resolves to nothing. That fabricated two citation failures
+# out of correct answers on M6's first run.
 retr_citations() {
-  grep -oE '\(source:[[:space:]]*raw/[^)]+\)' "$1" 2>/dev/null \
-    | sed -e 's/^(source:[[:space:]]*//' -e 's/)$//' \
-    | sed -e 's/[[:space:]]*$//' \
+  grep -oE 'source:[[:space:]]*raw/[^),;[:space:]]+' "$1" 2>/dev/null \
+    | sed -e 's/^source:[[:space:]]*//' -e 's/[[:space:]]*$//' \
     | sort -u
+}
+
+# retr_cite_integrity <answer_file> <raw_dir> <cite_span_py>
+# 0 = every citation in the answer resolves to a real file and, where it carries
+# an anchor, a real anchor. Sets RETR_CITE_TOTAL / RETR_CITE_BAD / RETR_CITE_BAD_LIST.
+#
+# R4 asks "is there ONE good citation?" — this asks "is any citation a lie?".
+# They are different failures and the second is the worse one: an unresolvable
+# target is a hallucinated receipt, and a receipt that cannot be checked is more
+# corrosive than a missing one, because it *looks* verifiable. Observed — an
+# answer cited `field-report.md#instrumentation-debt`, an anchor that does not
+# exist in that file, while passing every other check on the question.
+#
+# Answers with no citations set RETR_CITE_TOTAL=0 and return 0: "cite nothing"
+# must not be a way to pass this, and it isn't a way to pass R4 either, which is
+# what actually forces a citation to exist.
+retr_cite_integrity() {
+  local answer="$1" raw_dir="$2" py="$3" target
+  RETR_CITE_TOTAL=0; RETR_CITE_BAD=0; RETR_CITE_BAD_LIST=""
+  [ -f "$answer" ] || return 0
+  while IFS= read -r target; do
+    [ -z "$target" ] && continue
+    RETR_CITE_TOTAL=$((RETR_CITE_TOTAL + 1))
+    if ! python3 "$py" "$raw_dir" "$target" >/dev/null 2>&1; then
+      RETR_CITE_BAD=$((RETR_CITE_BAD + 1))
+      RETR_CITE_BAD_LIST="$RETR_CITE_BAD_LIST $target"
+    fi
+  done < <(retr_citations "$answer")
+  [ "$RETR_CITE_BAD" -eq 0 ]
 }
 
 # retr_grade_citation <answer_file> <raw_dir> <cite_contains> <max_span> <cite_span_py>

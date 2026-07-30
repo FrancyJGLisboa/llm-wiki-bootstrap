@@ -9,7 +9,7 @@
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
 #
-# Loss function — 8 binary checks (approved):
+# Loss function — 10 binary checks (approved):
 #   R1  needle retrieval    per modality (csv / email / report), planted past
 #                           each extractor's truncation boundary
 #   R2  point-in-time       as-of and current answers, both correct in ONE run
@@ -62,15 +62,21 @@ DRY_RUN=0
 HOLDOUT=0
 GEN_MODE=main
 WORK=
+SCALE=0
 for arg in "$@"; do
   case "$arg" in
     --dry-run) DRY_RUN=1 ;;
     --holdout) HOLDOUT=1; GEN_MODE=--holdout
                QUESTIONS="$REPO_ROOT/tests/eval/retrieval-questions-holdout.md" ;;
     --work=*)  WORK="${arg#--work=}" ;;
-    *) echo "usage: eval-retrieval.sh [--dry-run] [--holdout] [--work=DIR]" >&2; exit 2 ;;
+    --scale=*) SCALE="${arg#--scale=}"
+               case "$SCALE" in ''|*[!0-9]*)
+                 echo "error: --scale needs an integer" >&2; exit 2 ;; esac ;;
+    *) echo "usage: eval-retrieval.sh [--dry-run] [--holdout] [--work=DIR] [--scale=N]" >&2; exit 2 ;;
   esac
 done
+FILLER_GEN="$REPO_ROOT/tests/eval/retrieval-corpus/gen-scale-filler.sh"
+QUERY_TRACE="$SCRIPT_DIR/lib/query-trace.py"
 
 for f in "$GEN" "$QUESTIONS" "$CITE_SPAN" "$INSTALLER" "$LIB"; do
   [ -e "$f" ] || { echo "error: missing $f" >&2; exit 1; }
@@ -171,6 +177,19 @@ else
   mark_done install
 fi
 
+# ── Scale filler: pre-populate the wiki BEFORE the real extract/ingest, so the
+# librarian meets a big index and retrieval must discriminate among distractors.
+if [ "$SCALE" -gt 0 ]; then
+  if staged filler; then
+    echo "[retr] skip scale filler (done)" >&2
+  else
+    echo "[retr] injecting $SCALE deterministic filler pages" >&2
+    "$FILLER_GEN" "$WIKI" "$SCALE" >&2 \
+      || { echo "error: scale filler generation failed" >&2; exit 1; }
+    mark_done filler
+  fi
+fi
+
 sources=()
 for f in "$CORPUS"/*; do sources+=("$f"); done
 
@@ -203,15 +222,40 @@ echo "[retr] raw/: $extracted files, wiki/: $pages pages" >&2
 # route, and a scored report is worse than no report because it looks like
 # evidence. Abort loudly instead, and do not spend on queries that cannot
 # measure the thing.
-ingested=$(grep -rlc 'ingested_hash: "[0-9a-f]' "$WIKI/raw" 2>/dev/null | wc -l | tr -d ' ')
-if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
+# NEVER count commitments with `grep -rlc`: mixing -l and -c makes grep emit a
+# line for EVERY file, non-matches included, so the count becomes "how many raw
+# files exist" instead of "how many carry a hash". Measured: at 100 filler pages
+# it reported 13 while the true number of committed needle sources was 0 — the
+# gate cleared and the run was scored on a wiki whose entire provenance layer
+# was missing. That is the void-run lesson repeating in a new disguise, so the
+# gate now consumes the explicit loop below and nothing else.
+# Commitment rate over REAL needle sources. Three false-alarm routes this
+# closes, all found the first time the line printed ("22/12" — a numerator
+# above its own denominator): filler raws carry hashes by construction;
+# `.gitkeep` is scaffolding, not a source; and a binary/tabular source (a .csv)
+# keeps its commitment on the parsed `<name>.md` sidecar extract wrote beside
+# it, so checking only the .csv reports a gap that isn't one. A sensor that
+# cries wolf gets ignored, which is worse than not having it.
+committed=0; needle_raws=0
+while IFS= read -r f; do
+  base=$(basename "$f")
+  case "$base" in .*|scale-*) continue ;; esac
+  case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac  # sidecar counted with its parent
+  needle_raws=$((needle_raws + 1))
+  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
+     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+    committed=$((committed + 1))
+  fi
+done < <(find "$WIKI/raw" -type f 2>/dev/null | sort)
+if [ "$pages" -le 1 ] || [ "$committed" -eq 0 ]; then
   {
     echo "# retrieval eval — VOID (not a score)"
     echo ""
-    echo "The wiki was never populated, so no question can measure wiki retrieval."
+    echo "The wiki was never populated, or ingest never committed its sources, so"
+    echo "no question here can measure verifiable wiki retrieval."
     echo ""
     echo "- wiki pages:      $pages (need > 1)"
-    echo "- ingested raw:    $ingested of $extracted (need > 0)"
+    echo "- committed raw:   $committed of $needle_raws needle sources carry an ingested_hash (need > 0)"
     echo "- ingest log tail: $(tail -3 "$WORK/ingest.log" 2>/dev/null | tr '\n' ' ')"
     echo ""
     echo "With an empty wiki, /wiki-query falls back to reading raw/ directly and"
@@ -219,7 +263,7 @@ if [ "$pages" -le 1 ] || [ "$ingested" -eq 0 ]; then
     echo "  scripts/eval-retrieval.sh --work=$WORK"
     echo "(extract is cached; delete \$WORK/.done-ingest to retry just ingest)"
   }
-  echo "[retr] VOID: wiki unpopulated ($pages pages, $ingested ingested) — not scoring" >&2
+  echo "[retr] VOID: $pages pages, $committed/$needle_raws sources committed — not scoring" >&2
   exit 3
 fi
 
@@ -231,7 +275,9 @@ r3_pass=0; r3_total=0
 r4_pass=0; r4_total=0
 m1_pass=0; m1_total=0
 m4_pass=0; m4_total=0
+m6_pass=0; m6_total=0; m6_bad=""; m6_cites=0
 m2_answer=MISSING
+m5_answer=MISSING
 inconclusive=0
 
 while IFS=$'\t' read -r qid question modality expects cite span forbids refusal; do
@@ -245,8 +291,21 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     echo "[retr] $qid ($modality) — cached, regrading" >&2
   else
     echo "[retr] $qid ($modality)" >&2
-    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" ) \
-      >"$answer" 2>"$WORK/$qid.err" </dev/null || true
+    # stream-json so the transcript records WHAT the agent read — the scale
+    # eval's cost metric. query-trace.py distils answer text + read counts;
+    # if the stream is unparseable the raw bytes become the answer so the
+    # API-error markers stay visible to retr_answer_broken.
+    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" \
+        --output-format stream-json --verbose ) \
+      >"$WORK/$qid.stream" 2>"$WORK/$qid.err" </dev/null || true
+    python3 "$QUERY_TRACE" "$WORK/$qid.stream" --counts "$WORK/$qid.reads" \
+      >"$answer" 2>>"$WORK/$qid.err" || cp "$WORK/$qid.stream" "$answer"
+  fi
+  reads="?"
+  if [ -f "$WORK/$qid.reads" ]; then
+    reads=$(awk '{ for (i=1;i<=NF;i++) { split($i,kv,"="); c[kv[1]]=kv[2] }
+                   printf "%d+g%d", c["reads_wiki"]+c["reads_raw"], c["greps"] }' \
+            "$WORK/$qid.reads")
   fi
 
   if retr_answer_broken "$answer"; then
@@ -261,7 +320,26 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
 
   # M2 is scored after the loop (its verdict is ANDed with a structural check),
   # so stash the answer verdict — including INCONC — instead of bucketing it.
-  case "$qid" in M2-*) m2_answer="$a_verdict" ;; esac
+  case "$qid" in
+    M2-*) m2_answer="$a_verdict" ;;
+    M5-*) m5_answer="$a_verdict" ;;
+  esac
+
+  # M6: does every citation this answer offers actually resolve? Scored on any
+  # answer that cited anything, independent of whether the question carries a
+  # cite-contains — a fabricated target is a defect wherever it appears.
+  if [ "$a_verdict" != INCONC ]; then
+    if retr_cite_integrity "$answer" "$WIKI/raw" "$CITE_SPAN"; then
+      if [ "${RETR_CITE_TOTAL:-0}" -gt 0 ]; then
+        m6_total=$((m6_total + 1)); m6_pass=$((m6_pass + 1))
+        m6_cites=$((m6_cites + RETR_CITE_TOTAL))
+      fi
+    else
+      m6_total=$((m6_total + 1))
+      m6_cites=$((m6_cites + RETR_CITE_TOTAL))
+      m6_bad="$m6_bad $qid:${RETR_CITE_BAD}/${RETR_CITE_TOTAL}(${RETR_CITE_BAD_LIST# })"
+    fi
+  fi
 
   c_verdict=n/a
   if [ -n "$cite" ] && [ "$a_verdict" != INCONC ]; then
@@ -293,9 +371,24 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
   elif grep -qE '^- Wiki: *[^(]' "$answer" 2>/dev/null; then via=wiki
   else via=unknown; fi
 
-  detail+=("$qid|$modality|$a_verdict|$c_verdict|$via|$(retr_citations "$answer" | tr '\n' ' ')")
-  echo "[retr]   answer: $a_verdict  citation: $c_verdict  via: $via" >&2
+  detail+=("$qid|$modality|$a_verdict|$c_verdict|$via|$reads|$(retr_citations "$answer" | tr '\n' ' ')")
+  echo "[retr]   answer: $a_verdict  citation: $c_verdict  via: $via  reads: $reads" >&2
 done < "$tmp_q"
+
+# Reads summary over answered (non-INCONC) questions with a recorded trace.
+reads_summary="n/a (no traces)"
+reads_list=$(for row in "${detail[@]}"; do
+  IFS='|' read -r _ _ v _ _ r _ <<< "$row"
+  [ "$v" != INCONC ] && [ "$r" != "?" ] && printf '%s\n' "${r%%+*}"
+done | sort -n)
+if [ -n "$reads_list" ]; then
+  reads_summary=$(printf '%s\n' "$reads_list" | awk '
+    { a[NR] = $1 } END {
+      if (NR == 0) { print "n/a"; exit }
+      m = (NR % 2) ? a[(NR+1)/2] : a[NR/2]
+      printf "median=%d max=%d (wiki+raw file reads per answer)", m, a[NR]
+    }')
+fi
 
 # ── R5: mutate a raw body post-ingest; the answer must flag it ────────────────
 r5_pass=0; r5_total=0; r5_note="skipped (holdout run)"
@@ -319,7 +412,16 @@ if [ "$HOLDOUT" -eq 0 ]; then
     LC_ALL=C sed -i '' 's/412 GB\/day/999 GB\/day/' "$target" 2>/dev/null \
       || LC_ALL=C sed -i 's/412 GB\/day/999 GB\/day/' "$target"
     if "$DRIFT_LINT" "$WIKI/raw" >/dev/null 2>&1; then
-      r5_note="inconclusive: drift lint did not fire on a mutated body"
+      # No drift detected on a body we just mutated means the precondition is
+      # missing, not that the answer was wrong: ingest never committed an
+      # `ingested_hash` for this source, so there is no commitment to drift
+      # FROM. Scoring that 0/1 blames the answer for a gap in ingest. Exclude
+      # it (like an API failure) and let the Commitment line below carry the
+      # real signal — observed at 100 filler pages, where capacity-report-q1
+      # came back with `ingested_hash: ""` while the same ingest at 0 filler
+      # committed it. That degradation is a scale finding worth seeing plainly.
+      r5_total=0
+      r5_note="inconclusive: no ingest commitment on the mutated source (ingested_hash empty) — drift undetectable, R5 not exercised"
     else
       answer="$WORK/R5.answer.md"
       if [ -s "$answer" ]; then
@@ -337,7 +439,7 @@ if [ "$HOLDOUT" -eq 0 ]; then
       else
         r5_note="answer served the claim without flagging the drifted source"
       fi
-      detail+=("R5-drift|vintage|$([ "$r5_pass" -eq 1 ] && echo PASS || echo FAIL)|n/a|n/a|")
+      detail+=("R5-drift|vintage|$([ "$r5_pass" -eq 1 ] && echo PASS || echo FAIL)|n/a|n/a|?|")
     fi
     # Undo the corruption so this work dir stays resumable.
     if [ -f "$WORK/.r5-pristine" ]; then
@@ -381,9 +483,47 @@ if [ "$HOLDOUT" -eq 0 ]; then
   fi
 fi
 
+# ── M5: the feedback loop must exist as data, not only as narration ───────────
+#
+# Same two-leg shape as M2, for the same reason. A correct walk of the cycle
+# proves the model can compose three separately-dated causal claims; it does
+# NOT prove the cycle exists as machine-readable structure. Only a closed cycle
+# in the materialised graph does — and closing it requires ingest to have typed
+# every leg with a canonical causal verb, which is exactly what the "let loops
+# close" instruction asks for. Each failing leg is named in the note.
+m5_pass=0; m5_total=0; m5_note="skipped (holdout run)"
+if [ "$HOLDOUT" -eq 0 ]; then
+  if [ "$m5_answer" = INCONC ]; then
+    m5_note="inconclusive: no answer reached us (API/network)"
+  elif [ "$m5_answer" = MISSING ]; then
+    m5_total=1
+    m5_note="M5-loop question never ran (removed from the questions file?)"
+  else
+    m5_total=1
+    loops_out="$WORK/loops.txt"
+    python3 "$SCRIPT_DIR/wiki-to-kg.py" "$WIKI/wiki/" 2>/dev/null \
+      | python3 "$SCRIPT_DIR/wiki-loops.py" >"$loops_out" 2>/dev/null || : >"$loops_out"
+    # Require a REINFORCING cycle touching at least two of the three topics.
+    # Slug-agnostic on purpose: the librarian names its own pages, so pinning
+    # exact slugs would fail the check for a correct wiki.
+    topics=$(grep '^reinforcing:' "$loops_out" 2>/dev/null \
+      | grep -oiE 'queue|backlog|pag(er|ing)|mut(e|ed|ing)|silenc' | sort -u | wc -l | tr -d ' ')
+    if [ "${topics:-0}" -ge 2 ]; then m5_struct=1; else m5_struct=0; fi
+    if [ "$m5_struct" -eq 1 ] && [ "$m5_answer" = PASS ]; then
+      m5_pass=1; m5_note="reinforcing cycle closed in the graph and the answer walked it"
+    elif [ "$m5_struct" -eq 0 ] && [ "$m5_answer" = PASS ]; then
+      m5_note="answer walked the cycle but the graph has NO closed loop — the feedback lives only in the model's reasoning, not in the wiki"
+    elif [ "$m5_struct" -eq 1 ]; then
+      m5_note="cycle exists in the graph but the answer failed to walk it"
+    else
+      m5_note="no closed cycle in the graph and the answer failed"
+    fi
+  fi
+fi
+
 # ── Report ────────────────────────────────────────────────────────────────────
-total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass))
-total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total))
+total_pass=$((r1_pass + r2_pass + r3_pass + r4_pass + r5_pass + m1_pass + m2_pass + m4_pass + m5_pass + m6_pass))
+total=$((r1_total + r2_total + r3_total + r4_total + r5_total + m1_total + m2_total + m4_total + m5_total + m6_total))
 
 cat <<EOF
 # retrieval eval report$([ "$HOLDOUT" -eq 1 ] && echo " — HELDOUT")
@@ -391,7 +531,9 @@ cat <<EOF
 Corpus: tests/eval/retrieval-corpus/gen-corpus.sh (generated, deterministic)
 Questions: $QUESTIONS ($n_q)
 Wiki: built by create-llm-wiki.sh, loaded via /wiki-extract + /wiki-ingest
-Loaded: $extracted raw files, $pages wiki pages
+Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
+Reads: $reads_summary
+Commitment: $committed/$needle_raws needle raw sources carry an ingested_hash$([ "$committed" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - committed)); every citation into those bodies is unverifiable")
 
 R1 needle retrieval:    $r1_pass/$r1_total
 R2 point-in-time:       $r2_pass/$r2_total
@@ -401,17 +543,19 @@ R5 stale evidence:      $r5_pass/$r5_total   ($r5_note)
 M1 multi-valued answer: $m1_pass/$m1_total
 M2 supersession:        $m2_pass/$m2_total   ($m2_note)
 M4 clarify-on-ambig:    $m4_pass/$m4_total
+M5 feedback loop:       $m5_pass/$m5_total   ($m5_note)
+M6 citation integrity:  $m6_pass/$m6_total   ($m6_cites citations offered$([ -n "$m6_bad" ] && echo "; UNRESOLVABLE:$m6_bad" || echo ", all resolve"))
 
 retrieval score: $total_pass/$total$([ "$inconclusive" -gt 0 ] && echo "   ($inconclusive question(s) INCONCLUSIVE — no answer reached us; excluded, not counted as failures)")
 
 ## Per-question detail
 
-| question | modality | answer | citation | via | cited |
-|---|---|---|---|---|---|
+| question | modality | answer | citation | via | reads | cited |
+|---|---|---|---|---|---|---|
 EOF
 for row in "${detail[@]}"; do
-  IFS='|' read -r a b c d e f <<< "$row"
-  printf '| %s | %s | %s | %s | %s | %s |\n' "$a" "$b" "$c" "$d" "$e" "$f"
+  IFS='|' read -r a b c d e f g <<< "$row"
+  printf '| %s | %s | %s | %s | %s | %s | %s |\n' "$a" "$b" "$c" "$d" "$e" "$f" "$g"
 done
 
 if [ "$HOLDOUT" -eq 1 ]; then

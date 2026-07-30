@@ -14,7 +14,7 @@ agent can only produce one by actually reaching it.
 ```
 ### <check>-<id>
 Question text on one or more lines.
-modality: csv | email | report | vintage | absent | conflict | supersession | ambiguous
+modality: csv | email | report | vintage | absent | conflict | supersession | ambiguous | loop
 expects: token1, token2          # all must appear in the answer  (scores R1/R2/R3)
 cite-contains: token             # the cited passage must contain this (scores R4)
 max-span: N                      # ...within N lines               (scores R4)
@@ -54,6 +54,16 @@ meant or enumerating all readings — both must name every candidate (expects).
 The anti-reflex control (a single-reading question that FORBIDS clarify
 markers) lives in the holdout file, so "clarify on everything" cannot be
 optimised into a safe default.
+
+`M5-loop` is graded on two legs, like M2. The corpus states three causal legs
+of one cycle across three separately-dated sources and NEVER names the cycle
+(no "loop", "feedback", "reinforcing", "spiral" in any body — E14 enforces the
+blocklist), so the answer leg cannot be lifted from a single source. The
+structural leg requires `wiki-loops.py` to report a REINFORCING cycle over the
+materialised graph: that only happens if ingest typed all three legs with
+canonical causal verbs and closed the cycle, which is the capability the
+"let loops close" ingest instruction exists to produce. The question names one
+node only — the other two must come from the graph, not from the prompt.
 
 ## Questions
 
@@ -132,6 +142,15 @@ expects: 180 days, 30 days, production, sandbox
 cite-contains: 30 days
 max-span: 40
 forbids-pattern: [Oo]utdated|[Oo]bsolete|[Ss]tale
+
+### M5-loop
+Ingest queue depth keeps growing. According to the wiki, what does that set in
+motion, and how does it come back around to queue depth?
+modality: loop
+expects: pager, mut, queue
+cite-contains: mute the noisiest
+max-span: 40
+forbids-pattern: no (such )?(feedback|self-reinforcing|reinforcing) (loop|cycle|dynamic)
 
 ### M4-ambiguous
 What is the retention period?

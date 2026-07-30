@@ -36,6 +36,18 @@
 #                              prose) and M2 is gated on a KG edge, not answer
 #   E12 clarify honest       : M4 accepts ask-or-enumerate, fails a confident
 #                              pick; the anti-reflex control is held out (H4)
+#   E13 caps + misgradings   : a model-cap message is no-answer (not a wrong
+#                              answer), count-and-refuse is a clarification, an
+#                              unexercised R5 is not a loss, and the VOID gate
+#                              counts commitments rather than files
+#   E14 loop corpus honest   : M5's three legs are separately dated and never
+#                              name the cycle, so a closed loop can only come
+#                              from composition; graded on a graph cycle
+#   E15 prose is not a log   : an uppercase transport code is matched as a
+#                              TOKEN (ENOTFOUND fired inside
+#                              ModuleNotFoundError and voided a good answer),
+#                              and markdown emphasis is normalised before any
+#                              prose match (**three** retention windows)
 #
 # Usage: ./scripts/verify-retrieval-eval.sh   Exit: 0 all green, 1 a check failed.
 
@@ -273,8 +285,8 @@ EVAL="$SCRIPT_DIR/eval-retrieval.sh"
 e7=0
 grep -q 'VOID (not a score)' "$EVAL" \
   || { fail "E7 eval has no VOID gate (an empty wiki would be scored)"; e7=1; }
-grep -q 'ingested" -eq 0' "$EVAL" \
-  || { fail "E7 VOID gate does not check that any raw source was actually ingested"; e7=1; }
+grep -q 'committed" -eq 0' "$EVAL" \
+  || { fail "E7 VOID gate does not check that any raw source was actually committed"; e7=1; }
 # Every nested invocation must pin stdin: the /dev/null is on the same line as
 # the redirect, within two lines of the call.
 sites=$(grep -c 'claude -p "' "$EVAL")
@@ -284,9 +296,211 @@ if [ "$pinned" -lt "$sites" ]; then
 fi
 [ "$e7" -eq 0 ] && ok "E7 eval voids an unpopulated wiki and pins nested-claude stdin ($sites sites)"
 
+# ── E13: the two misgradings a real 500-page run produced ────────────────────
+# Both were scored as capability failures when neither was one. Locked in here
+# because each cost a whole scored run: the first read as "quality collapses at
+# scale" (it was a model cap), the second as "clarify-on-ambiguity regressed"
+# (it was the best answer in the run, phrased in a shape the markers missed).
+e13=0
+
+# (a) A model-cap message is NO ANSWER — excluded, never graded FAIL.
+printf "You've reached your Fable 5 limit. Run /usage-credits to continue or switch models with /model.\n" > "$TMP/cap.md"
+retr_answer_broken "$TMP/cap.md" || { fail "E13 model-cap message not recognised as a non-answer"; e13=1; }
+printf 'You have reached your weekly limit. Upgrade to continue.\n' > "$TMP/cap2.md"
+retr_answer_broken "$TMP/cap2.md" || { fail "E13 alternate cap phrasing not recognised"; e13=1; }
+# A real answer that merely mentions a limit is NOT broken (no over-broadening).
+printf 'The retry budget is 7 attempts, the documented per-message limit.\n' > "$TMP/notcap.md"
+retr_answer_broken "$TMP/notcap.md" && { fail "E13 real answer mentioning a limit misread as broken"; e13=1; }
+
+# (b) Counting the readings and refusing the single pick IS a clarification.
+printf 'There are three retention periods, not one: production logs 180 days, sandbox logs 30 days, database backup 35 days.\n' > "$TMP/m4-count.md"
+retr_grade_answer "$TMP/m4-count.md" "$M4_EXPECTS" "" clarify \
+  || { fail "E13 count-and-refuse enumeration graded FAIL (the strongest M4 shape)"; e13=1; }
+# …and the confident single pick still fails, so (b) did not loosen the check.
+retr_grade_answer "$TMP/m4-pick.md" "$M4_EXPECTS" "" clarify \
+  && { fail "E13 broadened markers let a confident single pick through"; e13=1; }
+
+# (c) An inconclusive R5 precondition must not be scored as a failed check.
+grep -q 'r5_total=0' "$EVAL" \
+  || { fail "E13 eval never zeroes r5_total — an unexercised R5 is counted as a loss"; e13=1; }
+grep -q 'Commitment: \$committed' "$EVAL" \
+  || { fail "E13 report lacks the ingest-commitment line (the real signal behind R5 inconclusives)"; e13=1; }
+
+# (d) The commitment sensor must not cry wolf. Replay its exact loop over a
+# fixture raw/ holding: a committed source, an UNcommitted one (the real
+# signal), scaffolding, filler, and a .csv whose hash lives on its .md sidecar.
+# Truth is 2/3 — the first run of this line printed "22/12", a numerator above
+# its own denominator, by counting all four wrong things.
+fx="$TMP/rawfx"; mkdir -p "$fx"
+printf -- '---\ningested_hash: "abc123def"\n---\nbody\n' > "$fx/committed.md"
+printf -- '---\ningested_hash: ""\n---\nbody\n'          > "$fx/uncommitted.md"
+printf -- '---\ningested_hash: "9f9f9f9f"\n---\nbody\n'  > "$fx/scale-billing-ops-notes.md"
+: > "$fx/.gitkeep"
+printf 'a,b\n1,2\n'                                       > "$fx/sales.csv"
+printf -- '---\ningested_hash: "cafe1234"\n---\nparsed\n' > "$fx/sales.csv.md"
+fx_committed=0; fx_total=0
+while IFS= read -r f; do
+  base=$(basename "$f")
+  case "$base" in .*|scale-*) continue ;; esac
+  case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac
+  fx_total=$((fx_total + 1))
+  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
+     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+    fx_committed=$((fx_committed + 1))
+  fi
+done < <(find "$fx" -type f | sort)
+[ "$fx_total" -eq 3 ] \
+  || { fail "E13 commitment denominator counts non-sources (got $fx_total, want 3: committed, uncommitted, sales.csv)"; e13=1; }
+[ "$fx_committed" -eq 2 ] \
+  || { fail "E13 commitment numerator wrong (got $fx_committed, want 2 — the .csv is committed via its .md sidecar)"; e13=1; }
+[ "$fx_committed" -le "$fx_total" ] \
+  || { fail "E13 numerator exceeds denominator — the original 22/12 bug"; e13=1; }
+# (e) The VOID gate must consume the counted loop, never a `grep -rlc` pipeline:
+# -l mixed with -c emits a line per file (non-matches included), so the gate
+# counted FILES and scored a run whose provenance layer was entirely missing.
+grep -q 'if \[ "\$pages" -le 1 \] || \[ "\$committed" -eq 0 \]' "$EVAL" \
+  || { fail "E13 VOID gate does not gate on \$committed"; e13=1; }
+# Code lines only — the comment above the fix names the banned form on purpose.
+grep -v '^[[:space:]]*#' "$EVAL" | grep -q 'grep -rlc' \
+  && { fail "E13 'grep -rlc' is back in code — it counts files, not commitments"; e13=1; }
+[ "$e13" -eq 0 ] && ok "E13 model caps excluded, count-and-refuse clarifications pass, unexercised R5 not a loss"
+
+# ── E14: M5's loop corpus states the legs and never the loop ─────────────────
+e14=0
+m5_files="$A/alerting-queue-depth-note.md $A/oncall-rotation-note.md $A/incident-review-backlog.md"
+for f in $m5_files; do
+  [ -f "$f" ] || { fail "E14 M5 source missing: $(basename "$f")"; e14=1; }
+done
+if [ "$e14" -eq 0 ]; then
+  # The cycle must be unliftable from any single body: no loop vocabulary at all.
+  if grep -qiE 'loop|cycle|feedback|reinforc|spiral|vicious|self-sustain' $m5_files; then
+    fail "E14 M5 corpus names the cycle — the answer could be lifted from one source"; e14=1
+  fi
+  # Each source must state exactly one leg with an explicit causal verb, so the
+  # check measures whether ingest TYPES narrated causation (not whether it can
+  # infer causation from nothing).
+  for pair in "alerting-queue-depth-note.md:causes a rise in pager volume" \
+              "oncall-rotation-note.md:causes the on-call rotation to mute" \
+              "incident-review-backlog.md:cause further growth in ingest queue depth"; do
+    f="$A/${pair%%:*}"; needle="${pair#*:}"
+    grep -qF "$needle" "$f" || { fail "E14 $(basename "$f") lost its causal leg ('$needle')"; e14=1; }
+  done
+  # Three distinct vintages: the legs are separately dated, so composing them
+  # is cross-source work, not one document's narrative.
+  n_dates=$(grep -h '^Published:' $m5_files | sort -u | wc -l | tr -d ' ')
+  [ "$n_dates" -eq 3 ] || { fail "E14 M5 legs are not three distinct vintages (got $n_dates)"; e14=1; }
+  # The eval must gate M5 on a REINFORCING cycle in the materialised graph.
+  grep -q 'wiki-loops.py' "$EVAL" \
+    || { fail "E14 eval never materialises loops — M5's structural leg is missing"; e14=1; }
+  grep -q "grep '\^reinforcing:'" "$EVAL" \
+    || { fail "E14 eval does not require a reinforcing cycle for M5"; e14=1; }
+  # Grading: a correct walk passes; denying the loop fails on the forbids.
+  M5_EXPECTS="pager, mut, queue"
+  M5_FORBIDS='no (such )?(feedback|self-reinforcing|reinforcing) (loop|cycle|dynamic)'
+  printf 'Queue depth growth raises pager volume; sustained paging leads the on-call to mute the noisiest rules; muted rules let the queue grow further.\n' > "$TMP/m5-walk.md"
+  retr_grade_answer "$TMP/m5-walk.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    || { fail "E14 a correct cycle walk graded FAIL"; e14=1; }
+  printf 'There is no self-reinforcing loop between queue depth and paging in this wiki.\n' > "$TMP/m5-deny.md"
+  retr_grade_answer "$TMP/m5-deny.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    && { fail "E14 denying the loop graded PASS"; e14=1; }
+  # A partial walk (one leg only) must not pass — every node is required.
+  printf 'Growing queue depth raises pager volume.\n' > "$TMP/m5-partial.md"
+  retr_grade_answer "$TMP/m5-partial.md" "$M5_EXPECTS" "$M5_FORBIDS" false \
+    && { fail "E14 a one-leg partial walk graded PASS"; e14=1; }
+fi
+[ "$e14" -eq 0 ] && ok "E14 M5 loop corpus states legs not loops, three vintages, graded on a closed cycle"
+
+# ── E15: prose is not a log, and markdown is not plain text ──────────────────
+# Two misgradings from one real run, both the same species — a pattern matching
+# inside ordinary writing instead of against the thing it names.
+e15=0
+
+# (a) An uppercase transport code is a TOKEN. Matched case-insensitively as a
+# substring, `ENOTFOUND` fires inside `ModuleNotFoundError`, and a complete
+# correct answer is reported as "no answer reached us".
+printf 'The lint crashes with ModuleNotFoundError because scripts/lib/wikitext.py is absent.\n' > "$TMP/prose-err.md"
+retr_answer_broken "$TMP/prose-err.md" \
+  && { fail "E15 answer mentioning ModuleNotFoundError misread as a transport failure"; e15=1; }
+printf 'request to api.anthropic.com failed: ENOTFOUND\n' > "$TMP/real-err.md"
+retr_answer_broken "$TMP/real-err.md" \
+  || { fail "E15 a real ENOTFOUND is no longer recognised"; e15=1; }
+printf 'The socket was closed: ECONNRESET.\n' > "$TMP/real-err2.md"
+retr_answer_broken "$TMP/real-err2.md" \
+  || { fail "E15 a real ECONNRESET is no longer recognised"; e15=1; }
+
+# (b) Markdown emphasis must not defeat prose matching. The model bolds its
+# count; the marker looking for "three retention window" then sees
+# "three** retention" and the best answer in the run grades FAIL.
+printf 'The question is under-specified — the wiki holds **three** retention windows: production logs, sandbox logs, and database backups.\n' > "$TMP/m4-bold.md"
+retr_grade_answer "$TMP/m4-bold.md" "log, backup" "" clarify \
+  || { fail "E15 bolded-count clarification graded FAIL (markdown defeated the markers)"; e15=1; }
+# …and an emphasised expects token must still be found.
+printf 'The current budget is **7** attempts per message.\n' > "$TMP/bold-token.md"
+retr_grade_answer "$TMP/bold-token.md" "7 attempts" "" false \
+  || { fail "E15 emphasised expects token not matched after normalisation"; e15=1; }
+# …while a confident single pick still fails, so (b) loosened nothing.
+retr_grade_answer "$TMP/m4-pick.md" "log, backup" "" clarify \
+  && { fail "E15 normalisation let a confident single pick pass M4"; e15=1; }
+# …and a headline-anchored forbids still fires through emphasis.
+printf '**999 GB/day** was the figure.\n' > "$TMP/bold-wrong.md"
+retr_grade_answer "$TMP/bold-wrong.md" "412" '^[^a-zA-Z0-9]{0,4}(389|999)' false \
+  && { fail "E15 emphasised wrong headline slipped past its forbids-pattern"; e15=1; }
+[ "$e15" -eq 0 ] && ok "E15 error codes matched as tokens, markdown emphasis normalised, guards intact"
+
+# ── E16: M6 citation integrity — a receipt that cannot be checked ────────────
+# R4 asks whether ONE citation is good; M6 asks whether ANY citation is a lie.
+# The observed failure: an answer cited `field-report.md#instrumentation-debt`,
+# an anchor absent from that file, and passed everything else on its question.
+e16=0
+printf 'Answer. (source: raw/sales-2026.csv#L948)\n' > "$TMP/i-good.md"
+retr_cite_integrity "$TMP/i-good.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 a resolving citation graded as unresolvable"; e16=1; }
+[ "${RETR_CITE_TOTAL:-0}" -eq 1 ] || { fail "E16 citation count wrong (got ${RETR_CITE_TOTAL:-unset}, want 1)"; e16=1; }
+
+printf 'Answer. (source: raw/field-report.md#no-such-anchor-here)\n' > "$TMP/i-anchor.md"
+retr_cite_integrity "$TMP/i-anchor.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a non-existent ANCHOR graded as resolving (the observed defect)"; e16=1; }
+
+printf 'Answer. (source: raw/not-a-real-file.md#L1)\n' > "$TMP/i-file.md"
+retr_cite_integrity "$TMP/i-file.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a non-existent FILE graded as resolving"; e16=1; }
+
+# One bad target among several good ones must still fail, and be named.
+printf 'A. (source: raw/sales-2026.csv#L948) (source: raw/field-report.md#nope-not-here)\n' > "$TMP/i-mixed.md"
+retr_cite_integrity "$TMP/i-mixed.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 one unresolvable target among good ones still passed"; e16=1; }
+[ "${RETR_CITE_BAD:-0}" -eq 1 ] || { fail "E16 bad-citation count wrong (got ${RETR_CITE_BAD:-unset}, want 1)"; e16=1; }
+case "${RETR_CITE_BAD_LIST:-}" in *nope-not-here*) ;; *) fail "E16 offending target not named in the report list"; e16=1 ;; esac
+
+# The false-pass route: cite NOTHING. It must not score M6 at all — and the
+# eval must only count answers that offered a citation, so silence buys nothing
+# here while still failing R4, which is what forces a citation to exist.
+printf 'The wiki does not cover Q2 2026.\n' > "$TMP/i-none.md"
+retr_cite_integrity "$TMP/i-none.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 an uncited answer treated as a citation failure"; e16=1; }
+[ "${RETR_CITE_TOTAL:-1}" -eq 0 ] || { fail "E16 uncited answer reported citations"; e16=1; }
+grep -q 'RETR_CITE_TOTAL:-0}" -gt 0' "$EVAL" \
+  || { fail "E16 eval scores M6 on answers that cited nothing (silence would pass)"; e16=1; }
+grep -q 'M6 citation integrity' "$EVAL" \
+  || { fail "E16 report has no M6 line"; e16=1; }
+# Two receipts in ONE parenthetical must extract as TWO targets. Grabbing up to
+# the closing paren produced a single comma-joined string that resolves to
+# nothing, inventing citation failures on correct answers.
+printf 'A. (source: raw/sales-2026.csv#L948, source: raw/sales-2026.csv#L949)\n' > "$TMP/i-pair.md"
+n_pair=$(retr_citations "$TMP/i-pair.md" | wc -l | tr -d ' ')
+[ "$n_pair" -eq 2 ] || { fail "E16 comma-joined citations extracted as $n_pair target(s), want 2"; e16=1; }
+retr_cite_integrity "$TMP/i-pair.md" "$A" "$CITE_SPAN" \
+  || { fail "E16 two valid receipts in one paren graded unresolvable"; e16=1; }
+# A line range that lands inside frontmatter cites METADATA, not content — the
+# resolver rejects it and M6 must surface that as the real defect it is.
+printf 'A. (source: raw/sales-2026.csv.md#L2-L4)\n' > "$TMP/i-fm.md"
+retr_cite_integrity "$TMP/i-fm.md" "$A" "$CITE_SPAN" \
+  && { fail "E16 a citation pointing into frontmatter graded as resolving"; e16=1; }
+[ "$e16" -eq 0 ] && ok "E16 M6 catches unresolvable files/anchors + frontmatter cites, splits paired receipts, silence cannot pass"
+
 echo
 if [ "$failures" -gt 0 ]; then
   printf "%sFailed.%s %d retrieval-eval check(s) did not pass.\n" "$RED" "$RESET" "$failures"; exit 1
 fi
-printf "%sPassed.%s E1-E12 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded, clock-free, multi-valued/supersession/clarify honest.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s E1-E16 green — corpus fixed, graders not fakeable, empty-wiki voids, no-answer excluded (incl. model caps), clock-free, multi-valued/supersession/clarify/loop honest.\n" "$GREEN" "$RESET"
 exit 0
