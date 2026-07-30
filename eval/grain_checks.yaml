@@ -1,0 +1,55 @@
+# Loss function — assessing llm-wiki-bootstrap's vectorless RAG on a real corpus.
+#
+# Corpus: "Grain Markets and Other Stuff" YouTube transcripts, 1,138 files,
+# 2.8M words, 2020-09-14 -> 2026-06-15. One host, weekly, on the same handful
+# of commodities for six years.
+#
+# Why this corpus and not the shipped fixtures: every existing fixture is
+# synthetic, with needles (NEEDLE-<MODALITY>-<hex>) chosen to be absent from
+# pretraining and cleanly separable from distractors. This corpus is the
+# adversarial opposite — 351 titles mention corn, 266 soybean, so there are no
+# clean needles; the subject matter IS in pretraining; and the host genuinely
+# contradicts himself across years as the market turns. The published scale
+# result (19 -> 495 pages, 20/21 -> 21/21) was measured against
+# gen-scale-filler.sh output: generated WIKI PAGES, not ingested sources. Only
+# ~13 sources have ever been through real LLM ingest. This measures ingest.
+#
+# Values are single-line on purpose: the goodhart_gate hook reads the text on
+# the same line as the key, so a YAML folded block (>-) reads as vacuous.
+
+corpus: Grain Markets and Other Stuff (YouTube transcripts, 2020-09 -> 2026-06)
+wiki: ~/grain-wiki-assessment
+ground_truth: internal — claims scored against the cited transcript only
+
+checks:
+  - id: A1
+    name: dated-opinion retrieval
+    check: ">=80% of gold questions about the host's specific dated position are answered correctly AND carry a citation resolving under citation-audit.py (C1+C2) into a transcript whose upload date matches the question's window, cited span <=15 lines."
+    false_pass: "The model answers from parametric grain-market knowledge without reading the wiki at all — grain fundamentals are public and in pretraining, so a naive gold set scores well against an EMPTY wiki and measures the model, not the retrieval."
+    mitigation: "Phase 3 runs every question against an empty wiki first and discards any the empty wiki answers, publishing the discarded list with the result; questions target one identified person's specific stated position and reasoning on a specific date, which is non-parametric even though the underlying facts are not; and grading demands a resolving citation into the correct-dated file, so a plausible uncited answer fails regardless of how right it sounds."
+
+  - id: A2
+    name: temporal contradiction
+    check: "For topics where the host's view demonstrably reversed across years, >=75% pass BOTH legs — an 'as of <date>' question returns the position held then, and the unqualified question surfaces BOTH dated positions."
+    false_pass: "The answer hedges — 'his view changed over time', 'it depends on the year' — with no dates and no specifics, which reads as correct to a human skimming but encodes nothing checkable."
+    mitigation: "expects: requires both dated position tokens so a hedge misses tokens and fails deterministically, and forbids-pattern blocks the second false pass of reciting both positions while dismissing one as merely 'outdated' when both were genuinely held at their own time; this reuses the M1-conflict device already proven in tests/eval/retrieval-questions.md."
+
+  - id: A3
+    name: faithfulness under redundancy
+    check: "citation-audit.py --coverage clean (no claim-bearing page without a resolving citation), C1-and-C2 resolution rate >=95%, and eval-citation-faithfulness.sh --sample 40 entailment rate >=90%."
+    false_pass: "The wiki retreats into unfalsifiable prose with no figures, dates or named entities, which is trivially faithful to any source because nothing in it can be contradicted."
+    mitigation: "A deterministic claim-density floor is measured alongside the rate — mean cited specific claims (figures, dates, named entities) per content page must clear a threshold, so a vague wiki fails density even at 100% faithfulness; and independently a wiki with no specifics cannot pass A1 or A2, so the cheapest way to satisfy A3 costs you the other two checks."
+
+  - id: A4
+    name: synthesis, not transcription
+    check: "Wiki body words <=30% of ingested raw words, orphan rate <=5%, every content page carries >=2 links under ## Related, entity pages exist for the top recurring corpus entities, and contradiction flags are present on A2 topics."
+    false_pass: "Hit the compression target by discarding content rather than condensing it, or hit the linkage target with one hub page linking everything, which satisfies '>=2 links' everywhere while encoding no real structure."
+    mitigation: "Content loss is caught by A1 and A2 because you cannot retrieve from a gutted wiki, putting compression and recall in deliberate tension so no single strategy satisfies both without doing the real work; star topology is caught by reporting graph diameter and max node degree from wiki-discover.py, where a hub of degree ~N with diameter 2 is visible on its face."
+
+  - id: A5
+    name: cost and scale, measured not assumed
+    check: "Publish measured seconds/source for real ingest, the bench-scale.sh 1138 deterministic curve, reads-per-answer median and max (budget <=12), query wall-clock, and committed=N/M = 100% at the largest real ingest."
+    false_pass: "Declaring 'it scales' from the cheap deterministic stages — hash-scan, audit and synthesis are 48.6s total at N=1138 — while LLM ingest, the actual bottleneck at one outer turn plus ~15 nested faithfulness judges per source, goes unmeasured."
+    mitigation: "The report must carry projected serial hours for the full 1,138 derived from MEASURED seconds/source rather than from the deterministic stages, and any committed < 100% is reported as a scale failure rather than rounded away — this is the already-recorded failure mode where ingest silently wrote an empty ingested_hash at only 100 filler pages (eval-retrieval.sh:420-423), breaking idempotence and making every citation into that body unverifiable."
+
+holdout: "~15 questions authored by a SEPARATE agent from 3 whole upload-months chosen by seed and reserved before any question is written (seed 20260730 selects 2021-01, 2023-05, 2023-10); those months are ingested like everything else so the wiki is not disadvantaged, only the questions are withheld. The sealed set is scored exactly once at the end, reported separately from the headline number, never consulted while tuning prompts or staging or thresholds, and not read by the assessing agent before scoring — its purpose is to catch the case where A1-A5 were unconsciously fitted to whatever the wiki happened to do well."
