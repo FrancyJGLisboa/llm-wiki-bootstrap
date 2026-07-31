@@ -32,15 +32,16 @@ set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 COMMIT="$SCRIPT_DIR/commit-source.py"
 
-WIKI=; LOG=; LIMIT=0; HALT=1; GATE_N=6
+WIKI=; LOG=; LIMIT=0; HALT=1; GATE_N=6; TIMEOUT_S=1500
 while [ $# -gt 0 ]; do
   case "$1" in
     --log)     LOG="${2:-}"; shift 2 ;;
     --limit)   LIMIT="${2:-0}"; shift 2 ;;
     --gate-n)  GATE_N="${2:-0}"; shift 2 ;;
+    --timeout) TIMEOUT_S="${2:-1500}"; shift 2 ;;
     --no-halt) HALT=0; shift ;;
     -h|--help) sed -n '2,32p' "$0"; exit 0 ;;
-    -*) echo "usage: ingest-corpus.sh <wiki-root> [--log FILE] [--limit N] [--gate-n K] [--no-halt]" >&2; exit 2 ;;
+    -*) echo "usage: ingest-corpus.sh <wiki-root> [--log FILE] [--limit N] [--gate-n K] [--timeout S] [--no-halt]" >&2; exit 2 ;;
     *)  WIKI="$1"; shift ;;
   esac
 done
@@ -105,7 +106,27 @@ idempotent."
   start=$(date +%s)
   # stdin pinned to /dev/null: without it `claude -p` waits 3s per call for input
   # that never comes. Same trap verify-retrieval-eval.sh E7 pins at all 3 sites.
-  if ( cd "$WIKI" && claude -p "$prompt" </dev/null ) >"$WIKI/.ingest-last.log" 2>&1; then
+  #
+  # Bounded by TIMEOUT_S. An unattended overnight run had one turn consume 8h on
+  # a 1,077-word source while others of the same size took 9 minutes; with no
+  # bound, a single stalled turn silently eats the whole run. macOS ships no
+  # timeout(1), hence the poll-and-kill. Children are swept by pattern because
+  # the turn can spawn nested judges that would otherwise be orphaned.
+  ( cd "$WIKI" && claude -p "$prompt" </dev/null ) >"$WIKI/.ingest-last.log" 2>&1 &
+  cpid=$!
+  waited=0
+  while kill -0 "$cpid" 2>/dev/null && [ "$waited" -lt "$TIMEOUT_S" ]; do
+    sleep 5; waited=$((waited + 5))
+  done
+  if kill -0 "$cpid" 2>/dev/null; then
+    kill -TERM "$cpid" 2>/dev/null
+    sleep 3
+    kill -KILL "$cpid" 2>/dev/null
+    pkill -f "claude -p /wiki-ingest $rel" 2>/dev/null
+    wait "$cpid" 2>/dev/null
+    status="TIMEOUT"
+    failed=$((failed + 1))
+  elif wait "$cpid"; then
     status=ok
   else
     status="FAIL"
