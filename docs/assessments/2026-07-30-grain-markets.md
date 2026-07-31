@@ -164,9 +164,63 @@ near-empty wiki understates cost at N.
 _Pending: per-source seconds, quartile trend, projected serial hours for 1,138,
 commitment rate, reads-per-answer._
 
+
+### F5 — Ingest has no timeout, retry, or cap detection
+
+An unattended overnight run degraded without bound. Sources 1-8 ran 310-1552s
+and committed; sources 9-12 then failed at 1111s, 3794s, 3908s and **28960s**.
+The 8-hour turn was a 1,077-word source; the 65-minute one was **415 words**, so
+this is not corpus growth. An API probe immediately after returned in 8s, so the
+stalls were transient, not a hard cap.
+
+`ingest-corpus.sh` and the `/wiki-ingest` path alike have nothing bounding a
+turn, so one stalled call silently consumed a third of the night. Bounding it
+took three attempts and is worth recording as a harness lesson: an in-loop
+counter that assumed `sleep 5` costs 5s fired at 4.4x its budget under load, and
+even a wall-clock deadline inside the same loop failed to fire on the real
+workload while killing a synthetic sleeper correctly. The bound that held is an
+external watchdog (`scripts/ingest-watchdog.sh`) that tracks ages itself.
+
+### F6 — The cost is a design choice, not a property of vectorless RAG
+
+The sibling project `~/wiki-factory` compiles the same YouTube-transcript corpus
+at **59-299 s/source** against this pipeline's **1554 s/source**. It is not
+faster through concurrency: it is serialized too (`max_concurrent=1`), and its
+Phase-0 spike explicitly falsified a per-source process fan-out, recording auth
+races and 529 Overloaded on 4 of 5 sources at $2.03/src and 774 s/src. That is
+the same failure class as F5, against the same backend — bootstrap's
+per-source-process shape is the architecture that experiment ruled out.
+
+Four differences account for the gap, in order of contribution:
+
+| | wiki-factory | llm-wiki-bootstrap |
+|---|---|---|
+| unit of work | one `claude -p` for the whole corpus | one per source |
+| OS processes, 5 sources | 1 | ~5 ingest + ~75 auditors |
+| citation check at build | deterministic only — anchor resolves, quoted spans verbatim | one nested `claude -p` per cited claim |
+| index | server-side Python at commit, once per corpus | model rewrites `wiki/index.md` per source |
+| entity dedup | 150-stem list injected once, selective reads | per-source sweep against the whole wiki |
+
+**What that speed costs, stated exactly.** llm-wiki-bootstrap enforces, blocking
+and per source, that every cited claim is ENTAILED BY its cited span.
+wiki-factory enforces only that the citation POINTS AT SOMETHING REAL — the file
+exists, the anchor resolves, quoted text appears verbatim. Paraphrase drift,
+over-claiming, and wrong-attribution of a real timestamp pass its commit gate.
+Entailment survives there as a non-blocking k=5 sample whose committed baseline
+is 4/5 = 0.80.
+
+So this is not a verdict that one repo is better engineered. It is a different
+point on the speed/verification curve, and the guarantee traded away is the one
+README.md:268 calls the moat. The actionable finding is that bootstrap's cost is
+**not** intrinsic: batching the corpus into one session, materializing the index
+and dashboards in Python at commit, and demoting the per-claim gate to the
+sampled check `eval-citation-faithfulness.sh --sample` already implements would
+close most of a 13-26x gap without touching the entailment guarantee's
+definition — only how often it is spent.
+
 ---
 
-## A1–A4 results
+## A1-A4 results
 
 _Pending the build._
 
