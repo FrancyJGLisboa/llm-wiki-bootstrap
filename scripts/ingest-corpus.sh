@@ -114,9 +114,13 @@ idempotent."
   # the turn can spawn nested judges that would otherwise be orphaned.
   ( cd "$WIKI" && claude -p "$prompt" </dev/null ) >"$WIKI/.ingest-last.log" 2>&1 &
   cpid=$!
-  waited=0
-  while kill -0 "$cpid" 2>/dev/null && [ "$waited" -lt "$TIMEOUT_S" ]; do
-    sleep 5; waited=$((waited + 5))
+  # Deadline is WALL-CLOCK, not a count of loop iterations. Counting `waited +=
+  # 5` per `sleep 5` assumes each iteration costs 5s; under the load this run
+  # generates each one cost ~22s, so a nominal 1500s bound did not fire until
+  # 6585s — a 4.4x overrun that made the cap almost meaningless.
+  deadline=$(( start + TIMEOUT_S ))
+  while kill -0 "$cpid" 2>/dev/null && [ "$(date +%s)" -lt "$deadline" ]; do
+    sleep 5
   done
   if kill -0 "$cpid" 2>/dev/null; then
     kill -TERM "$cpid" 2>/dev/null
