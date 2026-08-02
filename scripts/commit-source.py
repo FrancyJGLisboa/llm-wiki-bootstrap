@@ -69,6 +69,7 @@ def main():
     ap.add_argument("--at")
     ap.add_argument("--pages", default="")
     ap.add_argument("--check", action="store_true")
+    ap.add_argument("--uncommit", action="store_true")
     args = ap.parse_args()
 
     if not os.path.isfile(args.raw_file):
@@ -84,6 +85,16 @@ def main():
     except ValueError as exc:
         print("error: %s: %s" % (args.raw_file, exc), file=sys.stderr)
         return 2
+
+    if args.uncommit:
+        for key in TRIPLE:
+            fm = drop_field(fm, key)
+        fm.append('ingested_hash: ""')
+        fm.append("ingested_at: never")
+        fm.append("ingested_pages: []")
+        with open(args.raw_file, "w", encoding="utf-8") as fh:
+            fh.write("\n".join(head + fm + tail))
+        return 0
 
     if args.check:
         for line in fm:
