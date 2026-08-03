@@ -119,3 +119,42 @@ running the loop's actual output through the audit.
 citations. Don't trust "smoke green" — that proves old fixtures resolve, not
 that your new command's citations do. Run `citation-audit.py` on a scratch wiki
 built from the new command's output. R9 enforces the floor repo-wide.
+
+## 2026-08-03 — An eval field that isn't in the parser's field list ends up IN the question
+
+`retr_parse_questions` (scripts/lib/eval-common.sh) matches known fields and
+appends **everything else** to the question text. `cite-file-matches:` was never
+in that list — `eval-corpus.sh` reads it separately for grading and its comment
+even says so — so for every A1 question the catch-all folded it into the prompt.
+54 of the 66 gold questions were asking the model the question *plus*
+`cite-file-matches: ^2020-09-16-`, which names the date prefix of the correct
+source file. The A1 leg that field feeds is precisely "did you cite a source of
+the right date." The check was handing over its own answer.
+
+**Why:** the field was correctly excluded from the parser's *outputs* and
+therefore assumed to be excluded from its *inputs*. A catch-all makes those two
+different things. Every A1 figure measured before this fix is suspect, including
+the "16/16 with correct-episode citation" headline.
+
+**When to apply:** adding ANY field to a question/fixture format. Grep the
+parser for a catch-all before assuming an unknown field is ignored, and assert
+it: parse the file and check no metadata string survives in the question text.
+
+## 2026-08-03 — n=6 is not a diagnosis; get the baseline arm first
+
+A2 cross-temporal questions scored 3/6, and a mechanism story was built on top
+of it ("median 0 reads → answering from synthesis artifacts"). A router forcing
+dated reads was designed, built, verified (T1-T6), and measured. It fires 30/30
+and runs its gate 30/30 — and both arms score **identically**: 26/30 answer,
+30/30 date. The baseline prompt, with no router at all, was already citing the
+right dated episodes every time.
+
+The 8-question pilot's 3/7 → 6/6 read as confirmation. It was noise moving.
+
+**Why:** a plausible mechanism makes a small sample feel like evidence. The
+premise went unchallenged until a baseline arm existed to challenge it — by
+which point the fix was already built.
+
+**When to apply:** before building anything to close a measured gap, run the
+baseline arm on a properly-sized sample. The order is baseline, then diagnosis,
+then fix — not fix, then measure. Cheap rule: if n < 20, it is a hypothesis.

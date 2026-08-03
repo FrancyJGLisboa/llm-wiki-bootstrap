@@ -1,0 +1,3 @@
+# Eval run artifacts: per-question answers, streams, traces. Large, regenerable,
+# and they contain full model transcripts. The run REPORTS (*.txt) are kept.
+work-*/

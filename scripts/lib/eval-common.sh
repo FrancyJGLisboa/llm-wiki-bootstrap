@@ -282,6 +282,24 @@ retr_parse_questions() {
     /^max-span:/        { span     = $0; sub(/^max-span:[[:space:]]*/, "", span); next }
     /^forbids-pattern:/ { forbids  = $0; sub(/^forbids-pattern:[[:space:]]*/, "", forbids); next }
     /^refusal:/         { refusal  = $0; sub(/^refusal:[[:space:]]*/, "", refusal); next }
+    # Author-side metadata that must NEVER reach the model. `requires:` names the
+    # exact source files the answer needs; `change:` states the answer outright.
+    # Both are consumed by scoring and analysis, not by the question. Without
+    # these two skips the catch-all below folds them into the question text and
+    # the eval hands the model the evidence AND the label — scoring near 100%
+    # while measuring nothing. Unknown-field-becomes-question is a silent
+    # failure mode: the run looks healthy and the number is worthless.
+    /^requires:/        { next }
+    /^change:/          { next }
+    # cite-file-matches is graded by eval-corpus.sh, which reads it separately
+    # because it is not in this field list. True — but the
+    # catch-all below then folded it into the QUESTION, so 54 of the 66 gold
+    # questions were asking the model the question plus `cite-file-matches:
+    # ^2020-09-16-`. That ERE names the date prefix of the correct source, and
+    # the A1 leg it feeds is precisely "did you cite a source of the right date".
+    # Every A1 figure measured before this line was added had the answer to its
+    # own citation check pasted into the prompt.
+    /^cite-file-matches:/ { next }
     /^```/ { next }
     /^#/   { next }
     /^$/   { next }

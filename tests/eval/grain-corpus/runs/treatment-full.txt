@@ -1,0 +1,80 @@
+[treatment-full] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=30 control=0
+[treatment-full] A1-T1-china-shift-to-brazil-timing — cached, regrading
+[treatment-full] A1-T2-fund-corn-length-characterization — cached, regrading
+[treatment-full] A1-T3-brazil-record-crop-confidence
+[treatment-full] A1-T4-corn-condition-rating-july-2021
+[treatment-full] A1-T5-forecasting-humility
+[treatment-full] A1-T6-media-and-social-media-distortion
+[treatment-full] A1-T7-recession-versus-labor-market — cached, regrading
+[treatment-full] A1-T8-2008-as-the-reference-crash
+[treatment-full] A1-T9-rate-hike-warning-and-outcome
+[treatment-full] A1-T10-money-printing-thesis
+[treatment-full] A1-T11-why-gasoline-demand-is-weak
+[treatment-full] A1-T12-ethanol-stocks-seasonal-standing
+[treatment-full] A1-T13-weekly-ethanol-production-run-rate — cached, regrading
+[treatment-full] A1-T14-corn-acreage-expectation-versus-report
+[treatment-full] A1-T15-break-even-numbers-two-sources
+[treatment-full] A1-T16-crush-share-of-soybean-demand — cached, regrading
+[treatment-full] A1-T17-usda-numbers-deserve-error-bars
+[treatment-full] A1-T18-corn-priced-too-high-then-new-highs
+[treatment-full] A1-T19-forward-selling-after-a-punishing-year
+[treatment-full] A1-T20-carry-structure-and-storage-decisions
+[treatment-full] A1-T21-argentine-farmer-selling-behavior — cached, regrading
+[treatment-full] A1-T22-ukraine-bottleneck-diagnosis
+[treatment-full] A1-T23-ukraine-crop-figures-corn-then-wheat — cached, regrading
+[treatment-full] A1-T24-how-markets-answered-war-headlines
+[treatment-full] A1-T25-seasonal-high-timing-claim
+[treatment-full] A1-T26-reownership-stance
+[treatment-full] A1-T27-us-soybean-export-commitments-arc
+[treatment-full] A1-T28-chinese-corn-buying-outlook
+[treatment-full] A1-T29-subscription-price-over-time — cached, regrading
+[treatment-full] A1-T30-from-solo-experiment-to-contributors
+
+# corpus eval — treatment-full
+
+Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
+Questions: `/Users/francylisboacharuto/llm-wiki-bootstrap/tests/eval/grain-corpus/temporal-questions.md` (30)
+
+## scores
+
+- **A1** dated-opinion retrieval: **26/30** (87%) — target >=80%
+- **A2** temporal contradiction (both legs): **0/0** (n/a) — target >=75%
+- citation integrity: 256/256 offered citations resolve
+- reads per answer: median=0 max=3 — budget <=12
+
+## detail
+
+| question | modality | answer | cite | date | reads |
+|---|---|---|---|---|---|
+| A1-T1-china-shift-to-brazil-timing | reasoning | PASS | n/a | PASS | 3 |
+| A1-T2-fund-corn-length-characterization | figure | PASS | n/a | PASS | 0 |
+| A1-T3-brazil-record-crop-confidence | opinion | PASS | n/a | PASS | 0 |
+| A1-T4-corn-condition-rating-july-2021 | figure | PASS | n/a | PASS | 0 |
+| A1-T5-forecasting-humility | opinion | FAIL | n/a | PASS | 0 |
+| A1-T6-media-and-social-media-distortion | advice | PASS | n/a | PASS | 2 |
+| A1-T7-recession-versus-labor-market | reasoning | PASS | n/a | PASS | 0 |
+| A1-T8-2008-as-the-reference-crash | reasoning | PASS | n/a | PASS | 0 |
+| A1-T9-rate-hike-warning-and-outcome | reasoning | PASS | n/a | PASS | 2 |
+| A1-T10-money-printing-thesis | opinion | PASS | n/a | PASS | 0 |
+| A1-T11-why-gasoline-demand-is-weak | reasoning | PASS | n/a | PASS | 0 |
+| A1-T12-ethanol-stocks-seasonal-standing | figure | PASS | n/a | PASS | 0 |
+| A1-T13-weekly-ethanol-production-run-rate | figure | PASS | n/a | PASS | 0 |
+| A1-T14-corn-acreage-expectation-versus-report | reasoning | PASS | n/a | PASS | 0 |
+| A1-T15-break-even-numbers-two-sources | figure | PASS | n/a | PASS | 0 |
+| A1-T16-crush-share-of-soybean-demand | figure | PASS | n/a | PASS | 0 |
+| A1-T17-usda-numbers-deserve-error-bars | opinion | PASS | n/a | PASS | 2 |
+| A1-T18-corn-priced-too-high-then-new-highs | reasoning | PASS | n/a | PASS | 0 |
+| A1-T19-forward-selling-after-a-punishing-year | advice | FAIL | n/a | PASS | 0 |
+| A1-T20-carry-structure-and-storage-decisions | reasoning | PASS | n/a | PASS | 1 |
+| A1-T21-argentine-farmer-selling-behavior | reasoning | PASS | n/a | PASS | 0 |
+| A1-T22-ukraine-bottleneck-diagnosis | reasoning | PASS | n/a | PASS | 0 |
+| A1-T23-ukraine-crop-figures-corn-then-wheat | figure | PASS | n/a | PASS | 2 |
+| A1-T24-how-markets-answered-war-headlines | reasoning | FAIL | n/a | PASS | 0 |
+| A1-T25-seasonal-high-timing-claim | reasoning | PASS | n/a | PASS | 0 |
+| A1-T26-reownership-stance | advice | FAIL | n/a | PASS | 0 |
+| A1-T27-us-soybean-export-commitments-arc | figure | PASS | n/a | PASS | 0 |
+| A1-T28-chinese-corn-buying-outlook | opinion | PASS | n/a | PASS | 0 |
+| A1-T29-subscription-price-over-time | figure | PASS | n/a | PASS | 0 |
+| A1-T30-from-solo-experiment-to-contributors | anecdote | PASS | n/a | PASS | 0 |
+
+A1 26/30; A2 0/0
