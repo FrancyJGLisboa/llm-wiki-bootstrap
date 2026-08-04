@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R27) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R28) into a single exit-code-
 # driven test.
 #
 # Exit 0 iff all 31 checks pass.
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
 #   only the 31 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R27 guards). This is the CI path — the build phase is a precondition that
+#   R1–R28 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -58,8 +58,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R27 ────
-section "Regression guards (R1–R27)"
+# ──── REGRESSION GUARDS R1–R28 ────
+section "Regression guards (R1–R28)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -356,6 +356,19 @@ if "$SCRIPT_DIR/verify-corpus-eval.sh" >/dev/null 2>&1; then
   ok "R27 verify-corpus-eval.sh exits 0 (date leg can fail; staging deterministic; both anchor forms resolve)"
 else
   record_fail "R27 verify-corpus-eval.sh exits non-zero (real-corpus eval grader regression)"
+fi
+
+# R28 — /wiki-query's temporal contract. Cross-temporal questions scored 3/6
+# against 16/16 for single-source recall, and the failures opened zero files:
+# they narrated a trajectory out of the synthesis artifacts, which aggregate the
+# timeline away. The router (wiki-timeline.py) and the read floor
+# (wiki-metrics.sh --temporal) only work as a pair, so this asserts both — and
+# exercises the floor in BOTH directions, since a gate that never blocks and a
+# gate that blocks everything are equally useless and look identical in a log.
+if "$SCRIPT_DIR/verify-query-temporal-contract.sh" >/dev/null 2>&1; then
+  ok "R28 verify-query-temporal-contract.sh exits 0 (router specified; read floor blocks single-date answers)"
+else
+  record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/wiki-query temporal contract regression)"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────

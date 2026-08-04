@@ -80,8 +80,15 @@ done < <(grep -nE '[0-9]+ ?/ ?[0-9]+' "$PAGE" | grep -v 'minmax\|1fr\|/>' | cut 
 
 # S5 — the page must not resurrect a number the repo has moved past. Cheap
 # tripwire on the exact figures that were wrong.
+#
+# `31</b><span>deterministic` was on this list: the page once claimed 31 while
+# the suite had 30. R28 (the /wiki-query temporal contract) made 31 the true
+# count, so the tripwire started firing on the CORRECT figure. Removed rather
+# than bumped — a hardcoded list of wrong numbers has to be retired as the repo
+# grows past them, or it outlives the error it was written for and blocks the
+# truth. S1/S6 already check this count dynamically against the suite itself.
 stale=0
-for n in "31</b><span>deterministic" "8 binary" "21 / 21</b>"; do
+for n in "8 binary" "21 / 21</b>"; do
   grep -qF "$n" "$PAGE" && { bad "S5 superseded claim present: $n"; stale=1; }
 done
 [ "$stale" -eq 0 ] && ok "S5 no superseded figures resurrected"

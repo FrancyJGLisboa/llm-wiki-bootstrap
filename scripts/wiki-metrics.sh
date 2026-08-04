@@ -17,13 +17,17 @@
 #
 # Usage:
 #   wiki-metrics.sh ingest [<wiki-root>]
-#   wiki-metrics.sh query <answer-file> [<wiki-root>]
+#   wiki-metrics.sh query <answer-file> [<wiki-root>] [--temporal]
+#
+# `--temporal` additionally GATES the answer: exit 4 unless its resolving
+# citations span >= 2 distinct `asserted_at` dates. For change-over-time
+# questions only — see the temporal traversal section of wiki-query.md.
 #
 # Appends one line to log.md, inside a per-day `## <date> — metrics` section
 # (created at the top, newest-at-top, if today's does not exist yet):
 #
 #   - metrics: op=ingest date=2026-07-30 sources=11 pages=25 committed=11/11
-#   - metrics: op=query date=2026-07-30 cites=6/7 via=wiki
+#   - metrics: op=query date=2026-07-30 cites=6/7 dates=3 via=wiki
 #
 # NEVER touches raw/ (hard rule 1) and never rewrites existing log.md content:
 # it is an insert, so every prior byte survives verbatim.
@@ -31,6 +35,25 @@
 
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
+# --temporal turns the query record into a GATE: a change-over-time answer must
+# rest on at least two DIFFERENTLY DATED sources. Measured: every such answer
+# that succeeded opened 1-3 files; every one that failed opened zero and
+# narrated a trajectory out of the synthesis artifacts. Counting distinct
+# `asserted_at` values across the answer's resolving citations is the cheapest
+# thing that is false exactly when that happened.
+#
+# Position-independent so `query ans.md --temporal` and
+# `query ans.md /root --temporal` both work.
+TEMPORAL=0
+args=()
+for a in "$@"; do
+  case "$a" in
+    --temporal) TEMPORAL=1 ;;
+    *) args+=("$a") ;;
+  esac
+done
+set -- ${args[@]+"${args[@]}"}
 
 OP="${1:-}"
 case "$OP" in
@@ -86,24 +109,56 @@ else
   # own — models legitimately pack two receipts into one parenthetical.
   targets=$(grep -oE 'source:[[:space:]]*raw/[^),;[:space:]]+' "$ANSWER" 2>/dev/null \
             | sed -e 's/^source:[[:space:]]*//' | sort -u)
-  cite_total=0; cite_ok=0; resolver=1
+  cite_total=0; cite_ok=0; resolver=1; dates=
   [ -f "$SCRIPT_DIR/cite-span.py" ] && command -v python3 >/dev/null 2>&1 || resolver=0
   while IFS= read -r t; do
     [ -z "$t" ] && continue
     cite_total=$((cite_total + 1))
     if [ "$resolver" -eq 1 ] && python3 "$SCRIPT_DIR/cite-span.py" "$ROOT/raw" "$t" >/dev/null 2>&1; then
       cite_ok=$((cite_ok + 1))
+      # Valid time only, read off the cited file's own frontmatter. Deliberately
+      # NOT fetched_at: that is when WE snapshotted the source, so a corpus
+      # ingested in one afternoon would show a dozen "distinct dates" and the
+      # floor would pass on a single day's worth of evidence.
+      #
+      # Only RESOLVING citations earn a date — otherwise an answer could clear
+      # the floor by naming two dated files it never opened.
+      d=$(sed -n '/^asserted_at:/{s/^asserted_at:[[:space:]]*//;p;q;}' "$ROOT/${t%%#*}" 2>/dev/null)
+      case "$d" in ''|unknown) ;; *) dates="$dates$d
+" ;; esac
     fi
   done <<EOF
 $targets
 EOF
+  # `grep -c` already prints the count; its exit-1-on-no-match is not an error
+  # here, so swallow the status WITHOUT emitting a second value. `|| echo 0`
+  # appended a line to grep's own "0" and made date_n a two-line string, which
+  # embedded a newline in the log record and corrupted the insertion.
+  date_n=$(printf '%s' "$dates" | sort -u | grep -c . 2>/dev/null || true)
   # Degrade honestly: with no resolver the count is unknown, not zero. A "0/7"
   # that actually means "could not check" is a fabricated defect.
   if [ "$resolver" -eq 0 ] && [ "$cite_total" -gt 0 ]; then ok_field="?"; else ok_field="$cite_ok"; fi
   if grep -qE '^- Wiki: *\(none' "$ANSWER" 2>/dev/null; then via=raw-only
   elif grep -qE '^- Wiki: *[^(]' "$ANSWER" 2>/dev/null; then via=wiki
   else via=unknown; fi
-  record="- metrics: op=query date=$DATE cites=$ok_field/$cite_total via=$via"
+  record="- metrics: op=query date=$DATE cites=$ok_field/$cite_total dates=$date_n via=$via"
+
+  # The gate. Blocks BEFORE the record is written: a blocked answer is not a
+  # measurement of the wiki, it is an answer that never should have been given,
+  # and logging it would trend the wrong thing.
+  if [ "$TEMPORAL" -eq 1 ]; then
+    if [ "$resolver" -eq 0 ]; then
+      echo "wiki-metrics: --temporal cannot verify without python3 + cite-span.py (failing closed)" >&2
+      exit 4
+    fi
+    if [ "$date_n" -lt 2 ]; then
+      echo "wiki-metrics: TEMPORAL FLOOR FAILED — $date_n distinct asserted_at date(s) among $cite_ok resolving citation(s); need >= 2." >&2
+      echo "  A change-over-time answer must rest on sources from at least two different dates." >&2
+      echo "  Run: python3 $SCRIPT_DIR/wiki-timeline.py --topic \"<terms>\"   then read and cite two dated rows." >&2
+      echo "  If the wiki genuinely holds only one date on this topic, say THAT — do not imply a trajectory." >&2
+      exit 4
+    fi
+  fi
 fi
 
 # ── append (insert into today's section, or open one at the top) ───────────────

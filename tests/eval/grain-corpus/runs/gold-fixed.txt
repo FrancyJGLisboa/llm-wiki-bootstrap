@@ -1,0 +1,76 @@
+[gold-fixed] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=28 control=0
+[gold-fixed] A1-2020-wet-blanket
+[gold-fixed] A1-2020-stocks-use-2005
+[gold-fixed] A1-2020-fund-combined-long
+[gold-fixed] A1-2020-basscat-analogy
+[gold-fixed] A1-2020-sentiment-follows-price
+[gold-fixed] A1-2020-usda-carryout-halved
+[gold-fixed] A1-2021-march-madness
+[gold-fixed] A1-2021-may-first-study
+[gold-fixed] A1-2021-social-media-skew
+[gold-fixed] A1-2021-parana-emergency
+[gold-fixed] A1-2021-phase-one-benchmark-flaw
+[gold-fixed] A1-2022-ethanol-grind-risk
+[gold-fixed] A1-2022-soy-acres-third-time
+[gold-fixed] A1-2022-soy-peso
+[gold-fixed] A1-2022-profarmer-gap
+[gold-fixed] A1-2022-goldman-faded
+[gold-fixed] A2-blacksea-headlines-asof
+[gold-fixed] A2-ethanol-corn-demand-asof
+[gold-fixed] A2-usda-credibility-asof
+[gold-fixed] A2-corn-acreage-shift-asof
+[gold-fixed] A2-argentina-strikes-asof
+[gold-fixed] A2-china-corn-buyer-asof
+[gold-fixed] A2-blacksea-headlines-both
+[gold-fixed] A2-ethanol-corn-demand-both
+[gold-fixed] A2-usda-credibility-both
+[gold-fixed] A2-corn-acreage-shift-both
+[gold-fixed] A2-argentina-strikes-both
+[gold-fixed] A2-china-corn-buyer-both
+
+# corpus eval — gold-fixed
+
+Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
+Questions: `/Users/francylisboacharuto/llm-wiki-bootstrap/tests/eval/grain-corpus/gold-questions-scoreable.md` (28)
+
+## scores
+
+- **A1** dated-opinion retrieval: **16/16** (100%) — target >=80%
+- **A2** temporal contradiction (both legs): **4/6** (67%) — target >=75%
+- citation integrity: 203/203 offered citations resolve
+- reads per answer: median=0 max=2 — budget <=12
+
+## detail
+
+| question | modality | answer | cite | date | reads |
+|---|---|---|---|---|---|
+| A1-2020-wet-blanket | opinion | PASS | PASS | PASS | 0 |
+| A1-2020-stocks-use-2005 | figure | PASS | PASS | PASS | 0 |
+| A1-2020-fund-combined-long | figure | PASS | PASS | PASS | 0 |
+| A1-2020-basscat-analogy | anecdote | PASS | PASS | PASS | 0 |
+| A1-2020-sentiment-follows-price | opinion | PASS | PASS | PASS | 0 |
+| A1-2020-usda-carryout-halved | figure | PASS | PASS | PASS | 2 |
+| A1-2021-march-madness | anecdote | PASS | PASS | PASS | 1 |
+| A1-2021-may-first-study | figure | PASS | PASS | PASS | 0 |
+| A1-2021-social-media-skew | opinion | PASS | PASS | PASS | 0 |
+| A1-2021-parana-emergency | figure | PASS | PASS | PASS | 0 |
+| A1-2021-phase-one-benchmark-flaw | reasoning | PASS | PASS | PASS | 2 |
+| A1-2022-ethanol-grind-risk | reasoning | PASS | PASS | PASS | 0 |
+| A1-2022-soy-acres-third-time | figure | PASS | PASS | PASS | 0 |
+| A1-2022-soy-peso | figure | PASS | PASS | PASS | 0 |
+| A1-2022-profarmer-gap | figure | PASS | PASS | PASS | 0 |
+| A1-2022-goldman-faded | opinion | PASS | PASS | PASS | 1 |
+| A2-blacksea-headlines-asof | conflict | PASS | PASS | PASS | 1 |
+| A2-ethanol-corn-demand-asof | conflict | FAIL | PASS | PASS | 0 |
+| A2-usda-credibility-asof | conflict | PASS | PASS | PASS | 0 |
+| A2-corn-acreage-shift-asof | conflict | PASS | PASS | PASS | 2 |
+| A2-argentina-strikes-asof | conflict | PASS | PASS | PASS | 0 |
+| A2-china-corn-buyer-asof | conflict | PASS | PASS | PASS | 1 |
+| A2-blacksea-headlines-both | conflict | FAIL | n/a | n/a | 2 |
+| A2-ethanol-corn-demand-both | conflict | PASS | n/a | n/a | 0 |
+| A2-usda-credibility-both | conflict | PASS | n/a | n/a | 0 |
+| A2-corn-acreage-shift-both | conflict | PASS | n/a | n/a | 1 |
+| A2-argentina-strikes-both | conflict | PASS | n/a | n/a | 0 |
+| A2-china-corn-buyer-both | conflict | PASS | n/a | n/a | 0 |
+
+A1 16/16; A2 4/6

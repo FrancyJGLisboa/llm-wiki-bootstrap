@@ -1,0 +1,39 @@
+[treatment-v2] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=8 control=0
+[treatment-v2] T1-china-shift-to-brazil-timing
+[treatment-v2] T2-fund-corn-length-characterization
+[treatment-v2] T7-recession-versus-labor-market
+[treatment-v2] T13-weekly-ethanol-production-run-rate
+[treatment-v2] T16-crush-share-of-soybean-demand
+[treatment-v2] T21-argentine-farmer-selling-behavior
+[treatment-v2] T23-ukraine-crop-figures-corn-then-wheat
+[treatment-v2]   !! no answer (API/network/cap) — excluded from the score
+[treatment-v2] T29-subscription-price-over-time
+[treatment-v2]   !! no answer (API/network/cap) — excluded from the score
+
+# corpus eval — treatment-v2
+
+Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
+Questions: `tests/eval/grain-corpus/runs/pilot-8.md` (8)
+
+## scores
+
+- **A1** dated-opinion retrieval: **0/0** (n/a) — target >=80%
+- **A2** temporal contradiction (both legs): **0/0** (n/a) — target >=75%
+- citation integrity: 33/33 offered citations resolve
+- reads per answer: median=0 max=3 — budget <=12
+- INCONCLUSIVE (API/cap, excluded): 2
+
+## detail
+
+| question | modality | answer | cite | date | reads |
+|---|---|---|---|---|---|
+| T1-china-shift-to-brazil-timing | reasoning | PASS | n/a | n/a | 3 |
+| T2-fund-corn-length-characterization | figure | PASS | n/a | n/a | 0 |
+| T7-recession-versus-labor-market | reasoning | PASS | n/a | n/a | 0 |
+| T13-weekly-ethanol-production-run-rate | figure | PASS | n/a | n/a | 0 |
+| T16-crush-share-of-soybean-demand | figure | PASS | n/a | n/a | 0 |
+| T21-argentine-farmer-selling-behavior | reasoning | PASS | n/a | n/a | 0 |
+| T23-ukraine-crop-figures-corn-then-wheat | figure | INCONC | n/a | n/a | 0 |
+| T29-subscription-price-over-time | figure | INCONC | n/a | n/a | 0 |
+
+A1 0/0; A2 0/0

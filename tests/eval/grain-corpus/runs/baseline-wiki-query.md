@@ -42,33 +42,6 @@ python3 scripts/wiki-to-kg.py wiki/ | grep -E '"verb": "supersede(s|d-by)"'
 
 `<node>`/`<a>`/`<b>` are page slugs. Use the returned chain as the spine of your answer, then cite each hop's page as `[[slug]]`. If the walk returns "no recorded …", the edges aren't in the wiki yet — fall back to reading pages, and note the gap (a missing causal edge is a good `## Open questions` item). This is the key-free path: it runs on the graph your wiki already encodes, no subscription call. The same applies to **replacement** questions — "what replaced X", "which document superseded X": filter the graph for `supersedes` / `superseded-by` edges (last line above) instead of hunting for supersession prose that may not exist.
 
-**Temporal / change-over-time traversal — run this ALWAYS, as the first command of every `/wiki-query`.** Not "if the question looks temporal". Always, with the user's question passed through verbatim:
-
-```bash
-python3 scripts/wiki-timeline.py --question "<the user's question, verbatim>"
-```
-
-**Why it is unconditional.** The previous version of this instruction asked *you* to judge whether the question was about change over time, and to run the timeline only then. Measured on 8 cross-temporal questions: 3/7 correct with a **median of ZERO file reads** — the router never fired. The model that fails to notice a cross-temporal question is exactly the model that will not run a check on itself, so a conditional guard gets skipped precisely when it is needed. The classification now lives in the script, tuned against 30 cross-temporal and 42 single-point questions. Your job is to run it, not to decide whether to.
-
-It prints one of two things:
-
-- `# SINGLE-POINT question (...)` — nothing further to do; answer normally.
-- A block headed `ACT ON THIS` — the question is cross-temporal. It carries the dated reading list and the instructions that apply. **Follow that block.**
-
-Each row is labelled `asserted` (the document's own `asserted_at`), `inferred` (a date read off the filename — say so if you rely on one), or `unknown`, and shows which wiki pages cite it. A row marked `(uncited by any page)` exists only in `raw/` — no wiki page carries its content, so you must open the raw file to use it.
-
-Read **at least two rows at distinct dates** — the earliest and latest bearing on the question, plus any row where the position visibly turns. Structure the answer as a dated sequence: what was claimed when, what changed, what holds now, citing each date's own raw anchor.
-
-The detector is deliberately over-eager and does fire on some point-in-time questions. That is not a licence to ignore it: read the sources, and if the answer genuinely rests on one date, say so plainly and cite that one. What you may not do is imply a trajectory from a single date, or skip the reading because the question looked simple.
-
-**The read floor (blocking).** When the `ACT ON THIS` block appeared, write the answer you are about to give to a scratch file and run the gate — regardless of `--no-promote`, and before presenting anything:
-
-```bash
-bash scripts/wiki-metrics.sh query /tmp/wiki-answer.md . --temporal
-```
-
-Exit 4 means your answer's resolving citations span fewer than two distinct `asserted_at` dates — i.e. you narrated a change from a single point in time. **Treat it as blocking**, exactly like the faithfulness gate in step 5: go back to the timeline, open a second dated source, and re-answer from it. Do not present a blocked answer, and do not reword it to dodge the check — the floor is on the evidence, not the prose. The one legitimate escape is the single-date case above: say the wiki holds one date, cite it, drop the change framing, and run the gate without `--temporal`.
-
 ### Step 2 — Try to answer from the wiki alone
 
 Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.
@@ -204,7 +177,6 @@ Sources:
 - Raw: (source: raw/<file>#<anchor>), (source: raw/<other>#<anchor>)
 - Web: <urls if used>
 
-Timeline: <n> dated sources spanning <first>..<last> | (none — not a change-over-time question)
 Promoted to wiki: wiki/<file> (new) | (nothing — `--no-promote` was set | wiki was sufficient)
 Visual: diagrams/query-<slug>.<html|pdf|png> (archetype: <name>, score <n>) | (none — no --visual) | (HTML only — renderer missing, see hint above)
 ```

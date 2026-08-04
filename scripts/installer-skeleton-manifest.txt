@@ -46,6 +46,7 @@ scripts/wiki-lint-asserted-at.sh
 scripts/asserted-at-audit.py
 scripts/wiki-to-kg.py
 scripts/wiki-graph-walk.py
+scripts/wiki-timeline.py
 scripts/wiki-discover.py
 scripts/citation-audit.py
 scripts/wiki-faithfulness-gate.sh
