@@ -44,11 +44,23 @@ The clone above keeps the demo content (a meta-wiki about the LLM-wiki pattern �
 ```bash
 git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap tmp
 tmp/scripts/create-llm-wiki.sh ~/my-wiki   # fresh skeleton, no demo content
+                                           # refuses to clobber a non-empty target
 rm -rf tmp
 cd ~/my-wiki
+./scripts/preflight.sh                     # confirm hard requirements + optional tools
+git add -A && git commit -m "chore: bootstrap llm-wiki"   # installer already ran `git init`
+claude                                     # open Claude Code in the new wiki
 ```
 
-The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
+Then, inside Claude Code:
+
+```
+/wiki-extract https://example.com/some-article     # pull a source into raw/
+/wiki-ingest                                       # integrate every un-ingested raw/ file
+/wiki-query "what does that article say about X?"  # ask
+```
+
+The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/wiki-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
 A wiki you've curated is also a transferable asset: `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle a buyer can verify offline — see [`docs/SELLING.md`](docs/SELLING.md) for the productized-wiki recipe (schema, packaging, the raw-rights rule).
 
