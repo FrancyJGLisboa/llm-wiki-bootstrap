@@ -43,3 +43,11 @@ index 3333333..4444444 100644
 +ingested_pages:
 +  - wiki/open-knowledge-format.md
 +  - wiki/knowledge-graph.md
+diff --git a/raw/karpathy-llm-wiki-video-transcript.md b/raw/karpathy-llm-wiki-video-transcript.md
+index 8888888..9999999 100644
+--- a/raw/karpathy-llm-wiki-video-transcript.md
++++ b/raw/karpathy-llm-wiki-video-transcript.md
+@@ -7,2 +7,5 @@ fetched_at: 2026-05-25
++asserted_at: 2026-04-18
++asserted_at_source: raw/karpathy-llm-wiki-video-transcript.md#L12
++asserted_at_note: date stated in the opening remarks

@@ -168,7 +168,10 @@ i6_probe() {  # <label> <command...> — run in the target, demand a verdict
     i6=1
   fi
 }
-for lint in "$TGT"/scripts/wiki-lint-*.sh; do
+# `gate-*.sh` is in the glob too: a shipped gate that crashes on a fresh install
+# is worse than no gate, and this loop previously covered only wiki-lint-*, so a
+# newly shipped gate could pass the manifest check while never once being run.
+for lint in "$TGT"/scripts/wiki-lint-*.sh "$TGT"/scripts/gate-*.sh; do
   [ -f "$lint" ] || continue
   # No argument on purpose: each lint has its own default target (raw/ for the
   # drift lint, the wiki root for the commitment lint), and the default path is

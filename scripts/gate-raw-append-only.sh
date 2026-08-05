@@ -2,10 +2,20 @@
 # scripts/gate-raw-append-only.sh — gate RAW-APPEND-ONLY.
 #
 # RULE: `raw/` is append-only. A change to an existing raw source may touch
-# nothing but the three ingest-commitment frontmatter fields — `ingested_hash`,
-# `ingested_at`, `ingested_pages` — written as the last step of /wiki-ingest.
+# nothing but the six authorised frontmatter fields:
+#   - `ingested_hash`, `ingested_at`, `ingested_pages` — the ingest commitment,
+#     written as the last step of /wiki-ingest (wiki-ingest.md:189-191);
+#   - `asserted_at`, `asserted_at_source`, `asserted_at_note` — the valid-time
+#     axis, which /wiki-lint --apply is documented to write as "the one
+#     sanctioned exception to never writing to raw/" (wiki-lint.md:132). It is
+#     frontmatter-only, so the body hash is unchanged and no citation moves.
 # Adding a new raw file is always allowed. Editing a body, changing any other
 # frontmatter field, deleting a source, or renaming one is not.
+#
+# The asserted_at family was missed on the first pass: the gate was written from
+# the "must NOT do" list in AGENTS.md, which names only the three ingest fields.
+# Enforcing that literally would have made `/wiki-lint --apply` — a shipped,
+# documented workflow — fail the gate on correct behaviour.
 #
 # WHY THIS GATE EXISTS: this is hard rule #1 (AGENTS.md "What the LLM must NOT
 # do", item 1; CLAUDE.md rule 1) and until now it lived only in prose. Every
@@ -79,9 +89,16 @@ case "$MODE" in
     command -v git >/dev/null 2>&1 || die2 "git not found (cannot read the worktree diff)"
     cd "$REPO_ROOT" || die2 "cannot cd to $REPO_ROOT"
     git rev-parse --git-dir >/dev/null 2>&1 || die2 "$REPO_ROOT is not a git repository"
-    # HEAD may not exist in a repo with no commits; treat that as gate failure
-    # rather than silently passing an unexaminable tree.
-    git rev-parse --verify HEAD >/dev/null 2>&1 || die2 "no HEAD commit to diff against"
+    # A repo with no commits yet — a wiki freshly made by create-llm-wiki.sh,
+    # before the user's first `git commit`. There is no prior state, so every
+    # file in raw/ is a new file, and new files are always authorised. Clean, not
+    # exit 2: a brand-new wiki must not greet its owner with a gate error on turn
+    # one. (This is a correct reading of the rule, not a convenience: with no
+    # HEAD there is by construction nothing that could have been modified.)
+    if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+      printf 'gate-raw-append-only: clean — no commits yet, so every raw/ file is a new source.\n'
+      exit 0
+    fi
     git diff HEAD -- raw/ > "$DIFF" 2>"$tmp/err" || die2 "git diff failed: $(cat "$tmp/err")"
     ;;
   range)
@@ -107,8 +124,9 @@ awk -v rule="$RULE_ID" '
   function violation(msg,   _) {
     printf "%s: %s\n", path, rule > "/dev/stderr"
     printf "  %s\n", msg          > "/dev/stderr"
-    printf "  FIX: raw/ is read-only evidence. Revert this change. Only /wiki-ingest\n" > "/dev/stderr"
-    printf "  may write, and only ingested_hash / ingested_at / ingested_pages.\n"      > "/dev/stderr"
+    printf "  FIX: raw/ is read-only evidence. Revert this change. The only authorised\n" > "/dev/stderr"
+    printf "  writes are frontmatter: ingested_hash/at/pages (/wiki-ingest) and\n"        > "/dev/stderr"
+    printf "  asserted_at/_source/_note (/wiki-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
     violations++
   }
 
@@ -139,10 +157,15 @@ awk -v rule="$RULE_ID" '
   # ── content lines of a MODIFIED raw file ──
   /^[+-]/ {
     line = substr($0, 2)
-    # The three ingest-commitment fields — the only authorised writes.
-    if (line ~ /^ingested_hash:/)  next
-    if (line ~ /^ingested_at:/)    next
-    if (line ~ /^ingested_pages:/) next
+    # The six authorised frontmatter writes: the ingest commitment (/wiki-ingest)
+    # and the valid-time axis (/wiki-lint --apply). Both are frontmatter-only,
+    # so neither moves the body hash or invalidates a citation anchor.
+    if (line ~ /^ingested_hash:/)       next
+    if (line ~ /^ingested_at:/)         next
+    if (line ~ /^ingested_pages:/)      next
+    if (line ~ /^asserted_at:/)         next
+    if (line ~ /^asserted_at_source:/)  next
+    if (line ~ /^asserted_at_note:/)    next
     # A block-style `ingested_pages:` list continues as `  - wiki/<page>.md`.
     # Narrow on purpose: only list items pointing into wiki/ are exempt, so
     # this cannot be used to smuggle arbitrary lines past the gate.

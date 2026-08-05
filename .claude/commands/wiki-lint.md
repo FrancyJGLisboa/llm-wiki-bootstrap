@@ -116,6 +116,23 @@ Then check the *precondition* that lint depends on — a source with no commitme
 - Uncited sources are exempt and listed separately — nothing depends on their stability yet.
 - Fix proposal (if `--apply`): **never hand-write `ingested_hash`.** A commitment nobody derived is a fabricated receipt, and it would make the drift lint report clean forever. The only correct fix is re-running `/wiki-ingest` on each named source. Report it as a required follow-up, not an applied fix.
 
+### 8b. Unauthorised writes to `raw/` (the drift *cause*, not its symptom)
+
+Check 8 detects that a raw body moved. It cannot say **why**, and the two causes need opposite responses: a legitimate re-extract should be re-ingested, while an agent quietly editing evidence to match a claim should be reverted. Treated as drift, the second one gets laundered into the wiki by a re-ingest.
+
+Run the deterministic gate over uncommitted changes:
+
+```bash
+./scripts/gate-raw-append-only.sh --worktree
+```
+
+(Skip silently if the script is absent — older wiki. Exit 2 means the gate itself could not run — no git, no HEAD — which is not a pass; report it as unknown, never as clean.)
+
+- Report each violation as emitted: body edited, unauthorised frontmatter field, source deleted, source renamed.
+- The six authorised frontmatter writes are `ingested_hash` / `ingested_at` / `ingested_pages` (written by `/wiki-ingest`) and `asserted_at` / `asserted_at_source` / `asserted_at_note` (written by check 9 below). Everything else in `raw/` is evidence.
+- Fix proposal (if `--apply`): **never "fix" this by editing the wiki page to match the altered source** — that ratifies the corruption. Restore the raw body from git (`git checkout -- raw/<file>`) and, if the source genuinely changed upstream, re-extract it as a new source rather than mutating the old one. Report as a required follow-up, not an applied fix.
+- To audit history instead of the working tree: `./scripts/gate-raw-append-only.sh --range <rev-range>`.
+
 ### 9. Missing valid time (no as-of axis)
 
 `fetched_at` says when a snapshot entered the wiki. It does **not** say what date the document claims for its own content. Without `asserted_at`, an as-of question ("what was throughput in April?") has nothing structured to resolve against, and the wiki answers with whatever the file says now.
