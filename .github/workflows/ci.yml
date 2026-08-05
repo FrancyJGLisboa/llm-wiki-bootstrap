@@ -21,6 +21,20 @@ jobs:
   smoke:
     name: smoke + regression guards (no LLM)
     runs-on: ubuntu-latest
+    # Gate LOCALE-INVARIANT. These scripts are authored on macOS (BSD awk) and
+    # run here on gawk/mawk. `wiki-lint-typed-relations.sh` built an em-dash via
+    # sprintf("%c%c%c",226,128,148) and matched it with index(): three raw bytes
+    # under a byte locale, three multi-byte codepoints under UTF-8 — R7 green
+    # locally, red here, invisible until the PR ran. A static "non-ASCII near
+    # awk/sed" linter cannot separate the awk PROGRAM from the shell string
+    # around it (it flags 23 files here, every one a false positive), so this
+    # detects the actual failure instead of the smell: run the whole suite under
+    # both locales and require identical results. Divergence = locale-dependent
+    # behaviour, wherever it lives.
+    strategy:
+      fail-fast: false
+      matrix:
+        locale: [C, C.UTF-8]
     steps:
       - uses: actions/checkout@v4
       - name: Show toolchain
@@ -28,8 +42,43 @@ jobs:
           bash --version | head -1
           openssl version
           python3 --version
-      - name: Run 24 deterministic checks (C1–C5 + R1–R19)
-        run: bash scripts/smoke-all.sh --no-build
+          awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
+          locale
+      - name: Run the deterministic checks (C1–C5 + R1–R31) under LC_ALL=${{ matrix.locale }}
+        env:
+          LC_ALL: ${{ matrix.locale }}
+        run: bash scripts/smoke-all.sh --no-build | tee "smoke-${{ matrix.locale }}.log"
+      - name: Upload pass tally
+        uses: actions/upload-artifact@v4
+        with:
+          name: smoke-tally-${{ matrix.locale }}
+          path: smoke-${{ matrix.locale }}.log
+
+  locale-invariant:
+    name: LOCALE-INVARIANT (both locales agree)
+    needs: smoke
+    runs-on: ubuntu-latest
+    # `needs: smoke` already fails the build if either locale goes red. This job
+    # closes the remaining hole: both legs green but with DIFFERENT pass counts,
+    # which is the same locale bug wearing a green tick.
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: smoke-tally-*
+          merge-multiple: true
+      - name: Compare pass tallies
+        run: |
+          set -euo pipefail
+          a=$(grep -oE 'All [0-9]+ checks green' smoke-C.log | grep -oE '[0-9]+')
+          b=$(grep -oE 'All [0-9]+ checks green' smoke-C.UTF-8.log | grep -oE '[0-9]+')
+          echo "LC_ALL=C: $a passes / LC_ALL=C.UTF-8: $b passes"
+          if [ "$a" != "$b" ]; then
+            echo "LOCALE-INVARIANT: the suite counts a different number of passes per locale." >&2
+            echo "Some check is byte-oriented under one locale and codepoint-oriented under" >&2
+            echo "the other. FIX: force LC_ALL=C on the awk/sed that manipulates non-ASCII." >&2
+            exit 1
+          fi
+          echo "LOCALE-INVARIANT: clean — identical results under both locales."
 
   quality:
     name: shell + duplication quality gate
