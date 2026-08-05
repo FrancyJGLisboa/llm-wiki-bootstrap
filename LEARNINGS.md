@@ -158,3 +158,51 @@ which point the fix was already built.
 **When to apply:** before building anything to close a measured gap, run the
 baseline arm on a properly-sized sample. The order is baseline, then diagnosis,
 then fix — not fix, then measure. Cheap rule: if n < 20, it is a hypothesis.
+
+## 2026-08-05 — a differential gate must resolve WHICH implementation consumes each fixture, and refuse to guess
+
+**Rule:** When a gate proves a property by running the real code over a real
+fixture, and more than one implementation could consume that fixture, the gate
+must resolve the binding — not assume one, and not check every implementation.
+Resolve empirically (which ones can actually read it), use it when exactly one
+can, and require the fixture to DECLARE its consumer when several can. Never
+default silently; a fixture that resolves to nothing is a failure, not a pass.
+
+**Why:** `gate-eval-prompt-purity.sh` first ran `retr_parse_questions` over all
+seven question fixtures and reported five leaks in `multi-hop-questions.md` —
+all false. That file is consumed by `eval_parse_questions`, which handles
+`baseline-absent:` correctly. The next attempt ("no fixture may leak under
+EITHER parser") looked conservative and was simply wrong: a retr-format fixture
+reports nine leaks under the multi-hop parser, for nine fields that parser
+legitimately never sees. Both wrong answers came from skipping the binding
+question. The repo makes it unavoidable — two of four grain-corpus question
+files are passed to `eval-corpus.sh` by hand via `--questions`, so no call-graph
+can discover them, and a hand-written map rots the day someone adds a fixture.
+
+**When to apply:** any gate whose detection mechanism is "run the real thing and
+diff", where the repo has more than one "real thing". Also the tell: if a new
+gate's first run produces findings that are individually plausible but all in
+one file, suspect the binding before believing the findings.
+
+## 2026-08-05 — a CLEAN fixture can pass for the wrong reason; only a mutation proves it is load-bearing
+
+**Rule:** A gate's clean fixture passing tells you nothing until you have broken
+it and watched it fail. Write the fixture so the ONLY thing making it pass is
+the property under test — in particular, prose and comments inside a fixture
+must not restate the thing the gate greps for.
+
+**Why:** `gate-reachable.sh` computes reachability by looking for a script's
+basename in the text of already-reached files. Its clean fixture's own header
+comments said "Reaches verify-alpha.sh directly; verify-beta.sh is reached
+transitively through it." Two of five mutations — severing the transitive call,
+then severing the root call — both came back GREEN, because the explanatory
+comments still contained the basenames. The fixture was passing on its
+documentation, not its behaviour. The fix was two-sided: strip whole-line
+comments before matching (a script named only in a comment is described, not
+run), and rewrite the fixtures so no comment names a basename. Mutation M5 now
+covers exactly this case — the call commented out, the mention surviving.
+
+**When to apply:** every gate, at the moment the clean fixture first goes green
+— that is the least trustworthy green in the process. Deterministic-gates §5
+item 1 exists for this; the two mutations that fail are worth more than the
+three that pass.

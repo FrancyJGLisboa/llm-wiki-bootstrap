@@ -1,0 +1,27 @@
+# Claims table for scripts/gate-doc-claims.sh (rule DOC-CLAIM-RECOMPUTE).
+#
+# Each row binds a claim id to the command that RECOMPUTES its value from the
+# repository. Prose anywhere in the repo may then state that value inside a
+# marker pair:
+#
+#     <!-- claim:<id> -->VALUE<!-- /claim -->
+#
+# and the gate checks VALUE against the command's stdout. HTML comments render
+# as nothing on GitHub and on the Pages site, so the marker is invisible to
+# readers and exact for the gate.
+#
+# Only claims listed here are checked. That is deliberate: pattern-hunting for
+# "every number that looks like a count" misfires on prose describing history
+# ("it advertised 31 but ran 26"), on numbers inside the README directory tree,
+# and on en-dash vs hyphen ranges. A number is checked when someone chose to
+# bind it — and a marker naming an id that is NOT in this table is an error,
+# not a skip, so the binding cannot rot into a no-op.
+#
+# Format: <id><TAB><shell command>   (run from the repo root)
+#
+# Deliberately short. The smoke-check count, the command count and the
+# retrieval-check count are already pinned by scripts/verify-site-claims.sh,
+# each with its own definition of what it counts — binding them here too would
+# create two sources of truth for one number. Only claims nothing else pins
+# belong in this table. Adding the next one costs a row and a marker.
+smoke-guard-range	printf 'R1–R%s' "$(grep -oE '^# R[0-9]+' scripts/smoke-all.sh | grep -oE '[0-9]+' | sort -n | tail -1)"

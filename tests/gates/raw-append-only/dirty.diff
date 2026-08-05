@@ -1,0 +1,38 @@
+Fixture: VIOLATING — must exit 1, naming all four files.
+
+Four unauthorised shapes:
+  1. a raw BODY edited (the silent-corruption case: hash-drift would later fire
+     on the symptom and never name the cause)
+  2. a non-ingest frontmatter field rewritten (the `chore: backfill
+     extraction_method on legacy raws` shape — commit 60d30e3)
+  3. a raw source DELETED (citations into it dangle)
+  4. a raw source RENAMED (same, but hash-drift cannot even see it)
+
+diff --git a/raw/smoke-source.md b/raw/smoke-source.md
+index 1111111..2222222 100644
+--- a/raw/smoke-source.md
++++ b/raw/smoke-source.md
+@@ -20,3 +20,3 @@
+-The retention window for production logs is 90 days.
++The retention window for production logs is 30 days.
+diff --git a/raw/okf-spec-v0-1.md b/raw/okf-spec-v0-1.md
+index 3333333..4444444 100644
+--- a/raw/okf-spec-v0-1.md
++++ b/raw/okf-spec-v0-1.md
+@@ -4,2 +4,3 @@ source_type: article
++extraction_method: pdftotext
+ fetched_at: 2026-06-02
+diff --git a/raw/google-cloud-okf-blog.md b/raw/google-cloud-okf-blog.md
+deleted file mode 100644
+index 5555555..0000000
+--- a/raw/google-cloud-okf-blog.md
++++ /dev/null
+@@ -1,3 +0,0 @@
+----
+-source_type: article
+----
+diff --git a/raw/karpathy-llm-wiki-video-transcript.md b/raw/karpathy-transcript.md
+similarity index 98%
+rename from raw/karpathy-llm-wiki-video-transcript.md
+rename to raw/karpathy-transcript.md
+index 6666666..7777777 100644

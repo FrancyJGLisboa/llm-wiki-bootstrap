@@ -1,0 +1,5 @@
+name: CI
+jobs:
+  smoke:
+    steps:
+      - run: bash scripts/verify-alpha.sh

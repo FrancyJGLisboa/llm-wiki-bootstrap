@@ -1,5 +1,7 @@
 # Multi-hop questions for typed-relations eval
 
+<!-- gate-parser: eval_parse_questions -->
+
 The `scripts/eval-multi-hop.sh` script reads this file, runs each question against
 the **baseline** (verbs stripped from single-target `## Related` lines) and the
 **typed** wiki, and grades by literal case-insensitive substring match.

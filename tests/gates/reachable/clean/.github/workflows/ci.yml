@@ -1,0 +1,7 @@
+# Fixture root. The first oracle is invoked below; the second is reached only
+# through it, which is what makes this a closure rather than a flat grep.
+name: CI
+jobs:
+  smoke:
+    steps:
+      - run: bash scripts/verify-alpha.sh

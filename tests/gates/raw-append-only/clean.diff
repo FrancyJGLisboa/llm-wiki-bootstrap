@@ -1,0 +1,45 @@
+Fixture: CLEAN — must exit 0.
+
+Three authorised shapes in one diff:
+  1. a brand-new raw source (extract) — allowed wholesale
+  2. an ingest commitment stamped on an existing source — the only write
+     /wiki-ingest is permitted to make
+  3. a block-style ingested_pages list
+
+Prose above the first `diff --git` is ignored by the parser, which is why this
+explanation can live in the fixture itself.
+
+diff --git a/raw/newly-extracted.md b/raw/newly-extracted.md
+new file mode 100644
+index 0000000..1a2b3c4
+--- /dev/null
++++ b/raw/newly-extracted.md
+@@ -0,0 +1,8 @@
++---
++source_url: https://example.com/post
++source_type: article
++source_title: "A brand new source"
++fetched_at: 2026-08-05
++ingested_hash: ""
++ingested_at: never
++---
+diff --git a/raw/smoke-source.md b/raw/smoke-source.md
+index 1111111..2222222 100644
+--- a/raw/smoke-source.md
++++ b/raw/smoke-source.md
+@@ -5,8 +5,8 @@ fetched_at: 2026-05-25
+-ingested_hash: ""
+-ingested_at: never
+-ingested_pages: []
++ingested_hash: sha256:9f2c1a7e4b8d0c35
++ingested_at: 2026-08-05 09:14
++ingested_pages: [wiki/smoke-topic.md]
+diff --git a/raw/okf-spec-v0-1.md b/raw/okf-spec-v0-1.md
+index 3333333..4444444 100644
+--- a/raw/okf-spec-v0-1.md
++++ b/raw/okf-spec-v0-1.md
+@@ -6,3 +6,5 @@ fetched_at: 2026-06-02
+-ingested_pages: []
++ingested_pages:
++  - wiki/open-knowledge-format.md
++  - wiki/knowledge-graph.md

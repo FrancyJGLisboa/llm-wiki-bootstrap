@@ -1,0 +1,3 @@
+# Fixture claims table — the recompute commands are self-contained so the
+# fixture cannot drift with the real repo.
+widget-count	printf '3'

@@ -371,6 +371,75 @@ else
   record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/wiki-query temporal contract regression)"
 fi
 
+# R29 — the eval's own prompt purity. Three separate author-side fields have
+# leaked through retr_parse_questions' catch-all into the text sent to the model
+# (`requires:`, `change:`, `cite-file-matches:`) — the last one pasted the ERE
+# naming the correct source file's date prefix into 54 of 66 prompts, and the
+# check it feeds is precisely "did you cite a source of the right date". Every
+# figure measured before it was found is suspect. This runs the real parsers on
+# the real fixtures and asserts no `field:` line survives into a question.
+if "$SCRIPT_DIR/gate-eval-prompt-purity.sh" >/dev/null 2>&1; then
+  ok "R29 gate-eval-prompt-purity.sh exits 0 (no author-side metadata reaches the model)"
+else
+  record_fail "R29 gate-eval-prompt-purity.sh exits non-zero (an eval fixture leaks metadata into the prompt)"
+fi
+
+# R30 — raw/ is append-only (AGENTS.md hard rule #1), until now prose-only.
+# Every other gate rests on this: citations resolve into raw/, hash-drift
+# compares against it, the faithfulness gate entails from it. A quietly edited
+# raw body makes hash-drift fire on the symptom and never name the cause.
+# Worktree mode, so history is never required to be fixed.
+if "$SCRIPT_DIR/gate-raw-append-only.sh" >/dev/null 2>&1; then
+  ok "R30 gate-raw-append-only.sh exits 0 (raw/ changes are additions or ingest commitments only)"
+else
+  record_fail "R30 gate-raw-append-only.sh exits non-zero (unauthorised write to the immutable raw layer)"
+fi
+
+# R31 — the gates' own fixtures. A gate that never fires is indistinguishable
+# from a broken one; these assert both directions on committed fixtures.
+gate_fixtures_ok=1
+"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/clean-questions.md >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/dirty-questions.md >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/clean.diff >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/dirty.diff >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/clean  >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/dirty  >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/clean >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
+if [ "$gate_fixtures_ok" = 1 ]; then
+  ok "R31 all four gates fail their violating fixture and pass their clean one"
+else
+  record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, or misses a planted violation)"
+fi
+
+# R32 — the scale eval's own oracle (F1–F7). README names this as one of the
+# three oracles that "verify every grader — an eval nobody checks measures
+# nothing", and nothing ran it. Found by gate-reachable.sh; it is deterministic
+# and key-free, so the fix was to wire it, not to declare it standalone.
+if "$SCRIPT_DIR/verify-scale-eval.sh" >/dev/null 2>&1; then
+  ok "R32 verify-scale-eval.sh exits 0 (parity/budget/index gates + crash-survival hold)"
+else
+  record_fail "R32 verify-scale-eval.sh exits non-zero (scale-eval oracle regression)"
+fi
+
+# R33 — no orphan oracles. An unwired gate reads as coverage and never fires,
+# which is how most broken gates are born. Transitive reachability from the CI
+# workflows; declared standalones are printed as suppressions, never silent.
+if "$SCRIPT_DIR/gate-reachable.sh" >/dev/null 2>&1; then
+  ok "R33 gate-reachable.sh exits 0 (every verify-*/gate-* oracle is reachable from CI)"
+else
+  record_fail "R33 gate-reachable.sh exits non-zero (an oracle exists that nothing runs)"
+fi
+
+# R34 — structural numbers stated in prose are recomputed, not typed. README
+# described the suite as running "R1–R4 regression guards" for the two dozen
+# commits it took to reach R28: a doc that lies produces no red.
+if "$SCRIPT_DIR/gate-doc-claims.sh" >/dev/null 2>&1; then
+  ok "R34 gate-doc-claims.sh exits 0 (every bound doc claim recomputes to its stated value)"
+else
+  record_fail "R34 gate-doc-claims.sh exits non-zero (a documented number no longer matches the repo)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
