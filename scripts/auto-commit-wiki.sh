@@ -33,6 +33,30 @@ fi
 [ -n "$msg" ] || msg="wiki snapshot"
 msg="${msg//\"/}"
 
+# RAW-APPEND-ONLY, advisory. raw/ is evidence: citations resolve into it and
+# hash-drift compares against it, so an unauthorised edit corrupts the substrate
+# silently — /wiki-lint later reports the drift and never names the cause. Warn
+# here, where it is still one `git checkout --` away from undone.
+#
+# Warn, never block: this hook's contract is that it always exits 0 and can
+# never hang or fail a turn. A blocking gate on a Stop hook would strand the
+# user's work in an uncommitted tree, which is the exact failure this script
+# exists to prevent. The blocking enforcement belongs in /wiki-lint (check 8b).
+#
+# Exit 1 (a real violation) is warned about; exit 2 (the gate itself could not
+# run) is swallowed. Treating 2 as a violation would fire a scary warning on
+# every turn in an environment where the gate simply cannot work, and a warning
+# that cries wolf is one the user learns to scroll past.
+if [ -x scripts/gate-raw-append-only.sh ]; then
+  scripts/gate-raw-append-only.sh --worktree >/dev/null 2>&1
+  if [ "$?" -eq 1 ]; then
+    printf 'auto-commit: WARNING — raw/ was modified outside the authorised frontmatter fields.\n' >&2
+    printf '  raw/ is immutable evidence: wiki pages cite into it and drift detection\n' >&2
+    printf '  compares against it. Run  ./scripts/gate-raw-append-only.sh --worktree\n' >&2
+    printf '  Committing anyway (this hook never blocks), but review before pushing.\n' >&2
+  fi
+fi
+
 git add -A
 # -c commit.gpgsign=false: a Stop hook can't answer a GPG passphrase prompt;
 # an unsigned auto-snapshot is the right trade for never hanging the turn.
