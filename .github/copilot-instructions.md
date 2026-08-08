@@ -1,6 +1,6 @@
 # llm-wiki-bootstrap (GitHub Copilot instructions)
 
-This repository is an `llm-wiki-bootstrap` instance — a personal LLM-wiki knowledge base.
+This repository is an `llm-wiki-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over.
 
 ## Read first
 

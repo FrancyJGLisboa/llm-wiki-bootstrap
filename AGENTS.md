@@ -6,7 +6,9 @@ This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-sche
 
 ## What this project is
 
-A personal LLM-wiki knowledge base, operated **exclusively via slash commands** in any agentic tool (Claude Code first; others follow). The wiki layer is **owned by the LLM** — the user curates raw sources and asks questions; the LLM does all writing, cross-referencing, and maintenance.
+A **context compiler**: it transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that LLMs can navigate, retrieve from, and reason over. `raw/` is the source tree, `/wiki-ingest` is the build, `wiki/` is the emitted target representation, `/wiki-lint` is the semantic-analysis pass, and `scripts/package-wiki.sh` emits the distributable. The full category definition — including where the compiler analogy holds and where it deliberately breaks — is in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
+
+Operationally it is a personal LLM-wiki knowledge base, operated **exclusively via slash commands** in any agentic tool (Claude Code first; others follow). The wiki layer is **owned by the LLM** — the user curates raw sources and asks questions; the LLM does all writing, cross-referencing, and maintenance.
 
 The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itself, derived from `raw/karpathy-llm-wiki-video-transcript.md`. It serves as both the system's reference documentation and as a worked example of the pattern. Users may extend it, replace it, or wipe it (`./scripts/wipe-meta-wiki.sh`) to start their own.
 
@@ -311,6 +313,27 @@ This is the BYO-agent port of PageIndex: the **script** segments deterministical
 **Environment check.** `scripts/preflight.sh` reports which extraction tools (`pdftotext`, `pandoc`, `xlsx2csv`, `python-docx`, `openpyxl`, `yt-dlp`) are present and which `/wiki-extract` formats will run first-try vs fall back vs fail. Suggest running it if a user reports unexpected `extraction_status: failed` sidecars or asks why DOCX/XLSX produced empty content.
 
 **Optional MCP read surface.** A user may launch `./scripts/mcp-server.sh` to expose `wiki/` to any MCP-aware client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) with BM25 search over the wiki. This is **read-by-convention**, additive, and does not change the three-layer model or the slash commands. Writes should still flow through `/wiki-ingest` / `/wiki-query` so `log.md` stays accurate. Setup: [`docs/MCP.md`](docs/MCP.md).
+
+## Output format — the context package
+
+A built wiki is not only a directory to work in; it is a **distributable artifact**. `scripts/package-wiki.sh` emits it: a versioned `.tar.gz` built from an **include list, never an exclude list** (so junk cannot leak in by omission), carrying `raw/`, `wiki/`, `AGENTS.md`, `log.md`, the tool shims, `.claude/commands/`, `templates/`, and the handful of runtime scripts a recipient needs.
+
+Four gates block packaging, so an unsound wiki cannot ship:
+
+| Gate | Checks |
+|---|---|
+| G1 | every `raw/` file hashes cleanly via `scripts/body-hash.sh` (catches malformed frontmatter) |
+| G2 | every `wiki/` page carries the required frontmatter keys |
+| G3 | every citation resolves — `scripts/citation-audit.py` C1+C2, zero BAD |
+| G4 | every claim-bearing page is sourced (`--coverage`) — a wiki of uncited claims would otherwise package clean |
+
+The bundle carries a `MANIFEST` (SHA-256 per file, `LC_ALL=C` sorted), an optional detached GPG signature (`WIKI_SIGN_KEY`), and **`scripts/verify-bundle.sh` inside itself** — so the recipient verifies integrity and citation soundness offline, needing nothing from the producer. Symlinks are refused: a portable asset must not depend on host paths.
+
+**Scope of the claim:** the bundle proves citations *resolve* (G3) and claim-bearing pages are *covered* (G4). Semantic entailment — that each cited passage actually supports its claim — is a write-time guarantee enforced by the ingest/promote faithfulness gate; it needs an LLM and is not re-provable offline.
+
+There is deliberately **no `/wiki-export` command**. The output tier is split by artifact type (`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`, `scripts/wiki-to-okf.py`, and this packager) rather than unified behind one exporter — see [`wiki/commands.md`](wiki/commands.md). Packaging is a shell operation, not a slash command.
+
+Related: [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md) (why this is the compiler's emit stage), [`docs/SELLING.md`](docs/SELLING.md) (one use for a portable, verifiable package).
 
 ## log.md format
 

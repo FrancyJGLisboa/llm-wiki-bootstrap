@@ -2,7 +2,7 @@
 title: Decision Timeline
 type: navigation
 source: analysis
-updated: 2026-07-07
+updated: 2026-08-08
 tags: [synthesis, timeline, navigation]
 ---
 
@@ -12,6 +12,16 @@ tags: [synthesis, timeline, navigation]
 
 Reverse-chronological activity timeline parsed from every `log.md` entry (ingest / query / lint and other logged events). An activity trail, not a record of domain decisions.
 
+- **2026-08-08** — context-compiler framing (positioning, no mechanical change)
+- **2026-07-27** — R4: 0/7 -> 7/7. The spec gap was the whole story.
+- **2026-07-27** — R4 root cause was a spec gap; entity extraction (phase 2) instrumented
+- **2026-07-27** — T2 run: as-of survives without prose, and the eval mis-scored a correct answer
+- **2026-07-26** — first eval run came back VOID; hardened the instrument
+- **2026-07-26** — second run: R1 3/3 via wiki, and three more grader faults
+- **2026-07-26** — valid time: `asserted_at` enforced (timestamps phase 1 of 2)
+- **2026-07-26** — clean run: 7/12, and point-in-time actually works
+- **2026-07-24** — cross-modality retrieval eval (the measuring instrument)
+- **2026-07-24** — hash-drift lint (ingest commitments enforced)
 - **2026-07-07** 06:20 — /wiki-ingest
 - **2026-06-22** — vision hardening wave 7 (path-traversal confinement)
 - **2026-06-22** — vision hardening wave 6 (bare-url guard → allowlist)

@@ -1,5 +1,7 @@
 # llm-wiki-bootstrap (Gemini CLI)
 
+This project is a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over (see `docs/CONTEXT-COMPILER.md`).
+
 This project's canonical schema is **`AGENTS.md`** in the same directory. Some Gemini CLI versions load `GEMINI.md` only; this file exists as a shim for those.
 
 **Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the five named workflows.

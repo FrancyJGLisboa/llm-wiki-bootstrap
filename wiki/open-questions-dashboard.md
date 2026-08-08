@@ -2,7 +2,7 @@
 title: Open Questions Dashboard
 type: navigation
 source: analysis
-updated: 2026-07-07
+updated: 2026-08-08
 tags: [synthesis, open-questions, navigation]
 ---
 
@@ -15,6 +15,10 @@ Auto-aggregated from every `## Open questions on this page` section across the w
 ## [[commands]]
 - Should commands accept stdin / chained input (e.g., `/wiki-extract <url> | /wiki-ingest`)? Probably not — slash commands are not Unix pipes.
 - Versioning the schema: if `AGENTS.md` changes, do existing commands still work? Need a compatibility note.
+
+## [[context-compiler]]
+- Does the category need a conformance test suite that a *different* implementation could run, or is it only meaningful as a description of this one?
+- Packaging is a shell script rather than a command surface. Should the emit stage be first-class in the schema, or does that re-introduce the monolithic exporter that `[[commands]]` deliberately rejected?
 
 ## [[core-idea]]
 - What's the minimum number of raw sources where the compounding effect starts to show value? (Two? Ten?)

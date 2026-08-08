@@ -15,6 +15,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 ## Foundations
 
 - [[core-idea]] — what an LLM-wiki is, and Karpathy's central claim
+- [[context-compiler]] — the category: what this system *is*, as opposed to what it outputs
 - [[problem-with-naive-rag]] — what the pattern is a reaction against
 - [[knowledge-compounds]] — the single property that makes the pattern work
 - [[four-principles]] — Explicit / Yours / File-over-app / BYO AI

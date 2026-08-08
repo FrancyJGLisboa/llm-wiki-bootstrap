@@ -440,6 +440,19 @@ else
   record_fail "R34 gate-doc-claims.sh exits non-zero (a documented number no longer matches the repo)"
 fi
 
+# R35 — the Context Package Quality scorecard. The project's definition claims
+# a package LLMs "can navigate, retrieve from, and reason over"; an unmeasured
+# claim is a slogan, so package-quality.sh scores the structural half. But a
+# scorecard that only ever prints green launders debt as quality — this oracle
+# proves it still detects an unsound package, reads JSON values rather than
+# prose labels (a clean package once scored "2 thin" because the label
+# "(<2 related)" contains a 2), and never edits what it measures.
+if "$SCRIPT_DIR/verify-package-quality.sh" >/dev/null 2>&1; then
+  ok "R35 verify-package-quality.sh exits 0 (scorecard detects unsoundness, reads values not labels, read-only)"
+else
+  record_fail "R35 verify-package-quality.sh exits non-zero (the quality scorecard can no longer be trusted)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —

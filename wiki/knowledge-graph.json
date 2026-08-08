@@ -46,6 +46,81 @@
       "verb": "related-to"
     },
     {
+      "source": "context-compiler",
+      "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "division-of-labor",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "four-principles",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "ingest-pipeline",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "knowledge-compounds",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "layer-schema",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "layer-wiki",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "operation-ingest",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "operation-lint",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "problem-with-naive-rag",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "query-as-write-loop",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "source-attribution",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "synthesis-artifacts",
+      "verb": "related-to"
+    },
+    {
+      "source": "context-compiler",
+      "target": "three-layer-architecture",
+      "verb": "related-to"
+    },
+    {
+      "source": "core-idea",
+      "target": "context-compiler",
+      "verb": "related-to"
+    },
+    {
       "source": "core-idea",
       "target": "division-of-labor",
       "verb": "related-to"
@@ -333,6 +408,11 @@
     {
       "source": "index",
       "target": "commands",
+      "verb": "related-to"
+    },
+    {
+      "source": "index",
+      "target": "context-compiler",
       "verb": "related-to"
     },
     {
@@ -902,6 +982,11 @@
     },
     {
       "source": "open-questions-dashboard",
+      "target": "context-compiler",
+      "verb": "related-to"
+    },
+    {
+      "source": "open-questions-dashboard",
       "target": "core-idea",
       "verb": "related-to"
     },
@@ -1374,6 +1459,9 @@
   "nodes": [
     {
       "id": "commands"
+    },
+    {
+      "id": "context-compiler"
     },
     {
       "id": "core-idea"

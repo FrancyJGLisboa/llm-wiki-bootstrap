@@ -2,7 +2,7 @@
 
 [![CI](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**An LLM builds and maintains your personal wiki for you.** You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep — a persistent, interlinked markdown knowledge base that lives between you and your sources. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian. The pattern is Andrej Karpathy's.
+**A context compiler for LLMs.** It turns unstructured sources — PDFs, articles, transcripts, spreadsheets, screenshots — into a **structured, provenance-aware, machine-navigable context package** your AI tool can navigate, retrieve from, and reason over. You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian, no vector DB. The pattern is Andrej Karpathy's; the compiler framing is spelled out in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
 ![/wiki-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
@@ -62,7 +62,7 @@ Then, inside Claude Code:
 
 The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/wiki-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
-A wiki you've curated is also a transferable asset: `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle a buyer can verify offline — see [`docs/SELLING.md`](docs/SELLING.md) for the productized-wiki recipe (schema, packaging, the raw-rights rule).
+**The compiler's output format is a portable context package.** `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle that refuses to ship a wiki failing its own citation gates, and carries its own verifier inside — so a recipient confirms integrity offline, needing nothing from you. That makes a curated wiki a transferable asset; [`docs/SELLING.md`](docs/SELLING.md) covers one thing you can do with that (schema, packaging, the raw-rights rule).
 
 ### Optional: confirm your full setup
 
@@ -77,7 +77,7 @@ Just trying it out? Skip this. When you want to confirm the whole pipeline works
 
 `smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
-**For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md).
+**For the per-tool first-use sequence (which commands to type, in order, in each AI tool), see [`docs/QUICKSTART.md`](docs/QUICKSTART.md).** For the *mental model* — three layers, five commands, and the build-system analogy mapped to things you already know — see [`docs/EXPLAIN.md`](docs/EXPLAIN.md). For *what category this is and how to tell a real one from a folder of notes*, see [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
 ### Tool support
 
@@ -217,6 +217,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── docs/
 │   ├── QUICKSTART.md               # per-tool first-use guide (start here after cloning)
 │   ├── EXPLAIN.md                  # mental model for devs: build-system analogy, dev-mapped verbs
+│   ├── CONTEXT-COMPILER.md         # the category: definition, five properties, what it is not
 │   ├── MCP.md                      # optional MCP read surface (Claude Desktop / Cursor / etc.)
 │   ├── VISUALIZATION.md            # graph view, slides, mermaid render, local server — no Obsidian
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
@@ -230,7 +231,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── mcp-server.sh               # launch @bitbonsai/mcpvault pointed at wiki/
 │   ├── smoke-build.sh              # LLM-driven build phase (drives claude -p)
 │   ├── smoke-check.sh              # pure-shell asserts C1–C5 on the smoke artifacts
-│   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R34<!-- /claim --> regression guards
+│   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R35<!-- /claim --> regression guards
 │   ├── r3-obsidian-patterns.txt    # patterns file for the no-Obsidian-syntax check
 │   ├── create-llm-wiki.sh          # manifest-driven installer for a fresh skeleton
 │   ├── verify-create-llm-wiki.sh   # oracle for the installer (I1–I5)
@@ -274,13 +275,31 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 
 </details>
 
-## Vision — a second brain that ships with receipts
+## Vision — context that ships with receipts
 
-Every "second brain" tells you things and you hope they're true. This one is
-different: **every claim is mechanically traceable to a source, faithfulness is
-enforced at write-time, and the whole wiki is a portable, verifiable asset — not
-a service you rent.** That's the moat. The markdown is trivially copied (like an
-ebook); the verified provenance is not.
+Everyone building for agents has landed on the same insight: a model with a
+well-organized directory of markdown beats a model with a vector store, because
+the structure itself routes attention. That insight is about *operating* a body
+of context. It leaves the harder question open — **who builds the folders, and
+who keeps them true?** Hand-authoring works for fifty files and stops working at
+five hundred sources. That's a build problem, and this is the build system for
+it.
+
+So the output isn't a pile of notes you hope are accurate: **every claim is
+mechanically traceable to a source, faithfulness is enforced at write-time, and
+the whole package is portable and verifiable — not a service you rent.** That's
+the moat. The markdown is trivially copied (like an ebook); the verified
+provenance is not.
+
+Note what the definition does *not* claim. An earlier draft ended "…that an LLM
+can **reliably** use," and that word was wrong: a compiler controls the
+artifact, not the model reading it, and a flawless package can still be
+misread. Navigability, retrievability, and reasoning support *are* properties of
+the artifact — so they get measured instead of asserted. Run
+`./scripts/package-quality.sh` for the structural half (free, no LLM, no
+network); the `eval-*` family measures the behavioural half at the cost of real
+model runs. "Reliable" is a word to earn from a scorecard, not to put in a
+definition.
 
 The vision is falsifiable — these are the binary checks that say we're living it:
 
@@ -307,7 +326,7 @@ See `wiki/four-principles.md` for the full account.
 
 V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, and Codex are all in place. Real slash commands exist only for Claude Code; other tools invoke the workflows by natural language using the same prompt bodies.
 
-**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 37 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval and monitoring oracles, plus the prompt-purity and raw-append-only gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
+**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 38 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity and raw-append-only gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 
