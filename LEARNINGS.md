@@ -1,4 +1,4 @@
-# LEARNINGS — llm-wiki-bootstrap
+# LEARNINGS — context-compiler-bootstrap
 
 Project-scoped lessons. Lead with the rule, then `Why:` and `When to apply:`.
 

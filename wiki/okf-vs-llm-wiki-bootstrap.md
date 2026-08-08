@@ -14,6 +14,13 @@ Field-by-field comparison of [[open-knowledge-format]] with this system's schema
 
 ## Body
 
+> Note on this page's slug: the project was renamed to
+> `context-compiler-bootstrap` in schema v5, but this page keeps the filename
+> `okf-vs-llm-wiki-bootstrap.md`. The comparison was made against the project
+> under its old name and is cited from other pages under that slug; renaming it
+> would break those links to gain nothing. The body says "this system"
+> throughout and needs no rewrite.
+
 This page is interpretation, not extracted from any single source — the OKF side is cited; the mapping and conclusions are ours.
 
 ### The containers converge

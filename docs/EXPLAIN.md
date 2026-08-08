@@ -1,4 +1,4 @@
-# EXPLAIN — `llm-wiki-bootstrap` for a dev who just cloned it
+# EXPLAIN — `context-compiler-bootstrap` for a dev who just cloned it
 
 For developers. If you've used `git`, `make` / `npm run build`, and `eslint`, every novel concept here maps onto something you already do. This file is the missing 5-minute "what *is* this and why is it shaped this way" — `README.md` tells you what it does, [`QUICKSTART.md`](QUICKSTART.md) tells you which commands to type in which tool, and [`../AGENTS.md`](../AGENTS.md) is the spec. None of those tell you the mental model. This does.
 
@@ -89,7 +89,7 @@ Two of these surprise devs every time:
 
 ```markdown
 # $ sed -n '7,15p' .claude/commands/ctx-compile.md
-You are executing `/ctx-compile $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
+You are executing `/ctx-compile $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
 
 ## Read first
 
@@ -176,9 +176,9 @@ The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a ver
 
 These don't replace the five commands; they sit alongside them.
 
-### The installer — `scripts/create-llm-wiki.sh <target>`
+### The installer — `scripts/create-context-compiler.sh <target>`
 
-A manifest-driven scaffolder. `scripts/installer-skeleton-manifest.txt` is the single source of truth for what ships in a fresh skeleton: 44 paths, no meta-wiki content, no smoke artifacts. Run the installer once and you have a clean repo ready to ingest your own sources — saves the `wipe-meta-wiki.sh` step that used to be the friction. Verified by `scripts/verify-create-llm-wiki.sh` (5 checks: skeleton present, no leakage, internally consistent target).
+A manifest-driven scaffolder. `scripts/installer-skeleton-manifest.txt` is the single source of truth for what ships in a fresh skeleton: 44 paths, no meta-wiki content, no smoke artifacts. Run the installer once and you have a clean repo ready to ingest your own sources — saves the `wipe-meta-wiki.sh` step that used to be the friction. Verified by `scripts/verify-create-context-compiler.sh` (5 checks: skeleton present, no leakage, internally consistent target).
 
 ### The smoke umbrella — `scripts/smoke-all.sh`
 

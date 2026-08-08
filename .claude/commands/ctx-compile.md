@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [<raw-file>]
 ---
 
-You are executing `/ctx-compile $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
+You are executing `/ctx-compile $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
 
 ## Read first
 
@@ -211,7 +211,7 @@ content changed.
 These four are **generated, not authored**: never hand-edit them, never cite them as
 sources, and don't count them when deciding what to create in step 4 — they are
 overwritten on every run. If `scripts/synthesize/all.sh` is absent (older wiki), skip
-this step and tell the user to re-scaffold with `scripts/create-llm-wiki.sh` to pick it up.
+this step and tell the user to re-scaffold with `scripts/create-context-compiler.sh` to pick it up.
 
 ## What you must NOT do
 

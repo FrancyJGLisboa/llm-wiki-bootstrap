@@ -1,10 +1,10 @@
 ---
-description: Scaffold an empty llm-wiki-bootstrap structure in the current directory (idempotent — won't overwrite existing files)
+description: Scaffold an empty context-compiler-bootstrap structure in the current directory (idempotent — won't overwrite existing files)
 allowed-tools: Bash, Read, Write, Glob
 argument-hint: (no arguments)
 ---
 
-You are executing `/ctx-init` from the `llm-wiki-bootstrap` system. Your job is to scaffold an empty LLM-wiki structure in the current working directory.
+You are executing `/ctx-init` from the `context-compiler-bootstrap` system. Your job is to scaffold an empty LLM-wiki structure in the current working directory.
 
 ## What this command does
 

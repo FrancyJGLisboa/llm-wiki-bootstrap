@@ -1,6 +1,6 @@
-# llm-wiki-bootstrap
+# context-compiler-bootstrap
 
-[![CI](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![CI](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 **A context compiler for LLMs.** It turns unstructured sources — PDFs, articles, transcripts, spreadsheets, screenshots — into a **structured, provenance-aware, machine-navigable context package** your AI tool can navigate, retrieve from, and reason over. You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian, no vector DB. The pattern is Andrej Karpathy's; the compiler framing is spelled out in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
@@ -13,7 +13,7 @@
 **You need one thing:** an agentic AI tool on your `$PATH`. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude`); [other tools work too](#tool-support). Then:
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
 cd my-wiki && claude          # open Claude Code in the repo
 ```
 
@@ -42,8 +42,8 @@ That's the whole loop. The wiki that ships here is *meta* — a wiki about the L
 The clone above keeps the demo content (a meta-wiki about the LLM-wiki pattern — a handy worked example). To generate a clean skeleton with **no demo content** instead:
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap tmp
-tmp/scripts/create-llm-wiki.sh ~/my-wiki   # fresh skeleton, no demo content
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap tmp
+tmp/scripts/create-context-compiler.sh ~/my-wiki   # fresh skeleton, no demo content
                                            # refuses to clobber a non-empty target
 rm -rf tmp
 cd ~/my-wiki
@@ -60,7 +60,7 @@ Then, inside Claude Code:
 /ctx-query "what does that article say about X?"  # ask
 ```
 
-The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/ctx-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
+The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/ctx-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-context-compiler.sh`.
 
 **The compiler's output format is a portable context package.** `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle that refuses to ship a wiki failing its own citation gates, and carries its own verifier inside — so a recipient confirms integrity offline, needing nothing from you. That makes a curated wiki a transferable asset; [`docs/SELLING.md`](docs/SELLING.md) covers one thing you can do with that (schema, packaging, the raw-rights rule).
 
@@ -87,7 +87,7 @@ The project ships shim files for every major agentic tool. Whatever you use, the
 |---|---|---|---|
 | Claude Code (modern) | `AGENTS.md` (canonical) | `/ctx-init`, `/ctx-extract`, etc. — real slash commands | **e2e-verified** (driven by `scripts/smoke-all.sh`) |
 | Claude Code (legacy) | `CLAUDE.md` | same as modern | e2e-verified |
-| Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run ctx-compile" | Documented, not yet e2e-verified |
+| Cursor | `.cursor/rules/context-compiler.mdc` | natural language: "run ctx-compile" | Documented, not yet e2e-verified |
 | Cline (VSCode) | `.clinerules` | natural language | Documented, not yet e2e-verified |
 | GitHub Copilot | `.github/copilot-instructions.md` | natural language | Documented, not yet e2e-verified |
 | Gemini CLI | `GEMINI.md` | natural language | Documented, not yet e2e-verified |
@@ -210,7 +210,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │       └── ctx-lint.md
 ├── .cursor/
 │   └── rules/
-│       └── llm-wiki.mdc            # Cursor shim
+│       └── context-compiler.mdc    # Cursor shim
 ├── .clinerules                     # Cline shim
 ├── .github/
 │   └── copilot-instructions.md     # GitHub Copilot shim
@@ -233,8 +233,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── smoke-check.sh              # pure-shell asserts C1–C5 on the smoke artifacts
 │   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R38<!-- /claim --> regression guards
 │   ├── r3-obsidian-patterns.txt    # patterns file for the no-Obsidian-syntax check
-│   ├── create-llm-wiki.sh          # manifest-driven installer for a fresh skeleton
-│   ├── verify-create-llm-wiki.sh   # oracle for the installer (I1–I5)
+│   ├── create-context-compiler.sh          # manifest-driven installer for a fresh skeleton
+│   ├── verify-create-context-compiler.sh   # oracle for the installer (I1–I5)
 │   ├── installer-skeleton-manifest.txt # single source of truth for what ships fresh
 │   └── visualize/                  # opt-in OSS visualization wrappers
 │       ├── graph.sh                # bash wrapper around graph-html.py

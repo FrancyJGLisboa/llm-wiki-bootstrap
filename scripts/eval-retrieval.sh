@@ -3,7 +3,7 @@
 #
 # Turns "can a bootstrapped wiki retrieve accurate, point-in-time info about
 # anything?" into five numbers. Everything runs against a wiki built by the REAL
-# installer (create-llm-wiki.sh) and populated through the REAL /ctx-extract →
+# installer (create-context-compiler.sh) and populated through the REAL /ctx-extract →
 # /ctx-compile path, so a failure here is a failure a user would hit — not a
 # fixture artifact. No pre-built wiki fixture is used on purpose: the modality
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
@@ -54,7 +54,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GEN="$REPO_ROOT/tests/eval/retrieval-corpus/gen-corpus.sh"
 QUESTIONS="$REPO_ROOT/tests/eval/retrieval-questions.md"
 CITE_SPAN="$SCRIPT_DIR/cite-span.py"
-INSTALLER="$SCRIPT_DIR/create-llm-wiki.sh"
+INSTALLER="$SCRIPT_DIR/create-context-compiler.sh"
 DRIFT_LINT="$SCRIPT_DIR/wiki-lint-hash-drift.sh"
 LIB="$SCRIPT_DIR/lib/eval-common.sh"
 
@@ -139,7 +139,7 @@ if [ "$DRY_RUN" -eq 1 ]; then
   echo "questions ($n_q):"
   cut -f1,3 "$tmp_q" | sed 's/^/  /'
   echo ""
-  echo "would run: create-llm-wiki.sh → /ctx-extract (all sources) → /ctx-compile"
+  echo "would run: create-context-compiler.sh → /ctx-extract (all sources) → /ctx-compile"
   echo "           → /ctx-query per question → mutate raw → /ctx-query (R5)"
   exit 0
 fi
@@ -531,7 +531,7 @@ cat <<EOF
 
 Corpus: tests/eval/retrieval-corpus/gen-corpus.sh (generated, deterministic)
 Questions: $QUESTIONS ($n_q)
-Wiki: built by create-llm-wiki.sh, loaded via /ctx-extract + /ctx-compile
+Wiki: built by create-context-compiler.sh, loaded via /ctx-extract + /ctx-compile
 Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
 Reads: $reads_summary
 Commitment: $committed/$needle_raws needle raw sources carry an ingested_hash$([ "$committed" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - committed)); every citation into those bodies is unverifiable")

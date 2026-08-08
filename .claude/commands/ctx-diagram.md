@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Glob, Grep
 argument-hint: "<what you want to show, and for whom>" [--pdf|--png]
 ---
 
-You are executing `/ctx-diagram $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to turn a natural-language **intent** into a visual artifact by reasoning over the wiki: retrieve the relevant knowledge, propose the best diagram archetypes, let the user pick, and generate a self-contained HTML poster.
+You are executing `/ctx-diagram $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to turn a natural-language **intent** into a visual artifact by reasoning over the wiki: retrieve the relevant knowledge, propose the best diagram archetypes, let the user pick, and generate a self-contained HTML poster.
 
 This is an **output command** in the semantic tier. It is distinct from `/ctx-visualize`:
 

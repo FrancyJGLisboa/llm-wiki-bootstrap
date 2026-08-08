@@ -1,11 +1,11 @@
-# QUICKSTART — `llm-wiki-bootstrap`
+# QUICKSTART — `context-compiler-bootstrap`
 
 From `git clone` to first useful answer in 5 minutes, across the supported AI tools.
 
 ## Fastest path (Claude Code)
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
 cd my-wiki && claude
 ```
 
@@ -26,7 +26,7 @@ That's the loop. Everything below is depth — per-tool setup, the optional smok
 
 1. **Clone and open** in VS Code:
    ```bash
-   git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+   git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
    code my-wiki
    ```
 2. Open **Copilot Chat** (`Ctrl+Shift+I` / `Cmd+Shift+I`) and **toggle Agent Mode** (classic Chat can't run multi-step workflows).
@@ -95,7 +95,7 @@ Once `preflight.sh` is green, jump to the [Fastest path (VS Code + Copilot)](#fa
 **1. Clone the repo** where you want your wiki to live:
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
 cd my-wiki
 ```
 
@@ -103,7 +103,7 @@ cd my-wiki
 
 | Choice | Command | When |
 |---|---|---|
-| **Use the installer to generate a fresh skeleton** (recommended) | `./scripts/create-llm-wiki.sh ~/my-wiki` (manifest-driven; clean repo, no demo content) | You want to start your own wiki without doing a wipe. Cleanest path. |
+| **Use the installer to generate a fresh skeleton** (recommended) | `./scripts/create-context-compiler.sh ~/my-wiki` (manifest-driven; clean repo, no demo content) | You want to start your own wiki without doing a wipe. Cleanest path. |
 | **Keep + add alongside** | (do nothing) | You're learning the pattern. The meta-wiki + smoke stay as worked examples. |
 | **Wipe and start in-place** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | Edge case; the installer is preferable. |
 | **Archive to a reference folder** | `mkdir -p reference && git mv wiki reference/meta-wiki && mkdir wiki` | Best of both — keep the example, isolate your stuff. |
@@ -242,7 +242,7 @@ Render or export the wiki whenever you like (both are read-only on your wiki):
 
 ### Copilot CLI
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md` + `AGENTS.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. The path below is expected to work; if it does not, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md` + `AGENTS.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. The path below is expected to work; if it does not, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 `AGENTS.md` is auto-loaded by Copilot CLI on session start. Slash commands from `.claude/commands/` are not auto-discovered (Copilot CLI is a different CLI). You invoke workflows by natural language, referring to the workflow file.
 
@@ -295,7 +295,7 @@ Make a poster — "status of X for management" — per
 
 ### VSCode + Copilot Chat (Agent Mode)
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the workflows. Classic Copilot Chat won't autonomously do multi-step ingest.
 
@@ -352,7 +352,7 @@ Make a poster — "status of X for management" — per
 
 ### Cline (VSCode extension)
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.clinerules`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.clinerules`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Cline is open-source, free, and agentic by default. Best fit for users who want a Claude-Code-like loop without paying for Copilot.
 
@@ -404,9 +404,9 @@ Make a poster — "status of X for management" — per
 
 ### Cursor
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.cursor/rules/llm-wiki.mdc`, `alwaysApply: true`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.cursor/rules/context-compiler.mdc`, `alwaysApply: true`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
-Cursor auto-loads `.cursor/rules/llm-wiki.mdc` (ships in this project, `alwaysApply: true`) on every session.
+Cursor auto-loads `.cursor/rules/context-compiler.mdc` (ships in this project, `alwaysApply: true`) on every session.
 
 1. Open the directory:
    ```bash
@@ -448,7 +448,7 @@ Make a poster — "status of X for management" — per
 
 ### Other tools (Continue / Roo / Cody / Gemini CLI / Codex)
 
-> **Status: documented, not yet e2e-verified.** Gemini CLI reads `GEMINI.md`, Codex reads `AGENTS.md` (canonical), and the rest read the existing shims. Only Claude Code is driven by the smoke harness. If a path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** Gemini CLI reads `GEMINI.md`, Codex reads `AGENTS.md` (canonical), and the rest read the existing shims. Only Claude Code is driven by the smoke harness. If a path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Same pattern as Cline / Cursor:
 
@@ -581,14 +581,14 @@ What's still untested:
 - **DOCX / XLSX** extraction handlers in `/ctx-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`, `canary-scanned.pdf`) cover plain-text, CSV, and the PDF-LLM-vision fallback (demonstrated 2026-06-10 — evidence in `raw/canary-scanned.pdf.md`). DOCX and XLSX remain specified, not demonstrated.
 - **Concurrency.** The video mentions parallel ingest agents; no locking or conflict resolution defined yet.
 
-If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/ctx-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues, or open a PR with the prompt improvement.
+If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/ctx-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues, or open a PR with the prompt improvement.
 
 ---
 
 ## Quick reference card
 
 ```
-clone                git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki && cd my-wiki
+clone                git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki && cd my-wiki
 fetch                /ctx-extract <url|file|image>
 ingest               /ctx-compile                      (no arg = process all raw/ with new/changed hash)
 ask                  /ctx-query "<question>"            (--no-promote to skip auto-page-creation)

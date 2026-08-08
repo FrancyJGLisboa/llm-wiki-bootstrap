@@ -12,6 +12,8 @@ tags: [synthesis, timeline, navigation]
 
 Reverse-chronological activity timeline parsed from every `log.md` entry (ingest / query / lint and other logged events). An activity trail, not a record of domain decisions.
 
+- **2026-08-08** — valid-time contract satisfied: seven honest unknowns
+- **2026-08-08** — the commitment lint was quote-blind (one reader, four copies)
 - **2026-08-08** — context-compiler framing (positioning, no mechanical change)
 - **2026-07-27** — R4: 0/7 -> 7/7. The spec gap was the whole story.
 - **2026-07-27** — R4 root cause was a spec gap; entity extraction (phase 2) instrumented
@@ -22,7 +24,7 @@ Reverse-chronological activity timeline parsed from every `log.md` entry (ingest
 - **2026-07-26** — clean run: 7/12, and point-in-time actually works
 - **2026-07-24** — cross-modality retrieval eval (the measuring instrument)
 - **2026-07-24** — hash-drift lint (ingest commitments enforced)
-- **2026-07-07** 06:20 — /ctx-compile
+- **2026-07-07** 06:20 — /wiki-ingest
 - **2026-06-22** — vision hardening wave 7 (path-traversal confinement)
 - **2026-06-22** — vision hardening wave 6 (bare-url guard → allowlist)
 - **2026-06-22** — vision hardening wave 5 (web sources must snapshot to raw/)
@@ -33,25 +35,25 @@ Reverse-chronological activity timeline parsed from every `log.md` entry (ingest
 - **2026-06-08** — fix stale verification note in operation-ingest.md
 - **2026-06-08** — cut to core (factory + brain + causal removed)
 - **2026-06-01** — conversion pass: prove it runs, show it, one start-here, CI
-- **2026-05-29** — visual answers: /ctx-query --visual (html/pdf/png)
+- **2026-05-29** — visual answers: /wiki-query --visual (html/pdf/png)
 - **2026-05-29** — multi-wiki factory (/wiki-new, /wiki-registry)
-- **2026-05-28** — /ctx-diagram (semantic output command)
-- **2026-05-28** — output-command tier (/ctx-visualize, /ctx-flashcards)
+- **2026-05-28** — /wiki-diagram (semantic output command)
+- **2026-05-28** — output-command tier (/wiki-visualize, /wiki-flashcards)
 - **2026-05-27** 17:45 — phase-2 kg-traversal
 - **2026-05-27** 14:00 — phase-1 typed-relations eval
 - **2026-05-26** 10:56 — visualization toolchain landed
 - **2026-05-26** 09:17 — installer toolchain landed
 - **2026-05-26** 08:00 — smoke infrastructure landed
-- **2026-05-26** 06:52 — /ctx-compile
+- **2026-05-26** 06:52 — /wiki-ingest
 - **2026-05-26** 05:30 — schema bump 1 → 2
 - **2026-05-25** 17:15 — backfill extraction_method on legacy raws
 - **2026-05-25** 17:00 — verify-extract.sh: surface extraction_status visually
 - **2026-05-25** 16:50 — tests/canary/canary-csv.csv: tracked CSV fixture
-- **2026-05-25** 15:30 — canary + verify-extract.sh: smoke test for first /ctx-extract
+- **2026-05-25** 15:30 — canary + verify-extract.sh: smoke test for first /wiki-extract
 - **2026-05-25** 15:15 — scripts/wipe-meta-wiki.sh: clean-slate helper
 - **2026-05-25** 15:00 — AGENTS.md: schema_version = 1 declared
 - **2026-05-25** 14:30 — scripts/preflight.sh: fail-fast tool & permissions check
-- **2026-05-25** 10:45 — /ctx-extract gains DOCX / XLSX / CSV handlers + PDF LLM-vision fallback
+- **2026-05-25** 10:45 — /wiki-extract gains DOCX / XLSX / CSV handlers + PDF LLM-vision fallback
 - **2026-05-25** 10:30 — verb rename: fetch→extract, ask→query
 - **2026-05-25** 09:35 — docs/QUICKSTART.md: per-tool first-use sequences
 - **2026-05-25** 09:15 — fix: pitch HTML had outdated Copilot claim

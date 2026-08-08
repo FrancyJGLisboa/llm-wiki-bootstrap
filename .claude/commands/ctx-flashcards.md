@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Glob
 argument-hint: [target-dir] [--out <path>]
 ---
 
-You are executing `/ctx-flashcards $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to export spaced-repetition cards declared in `## Flashcards` sections to an Anki-importable CSV. This is an **output command**, not a lifecycle step: it generates **a new output file only** and never edits anything under `raw/` or `wiki/`.
+You are executing `/ctx-flashcards $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to export spaced-repetition cards declared in `## Flashcards` sections to an Anki-importable CSV. This is an **output command**, not a lifecycle step: it generates **a new output file only** and never edits anything under `raw/` or `wiki/`.
 
 ## Read first
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/body-hash.sh — canonical body hash for an llm-wiki-bootstrap raw source.
+# scripts/body-hash.sh — canonical body hash for an context-compiler-bootstrap raw source.
 #
 # This is the ONE allowed way to compute `ingested_hash`. The slash commands
 # `/ctx-compile` and `/ctx-lint` MUST use this script; do not reinvent the

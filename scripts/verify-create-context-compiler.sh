@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
-# scripts/verify-create-llm-wiki.sh — oracle for the installer.
+# scripts/verify-create-context-compiler.sh — oracle for the installer.
 #
-# Runs scripts/create-llm-wiki.sh against a fresh temp target under
+# Runs scripts/create-context-compiler.sh against a fresh temp target under
 # tests/installer-output/<timestamp>/freshrepo, then asserts:
 #
 #   I3       — target has every file listed in installer-skeleton-manifest.txt
@@ -40,7 +40,7 @@ find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -exec rm -rf {} 
 
 # Pre-flight: manifest + installer + templates must exist.
 [ -f "$MANIFEST" ] || { fail "manifest missing: $MANIFEST"; exit 1; }
-[ -x "scripts/create-llm-wiki.sh" ] || { fail "installer missing or not executable"; exit 1; }
+[ -x "scripts/create-context-compiler.sh" ] || { fail "installer missing or not executable"; exit 1; }
 [ -f templates/README-fresh.md ] || { fail "templates/README-fresh.md missing"; exit 1; }
 [ -f wiki/index-FRESH.md ] || { fail "wiki/index-FRESH.md missing"; exit 1; }
 
@@ -53,7 +53,7 @@ TGT="$TARGET_PARENT/freshrepo"
 note "[verifier] target: $TGT"
 
 # I2 — installer succeeds
-if ! ./scripts/create-llm-wiki.sh "$TGT" > "$TARGET_PARENT/install.log" 2>&1; then
+if ! ./scripts/create-context-compiler.sh "$TGT" > "$TARGET_PARENT/install.log" 2>&1; then
   fail "I2 installer exited non-zero — see $TARGET_PARENT/install.log"
   exit 1
 fi

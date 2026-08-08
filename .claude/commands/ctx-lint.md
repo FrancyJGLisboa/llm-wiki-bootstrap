@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, Edit, Glob, Grep
 argument-hint: [--apply]
 ---
 
-You are executing `/ctx-lint $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to find problems in the wiki and either report them or fix them, depending on the `--apply` flag.
+You are executing `/ctx-lint $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to find problems in the wiki and either report them or fix them, depending on the `--apply` flag.
 
 ## Read first
 

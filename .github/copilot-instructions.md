@@ -1,6 +1,6 @@
-# llm-wiki-bootstrap (GitHub Copilot instructions)
+# context-compiler-bootstrap (GitHub Copilot instructions)
 
-This repository is an `llm-wiki-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over.
+This repository is an `context-compiler-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over.
 
 ## Read first
 
@@ -28,7 +28,7 @@ Plus two **output workflows** that render/export an already-built wiki (read-onl
 - `ctx-flashcards [dir]` — export `## Flashcards` sections to an Anki CSV; wraps `scripts/wiki-to-anki.sh`
 - `ctx-diagram "<intent>"` — semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`; contracts in `templates/infographic/`
 
-A blank wiki can be scaffolded with `scripts/create-llm-wiki.sh <target-dir>` (the installer; verified by `scripts/verify-create-llm-wiki.sh`). To start fresh **without** the bash installer, scaffold in place by following `.claude/commands/ctx-init.md` — pure file creation, no shell needed.
+A blank wiki can be scaffolded with `scripts/create-context-compiler.sh <target-dir>` (the installer; verified by `scripts/verify-create-context-compiler.sh`). To start fresh **without** the bash installer, scaffold in place by following `.claude/commands/ctx-init.md` — pure file creation, no shell needed.
 
 ## First run (help the user reach their first source)
 

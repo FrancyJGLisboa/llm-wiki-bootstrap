@@ -137,7 +137,7 @@ ingested_at: never
 ingested_pages: []
 extraction_method: passthrough
 notes: |
-  This file is the end-to-end smoke fixture for llm-wiki-bootstrap. Body
+  This file is the end-to-end smoke fixture for context-compiler-bootstrap. Body
   copied verbatim from tests/smoke/smoke-source.md by scripts/smoke-build.sh.
   Do not edit the body here — edit the fixture and rerun.
 ---

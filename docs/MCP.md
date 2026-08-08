@@ -48,7 +48,7 @@ Edit `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) o
   "mcpServers": {
     "llm-wiki": {
       "command": "npx",
-      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/llm-wiki-bootstrap/wiki"]
+      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/context-compiler-bootstrap/wiki"]
     }
   }
 }
@@ -65,7 +65,7 @@ Edit `~/.claude.json` (or your project-local `.claude.json`):
   "mcpServers": {
     "llm-wiki": {
       "command": "npx",
-      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/llm-wiki-bootstrap/wiki"],
+      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/context-compiler-bootstrap/wiki"],
       "env": {}
     }
   }
@@ -83,7 +83,7 @@ In `~/.cursor/mcp.json`:
   "mcpServers": {
     "llm-wiki": {
       "command": "npx",
-      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/llm-wiki-bootstrap/wiki"]
+      "args": ["-y", "@bitbonsai/mcpvault@latest", "/absolute/path/to/context-compiler-bootstrap/wiki"]
     }
   }
 }

@@ -193,7 +193,7 @@ per-source-process shape is the architecture that experiment ruled out.
 
 Four differences account for the gap, in order of contribution:
 
-| | wiki-factory | llm-wiki-bootstrap |
+| | wiki-factory | context-compiler-bootstrap |
 |---|---|---|
 | unit of work | one `claude -p` for the whole corpus | one per source |
 | OS processes, 5 sources | 1 | ~5 ingest + ~75 auditors |
@@ -201,7 +201,7 @@ Four differences account for the gap, in order of contribution:
 | index | server-side Python at commit, once per corpus | model rewrites `wiki/index.md` per source |
 | entity dedup | 150-stem list injected once, selective reads | per-source sweep against the whole wiki |
 
-**What that speed costs, stated exactly.** llm-wiki-bootstrap enforces, blocking
+**What that speed costs, stated exactly.** context-compiler-bootstrap enforces, blocking
 and per source, that every cited claim is ENTAILED BY its cited span.
 wiki-factory enforces only that the citation POINTS AT SOMETHING REAL — the file
 exists, the anchor resolves, quoted text appears verbatim. Paraphrase drift,

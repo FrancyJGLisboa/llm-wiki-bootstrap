@@ -95,7 +95,7 @@ case "$MODE" in
     command -v git >/dev/null 2>&1 || die2 "git not found (cannot read the worktree diff)"
     cd "$REPO_ROOT" || die2 "cannot cd to $REPO_ROOT"
     git rev-parse --git-dir >/dev/null 2>&1 || die2 "$REPO_ROOT is not a git repository"
-    # A repo with no commits yet — a wiki freshly made by create-llm-wiki.sh,
+    # A repo with no commits yet — a wiki freshly made by create-context-compiler.sh,
     # before the user's first `git commit`. There is no prior state, so every
     # file in raw/ is a new file, and new files are always authorised. Clean, not
     # exit 2: a brand-new wiki must not greet its owner with a gate error on turn

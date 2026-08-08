@@ -5,7 +5,7 @@ LICENSE
 .gitignore
 .claude/settings.json
 .clinerules
-.cursor/rules/llm-wiki.mdc
+.cursor/rules/context-compiler.mdc
 .github/copilot-instructions.md
 .claude/commands/ctx-init.md
 .claude/commands/ctx-extract.md

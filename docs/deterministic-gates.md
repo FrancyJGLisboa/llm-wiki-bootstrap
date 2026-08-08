@@ -1,7 +1,7 @@
 # Deterministic Gates
 
 Doctrine for making coding agents produce reliable deterministic gates.
-Project-agnostic; this copy is the one llm-wiki-bootstrap agents follow.
+Project-agnostic; this copy is the one context-compiler-bootstrap agents follow.
 
 **Gates already live here** — read them before proposing a new one:
 `scripts/wiki-lint-*.sh` (asserted-at, causal, commitment, hash-drift,

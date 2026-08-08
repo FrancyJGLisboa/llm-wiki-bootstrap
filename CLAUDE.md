@@ -1,4 +1,4 @@
-# llm-wiki-bootstrap (Claude Code)
+# context-compiler-bootstrap (Claude Code)
 
 This project is a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over (see `docs/CONTEXT-COMPILER.md`).
 
@@ -20,7 +20,7 @@ Plus two **output commands** that render/export an already-built wiki (read-only
 - `/ctx-flashcards [dir]` — export `## Flashcards` sections to an Anki CSV; wraps `scripts/wiki-to-anki.sh`
 - `/ctx-diagram "<intent>"` — semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`; contracts in `templates/infographic/`
 
-A blank wiki can be scaffolded for use with `scripts/create-llm-wiki.sh <target-dir>` (the installer; verified by `scripts/verify-create-llm-wiki.sh`).
+A blank wiki can be scaffolded for use with `scripts/create-context-compiler.sh <target-dir>` (the installer; verified by `scripts/verify-create-context-compiler.sh`).
 
 Hard rules (full text in `AGENTS.md`):
 

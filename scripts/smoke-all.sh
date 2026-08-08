@@ -95,9 +95,9 @@ fi
 
 # R4 — schema and core-script purity stay stable
 r4_ok=yes
-if ! grep -q '\*\*Schema version:\*\* 4' AGENTS.md; then
+if ! grep -q '\*\*Schema version:\*\* 5' AGENTS.md; then
   r4_ok=no
-  record_fail "R4 AGENTS.md schema version is not 4"
+  record_fail "R4 AGENTS.md schema version is not 5"
 fi
 if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal' AGENTS.md; then
   r4_ok=no
@@ -131,12 +131,12 @@ else
   record_fail "R6 wiki-lint-typed-relations.sh typed-relation checks regressed"
 fi
 
-# R7 — installer oracle (create-llm-wiki: tree shape EQUALS manifest + no dev-repo
+# R7 — installer oracle (create-context-compiler: tree shape EQUALS manifest + no dev-repo
 # string leakage + target preflight).
-if "$SCRIPT_DIR/verify-create-llm-wiki.sh" >/dev/null 2>&1; then
-  ok "R7 verify-create-llm-wiki.sh exits 0 (clean fresh-skeleton install)"
+if "$SCRIPT_DIR/verify-create-context-compiler.sh" >/dev/null 2>&1; then
+  ok "R7 verify-create-context-compiler.sh exits 0 (clean fresh-skeleton install)"
 else
-  record_fail "R7 verify-create-llm-wiki.sh exits non-zero (installer regression)"
+  record_fail "R7 verify-create-context-compiler.sh exits non-zero (installer regression)"
 fi
 
 # R8 — citation-faithfulness deterministic floor (C1+C2): the audit must catch

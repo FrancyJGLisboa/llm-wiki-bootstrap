@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Glob
 argument-hint: [graph|mermaid|slides|serve] [target] [--out <path>]
 ---
 
-You are executing `/ctx-visualize $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to turn the wiki (or a single page) into a visual artifact by dispatching to the right script under `scripts/visualize/`. This is an **output command**, not a lifecycle step: it generates **new output files only** and never edits anything under `raw/` or `wiki/`.
+You are executing `/ctx-visualize $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to turn the wiki (or a single page) into a visual artifact by dispatching to the right script under `scripts/visualize/`. This is an **output command**, not a lifecycle step: it generates **new output files only** and never edits anything under `raw/` or `wiki/`.
 
 ## Read first
 

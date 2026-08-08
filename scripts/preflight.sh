@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/preflight.sh — environment & dependency check for llm-wiki-bootstrap.
+# scripts/preflight.sh — environment & dependency check for context-compiler-bootstrap.
 #
 # Purpose:
 #   Verify hard requirements are present, report which optional shell tools
@@ -60,7 +60,7 @@ ok()   { printf "%s✓%s %-15s — %s\n" "$GREEN"  "$RESET" "$1" "$2"; }
 warn() { printf "%s⚠%s %-15s — %s\n" "$YELLOW" "$RESET" "$1" "$2"; }
 fail() { printf "%s✗%s %-15s — %s\n" "$RED"    "$RESET" "$1" "$2"; hard_failures=$((hard_failures + 1)); }
 
-echo "llm-wiki-bootstrap preflight"
+echo "context-compiler-bootstrap preflight"
 echo "============================"
 echo
 echo "${DIM}Hard requirements:${RESET}"

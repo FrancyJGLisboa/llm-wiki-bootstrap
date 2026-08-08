@@ -1,119 +1,22 @@
 #!/usr/bin/env bash
-# scripts/create-llm-wiki.sh — generate a fresh llm-wiki-bootstrap repo at <target-dir>.
+# scripts/create-llm-wiki.sh — deprecated name for create-context-compiler.sh.
 #
-# Reads `scripts/installer-skeleton-manifest.txt` (the single source of truth) and
-# copies every listed path from the dev repo to <target-dir>. Three target-only
-# paths are sourced from FRESH templates:
-#   wiki/index.md  ←  wiki/index-FRESH.md
-#   README.md      ←  templates/README-fresh.md
-#   log.md         ←  hard-coded 3-line stub
+# The project was renamed from llm-wiki-bootstrap to context-compiler-bootstrap.
+# This forwarder stays because the old path is baked into README snippets people
+# have already copied, into blog posts, and into shell history. It is not
+# scheduled for removal.
 #
-# What ships and what doesn't is governed entirely by the manifest. No spot-lists
-# of forbidden files; the verifier asserts the target's tree shape EQUALS the
-# manifest (see scripts/verify-create-llm-wiki.sh).
-#
-# Usage:
-#   ./scripts/create-llm-wiki.sh <target-dir>
-#
-# Refuses to clobber: exits 1 if <target-dir> already exists and is non-empty.
-# Bash 3.2+. No `cp --parents` (GNU-only); explicit `mkdir -p` before every copy.
+# Exit codes, stdout and stderr are whatever create-context-compiler.sh returns —
+# `exec` replaces this process, so nothing here can mask a failure.
 
-set -euo pipefail
-
-# Resolve dev-repo root (one level up from this script).
+set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SRC="$(cd "$SCRIPT_DIR/.." && pwd)"
-MANIFEST="$SCRIPT_DIR/installer-skeleton-manifest.txt"
+TARGET="$SCRIPT_DIR/create-context-compiler.sh"
 
-if [ "$#" -ne 1 ]; then
-  cat >&2 <<EOF
-usage: ./scripts/create-llm-wiki.sh <target-dir>
-
-  Generates a fresh llm-wiki-bootstrap repo at <target-dir>, ready to use
-  without any subsequent wipe step. Reads the skeleton from
-  scripts/installer-skeleton-manifest.txt.
-EOF
+[ -x "$TARGET" ] || {
+  printf 'create-llm-wiki.sh: cannot find %s\n' "$TARGET" >&2
   exit 2
-fi
+}
 
-TARGET="$1"
-
-# Refuse to clobber: target may exist but must be empty (or absent).
-if [ -d "$TARGET" ]; then
-  if [ -n "$(ls -A "$TARGET" 2>/dev/null)" ]; then
-    echo "error: target '$TARGET' exists and is non-empty — refusing to clobber." >&2
-    echo "       Pick a fresh path, or delete the existing target first." >&2
-    exit 1
-  fi
-elif [ -e "$TARGET" ]; then
-  echo "error: target '$TARGET' exists and is not a directory." >&2
-  exit 1
-fi
-
-[ -f "$MANIFEST" ] || { echo "error: manifest missing: $MANIFEST" >&2; exit 1; }
-
-mkdir -p "$TARGET"
-
-# Iterate the manifest; for each path, resolve its source and copy.
-copies=0
-while IFS= read -r p; do
-  # Skip blank lines defensively.
-  [ -n "$p" ] || continue
-
-  # Resolve source path per the three target-only specials.
-  case "$p" in
-    wiki/index.md)
-      source_path="$SRC/wiki/index-FRESH.md"
-      ;;
-    README.md)
-      source_path="$SRC/templates/README-fresh.md"
-      ;;
-    .claude/settings.json)
-      # Sourced from a template so the dev repo keeps no live settings.json of
-      # its own — the generated wiki gets the auto-commit Stop hook; this repo
-      # does not.
-      source_path="$SRC/templates/wiki-settings.json"
-      ;;
-    log.md)
-      # Hard-coded stub; write directly.
-      mkdir -p "$TARGET/$(dirname "$p")"
-      cat > "$TARGET/$p" <<'EOF'
-# log.md
-
-Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top.
-EOF
-      copies=$((copies + 1))
-      continue
-      ;;
-    *)
-      source_path="$SRC/$p"
-      ;;
-  esac
-
-  if [ ! -e "$source_path" ]; then
-    echo "error: manifest references missing source: $source_path (for target path: $p)" >&2
-    exit 1
-  fi
-
-  # Explicit parent-dir creation — Bash 3.2 has no `cp --parents`.
-  mkdir -p "$TARGET/$(dirname "$p")"
-  # cp -p preserves mode (so executable scripts stay executable).
-  cp -p "$source_path" "$TARGET/$p"
-  copies=$((copies + 1))
-done < "$MANIFEST"
-
-# Initialize a fresh git repo at the target. No initial commit — leave that to the user.
-( cd "$TARGET" && git init -q )
-
-cat <<EOF
-✓ Created fresh llm-wiki-bootstrap at: $TARGET ($copies files)
-
-Next steps:
-  cd "$TARGET"
-  ./scripts/preflight.sh           # confirm hard requirements + optional tools
-  # then open the directory in Claude Code (or another agentic tool) and
-  # run /ctx-extract on your first source.
-
-Repo is git-initialized but uncommitted — review the tree, then:
-  git add -A && git commit -m "initial commit"
-EOF
+printf 'note: create-llm-wiki.sh is now create-context-compiler.sh (this alias still works)\n' >&2
+exec "$TARGET" "$@"

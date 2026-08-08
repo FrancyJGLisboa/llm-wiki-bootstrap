@@ -13,7 +13,7 @@ properties of the artifact, and each one is measurable. See
 [Measuring the package](#measuring-the-package).
 
 This document defines that as a **category**, and shows that
-`llm-wiki-bootstrap` is a reference implementation of it. The category is the
+`context-compiler-bootstrap` is a reference implementation of it. The category is the
 point: the name of this repo, or of any other one, is incidental.
 
 ---
@@ -362,9 +362,25 @@ worth deploying. This is the layer that produces the package.
 
 ## Vocabulary
 
-A reading aid for anyone who thinks in compilers. **No identifier in this repo
-is named after the right-hand column** — the commands are `/wiki-*` and the
-directories are `raw/` and `wiki/`, and they stay that way.
+A reading aid for anyone who thinks in compilers.
+
+**This section used to say the opposite.** Until schema v5 it read: *"No
+identifier in this repo is named after the right-hand column — the commands are
+`/wiki-*` and the directories are `raw/` and `wiki/`, and they stay that way."*
+The reasoning was that naming things after an analogy invites the analogy to be
+taken literally, and the file spends a whole section (*Compiler-inspired, not
+formal*) warning against exactly that.
+
+That reasoning still holds for the *analogy*. It stopped holding for the
+*names*, because the names had drifted from the thing. `/wiki-ingest` described
+the weakest part of what it does; the output carries provenance, typed
+relations, valid time, a portable bundle and its own verifier, and — since v5 —
+extracted rules with executable gates. "Wiki" named the least of that. The
+commands are now `/ctx-*`; every `/wiki-*` name still works as a forwarder.
+
+The caution the old paragraph was protecting is worth keeping in the reader's
+head: the right-hand column is a *reading aid*, not a claim that this is a
+compiler in the formal sense. Read the section above before leaning on it.
 
 | In this repo | Compiler term |
 |---|---|

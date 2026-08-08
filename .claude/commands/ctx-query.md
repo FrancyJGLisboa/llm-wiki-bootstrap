@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch, Glob, Grep
 argument-hint: <question> [--no-promote] [--visual [html|pdf|png]] [--archetype <name>]
 ---
 
-You are executing `/ctx-query $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
+You are executing `/ctx-query $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
 
 ## Read first
 

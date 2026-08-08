@@ -1,12 +1,12 @@
 ---
-description: llm-wiki-bootstrap project conventions
+description: context-compiler-bootstrap project conventions
 globs: ["**/*"]
 alwaysApply: true
 ---
 
-# llm-wiki-bootstrap (Cursor rules)
+# context-compiler-bootstrap (Cursor rules)
 
-This project is an `llm-wiki-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over. Operated via five named workflows.
+This project is an `context-compiler-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over. Operated via five named workflows.
 
 ## Read this first
 

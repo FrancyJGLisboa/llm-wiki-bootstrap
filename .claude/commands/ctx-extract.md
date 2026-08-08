@@ -4,7 +4,7 @@ allowed-tools: Bash, Read, Write, WebFetch
 argument-hint: <url-or-filepath> [<url-or-filepath> ...]  |  --text [--title "<title>"] [--source-type <value>] <pasted text>
 ---
 
-You are executing `/ctx-extract $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to acquire one or more sources and deposit each in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
+You are executing `/ctx-extract $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to acquire one or more sources and deposit each in `raw/` with the right frontmatter. You **never touch `wiki/`** in this command.
 
 ## Read first
 

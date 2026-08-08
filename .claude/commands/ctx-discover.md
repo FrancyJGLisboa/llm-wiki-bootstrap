@@ -4,7 +4,7 @@ allowed-tools: Bash, Read
 argument-hint: (no args)
 ---
 
-You are executing `/ctx-discover` from the `llm-wiki-bootstrap` system. Your job is to show the user **what's worth asking about** in their wiki — the connections and causal chains they haven't looked at — without them having to ask a specific question. This is an **output command**: read-only on `raw/` and `wiki/`.
+You are executing `/ctx-discover` from the `context-compiler-bootstrap` system. Your job is to show the user **what's worth asking about** in their wiki — the connections and causal chains they haven't looked at — without them having to ask a specific question. This is an **output command**: read-only on `raw/` and `wiki/`.
 
 ## Read first
 

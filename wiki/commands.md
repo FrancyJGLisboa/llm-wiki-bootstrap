@@ -13,7 +13,7 @@ tags: [system, commands, spec]
 
 ## Definition / TL;DR
 
-`llm-wiki-bootstrap` exposes five slash commands that together let any user operate an LLM-wiki from any agentic tool. Three implement the video's named operations ([[operation-ingest]], [[operation-query]], [[operation-lint]]); two ([[#ctx-init]], [[#ctx-extract]]) handle bootstrap and source acquisition.
+`context-compiler-bootstrap` exposes five slash commands that together let any user operate an LLM-wiki from any agentic tool. Three implement the video's named operations ([[operation-ingest]], [[operation-query]], [[operation-lint]]); two ([[#ctx-init]], [[#ctx-extract]]) handle bootstrap and source acquisition.
 
 Three further **output commands** (`/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`) sit outside this lifecycle loop — they render, export, or synthesize from an already-built wiki rather than acquiring or maintaining it. They are documented in [Output commands](#output-commands) below.
 
