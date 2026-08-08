@@ -11,6 +11,8 @@
 #   scripts/{body-hash,preflight,verify-extract,vtt-to-md,verify-bundle}.sh
 #   scripts/citation-audit.py  scripts/lib/  scripts/synthesize/
 #   templates/                                           (runtime, if present)
+#   gates/ + gates/fixtures/ + gates/baseline.tsv        (executable context)
+#   scripts/{gate-fixtures,gate-ratchet,ctx-lint-rules}.sh + gate-fixtures.tsv
 #   + generated: MANIFEST  BUYER-README.md  LICENSE (stub if none exists)
 #
 # Packaging REFUSES to ship a wiki that fails its own quality gates:
@@ -143,6 +145,23 @@ for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.
 done
 copy_if scripts/lib
 copy_if scripts/synthesize
+
+# ── executable context ──
+# The rules layer is only half knowledge. wiki/rules/ travels with wiki/ as
+# ordinary pages, but a rule classified `deterministic` is only actually enforced
+# by the script under gates/ — so the gates, their fixtures and the ratchet
+# baseline ship too. Without them the recipient holds pages that DESCRIBE
+# constraints and nothing that CHECKS them, which is the difference this whole
+# layer exists to make.
+#
+# The fixtures are not optional freight: they are what lets the recipient
+# confirm each gate still fires rather than taking the seller's word for it —
+# the same reason verify-bundle.sh ships inside the bundle.
+copy_if gates
+for s in gate-fixtures.sh gate-ratchet.sh ctx-lint-rules.sh; do
+  copy_if "scripts/$s"
+done
+copy_if scripts/gate-fixtures.tsv
 
 # Generated: LICENSE stub if the seller has none.
 if [ ! -f "$DEST/LICENSE" ]; then

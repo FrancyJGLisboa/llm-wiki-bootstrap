@@ -138,6 +138,61 @@ From inside your AI tool, just run `/ctx-visualize` (alias `/visualize`) — it 
 
 Five opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, `serve.sh` (MARP / mermaid-CLI / local HTTP), and `render.sh` (HTML poster → PDF/PNG, used by `/ctx-query --visual` and `/ctx-diagram --pdf/--png`; graceful fallback to HTML when no browser/Node). All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
 
+## Executable context — rules the compiler enforces
+
+Most of what a source says is knowledge. Some of it is a **rule**, and rules are
+worth treating differently, because prose is a *soft* constraint on an LLM: it
+can be misread, lost under a longer instruction, or sincerely reported as
+followed when it wasn't. Every one of those failures is silent.
+
+```
+"Don't do X"          →  interpretation  →  self-report
+gates/RULE-0007.sh    →  exit 0 | 1 | 2  →  an artifact you can look at
+```
+
+So `/ctx-compile` separates the two. Every rule it finds is classified once:
+
+| Class | Means | What happens to it |
+|---|---|---|
+| `deterministic` | A script with an exit code can settle it | Becomes a gate under `gates/` |
+| `heuristic` | Needs judgement — "forecasts must be readable" | Stays a rule page; a reviewer's job |
+| `unverifiable` | Nothing could check it, even in principle | Recorded in `rules/discarded/` **with the reason** |
+
+**The standing rule: no deterministic rule stays prose-only.** `/ctx-lint`
+reports `R-01` for any rule classified deterministic that still has
+`gate: none`.
+
+Building the gate is a separate, deliberate step:
+
+```
+/ctx-rules --scan-context    # what rules exist, and which are gateable?
+/ctx-gate RULE-0007          # build the gate for one of them
+/ctx-lint                    # R-01 clear?
+```
+
+`/ctx-gate` will not take your word for it. Before a gate counts as built it
+must fail on a committed fixture that violates the rule, pass on a clean one,
+survive five mutations, and **declare three ways to violate the rule it does
+not catch** — because an author who can't name their gate's blind spots has only
+observed that it passes. It refuses outright to build a gate whose detection
+would need an LLM call: that answers differently on the same input tomorrow, so
+it can't be ratcheted and its green means nothing.
+
+Two things stop this from becoming decoration:
+
+- **`gate-fixtures.sh`** runs every gate against both its fixtures on every CI
+  run, requiring exactly 1 then exactly 0. A gate that never fires is
+  indistinguishable from a broken one, and an unfixtured gate is a violation, not
+  a skip.
+- **`gates/baseline.tsv`** is a ratchet: counts may not go up, and you are never
+  asked to fix the past. Scope exclusions and suppressions count in the same
+  number, so routing around a gate is possible but never quiet.
+
+Gates and their fixtures travel inside `scripts/package-wiki.sh` bundles, so a
+recipient gets the checks, not just pages describing them. Full doctrine in
+[`docs/deterministic-gates.md`](docs/deterministic-gates.md) — which ships into
+every wiki you create.
+
 ## MCP access (optional)
 
 Expose this wiki over the Model Context Protocol so any MCP-aware AI client — Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc. — can read it (and optionally write to it) without slash-command indirection. Uses [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault), which works on any markdown directory with no Obsidian dependency. BM25 search built in.
@@ -206,6 +261,8 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │       ├── ctx-init.md
 │       ├── ctx-extract.md
 │       ├── ctx-compile.md
+│       ├── ctx-rules.md            # inventory + triage rules (writes no code)
+│       ├── ctx-gate.md             # build a gate behind the mutation proof
 │       ├── ctx-query.md
 │       └── ctx-lint.md
 ├── .cursor/
@@ -234,7 +291,7 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R39<!-- /claim --> regression guards
 │   ├── r3-obsidian-patterns.txt    # patterns file for the no-Obsidian-syntax check
 │   ├── create-context-compiler.sh          # manifest-driven installer for a fresh skeleton
-│   ├── verify-create-context-compiler.sh   # oracle for the installer (I1–I5)
+│   ├── verify-create-context-compiler.sh   # oracle for the installer (I2–I7)
 │   ├── installer-skeleton-manifest.txt # single source of truth for what ships fresh
 │   └── visualize/                  # opt-in OSS visualization wrappers
 │       ├── graph.sh                # bash wrapper around graph-html.py

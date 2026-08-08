@@ -74,7 +74,9 @@ job.
 ## The five properties
 
 A system is a context compiler if it has all five. Each is stated as a
-conformance question, with this repo's answer.
+conformance question, with this repo's answer. A sixth — **enforcement** — is
+listed after them, and is deliberately *not* part of the definition; see the
+note there.
 
 ### 1. Transformation — is there an input language and a build step?
 
@@ -202,6 +204,58 @@ The verifier **ships inside the bundle**. The recipient runs
 four ways, and asserts each tamper is caught.
 
 ---
+
+## The sixth property — enforcement (outside the definition)
+
+**Not part of the definition.** A system with the five properties above is a
+context compiler whether or not it has this one. Enforcement is listed here
+because it is the axis along which a context compiler stops being a very good
+filing system, and because leaving it out of the five is the honest position:
+plenty of useful compiled context is purely descriptive.
+
+**The question.** When a source states a *rule* rather than a fact, does the
+output only describe the rule — or does it also check it?
+
+The distinction is not academic, and it is sharpest for LLM consumers. Prose in
+a schema file is a **soft** constraint: the model can misread it, lose it under
+a longer instruction, or sincerely report compliance it did not achieve. Every
+one of those failure modes is silent. A script with an exit code is a **hard**
+constraint: it is either 0 or it is not.
+
+```
+"Don't do X"          ->  interpretation  ->  self-report
+gates/RULE-0007.sh    ->  exit 0 | 1 | 2  ->  artifact
+```
+
+Which means the useful test is not *did the agent follow the rule* but *what
+shows that it did*. Trust the context less; verify the consequences more.
+
+**How this repo answers it.** `/ctx-compile` step 2.5 separates normative
+statements from knowledge and classifies each `deterministic` / `heuristic` /
+`unverifiable`. Deterministic rules become gates via `/ctx-gate`, behind a
+five-way mutation proof and three declared blind spots. `/ctx-lint` R-01 reports
+any deterministic rule still enforced by prose alone.
+
+**Three things that keep this from being theatre**, each of which is a way the
+idea fails when implemented carelessly:
+
+1. **A gate that never fires is indistinguishable from a broken gate.** So every
+   gate ships with a fixture that must exit 1 and one that must exit 0, and
+   `gate-fixtures.sh` checks both directions on every gate, every run. An
+   unfixtured gate is a violation, not a skip.
+2. **A script that asks an LLM whether the rule holds is not a deterministic
+   gate.** It is a heuristic in a script costume: it can answer differently on
+   the same input tomorrow, so it cannot ratchet and its green proves nothing.
+   `/ctx-gate` refuses to build one.
+3. **Classifying a rule is not enforcing it.** A rule sitting in
+   `rules/deterministic/` with no gate is worse than an unclassified one — the
+   page reads like a control while nothing checks it. That is what R-01 is for.
+
+**Where it stops.** Only some rules are deterministic. "Forecasts must be
+readable" is real and no exit code will ever settle it; it stays a rule page and
+a reviewer's job. A compiler that pretended otherwise would be claiming
+enforcement it does not have — the failure this property exists to prevent, in
+the other direction.
 
 ## Two things that look like exceptions
 
@@ -409,6 +463,7 @@ compiler in the formal sense. Read the section above before leaning on it.
 | machine-navigable | `[[kebab-case]]` links, `wiki-to-kg.py`, `wiki-graph-walk.py`, `knowledge-graph.json`, MCP surface | `verify-graph-walk.sh`, `verify-synthesize.sh`, `gate-reachable.sh` |
 | context package | `scripts/package-wiki.sh` (G1–G4, `MANIFEST`, optional GPG) | `verify-bundle.sh`, `verify-bundle-roundtrip.sh` |
 | LLMs can navigate, retrieve from, and reason over | citation + temporal contracts, read-floor gate, faithfulness gate — and the eval suite that measures each verb | `verify-query-citation-contract.sh`, `verify-query-temporal-contract.sh`, `verify-faithfulness-gate.sh`, `eval-retrieval.sh` |
+| **rules the system enforces, not only describes** (the sixth property — outside the definition) | `type: rule` pages under `wiki/rules/{deterministic,heuristic,discarded}/`, `/ctx-compile` steps 2.5 + 4.5, `/ctx-rules`, `/ctx-gate`, gates under `gates/` with committed fixture pairs, `gates/baseline.tsv` | `ctx-lint-rules.sh` (R-01/R-02/R-05/R-06), `gate-fixtures.sh` (every gate fails its violating fixture and passes its clean one), `gate-ratchet.sh` (§6 ratchet; suppressions counted) |
 
 ## See also
 

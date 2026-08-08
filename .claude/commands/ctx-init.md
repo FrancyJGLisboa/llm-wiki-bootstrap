@@ -21,6 +21,8 @@ Read `AGENTS.md` if it exists in the current directory — it tells you the proj
 2. **Create the directory skeleton** if missing:
    - `raw/`
    - `wiki/`
+   - `wiki/rules/deterministic/`, `wiki/rules/heuristic/`, `wiki/rules/discarded/` — where `/ctx-compile` files rules it harvests from sources (see `AGENTS.md` → "Rules and executable context"). Create them empty; a compiler with no rules yet is a normal state, and `/ctx-lint` treats an empty rules tree as clean.
+   - `gates/`, `gates/fixtures/` — where `/ctx-gate` writes executable gates and their committed fixture pairs. Empty until a deterministic rule earns one.
    - `.claude/commands/`
 
 3. **Create files if missing** (never overwrite existing — if a file exists, skip it and report):
@@ -48,6 +50,8 @@ End with a status report:
 Created:
 - raw/
 - wiki/
+- wiki/rules/{deterministic,heuristic,discarded}/
+- gates/, gates/fixtures/
 - .claude/commands/
 - AGENTS.md
 - wiki/index.md
