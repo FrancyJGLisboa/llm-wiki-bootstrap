@@ -62,6 +62,8 @@ HOLDOUT_Q="tests/eval/retrieval-questions-holdout.md"
 CITE_SPAN="$SCRIPT_DIR/cite-span.py"
 # shellcheck source=scripts/lib/eval-common.sh
 . "$SCRIPT_DIR/lib/eval-common.sh"
+# shellcheck source=scripts/lib/commitment.sh
+. "$SCRIPT_DIR/lib/commitment.sh"
 
 if [ -t 1 ]; then RED=$'\033[31m'; GREEN=$'\033[32m'; RESET=$'\033[0m'; else RED=; GREEN=; RESET=; fi
 failures=0
@@ -344,8 +346,7 @@ while IFS= read -r f; do
   case "$base" in .*|scale-*) continue ;; esac
   case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac
   fx_total=$((fx_total + 1))
-  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
-     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+  if has_commitment "$f"; then
     fx_committed=$((fx_committed + 1))
   fi
 done < <(find "$fx" -type f | sort)

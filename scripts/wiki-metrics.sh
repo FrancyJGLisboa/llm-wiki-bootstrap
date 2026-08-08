@@ -35,6 +35,8 @@
 
 set -uo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/commitment.sh
+. "$SCRIPT_DIR/lib/commitment.sh"
 
 # --temporal turns the query record into a GATE: a change-over-time answer must
 # rest on at least two DIFFERENTLY DATED sources. Measured: every such answer
@@ -96,8 +98,7 @@ if [ "$OP" = ingest ]; then
     n_side=$(grep -ro "(source: raw/$base.md" "$ROOT/wiki" 2>/dev/null | wc -l | tr -d ' ')
     if [ "$((n_cite + n_side))" -eq 0 ]; then uncited=$((uncited + 1)); continue; fi
     cited_total=$((cited_total + 1))
-    if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
-       || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+    if has_commitment "$f"; then
       committed=$((committed + 1))
     fi
   done < <(find "$ROOT/raw" -type f 2>/dev/null | sort)

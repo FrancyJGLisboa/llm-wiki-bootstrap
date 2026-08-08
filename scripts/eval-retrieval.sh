@@ -83,6 +83,8 @@ for f in "$GEN" "$QUESTIONS" "$CITE_SPAN" "$INSTALLER" "$LIB"; do
 done
 # shellcheck source=scripts/lib/eval-common.sh
 . "$LIB"
+# shellcheck source=scripts/lib/commitment.sh
+. "$SCRIPT_DIR/lib/commitment.sh"
 command -v python3 >/dev/null 2>&1 || { echo "error: python3 not on PATH" >&2; exit 1; }
 if [ "$DRY_RUN" -eq 0 ] && ! command -v claude >/dev/null 2>&1; then
   echo "error: claude CLI not on PATH (use --dry-run to build the corpus only)" >&2
@@ -242,8 +244,7 @@ while IFS= read -r f; do
   case "$base" in .*|scale-*) continue ;; esac
   case "$f" in *.md) [ -f "${f%.md}" ] && continue ;; esac  # sidecar counted with its parent
   needle_raws=$((needle_raws + 1))
-  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
-     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+  if has_commitment "$f"; then
     committed=$((committed + 1))
   fi
 done < <(find "$WIKI/raw" -type f 2>/dev/null | sort)
