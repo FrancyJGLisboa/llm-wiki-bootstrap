@@ -47,6 +47,9 @@
 # MODES:
 #   (default)      check this repository
 #   --repo <dir>   check the tree at <dir> — fixture mode
+#   --count        print "<orphans>TAB<suppressions>" and exit 0; the ratchet
+#                  (scripts/gate-ratchet.sh) reads this. Exit 2 still means the
+#                  gate could not run.
 #
 # RUNTIME: bash + grep + find. No LLM, no network, no key, no git.
 # WIRED AT: scripts/smoke-all.sh (R32) → CI.
@@ -59,9 +62,11 @@ RULE_ID="GATE-REACHABLE"
 die2() { printf 'gate-reachable: %s\n' "$1" >&2; exit 2; }
 
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COUNT=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --repo) ROOT="${2:-}"; [ -n "$ROOT" ] || die2 "--repo needs a directory"; shift 2 ;;
+    --count) COUNT=1; shift ;;
     *) die2 "unknown argument: $1" ;;
   esac
 done
@@ -129,18 +134,27 @@ for f in scripts/verify-*.sh scripts/gate-*.sh; do
   base="$(basename "$f")"
   if grep -qE "^${base}[[:space:]]" "$tmp/standalone" 2>/dev/null; then
     reason="$(grep -E "^${base}[[:space:]]" "$tmp/standalone" | head -1 | sed "s|^${base}[[:space:]]*||")"
-    printf '  suppressed: %s — %s\n' "$base" "$reason"
+    [ "$COUNT" = 1 ] || printf '  suppressed: %s — %s\n' "$base" "$reason"
     continue
   fi
+  orphans=$((orphans + 1))
+  if [ "$COUNT" = 1 ]; then continue; fi
   printf '%s: %s\n' "$f" "$RULE_ID" >&2
   printf '  no CI entry point reaches this oracle. It exists, it is never run, and\n' >&2
   printf '  a gate that never fires is indistinguishable from a broken one.\n' >&2
   printf '  FIX: wire it into scripts/smoke-all.sh as a numbered guard, or add a\n' >&2
   printf '  line to %s:  %s  <reason it cannot be wired>\n' "$STANDALONE_LIST" "$base" >&2
-  orphans=$((orphans + 1))
 done
 
 [ "$checked" -gt 0 ] || die2 "no verify-*/gate-* oracles found under scripts/ — the gate is inspecting nothing"
+
+# --count: the ratchet asks for the tally, not the verdict. Exit 0 even with
+# orphans — gate-ratchet.sh decides whether the number is acceptable. A gate
+# that could not run has already exited 2 above.
+if [ "$COUNT" = 1 ]; then
+  printf '%d\t%d\n' "$orphans" "$suppressions"
+  exit 0
+fi
 
 if [ "$suppressions" -gt 0 ]; then
   printf 'gate-reachable: %d declared standalone(s) — these count as suppressions.\n' "$suppressions"

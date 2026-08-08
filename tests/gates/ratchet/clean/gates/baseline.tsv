@@ -1,0 +1,7 @@
+# Clean fixture: the recorded pair matches what the stub reports exactly.
+# At-baseline must PASS — the rule is "the count may not go UP", not "the count
+# must be zero". A ratchet that demanded zero would be unadoptable, which is the
+# whole reason §6 exists.
+#
+# gate_id	command	violations	suppressions	recorded_at	note
+STUB	scripts/gate-stub.sh	2	1	2026-08-08	fixture stub; pair matches

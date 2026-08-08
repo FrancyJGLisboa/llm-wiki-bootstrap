@@ -406,8 +406,10 @@ gate_fixtures_ok=1
 "$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/dirty  >/dev/null 2>&1 && gate_fixtures_ok=0
 "$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/clean >/dev/null 2>&1 || gate_fixtures_ok=0
 "$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/clean    >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/dirty    >/dev/null 2>&1 && gate_fixtures_ok=0
 if [ "$gate_fixtures_ok" = 1 ]; then
-  ok "R31 all four gates fail their violating fixture and pass their clean one"
+  ok "R31 all five gates fail their violating fixture and pass their clean one"
 else
   record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, or misses a planted violation)"
 fi
@@ -451,6 +453,19 @@ if "$SCRIPT_DIR/verify-package-quality.sh" >/dev/null 2>&1; then
   ok "R35 verify-package-quality.sh exits 0 (scorecard detects unsoundness, reads values not labels, read-only)"
 else
   record_fail "R35 verify-package-quality.sh exits non-zero (the quality scorecard can no longer be trusted)"
+fi
+
+# R36 — the ratchet. deterministic-gates §6 sat in the doctrine unimplemented:
+# nothing read a baseline, nothing failed on an increase, and no baseline file
+# existed. Without it, adopting a gate means fixing every historical violation
+# first — so the realistic alternative to a ratchet is not a stricter repo, it
+# is a gate nobody turns on. This also makes suppressions cost something:
+# gate-reachable.sh already counted its declared standalones and printed them,
+# but nothing consumed the number, so silencing an orphan oracle was free.
+if "$SCRIPT_DIR/gate-ratchet.sh" >/dev/null 2>&1; then
+  ok "R36 gate-ratchet.sh exits 0 (no gate's violations or suppressions exceed gates/baseline.tsv)"
+else
+  record_fail "R36 gate-ratchet.sh exits non-zero (a gate's violation or suppression count went up, or a gate has no baseline row)"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────

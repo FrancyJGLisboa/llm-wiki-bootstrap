@@ -8,6 +8,9 @@ Project-agnostic; this copy is the one llm-wiki-bootstrap agents follow.
 typed-relations), `scripts/citation-audit.py` (`--coverage`, `--no-bare-urls`),
 `scripts/wiki-faithfulness-gate.sh`, `scripts/corpus-health.py`, and the
 `scripts/verify-*.sh` family that proves each of them still fires.
+Cross-cutting: `scripts/gate-ratchet.sh` (§6) watches every other gate's counts,
+and `scripts/lib/gate-lib.sh` carries the shared exit-code discipline — source
+it rather than re-implementing `die2`.
 
 ## Core principle
 
@@ -107,6 +110,27 @@ Additionally: count suppressions (`nolint`, `eslint-disable`, pragma, config
 exclusions) as violations in the same baseline. If suppression does not enter
 the ratchet, you will route around the gate instead of obeying it — and I want
 that to be impossible, not merely discouraged.
+
+**Implemented here** by `scripts/gate-ratchet.sh` (rule `RATCHET-NO-INCREASE`)
+against the committed baseline `gates/baseline.tsv`, wired at
+`scripts/smoke-all.sh` (R36) → CI.
+
+Every gate exposes `--count`, printing `<violations>TAB<suppressions>` and
+exiting 0; the ratchet, not the gate, decides whether the number is acceptable.
+A gate that exits 2 under `--count` fails the ratchet as a gate error — a
+broken gate never reads as compliant. Two directions are enforced: a recorded
+count may not be exceeded, and **a gate with no baseline row is itself a
+violation**, so a new gate cannot escape the ratchet by never being registered.
+
+Downward moves are silent — lowering a row is the reward for fixing something.
+Raising one requires editing the file and writing the reason in the note
+column, which makes the increase an artifact in review rather than an accident.
+
+Known limits, stated rather than implied: this is a *count* ratchet, not an
+identity ratchet — two violations swapped for two others keeps the total flat
+and passes. Per-gate stable violation identifiers would be needed for the
+stronger version, and the diff-based and reachability-based gates here cannot
+produce them.
 
 ## 7. Continuous harvest — standing instruction
 

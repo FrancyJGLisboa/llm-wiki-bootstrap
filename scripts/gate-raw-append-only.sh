@@ -52,6 +52,10 @@
 # non-ingest frontmatter field across committed evidence.
 #
 # MODES:
+#   --count               print "<violations>TAB<suppressions>" and exit 0; the
+#                         ratchet (scripts/gate-ratchet.sh) reads this. Exit 2
+#                         still means the gate could not run. Combines with the
+#                         mode flags below; defaults to --worktree like normal.
 #   --worktree            (default) staged + unstaged changes vs HEAD
 #   --range <rev-range>   e.g. origin/main...HEAD, or a single SHA
 #   --diff <file>         read a unified diff from a file ("-" for stdin);
@@ -71,8 +75,10 @@ die2() { printf 'gate-raw-append-only: %s\n' "$1" >&2; exit 2; }
 
 MODE=worktree
 ARG=
+COUNT=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --count)    COUNT=1; shift ;;
     --worktree) MODE=worktree; shift ;;
     --range)    MODE=range; ARG="${2:-}"; [ -n "$ARG" ] || die2 "--range needs a revision range"; shift 2 ;;
     --diff)     MODE=diff;  ARG="${2:-}"; [ -n "$ARG" ] || die2 "--diff needs a file (or -)"; shift 2 ;;
@@ -96,6 +102,10 @@ case "$MODE" in
     # one. (This is a correct reading of the rule, not a convenience: with no
     # HEAD there is by construction nothing that could have been modified.)
     if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+      # In count mode this early exit must still emit a tally, or the ratchet
+      # reads empty stdout and cannot tell "zero violations" from "gate produced
+      # nothing" — which is the exit-2-collapsed-into-0 failure in another form.
+      if [ "$COUNT" = 1 ]; then printf '0\t0\n'; exit 0; fi
       printf 'gate-raw-append-only: clean — no commits yet, so every raw/ file is a new source.\n'
       exit 0
     fi
@@ -117,17 +127,18 @@ case "$MODE" in
     ;;
 esac
 
-awk -v rule="$RULE_ID" '
+awk -v rule="$RULE_ID" -v count_mode="$COUNT" '
   function flush_file() {
     # nothing to carry between files; state resets in the diff --git branch
   }
   function violation(msg,   _) {
+    violations++
+    if (count_mode) return
     printf "%s: %s\n", path, rule > "/dev/stderr"
     printf "  %s\n", msg          > "/dev/stderr"
     printf "  FIX: raw/ is read-only evidence. Revert this change. The only authorised\n" > "/dev/stderr"
     printf "  writes are frontmatter: ingested_hash/at/pages (/wiki-ingest) and\n"        > "/dev/stderr"
     printf "  asserted_at/_source/_note (/wiki-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
-    violations++
   }
 
   # ── file header ──
@@ -178,9 +189,19 @@ awk -v rule="$RULE_ID" '
     next
   }
 
-  END { exit (violations > 0 ? 1 : 0) }
+  END {
+    # --count: raw/ has no suppression mechanism — there is no pragma that
+    # authorises an edit — so the second column is always 0.
+    if (count_mode) { printf "%d\t0\n", violations; exit 0 }
+    exit (violations > 0 ? 1 : 0)
+  }
 ' "$DIFF"
 status=$?
+
+if [ "$COUNT" = 1 ]; then
+  [ "$status" -eq 0 ] || die2 "awk exited $status in count mode (parse failure)"
+  exit 0
+fi
 
 if [ "$status" -eq 1 ]; then
   printf 'gate-raw-append-only: violation(s) found — %s\n' "$RULE_ID" >&2

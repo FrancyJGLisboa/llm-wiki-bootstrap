@@ -1,0 +1,8 @@
+# Dirty fixture: exercises all three failure paths at once.
+#   1. STUB violations   0 -> 2   (recorded 0, stub reports 2)
+#   2. STUB suppressions 0 -> 1   (recorded 0, stub reports 1) — the anti-bypass
+#      half of §6, which is the one that is easy to leave unimplemented
+#   3. scripts/gate-unregistered.sh has no row at all
+#
+# gate_id	command	violations	suppressions	recorded_at	note
+STUB	scripts/gate-stub.sh	0	0	2026-08-08	deliberately understated

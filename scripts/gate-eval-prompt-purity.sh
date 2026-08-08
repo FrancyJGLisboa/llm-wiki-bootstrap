@@ -54,6 +54,20 @@ RULE_ID="EVAL-NO-METADATA-IN-PROMPT"
 
 die2() { printf 'gate-eval-prompt-purity: %s\n' "$1" >&2; exit 2; }
 
+# --count is a flag; everything else stays positional, because this gate takes
+# an optional list of fixture files to scan (see FILES below). Consuming
+# positionals here would break `gate-eval-prompt-purity.sh <fixture>`, which is
+# how smoke-all.sh R31 proves the gate discriminates.
+COUNT=0
+ARGS=()
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --count) COUNT=1; shift ;;
+    *) ARGS+=("$1"); shift ;;
+  esac
+done
+set -- ${ARGS[@]+"${ARGS[@]}"}
+
 COMMON="$SCRIPT_DIR/lib/eval-common.sh"
 [ -r "$COMMON" ] || die2 "cannot read $COMMON (the parser under test is missing)"
 # shellcheck source=/dev/null
@@ -161,6 +175,14 @@ for f in "${FILES[@]}"; do
     fi
   done < "$tmp/fields.txt"
 done
+
+# --count: tally for scripts/gate-ratchet.sh. A leak cannot be suppressed —
+# there is no pragma that lets author-side metadata reach the model — so the
+# second column is 0.
+if [ "$COUNT" = 1 ]; then
+  printf '%d\t0\n' "$leaks"
+  exit 0
+fi
 
 if [ "$leaks" -gt 0 ]; then
   printf 'gate-eval-prompt-purity: %d leak(s) across %d fixture(s) — %s\n' \

@@ -57,9 +57,11 @@ RULE_ID="DOC-CLAIM-RECOMPUTE"
 die2() { printf 'gate-doc-claims: %s\n' "$1" >&2; exit 2; }
 
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+COUNT=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
     --repo) ROOT="${2:-}"; [ -n "$ROOT" ] || die2 "--repo needs a directory"; shift 2 ;;
+    --count) COUNT=1; shift ;;
     *) die2 "unknown argument: $1" ;;
   esac
 done
@@ -148,6 +150,13 @@ while IFS=$'\t' read -r id _cmd; do
   printf '  FIX: bind it in a doc with `<!-- claim:%s -->…<!-- /claim -->`, or drop the row.\n' "$id" >&2
   fails=$((fails + 1))
 done < "$TABLE"
+
+# --count: tally for scripts/gate-ratchet.sh. No suppression mechanism exists
+# for this gate — a claim is bound or it is not — so the second column is 0.
+if [ "$COUNT" = 1 ]; then
+  printf '%d\t0\n' "$fails"
+  exit 0
+fi
 
 if [ "$fails" -gt 0 ]; then
   printf 'gate-doc-claims: %d claim problem(s) — %s\n' "$fails" "$RULE_ID" >&2
