@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R28) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R41) into a single exit-code-
 # driven test.
 #
-# Exit 0 iff all 31 checks pass.
+# Exit 0 iff every check passes (the suite counts its own tally; see `passes`).
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
-#   only the 31 deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R28 guards). This is the CI path — the build phase is a precondition that
+#   only the deterministic checks (C1–C5 asserts on the committed artifacts +
+#   R1–R41 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -58,8 +58,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R28 ────
-section "Regression guards (R1–R28)"
+# ──── REGRESSION GUARDS R1–R41 ────
+section "Regression guards (R1–R41)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -507,6 +507,36 @@ if "$SCRIPT_DIR/gate-context-root.sh" >/dev/null 2>&1; then
   ok "R40 gate-context-root.sh exits 0 (context/, context-only, and legacy wiki/ all resolve; compat link sound)"
 else
   record_fail "R40 gate-context-root.sh exits non-zero (a root layout resolves wrongly, or wiki/ is not a symlink to context)"
+fi
+
+# R41 — the ctx_root() convention is enforced, not merely written down.
+# R40 proves ctx_root() RESOLVES for all three layouts; it says so itself, and
+# says just as plainly that it cannot prove anything about the ~40 scripts that
+# bypass ctx_root() entirely. AGENTS.md:24 tells new code to call it. That was
+# the whole enforcement — a paragraph — which is the failure mode
+# docs/deterministic-gates.md §1 exists to name. Ratcheted, not migrated: the
+# recorded lines stay legal and only an INCREASE fails.
+#
+# WHY --count AND NOT A BARE RUN: this is the first gate with a NONZERO
+# baseline. Every other gate here records 0 violations, so "exits 0" and "at or
+# below baseline" are the same assertion for them. They are not the same for
+# this one: 80 pre-existing lines are recorded and legal, so a bare run exits 1
+# by design and forever. Asserting exit 0 would demand the bulk rewrite
+# AGENTS.md:24 argues against.
+#
+# So the split is: R41 proves the gate is OPERABLE (exit 0 from --count; an
+# unrunnable gate exits 2 and is caught here), and R36's ratchet enforces the
+# THRESHOLD against gates/baseline.tsv. R31 proves it discriminates on fixtures.
+#
+# The messages below deliberately do not spell the legacy root as a path token:
+# the gate counts any non-comment line containing one, so wiring that named it
+# literally would inflate the very number it reports. Declared failure mode 2 in
+# the gate header, met the first time it fired.
+if tally="$("$SCRIPT_DIR/gate-ctx-root.sh" --count 2>/dev/null)" \
+   && printf '%s' "$tally" | grep -qE '^[0-9]+	[0-9]+$'; then
+  ok "R41 gate-ctx-root.sh --count reports a tally ($(printf '%s' "$tally" | tr '\t' '/')); R36 ratchets it, R31 proves it discriminates"
+else
+  record_fail "R41 gate-ctx-root.sh --count did not print '<violations>TAB<suppressions>' and exit 0 — the gate is unrunnable, so the ratchet has nothing to compare and CTX-ROOT-ADOPTION is unenforced"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────

@@ -2,6 +2,92 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-08 — three enforcement gaps closed: the standing rule applied to this repo
+
+**Rationale.** `docs/deterministic-gates.md` §1 says no deterministic rule stays
+prose-only, and `/ctx-lint` R-01 enforces exactly that — on the compiler's
+*output*. Three places in the compiler's own repo did not meet the standard. Two
+were live bugs.
+
+**1. A generated compiler could not package itself.** `scripts/package-wiki.sh`
+ships in the installer skeleton and hard-sources `scripts/lib/ctx-root.sh`
+(line 72), which was absent from `scripts/installer-skeleton-manifest.txt`. Every
+repo built by `scripts/create-context-compiler.sh` exited 2 on its first
+packaging attempt — the context package, the fifth property in
+`docs/CONTEXT-COMPILER.md`, was unreachable from a generated compiler. Fixed by
+adding the manifest row. An audit of every manifest-shipped script for unlisted
+`lib/` dependencies found no others.
+
+**2. The ratchet's registration check missed the directory `/ctx-gate` writes
+to.** `scripts/gate-ratchet.sh` enforced "every gate owns a baseline row" over
+`scripts/gate-*.sh` and `context/gates/*.sh`, but `/ctx-gate` writes to
+`gates/<RULE-ID>.sh` (`scripts/new-gate.sh:38`). The first gate the compiler ever
+generated for itself would have been exempt from the requirement
+`gates/baseline.tsv` declares non-negotiable in its own header. Latent only
+because `gates/` holds no `.sh` files yet. Two other call sites already had the
+glob right (`gate-ratchet.sh:80`, `gate-fixtures.sh:141`), which is what marks it
+a slip rather than a design choice.
+
+It survived because the gate that catches unproven gates was itself unproven:
+`tests/gates/ratchet/{clean,dirty}` existed and `--repo` worked, but
+`scripts/gate-fixtures.tsv` had no row and `gate-fixtures.sh` excluded
+`gate-ratchet.sh` by name as "recurses". That exclusion was over-broad — the
+recursion only exists for the *default* invocation, which reads the real
+baseline; in `--repo` mode it reads the fixture's, which lists stubs only.
+
+The pre-existing dirty fixture could not have caught it either: it fails for
+three other reasons, so it exits 1 whether or not `gates/` is scanned. Pinning
+the fix needed a tree whose *only* defect is an unregistered `gates/*.sh` —
+`tests/gates/ratchet/gates-arm-dirty/`. Verified by reverting the glob: the old
+code reports "clean — none unregistered" on that tree while an unregistered gate
+sits in it.
+
+`gate-ratchet.sh` remains the one gate with no baseline row, now stated in
+`gates/baseline.tsv` rather than left implicit: it has no `--count` mode, because
+"count your own violations" is undefined for the script that reads the baseline,
+and a row naming it would make it invoke itself once per run forever. Its
+coverage is two fixture pairs instead.
+
+**3. `CTX-ROOT-ADOPTION` (R41) — a new gate.** `AGENTS.md` tells new code to
+resolve the compiled root with `ctx_root()`. Measured adoption on the day the
+gate was written: 4 files called it, 41 files hardcoded `wiki/` on 80 non-comment
+lines. `gate-context-root.sh` (R40) proves `ctx_root()` *resolves*; it states in
+its own header that it proves nothing about the scripts that bypass it.
+
+`scripts/gate-ctx-root.sh` counts hardcoded roots under `scripts/` and is
+**ratcheted at 80, not migrated to 0** — `AGENTS.md` argues directly against a
+bulk rewrite of the oracles that constitute this repo's safety net, and this gate
+deliberately creates no pressure toward one. Five declared failure modes in the
+header; a five-way mutation proof confirmed the fixture pair catches each break.
+The negative controls (a commented path, and `meta-wiki/`-style names that must
+not match) live in the **clean** tree on purpose: `gate-fixtures.sh` compares exit
+codes only, so a control planted in a tree that already exits 1 proves nothing.
+
+Wired as R41 via `--count` rather than a bare run: this is the first gate with a
+nonzero baseline, so a bare run exits 1 by design and forever. R41 proves the gate
+is operable, R36's ratchet enforces the threshold, R31 proves it discriminates.
+
+**Not done, and why.** The plan called for adding a `RATCHET-NO-INCREASE` row to
+`gates/baseline.tsv`. That would recurse infinitely — see the exception recorded
+above.
+
+**Three claim gates fired on this change, and each was answered by correcting the
+claim rather than the gate.** `gate-doc-claims.sh` caught README's bound
+`smoke-guard-range` still reading R1–R40; `verify-site-claims.sh` caught both
+`site/index.html` and README still advertising 43 deterministic checks against a
+suite that now runs 44. Adding a check to a repo that publishes its own numbers
+is supposed to cost exactly this, and it did.
+
+**Files.** `scripts/gate-ctx-root.sh` (new), `scripts/gate-ratchet.sh`,
+`scripts/gate-fixtures.sh`, `scripts/gate-fixtures.tsv`,
+`templates/gate-fixtures-fresh.tsv`, `gates/baseline.tsv`,
+`scripts/installer-skeleton-manifest.txt`, `scripts/smoke-all.sh`,
+`tests/gates/ctx-root/**` (new), `tests/gates/ratchet/gates-arm-dirty/**` (new),
+`tests/gates/ratchet/clean/gates/RULE-9999.sh` (new), `AGENTS.md` (the ctx_root()
+paragraph now names the gate that enforces it), `README.md` (bound claim
+`smoke-guard-range` → R1–R41; check count → 44), `site/index.html` (check count
+→ 44), `.github/workflows/ci.yml`.
+
 ## 2026-08-08 — schema v5: the commands are `/ctx-*`, the project is `context-compiler-bootstrap`
 
 **Rationale.** The names had drifted from the thing. `/wiki-ingest` described the weakest part of what it does: the output carries provenance, typed relations, valid time, a portable bundle and its own verifier, and "wiki" named none of that. The canonical commands are now `/ctx-init`, `/ctx-extract`, `/ctx-compile`, `/ctx-query`, `/ctx-lint`, `/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`, `/ctx-discover`. The project is renamed `llm-wiki-bootstrap` → `context-compiler-bootstrap`, and `scripts/create-llm-wiki.sh` → `scripts/create-context-compiler.sh`.

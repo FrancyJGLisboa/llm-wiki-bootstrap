@@ -18,3 +18,6 @@ scripts/gate-exec-bits.sh	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits
 scripts/gate-fixtures.sh	scripts/gate-fixtures.sh --repo tests/gates/fixtures/dirty	scripts/gate-fixtures.sh --repo tests/gates/fixtures/clean
 scripts/ctx-lint-rules.sh	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/dirty	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/clean
 scripts/gate-context-root.sh	scripts/gate-context-root.sh --repo tests/gates/context-root/dirty	scripts/gate-context-root.sh --repo tests/gates/context-root/clean
+scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean
+scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/gates-arm-dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean
+scripts/gate-ctx-root.sh	scripts/gate-ctx-root.sh --repo tests/gates/ctx-root/dirty	scripts/gate-ctx-root.sh --repo tests/gates/ctx-root/clean

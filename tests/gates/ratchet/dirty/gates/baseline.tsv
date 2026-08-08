@@ -4,5 +4,11 @@
 #      half of §6, which is the one that is easy to leave unimplemented
 #   3. scripts/gate-unregistered.sh has no row at all
 #
+# Deliberately NOT covered here: the same escape under gates/ (the directory
+# /ctx-gate writes to). Adding it to this tree would prove nothing, because
+# paths 1-3 already fail it — a ratchet blind to gates/ would still exit 1 and
+# look correct. That arm needs a tree whose ONLY defect is the unregistered
+# gates/*.sh gate: tests/gates/ratchet/gates-arm-dirty/.
+#
 # gate_id	command	violations	suppressions	recorded_at	note
 STUB	scripts/gate-stub.sh	0	0	2026-08-08	deliberately understated

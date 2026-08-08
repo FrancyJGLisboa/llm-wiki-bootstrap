@@ -45,6 +45,7 @@ scripts/extract/segment-doc.py
 scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
 scripts/lib/commitment.sh
+scripts/lib/ctx-root.sh
 scripts/lib/eval-common.sh
 scripts/lib/wikitext.py
 scripts/preflight.sh
@@ -131,10 +132,14 @@ tests/gates/exec-bits/dirty/scripts/alpha.sh
 tests/gates/exec-bits/dirty/scripts/beta.sh
 tests/gates/exec-bits/dirty/scripts/lib.sh
 tests/gates/ratchet/clean/gates/baseline.tsv
+tests/gates/ratchet/clean/gates/RULE-9999.sh
 tests/gates/ratchet/clean/scripts/gate-stub.sh
 tests/gates/ratchet/dirty/gates/baseline.tsv
 tests/gates/ratchet/dirty/scripts/gate-stub.sh
 tests/gates/ratchet/dirty/scripts/gate-unregistered.sh
+tests/gates/ratchet/gates-arm-dirty/gates/baseline.tsv
+tests/gates/ratchet/gates-arm-dirty/gates/RULE-9999.sh
+tests/gates/ratchet/gates-arm-dirty/scripts/gate-stub.sh
 tests/gates/fixtures/clean/scripts/gate-fixtures.tsv
 tests/gates/fixtures/clean/scripts/gate-good.sh
 tests/gates/fixtures/dirty/scripts/gate-blind.sh

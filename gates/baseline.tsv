@@ -21,9 +21,22 @@
 # note. That edit is the artifact — it shows up in review as a decision, not as
 # an accident.
 #
-# EVERY gate-*.sh in scripts/ and context/gates/ must have a row here. A gate
+# EVERY gate in scripts/, gates/ and context/gates/ must have a row here. A gate
 # with no row is a violation, not a skip — otherwise a new gate escapes the
 # ratchet simply by never being registered.
+#
+# gates/ is named explicitly because it is where /ctx-gate writes every gate it
+# builds (scripts/new-gate.sh). It was missing from the check until 2026-08-08,
+# which meant the first gate the compiler generated for itself was exempt from
+# the requirement this paragraph states. Pinned by the fixture pair
+# tests/gates/ratchet/gates-arm-dirty -> tests/gates/ratchet/clean.
+#
+# ONE EXCEPTION, and it is structural: scripts/gate-ratchet.sh has no row. It is
+# the only gate with no --count mode, because "count your own violations" is not
+# defined for the script that reads this file — and a row naming it would make
+# it invoke itself once per run, forever. It is fixtured like every other gate
+# instead (two pairs in scripts/gate-fixtures.tsv), so its coverage does not
+# depend on a number nobody could compute.
 #
 # gate_id	command	violations	suppressions	recorded_at	note
 RAW-APPEND-ONLY	scripts/gate-raw-append-only.sh --worktree	0	0	2026-08-08	worktree mode: only what is changing now. The three historical violations are recorded in the gate header, not here — the past is not required to be fixed.
@@ -35,3 +48,4 @@ EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08	104 tracked executab
 GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08	6 registered gates
 RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rule pages yet; the layer ships empty
 CTX-ROOT-COMPAT	scripts/gate-context-root.sh	0	0	2026-08-08	three layouts + link soundness
+CTX-ROOT-ADOPTION	scripts/gate-ctx-root.sh	80	0	2026-08-08	AGENTS.md:24 says new code uses ctx_root(); 41 files predate it. Ratchet, not migration order — AGENTS.md argues against a bulk rewrite of the oracles.

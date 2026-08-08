@@ -3,5 +3,10 @@
 # must be zero". A ratchet that demanded zero would be unadoptable, which is the
 # whole reason §6 exists.
 #
+# Both arms of the converse check are represented: a gate under scripts/ and a
+# gate under gates/ (the path /ctx-gate writes to). Both are registered here, so
+# the converse check must stay silent.
+#
 # gate_id	command	violations	suppressions	recorded_at	note
 STUB	scripts/gate-stub.sh	2	1	2026-08-08	fixture stub; pair matches
+RULE-9999	gates/RULE-9999.sh	1	0	2026-08-08	fixture stub under gates/; pair matches
