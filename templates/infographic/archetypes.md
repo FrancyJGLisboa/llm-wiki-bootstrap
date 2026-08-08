@@ -2,7 +2,7 @@
   Vendored from FrancyJGLisboa/Infographic-extractor (references/archetypes.md).
   Bundled so produced wikis are self-contained (no external skill required).
   License: pending upstream — add MIT/Apache to Infographic-extractor.
-  /wiki-diagram reads this file as the single source of truth for archetype lenses.
+  /ctx-diagram reads this file as the single source of truth for archetype lenses.
 -->
 # Archetypes
 

@@ -1,0 +1,231 @@
+---
+description: Answer a question from the wiki (web-search + auto-promote on gaps). Optionally also emit a diagram of the answer with --visual html|pdf|png.
+allowed-tools: Bash, Read, Write, Edit, WebSearch, WebFetch, Glob, Grep
+argument-hint: <question> [--no-promote] [--visual [html|pdf|png]] [--archetype <name>]
+---
+
+You are executing `/ctx-query $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to answer the user's question from the wiki and, when the wiki falls short, to fetch new knowledge and **file it back into the wiki**.
+
+## Read first
+
+**Run from the wiki root** (the directory with `raw/`, `wiki/`, `AGENTS.md`, `log.md`). If `AGENTS.md` is absent, you're not in a wiki: tell the user to run `/ctx-init` first (or `cd` into their wiki), then stop.
+
+Read `AGENTS.md` (conventions). Read `wiki/index.md` to locate relevant pages.
+
+## Parse the question
+
+- Strip a `--no-promote` flag if present; remember it for step 5.
+- Strip a `--visual [<format>]` flag if present; remember it for step 5.5. `<format>` ∈ {`html`,`pdf`,`png`}; a bare `--visual` means `html`. Absent ⇒ no visual.
+- Strip a `--archetype <name>` flag if present; remember it for step 5.5 (forces a specific archetype instead of auto-selecting).
+- Treat the rest as the question.
+- If no question, ask the user what to ask.
+
+## Steps
+
+### Step 1 — Locate relevant pages
+
+From `wiki/index.md` and via `Grep` over `wiki/`, identify the 3-10 pages most likely to contain relevant material. Read them (frontmatter + body).
+
+**Section-tree drill-down (segmented sources).** If a relevant page is a summary whose `## Body` is a **section tree** (nested one-line nodes each carrying a `(source: raw/<slug>.<ext>.md#<section-slug>)` anchor — produced from a `segmented: true` source), do NOT read the whole sidecar. Read the tree, pick the node(s) whose summaries match the question, and read **only those sections** from the sidecar: `Bash awk '/^#{1,6} <Title>.*\\(/{f=1;print;next} /^#{1,6} .*\\(/{f=0} f' raw/<slug>.<ext>.md` — or just open the sidecar and read the lines under the matching `## <Title> (range)` heading. Cite the specific section anchor you used, not the whole document. This is the PageIndex-style "reason over the summaries, then read the chosen sections" loop.
+
+**Causal / connection traversal.** When the question is about **causation or connection** — "what caused X", "what does X lead to / enable", "how does A connect to B", "what's the chain between …" — don't eyeball it across pages. Materialize the typed-relation graph and walk it deterministically:
+
+```bash
+# causal chain (upstream causes or downstream effects of a node):
+python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-walk.py --causes-of <node>
+python3 scripts/wiki-to-kg.py --causal-only wiki/ | python3 scripts/wiki-graph-walk.py --effects-of <node>
+# connection path between two pages (sign-agnostic, undirected):
+python3 scripts/wiki-to-kg.py wiki/ | python3 scripts/wiki-graph-walk.py --path <a> <b>
+# supersession (what replaced X / what did X replace):
+python3 scripts/wiki-to-kg.py wiki/ | grep -E '"verb": "supersede(s|d-by)"'
+```
+
+`<node>`/`<a>`/`<b>` are page slugs. Use the returned chain as the spine of your answer, then cite each hop's page as `[[slug]]`. If the walk returns "no recorded …", the edges aren't in the wiki yet — fall back to reading pages, and note the gap (a missing causal edge is a good `## Open questions` item). This is the key-free path: it runs on the graph your wiki already encodes, no subscription call. The same applies to **replacement** questions — "what replaced X", "which document superseded X": filter the graph for `supersedes` / `superseded-by` edges (last line above) instead of hunting for supersession prose that may not exist.
+
+**Temporal / change-over-time traversal — run this ALWAYS, as the first command of every `/ctx-query`.** Not "if the question looks temporal". Always, with the user's question passed through verbatim:
+
+```bash
+python3 scripts/wiki-timeline.py --question "<the user's question, verbatim>"
+```
+
+**Why it is unconditional.** The previous version of this instruction asked *you* to judge whether the question was about change over time, and to run the timeline only then. Measured on 8 cross-temporal questions: 3/7 correct with a **median of ZERO file reads** — the router never fired. The model that fails to notice a cross-temporal question is exactly the model that will not run a check on itself, so a conditional guard gets skipped precisely when it is needed. The classification now lives in the script, tuned against 30 cross-temporal and 42 single-point questions. Your job is to run it, not to decide whether to.
+
+It prints one of two things:
+
+- `# SINGLE-POINT question (...)` — nothing further to do; answer normally.
+- A block headed `ACT ON THIS` — the question is cross-temporal. It carries the dated reading list and the instructions that apply. **Follow that block.**
+
+Each row is labelled `asserted` (the document's own `asserted_at`), `inferred` (a date read off the filename — say so if you rely on one), or `unknown`, and shows which wiki pages cite it. A row marked `(uncited by any page)` exists only in `raw/` — no wiki page carries its content, so you must open the raw file to use it.
+
+Read **at least two rows at distinct dates** — the earliest and latest bearing on the question, plus any row where the position visibly turns. Structure the answer as a dated sequence: what was claimed when, what changed, what holds now, citing each date's own raw anchor.
+
+The detector is deliberately over-eager and does fire on some point-in-time questions. That is not a licence to ignore it: read the sources, and if the answer genuinely rests on one date, say so plainly and cite that one. What you may not do is imply a trajectory from a single date, or skip the reading because the question looked simple.
+
+**The read floor (blocking).** When the `ACT ON THIS` block appeared, write the answer you are about to give to a scratch file and run the gate — regardless of `--no-promote`, and before presenting anything:
+
+```bash
+bash scripts/wiki-metrics.sh query /tmp/wiki-answer.md . --temporal
+```
+
+Exit 4 means your answer's resolving citations span fewer than two distinct `asserted_at` dates — i.e. you narrated a change from a single point in time. **Treat it as blocking**, exactly like the faithfulness gate in step 5: go back to the timeline, open a second dated source, and re-answer from it. Do not present a blocked answer, and do not reword it to dodge the check — the floor is on the evidence, not the prose. The one legitimate escape is the single-date case above: say the wiki holds one date, cite it, drop the change framing, and run the gate without `--temporal`.
+
+### Step 2 — Try to answer from the wiki alone
+
+Synthesize an answer using only what you've read. If the answer is complete and confident, present it to the user with citations: each non-trivial claim should reference the wiki page that supports it as `[[page-name]]`.
+
+If the wiki suffices: skip to step 6 (no promote needed; nothing was newly learned).
+
+### Step 3 — If the wiki is insufficient, search
+
+Identify what's missing. Run `WebSearch` (and `WebFetch` for promising results) to fill the gap. Stay narrow — answer the user's question; don't drift.
+
+### Step 4 — Synthesize the full answer
+
+Combine wiki content + web-search results into a coherent answer. Make sure to cite:
+- Wiki sources as `[[page-name]]`
+- Web sources as `[<title>](<url>)`
+
+### Step 5 — Promote (default behavior, unless `--no-promote`)
+
+If web search produced **notable** new knowledge, file it back into the wiki. Notability = at least one of:
+- Introduces a new term (worth a glossary entry + likely a concept page)
+- Makes a new connection between existing pages
+- Cites a new external source worth keeping
+
+For each notable piece, **snapshot the web source into `raw/` before citing it** — a bare `(source: <url>)` is a rot-prone link that the citation floor cannot entailment-check. Acquire the URL via the `/ctx-extract` procedure (writing `raw/<slug>` with `url:` + `retrieved:` frontmatter), then cite the snapshot with an anchor: `(source: raw/<slug>...#<anchor>)`. A bare external URL `(source: <url>)` will be **BLOCKED** by the promote gate / bare-url check below (`citation-audit.py --no-bare-urls`).
+- If a relevant page exists: append the new claim with a `(source: raw/<slug>...#<anchor>)` citation pointing at the snapshot. Update `updated:` in frontmatter.
+- If no page exists and the concept is non-trivial: create a new `wiki/<slug>.md` with `type: concept` or `type: entity`, `source: external`, and cite the raw snapshot with an anchor.
+- Update `wiki/index.md` to list the new page(s).
+- Record the integrity numbers for this answer (run it; never hand-write the line). Write the answer you are about to give to a scratch file, then:
+
+  ```bash
+  bash scripts/wiki-metrics.sh query /tmp/wiki-answer.md
+  ```
+
+  This appends `cites=OK/TOTAL via=wiki|raw-only|unknown` to `log.md`, so citation resolution becomes a trend rather than a per-run accident. If `OK < TOTAL`, at least one of your citations does not resolve — fix the citation before answering rather than logging a broken receipt.
+- Append a `log.md` entry:
+
+  ```markdown
+  ## YYYY-MM-DD HH:MM — /ctx-query "<short question>"
+
+  - Web-searched: <urls>
+  - Promoted: wiki/<file> (new) | wiki/<file> (updated)
+  ```
+
+If you promoted anything (created or updated a page), **run the faithfulness gate in
+promote mode over exactly those changed pages BEFORE synthesizing** — promotion writes
+new claims into `wiki/`, so the same C3 entailment check that `/ctx-compile` applies
+(step 5.5) applies here. This mirrors `ctx-compile.md` step 5.5:
+
+```bash
+scripts/wiki-faithfulness-gate.sh --mode promote wiki/<changed-page>.md [wiki/<more>.md ...]
+```
+
+It reuses `scripts/citation-audit.py` to extract each `(source: ...)` claim and judges it
+against its cited evidence (SUPPORTED / UNSUPPORTED / CONTRADICTED). **Treat a non-zero
+exit as blocking**: on `--mode promote`, CONTRADICTED, UNSUPPORTED, a broken citation, or a
+**bare web URL cite** (`(source: <url>)` that isn't a `raw/` path) all block — the last is why
+you must snapshot the source into `raw/` first. If the gate blocks, **do not promote** — roll back the page change (undo the
+append, or delete the just-created page), tell the user which claim failed, and skip
+synthesis. Only proceed to regenerate synthesis when the gate exits 0.
+
+The entailment judgment uses the `claude` CLI. With no judge available the gate **fails
+closed (exit 3)** — install the `claude` CLI or, to proceed without entailment checking
+(citation floor only), pass `--allow-unjudged`, which prints a loud `FAITHFULNESS
+UNVERIFIED` warning. C3 entailment is a write-time gate; CI/offline enforces only the
+deterministic citation floor (C1/C2), not entailment.
+
+Then **regenerate the synthesis artifacts** as the last action of this step so the
+dashboards reflect the new/updated pages and the new log entry:
+
+```bash
+./scripts/synthesize/all.sh
+```
+
+(Skip silently if the script is absent — older wiki.) If promotion produced **no**
+page changes — or `--no-promote` was passed — skip this regeneration; nothing in
+`wiki/` changed.
+
+If `--no-promote` was passed: skip this entire step. Mention to the user that promotion was disabled.
+
+### Step 5.5 — Visual output (only if `--visual` was passed)
+
+Produce a diagram **of the answer you just synthesized**, using the same archetype system and design as `/ctx-diagram` (the vendored Infographic-extractor contracts). The text answer is always produced; this is **additive**. Skip this step entirely if `--visual` was not passed.
+
+1. **Read the contracts** (single source of truth — do not invent archetypes/scoring/design):
+   - `templates/infographic/archetypes.md`, `templates/infographic/scoring-rubric.md`, `templates/infographic/generator-contract.md`, `templates/infographic/example-poster.html`.
+   - If `templates/infographic/` is absent (an older generated wiki), tell the user the visual feature needs those contracts and skip — still deliver the text answer.
+
+2. **Choose the archetype from the query.** Treat the synthesized answer (its claims, structure, and relationships) as the material. Score **all 8** archetypes on the 4 dimensions in `scoring-rubric.md`.
+   - If `--archetype <name>` was given, use that one (validate it's one of the 8; if not, say so and fall back to auto).
+   - Otherwise **auto-select the highest-scoring** archetype. If none clears the ≥3.5 threshold, pick the best available and note it's a weak fit. Always **report which archetype you chose and its score, plus one plain-English clause on why it fits** (e.g. "A5-causal-chain (4.2) — the answer is a cause→effect chain of drivers"). Then add: "Run `/ctx-diagram \"<intent>\"` to see all scored options and pick a different lens. The 8 archetypes are listed in `AGENTS.md` → Diagram archetypes."
+
+3. **Generate the poster.** First ensure the output directory exists (it is git-ignored and absent in a fresh wiki — the Write tool fails on a missing parent):
+
+   ```bash
+   mkdir -p diagrams
+   ```
+
+   Then fill the chosen candidate's `handoff_to_generator` block and apply the generation protocol in `generator-contract.md` to produce a **single self-contained HTML file** (no JavaScript; only Google Fonts external), styled per `example-poster.html`. Write it to `diagrams/query-<slug>.html`, where `<slug>` is a kebab-case slug of the question. The footer must cite the **wiki pages** used (`source_pages`) and any **web URLs** that contributed to the answer. Never invent connections the answer doesn't support.
+
+4. **Render to the requested format.** If `<format>` is `pdf` or `png`, run:
+
+   ```bash
+   scripts/visualize/render.sh diagrams/query-<slug>.html --pdf   # or --png
+   ```
+
+   - On success it writes `diagrams/query-<slug>.<pdf|png>` next to the HTML.
+   - If `render.sh` exits non-zero (no headless browser and no Node/puppeteer), it **keeps the HTML** and prints an install hint — surface that hint to the user and point them at the `.html` (degraded, not failed). `html` format never needs `render.sh`.
+
+### Step 6 — Present the answer
+
+Give the user:
+1. The answer itself (well-formed, scannable).
+2. A "Sources" footer listing wiki pages read and any external URLs used.
+3. If promoted: a one-line summary of what was filed into the wiki.
+
+## What you must NOT do
+
+- Make up facts when the wiki and the web don't support them. Say "I don't know" instead.
+- Promote sensitive content (personal/medical/financial details the user mentioned in passing) without explicit consent.
+- Drift from the question. The web search is a tool, not a research expedition.
+- Modify `raw/`.
+- Use Obsidian-specific markdown in promoted pages.
+
+## Output format
+
+```
+<the answer — every load-bearing fact carries an inline (source: raw/<file>#<anchor>)>
+
+---
+
+Sources:
+- Wiki: [[page-a]], [[page-b]]
+- Raw: (source: raw/<file>#<anchor>), (source: raw/<other>#<anchor>)
+- Web: <urls if used>
+
+Timeline: <n> dated sources spanning <first>..<last> | (none — not a change-over-time question)
+Promoted to wiki: wiki/<file> (new) | (nothing — `--no-promote` was set | wiki was sufficient)
+Visual: diagrams/query-<slug>.<html|pdf|png> (archetype: <name>, score <n>) | (none — no --visual) | (HTML only — renderer missing, see hint above)
+```
+
+### Citing raw evidence (the exact form matters)
+
+Every fact in the answer that a reader could check must carry an inline citation in **exactly** this shape, the same one AGENTS.md hard rule 4 mandates for wiki pages:
+
+```
+(source: raw/<file>#<anchor>)
+```
+
+The literal string `(source:` must open the parenthesis, and the `raw/...` path must follow it directly. This is not cosmetic — `scripts/citation-audit.py` and every downstream check locate provenance by grepping that exact form, so a citation in any other shape is unverifiable no matter how correct it is. These all **fail** even when the path and anchor are perfect:
+
+| written as | why it fails |
+|---|---|
+| ``source: `raw/f.md#L20` `` | backticks around the path; no opening `(source:` |
+| `([[page-summary]], source: raw/f.md#L20)` | `(source:` does not open the parenthesis |
+| `see raw/f.md#L20` | no `(source: …)` wrapper at all |
+| listing the path only under `Sources:` | the *claim* is uncited; only the answer as a whole is |
+
+Prefer the **narrowest** anchor that contains the fact — `#L948` over `#L900-L960`, a section slug over a whole file. A citation that resolves to 60 lines gestures at a document; one that resolves to 2 proves a claim. Whole-file citations (`raw/f.md` with no `#anchor`) are a last resort for facts that genuinely span the document.
+
+Cite the raw snapshot even when you reached the fact through a wiki page — name the page in `- Wiki:` **and** the underlying passage inline. The wikilink says where you read it; the `(source: …)` says how anyone else can check it.

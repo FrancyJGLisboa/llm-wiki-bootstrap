@@ -12,7 +12,7 @@
 #   3. dead-script  — scripts/ entries referenced by nothing else (advisory)
 #
 # Markdown health (broken links, orphans, contradictions) is already covered
-# by /wiki-lint and is intentionally NOT duplicated here.
+# by /ctx-lint and is intentionally NOT duplicated here.
 #
 # Exit 0 iff shellcheck (gate 1) and jscpd (gate 2) both pass. The dead-script
 # scan is advisory: it reports candidates but does not fail the build, because
@@ -38,7 +38,7 @@ CI=0
 JSCPD_VERSION="${JSCPD_VERSION:-5.0.4}"
 
 # Duplication ceiling — scoped to scripts/ (code only; markdown commands are
-# 0%-duplicated and owned by /wiki-lint, and would only dilute the metric).
+# 0%-duplicated and owned by /ctx-lint, and would only dilute the metric).
 # 2.5% under the pinned jscpd@5.0.4 (measured ~1.9% after the cut-to-core trim
 # removed the factory/brain/causal scripts and their sibling oracles). The
 # remaining duplication is the accepted per-verify-script reporting boilerplate.
@@ -107,7 +107,7 @@ done < <(git ls-files 'scripts/*.sh' 'scripts/*.py' 'scripts/**/*.sh' 'scripts/*
 
 # ──── SUMMARY ────
 section "summary"
-printf "%sReminder:%s run /wiki-lint for markdown health (links, orphans, contradictions).\n" "$DIM" "$RESET"
+printf "%sReminder:%s run /ctx-lint for markdown health (links, orphans, contradictions).\n" "$DIM" "$RESET"
 if [ "$failures" = 0 ]; then
   ok "quality gate passed"
   exit 0

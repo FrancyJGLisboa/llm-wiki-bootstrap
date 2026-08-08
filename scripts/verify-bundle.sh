@@ -14,7 +14,7 @@
 #   B1  MANIFEST present and every listed file exists with a matching SHA-256
 #   B2  no extra files beyond the MANIFEST (tamper/addition detection;
 #       buyer-added content is expected after first use — see --post-use)
-#   B3  wiki root shape: raw/, wiki/, AGENTS.md, log.md
+#   B3  root shape: raw/, context/ (or legacy wiki/), AGENTS.md, log.md
 #   B4  every citation resolves to a real raw anchor (citation-audit C1+C2)
 #   B5  every claim-bearing page is sourced (citation-audit --coverage)
 #
@@ -113,8 +113,12 @@ else
 fi
 
 # ── B3: wiki root shape ─────────────────────────────────────────────────────
-if [ -d raw ] && [ -d wiki ] && [ -f AGENTS.md ] && [ -f log.md ]; then
-  ok "B3 shape: raw/ wiki/ AGENTS.md log.md present"
+# The compiled root is `context/` from schema v5 and `wiki/` before it. Both are
+# accepted permanently: bundles already delivered cannot be migrated, and a
+# buyer running this script is verifying an artifact they were given, not
+# upgrading it.
+if [ -d raw ] && { [ -d context ] || [ -d wiki ]; } && [ -f AGENTS.md ] && [ -f log.md ]; then
+  ok "B3 shape: raw/ $([ -d context ] && echo context/ || echo wiki/) AGENTS.md log.md present"
 else
   bad "B3 shape: not a complete wiki root"
 fi

@@ -209,12 +209,30 @@ def main() -> int:
     args = ap.parse_args()
 
     root = Path(args.wiki_root).resolve() if args.wiki_root else Path(__file__).resolve().parent.parent
-    if not (root / "wiki").is_dir() or not (root / "AGENTS.md").is_file():
-        print(f"error: {root} is not a wiki root (needs wiki/ and AGENTS.md)", file=sys.stderr)
+    # The compiled root is context/ from schema v5, wiki/ before it. Accept
+    # either: bundles built before v5 have only wiki/.
+    ctx_dir = None
+    for candidate in ("context", "wiki"):
+        if (root / candidate).is_dir():
+            ctx_dir = root / candidate
+            break
+    if ctx_dir is None or not (root / "AGENTS.md").is_file():
+        print(f"error: {root} is not a context root (needs context/ or wiki/, and AGENTS.md)", file=sys.stderr)
         return 2
     out = Path(args.out).resolve() if args.out else root / "dist" / "okf"
     # Guarantee (d): never write into the source trees.
-    for guarded in (root / "wiki", root / "raw"):
+    #
+    # Every path here is .resolve()d before comparison. `out` always was, but the
+    # guarded paths were not — so once `wiki` became a symlink to `context`,
+    # `--out wiki/leak` resolved to `<root>/context/leak` while the guard still
+    # held the literal `<root>/wiki`, the two never matched, and the export
+    # happily wrote into the read-only source tree. Comparing a resolved path
+    # against an unresolved one is the bug; resolve both sides.
+    guarded_roots = {(root / "raw").resolve()}
+    for candidate in ("context", "wiki"):
+        if (root / candidate).exists():
+            guarded_roots.add((root / candidate).resolve())
+    for guarded in sorted(guarded_roots):
         if guarded == out or guarded in out.parents:
             print(f"error: --out {out} would overlap the read-only source {guarded}", file=sys.stderr)
             return 2

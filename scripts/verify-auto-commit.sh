@@ -36,13 +36,13 @@ before="$(count)"; run; after="$(count)"
 if [ "$before" = "$after" ]; then echo "A ok: clean tree → no commit"; else echo "A FAIL: committed on clean tree"; fails=$((fails+1)); fi
 
 # B — wiki change + log header → commit created with derived message.
-printf '## 2026-06-08 12:00 — /wiki-ingest\n- did a thing\n\n# log.md\n' > "$repo/log.md"
+printf '## 2026-06-08 12:00 — /ctx-compile\n- did a thing\n\n# log.md\n' > "$repo/log.md"
 printf 'page\n' > "$repo/wiki/a.md"
 before="$(count)"; run; after="$(count)"
 if [ "$after" -gt "$before" ]; then echo "B ok: change → commit created"; else echo "B FAIL: no commit on change"; fails=$((fails+1)); fi
 msg="$( cd "$repo" && git log -1 --format='%s' )"
 case "$msg" in
-  "auto: 2026-06-08 12:00 — /wiki-ingest") echo "B ok: message derived from log.md header" ;;
+  "auto: 2026-06-08 12:00 — /ctx-compile") echo "B ok: message derived from log.md header" ;;
   *) echo "B FAIL: unexpected commit message: $msg"; fails=$((fails+1)) ;;
 esac
 

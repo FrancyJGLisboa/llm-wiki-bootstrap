@@ -1,4 +1,4 @@
-# Loss function — assessing llm-wiki-bootstrap's vectorless RAG on a real corpus.
+# Loss function — assessing context-compiler-bootstrap's vectorless RAG on a real corpus.
 #
 # Corpus: "Grain Markets and Other Stuff" YouTube transcripts, 1,138 files,
 # 2.8M words, 2020-09-14 -> 2026-06-15. One host, weekly, on the same handful

@@ -22,7 +22,7 @@ expected output — keep it stable unless you also update `verify-wiki-to-anki.s
 
 - Q: What is the canonical hashing script in this repo?
   A: scripts/body-hash.sh (source: raw/canary.md#hashing)
-- Q: What does `/wiki-lint` check?
+- Q: What does `/ctx-lint` check?
   A: Broken links, orphans, contradictions, stale claims,
      and unresolved open questions.
   (source: raw/canary.md#lint)

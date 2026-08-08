@@ -2,12 +2,12 @@
 """scripts/commit-source.py — write the three ingest commitment fields into a raw source.
 
 AGENTS.md hard rule 1: never write to raw/ except `ingested_hash`, `ingested_at`
-and `ingested_pages`, as the last step of /wiki-ingest. This does exactly that
+and `ingested_pages`, as the last step of /ctx-compile. This does exactly that
 and nothing else — every other byte of the file, frontmatter and body alike, is
 preserved verbatim. verify-corpus-eval.sh proves that by byte-comparing
 everything outside the three fields.
 
-Why it exists: in headless sharded mode (`claude -p "/wiki-ingest raw/<f>"`) the
+Why it exists: in headless sharded mode (`claude -p "/ctx-compile raw/<f>"`) the
 agent can end its turn while the faithfulness gate is still running — observed
 verbatim, "Waiting on the gate — I'll pick up Steps 6-8 automatically when it
 completes." There is no later turn in -p mode, so Step 7 never runs: pages are

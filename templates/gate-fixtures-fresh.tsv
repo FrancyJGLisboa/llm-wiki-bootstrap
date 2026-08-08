@@ -1,0 +1,17 @@
+# scripts/gate-fixtures.tsv — fixture invocations for scripts/gate-fixtures.sh.
+#
+# This is the FRESH copy installed into a new context compiler. It lists only
+# the gates that ship, because a table row naming an absent gate is an error
+# (exit 2), not a skip — a gate that vanishes must not be able to do so quietly.
+#
+# When /ctx-gate builds a gate under gates/, it does NOT need a row here: gates
+# in gates/ are discovered by the gates/fixtures/<RULE-ID>/ convention. This
+# table exists for the hand-written gates in scripts/, whose fixtures take
+# gate-specific flags that cannot be guessed from a directory layout.
+#
+# Format: <gate-path><TAB><violating-invocation><TAB><clean-invocation>
+scripts/gate-raw-append-only.sh	scripts/gate-raw-append-only.sh --diff tests/gates/raw-append-only/dirty.diff	scripts/gate-raw-append-only.sh --diff tests/gates/raw-append-only/clean.diff
+scripts/gate-command-aliases.sh	scripts/gate-command-aliases.sh --repo tests/gates/command-aliases/dirty	scripts/gate-command-aliases.sh --repo tests/gates/command-aliases/clean
+scripts/gate-exec-bits.sh	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/dirty --index tests/gates/exec-bits/dirty/index.txt	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/clean --index tests/gates/exec-bits/clean/index.txt
+scripts/gate-fixtures.sh	scripts/gate-fixtures.sh --repo tests/gates/fixtures/dirty	scripts/gate-fixtures.sh --repo tests/gates/fixtures/clean
+scripts/ctx-lint-rules.sh	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/dirty	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/clean

@@ -11,6 +11,8 @@
 #   scripts/{body-hash,preflight,verify-extract,vtt-to-md,verify-bundle}.sh
 #   scripts/citation-audit.py  scripts/lib/  scripts/synthesize/
 #   templates/                                           (runtime, if present)
+#   gates/ + gates/fixtures/ + gates/baseline.tsv        (executable context)
+#   scripts/{gate-fixtures,gate-ratchet,ctx-lint-rules}.sh + gate-fixtures.tsv
 #   + generated: MANIFEST  BUYER-README.md  LICENSE (stub if none exists)
 #
 # Packaging REFUSES to ship a wiki that fails its own quality gates:
@@ -63,15 +65,58 @@ ok()   { echo "✓ $1"; }
 # ── Setup checks ────────────────────────────────────────────────────────────
 [ -d "$ROOT/raw" ] && [ -d "$ROOT/wiki" ] && [ -f "$ROOT/AGENTS.md" ] && [ -f "$ROOT/log.md" ] \
   || fail "$ROOT is not a wiki root (needs raw/, wiki/, AGENTS.md, log.md)" 2
+# The compiled root is `context/` from schema v5, `wiki/` before it. Resolve it
+# once rather than hardcoding either: a bundle built on a checkout without the
+# compat symlink (Windows, no core.symlinks) has context/ and no wiki/ at all,
+# and the G2-G4 gates must still find the pages.
+# shellcheck source=lib/ctx-root.sh
+. "$SCRIPT_DIR/lib/ctx-root.sh" || fail "cannot source lib/ctx-root.sh" 2
+CTXDIR="$(ctx_root "$ROOT")" || fail "$ROOT has neither context/ nor wiki/" 2
+
 PYBIN="$(command -v python3 || command -v python || true)"
 [ -n "$PYBIN" ] || fail "python3 required — packaging will not ship unaudited citations" 2
 command -v tar >/dev/null 2>&1 || fail "tar required" 2
 
-# Refuse symlinks: a portable asset must not depend on host paths (a symlink
-# like raw/leak.md -> /tmp/secret would resolve on the buyer's machine, not
-# ship its target). cp -Rp + tar store symlinks verbatim, so reject up front.
-symlinks="$(find "$ROOT" -path "$ROOT/.git" -prune -o -type l -print | head -10)"
-[ -z "$symlinks" ] || { printf '  symlink: %s\n' $symlinks >&2; fail "symlinks present — a portable asset must not depend on host paths; remove them before packaging" 2; }
+# Refuse ESCAPING symlinks: a portable asset must not depend on host paths. A
+# symlink like raw/leak.md -> /tmp/secret resolves on the buyer's machine
+# instead of shipping its target, and cp -Rp + tar store symlinks verbatim, so
+# it has to be caught here.
+#
+# This was a blanket "no symlinks at all" check until schema v5. That was too
+# coarse in one specific way: the compiled root gained a committed compat
+# symlink `wiki -> context`, which is RELATIVE and points INSIDE the bundle. It
+# is not the threat — tar stores it, and it resolves on the buyer's machine to
+# the context/ directory that shipped alongside it. Rejecting it blocked
+# packaging entirely.
+#
+# So the rule is now precise rather than broad: a symlink is refused when it is
+# absolute, or when its target resolves outside $ROOT. Both of those are the
+# host-path dependency the check exists for; a relative link that stays inside
+# the tree is portable by construction.
+# Compare against the PHYSICAL root. `pwd -P` below resolves symlinks in the
+# path, and on macOS $TMPDIR lives under /var, which is itself a symlink to
+# /private/var — so an unresolved $ROOT never matches a resolved target and
+# every symlink reads as escaping.
+ROOT_P="$(cd "$ROOT" && pwd -P)"
+bad_links=""
+while IFS= read -r link; do
+  [ -n "$link" ] || continue
+  target="$(readlink "$link")"
+  case "$target" in
+    /*) bad_links="$bad_links $link->$target"; continue ;;   # absolute: host path
+  esac
+  # Resolve relative to the link's own directory and require it to stay inside
+  # ROOT. cd+pwd -P is used rather than realpath, which is not on every macOS.
+  link_dir="$(dirname "$link")"
+  resolved="$(cd "$link_dir" 2>/dev/null && cd "$(dirname "$target")" 2>/dev/null && pwd -P)/$(basename "$target")"
+  case "$resolved" in
+    "$ROOT_P"/*|"$ROOT_P") : ;;
+    *) bad_links="$bad_links $link->$target" ;;
+  esac
+done <<EOF
+$(find "$ROOT" -path "$ROOT/.git" -prune -o -type l -print)
+EOF
+[ -z "$bad_links" ] || { printf '  escaping symlink: %s\n' $bad_links >&2; fail "symlink(s) point outside the bundle — a portable asset must not depend on host paths; remove them before packaging" 2; }
 
 NAME="$(basename "$ROOT" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//; s/-$//')"
 BUNDLE="${NAME}-${VERSION}"
@@ -89,7 +134,7 @@ ok "G1 raw frontmatter: all raw files hash cleanly"
 
 # ── Gate G2: wiki pages carry required frontmatter keys ─────────────────────
 g2_bad=0
-for f in "$ROOT"/wiki/*.md; do
+for f in "$ROOT/$CTXDIR"/*.md; do
   [ -e "$f" ] || continue
   fm="$(awk '/^---$/{n++; next} n>=2{exit} n==1' "$f")"  # frontmatter block (between the first two ---)
   for key in title type source updated; do
@@ -97,18 +142,18 @@ for f in "$ROOT"/wiki/*.md; do
   done
 done
 [ "$g2_bad" -eq 0 ] || fail "G2 wiki frontmatter: $g2_bad missing key(s) — fix before packaging"
-ok "G2 wiki frontmatter: all pages carry title/type/source/updated"
+ok "G2 $CTXDIR frontmatter: all pages carry title/type/source/updated"
 
 # ── Gate G3: every citation resolves (C1+C2 deterministic floor) ────────────
-if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" >/dev/null 2>&1; then
-  "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" 2>&1 | grep -i bad | head -5 >&2
+if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/$CTXDIR" --raw "$ROOT/raw" >/dev/null 2>&1; then
+  "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/$CTXDIR" --raw "$ROOT/raw" 2>&1 | grep -i bad | head -5 >&2
   fail "G3 citations: broken citations found — a buyer would catch this; fix before packaging"
 fi
 ok "G3 citations: every citation resolves to a real raw anchor"
 
 # ── Gate G4: every claim-bearing page is sourced (coverage) ─────────────────
-if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" --coverage >/dev/null 2>&1; then
-  "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/wiki" --raw "$ROOT/raw" --coverage 2>&1 | grep '✗' | head -5 >&2
+if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/$CTXDIR" --raw "$ROOT/raw" --coverage >/dev/null 2>&1; then
+  "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/$CTXDIR" --raw "$ROOT/raw" --coverage 2>&1 | grep '✗' | head -5 >&2
   fail "G4 coverage: claim-bearing page(s) carry no citation — a buyer would catch this; cite them or set 'provenance: none'"
 fi
 ok "G4 coverage: every claim-bearing page carries a resolving citation"
@@ -127,7 +172,8 @@ copy_if() {  # copy_if <relative-path>  (file or directory; silent if absent)
 }
 
 copy_if raw
-copy_if wiki
+copy_if context
+copy_if wiki    # the compat symlink (or, pre-v5, the real directory)
 copy_if AGENTS.md
 copy_if log.md
 copy_if LICENSE
@@ -143,6 +189,23 @@ for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.
 done
 copy_if scripts/lib
 copy_if scripts/synthesize
+
+# ── executable context ──
+# The rules layer is only half knowledge. wiki/rules/ travels with wiki/ as
+# ordinary pages, but a rule classified `deterministic` is only actually enforced
+# by the script under gates/ — so the gates, their fixtures and the ratchet
+# baseline ship too. Without them the recipient holds pages that DESCRIBE
+# constraints and nothing that CHECKS them, which is the difference this whole
+# layer exists to make.
+#
+# The fixtures are not optional freight: they are what lets the recipient
+# confirm each gate still fires rather than taking the seller's word for it —
+# the same reason verify-bundle.sh ships inside the bundle.
+copy_if gates
+for s in gate-fixtures.sh gate-ratchet.sh ctx-lint-rules.sh; do
+  copy_if "scripts/$s"
+done
+copy_if scripts/gate-fixtures.tsv
 
 # Generated: LICENSE stub if the seller has none.
 if [ ! -f "$DEST/LICENSE" ]; then
@@ -166,15 +229,15 @@ base. You query it with the AI tool you already use — no service, no account.
 1. Unpack this bundle anywhere and open the directory in an agentic AI tool
    (Claude Code: \`cd\` here, run \`claude\`). Run \`./scripts/preflight.sh\`
    to confirm your environment.
-2. Ask your first question: \`/wiki-query "<anything about this topic>"\`
+2. Ask your first question: \`/ctx-query "<anything about this topic>"\`
 3. Every answer cites its sources — raw material ships in \`raw/\`, claims
    link to it. Verify citation integrity (intact + citations resolve +
    every claim-bearing page is sourced) at any time:
 
        ./scripts/verify-bundle.sh
 
-4. The wiki is yours to extend: \`/wiki-extract <your-source>\` then
-   \`/wiki-ingest\`. Your additions never overwrite the purchased provenance.
+4. The wiki is yours to extend: \`/ctx-extract <your-source>\` then
+   \`/ctx-compile\`. Your additions never overwrite the purchased provenance.
 
 Integrity: MANIFEST lists a SHA-256 for every file in this bundle.
 EOF

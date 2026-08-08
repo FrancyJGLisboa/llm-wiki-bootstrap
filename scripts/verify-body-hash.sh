@@ -3,7 +3,7 @@
 #
 # body-hash.sh is the ONE canonical hash for `ingested_hash`. A raw file with
 # malformed frontmatter (missing the closing ---) must FAIL CLOSED, not return
-# the empty-string SHA — otherwise /wiki-ingest stamps a placeholder hash and
+# the empty-string SHA — otherwise /ctx-compile stamps a placeholder hash and
 # idempotence silently skips the file forever (lost content). This verifier
 # pins that behavior against the fixtures in tests/canary/frontmatter-fixture/.
 #

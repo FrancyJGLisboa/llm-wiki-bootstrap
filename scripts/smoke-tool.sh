@@ -57,11 +57,11 @@ cp "$FIX" "$WORK/raw/borealis.md"
 # Drive each tool by its BEST invocation: claude has real slash commands; the
 # others invoke the same workflows by natural language (per their shims).
 if [ "$tool" = claude ]; then
-  INGEST='/wiki-ingest raw/borealis.md'
-  QUERY='/wiki-query "what did the Borealis composite index close at in the 2029 review?"'
+  INGEST='/ctx-compile raw/borealis.md'
+  QUERY='/ctx-query "what did the Borealis composite index close at in the 2029 review?"'
 else
-  INGEST="Ingest raw/borealis.md into this wiki by following the procedure in .claude/commands/wiki-ingest.md and AGENTS.md: write the summary + concept pages with (source: raw/borealis.md#...) citations and update wiki/index.md. Do the work; don't just describe it."
-  QUERY="Following .claude/commands/wiki-query.md, answer from this wiki only: what did the Borealis composite index close at in the 2029 review? Cite the source page."
+  INGEST="Ingest raw/borealis.md into this wiki by following the procedure in .claude/commands/ctx-compile.md and AGENTS.md: write the summary + concept pages with (source: raw/borealis.md#...) citations and update wiki/index.md. Do the work; don't just describe it."
+  QUERY="Following .claude/commands/ctx-query.md, answer from this wiki only: what did the Borealis composite index close at in the 2029 review? Cite the source page."
 fi
 
 log "ingest via: ${RUN[*]} \"<prompt>\""

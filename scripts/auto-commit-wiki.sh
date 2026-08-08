@@ -35,13 +35,13 @@ msg="${msg//\"/}"
 
 # RAW-APPEND-ONLY, advisory. raw/ is evidence: citations resolve into it and
 # hash-drift compares against it, so an unauthorised edit corrupts the substrate
-# silently — /wiki-lint later reports the drift and never names the cause. Warn
+# silently — /ctx-lint later reports the drift and never names the cause. Warn
 # here, where it is still one `git checkout --` away from undone.
 #
 # Warn, never block: this hook's contract is that it always exits 0 and can
 # never hang or fail a turn. A blocking gate on a Stop hook would strand the
 # user's work in an uncommitted tree, which is the exact failure this script
-# exists to prevent. The blocking enforcement belongs in /wiki-lint (check 8b).
+# exists to prevent. The blocking enforcement belongs in /ctx-lint (check 8b).
 #
 # Exit 1 (a real violation) is warned about; exit 2 (the gate itself could not
 # run) is swallowed. Treating 2 as a violation would fire a scary warning on

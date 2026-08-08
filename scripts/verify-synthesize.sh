@@ -79,7 +79,7 @@ Body links to [[page-a]].
 - [[page-a]] — sibling
 
 ## Open questions on this page
-- ... (consumed by /wiki-lint)
+- ... (consumed by /ctx-lint)
 EOF
 
 cat > "$tmp/log.md" <<'EOF'
@@ -89,11 +89,11 @@ cat > "$tmp/log.md" <<'EOF'
 
 A summary entry with no HH:MM, like real cut-to-core / schema-bump headers.
 
-## 2026-06-03 09:00 — /wiki-ingest
+## 2026-06-03 09:00 — /ctx-compile
 
 - Processed: raw/page-b.md (hash abcd1234)
 
-## 2026-06-01 08:00 — /wiki-ingest
+## 2026-06-01 08:00 — /ctx-compile
 
 - Processed: raw/page-a.md (hash 0badf00d)
 EOF
@@ -125,7 +125,7 @@ else
   fail "open-questions dashboard missing planted question or [[page-a]] link"
 fi
 # placeholder '...' question must NOT leak in
-if grep -q "consumed by /wiki-lint" "$tmp/wiki/open-questions-dashboard.md"; then
+if grep -q "consumed by /ctx-lint" "$tmp/wiki/open-questions-dashboard.md"; then
   fail "placeholder '...' question leaked into the dashboard"
 else
   ok "placeholder '...' question correctly skipped"

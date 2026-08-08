@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/visualize/render.sh — render a self-contained HTML poster to PDF or PNG.
 #
-# Used by /wiki-query --visual pdf|png and /wiki-diagram --pdf|--png to turn the
+# Used by /ctx-query --visual pdf|png and /ctx-diagram --pdf|--png to turn the
 # HTML poster produced from the infographic generator-contract into a PDF or PNG.
 #
 # Renderer detection (graceful, optional-dependency posture — never silent):

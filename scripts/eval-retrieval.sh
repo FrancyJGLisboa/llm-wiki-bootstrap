@@ -3,8 +3,8 @@
 #
 # Turns "can a bootstrapped wiki retrieve accurate, point-in-time info about
 # anything?" into five numbers. Everything runs against a wiki built by the REAL
-# installer (create-llm-wiki.sh) and populated through the REAL /wiki-extract →
-# /wiki-ingest path, so a failure here is a failure a user would hit — not a
+# installer (create-context-compiler.sh) and populated through the REAL /ctx-extract →
+# /ctx-compile path, so a failure here is a failure a user would hit — not a
 # fixture artifact. No pre-built wiki fixture is used on purpose: the modality
 # gaps this eval exists to find (tabular truncation, thread flattening) live in
 # extract and ingest, and a hand-authored fixture would paper over exactly them.
@@ -54,7 +54,7 @@ REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 GEN="$REPO_ROOT/tests/eval/retrieval-corpus/gen-corpus.sh"
 QUESTIONS="$REPO_ROOT/tests/eval/retrieval-questions.md"
 CITE_SPAN="$SCRIPT_DIR/cite-span.py"
-INSTALLER="$SCRIPT_DIR/create-llm-wiki.sh"
+INSTALLER="$SCRIPT_DIR/create-context-compiler.sh"
 DRIFT_LINT="$SCRIPT_DIR/wiki-lint-hash-drift.sh"
 LIB="$SCRIPT_DIR/lib/eval-common.sh"
 
@@ -139,8 +139,8 @@ if [ "$DRY_RUN" -eq 1 ]; then
   echo "questions ($n_q):"
   cut -f1,3 "$tmp_q" | sed 's/^/  /'
   echo ""
-  echo "would run: create-llm-wiki.sh → /wiki-extract (all sources) → /wiki-ingest"
-  echo "           → /wiki-query per question → mutate raw → /wiki-query (R5)"
+  echo "would run: create-context-compiler.sh → /ctx-extract (all sources) → /ctx-compile"
+  echo "           → /ctx-query per question → mutate raw → /ctx-query (R5)"
   exit 0
 fi
 
@@ -196,18 +196,18 @@ sources=()
 for f in "$CORPUS"/*; do sources+=("$f"); done
 
 if staged extract; then
-  echo "[retr] skip /wiki-extract (done)" >&2
+  echo "[retr] skip /ctx-extract (done)" >&2
 else
-  echo "[retr] /wiki-extract (${#sources[@]} sources)" >&2
-  claude_p "$WORK/extract.log" "/wiki-extract ${sources[*]}"
+  echo "[retr] /ctx-extract (${#sources[@]} sources)" >&2
+  claude_p "$WORK/extract.log" "/ctx-extract ${sources[*]}"
   mark_done extract
 fi
 
 if staged ingest; then
-  echo "[retr] skip /wiki-ingest (done)" >&2
+  echo "[retr] skip /ctx-compile (done)" >&2
 else
-  echo "[retr] /wiki-ingest" >&2
-  claude_p "$WORK/ingest.log" "/wiki-ingest"
+  echo "[retr] /ctx-compile" >&2
+  claude_p "$WORK/ingest.log" "/ctx-compile"
   mark_done ingest
 fi
 
@@ -217,7 +217,7 @@ echo "[retr] raw/: $extracted files, wiki/: $pages pages" >&2
 
 # ── Precondition: refuse to score an unpopulated wiki ─────────────────────────
 #
-# This gate is the lesson from a void run. With an empty wiki, /wiki-query
+# This gate is the lesson from a void run. With an empty wiki, /ctx-query
 # answered every question correctly by reading raw/ directly and said so — so
 # R1 scored 3/3 and R2 scored 2/2 while measuring nothing but "an agent can grep
 # a file". Passing on raw-only reads is the loss function's biggest false-pass
@@ -259,7 +259,7 @@ if [ "$pages" -le 1 ] || [ "$committed" -eq 0 ]; then
     echo "- committed raw:   $committed of $needle_raws needle sources carry an ingested_hash (need > 0)"
     echo "- ingest log tail: $(tail -3 "$WORK/ingest.log" 2>/dev/null | tr '\n' ' ')"
     echo ""
-    echo "With an empty wiki, /wiki-query falls back to reading raw/ directly and"
+    echo "With an empty wiki, /ctx-query falls back to reading raw/ directly and"
     echo "needle questions pass for the wrong reason. Fix ingest, then re-run:"
     echo "  scripts/eval-retrieval.sh --work=$WORK"
     echo "(extract is cached; delete \$WORK/.done-ingest to retry just ingest)"
@@ -296,7 +296,7 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     # eval's cost metric. query-trace.py distils answer text + read counts;
     # if the stream is unparseable the raw bytes become the answer so the
     # API-error markers stay visible to retr_answer_broken.
-    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" \
+    ( cd "$WIKI" && claude -p "/ctx-query \"$question\" --no-promote" \
         --output-format stream-json --verbose ) \
       >"$WORK/$qid.stream" 2>"$WORK/$qid.err" </dev/null || true
     python3 "$QUERY_TRACE" "$WORK/$qid.stream" --counts "$WORK/$qid.reads" \
@@ -429,7 +429,7 @@ if [ "$HOLDOUT" -eq 0 ]; then
         echo "[retr] R5 — cached, regrading" >&2
       else
         echo "[retr] R5 (post-mutation re-query)" >&2
-        ( cd "$WIKI" && claude -p "/wiki-query \"What was sustained throughput as of 2026-04-15?\" --no-promote" ) \
+        ( cd "$WIKI" && claude -p "/ctx-query \"What was sustained throughput as of 2026-04-15?\" --no-promote" ) \
           >"$answer" 2>"$WORK/R5.err" </dev/null || true
       fi
       if retr_answer_broken "$answer"; then
@@ -531,7 +531,7 @@ cat <<EOF
 
 Corpus: tests/eval/retrieval-corpus/gen-corpus.sh (generated, deterministic)
 Questions: $QUESTIONS ($n_q)
-Wiki: built by create-llm-wiki.sh, loaded via /wiki-extract + /wiki-ingest
+Wiki: built by create-context-compiler.sh, loaded via /ctx-extract + /ctx-compile
 Loaded: $extracted raw files, $pages wiki pages$([ "$SCALE" -gt 0 ] && echo " (includes $SCALE scale-filler pages)")
 Reads: $reads_summary
 Commitment: $committed/$needle_raws needle raw sources carry an ingested_hash$([ "$committed" -lt "$needle_raws" ] && echo "  <- ingest skipped the frontmatter commitment on $((needle_raws - committed)); every citation into those bodies is unverifiable")

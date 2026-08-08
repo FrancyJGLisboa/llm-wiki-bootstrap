@@ -2,7 +2,7 @@
 # scripts/eval-entities.sh — measure entity extraction against a planted gold set.
 #
 # Reads a wiki that has already been built and ingested (by scripts/eval-retrieval.sh
-# or by hand) and scores the `## Entities` sections that /wiki-ingest step 3.5 is
+# or by hand) and scores the `## Entities` sections that /ctx-compile step 3.5 is
 # supposed to produce. Deterministic: no LLM, no spend. The LLM work happened at
 # ingest; this only grades it, so it can re-grade a wiki as often as needed for free.
 #
@@ -70,7 +70,7 @@ if [ -z "$entity_lines" ]; then
   echo "# entity eval — NO ENTITIES CAPTURED"
   echo ""
   echo "No wiki page carries an \`## Entities\` section, so there is nothing to score."
-  echo "Either /wiki-ingest step 3.5 did not run, or this wiki predates it."
+  echo "Either /ctx-compile step 3.5 did not run, or this wiki predates it."
   echo "This is reported as a distinct outcome, NOT as E1 0% — a missing section and"
   echo "an empty one fail for different reasons and need different fixes."
   exit 0

@@ -7,7 +7,7 @@
 # sidecar) and the body moves while every `(source: raw/<file>#<anchor>)`
 # citation keeps pointing at it — the citation still resolves, but to text that
 # no longer says what the wiki claims it says. Nothing else catches this:
-# `/wiki-lint` check 4 is about page age, check 7 about frontmatter fields, and
+# `/ctx-lint` check 4 is about page age, check 7 about frontmatter fields, and
 # citation-audit.py only proves the target file/anchor EXISTS.
 #
 # This lint recomputes the canonical body hash (scripts/body-hash.sh — the ONE
@@ -15,7 +15,7 @@
 # the hash recorded at last ingest, naming the wiki pages now at risk.
 #
 # Not-yet-ingested sources (`ingested_hash: ""`) are NOT drift — they are
-# /wiki-ingest's job — and are skipped silently.
+# /ctx-compile's job — and are skipped silently.
 #
 # Exit: 0 — every ingested raw still hashes to its recorded commitment.
 #       1 — ≥1 drifted or unhashable raw (each named on stderr).
@@ -75,7 +75,7 @@ for file in "${files[@]}"; do
 done
 
 if [ "$drift" -gt 0 ]; then
-  echo "wiki-lint-hash-drift: $drift raw source(s) no longer match their ingest commitment — re-run /wiki-ingest on each to re-derive the claims." >&2
+  echo "wiki-lint-hash-drift: $drift raw source(s) no longer match their ingest commitment — re-run /ctx-compile on each to re-derive the claims." >&2
   exit 1
 fi
 exit 0

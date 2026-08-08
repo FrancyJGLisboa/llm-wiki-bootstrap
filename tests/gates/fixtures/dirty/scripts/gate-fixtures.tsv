@@ -1,0 +1,3 @@
+scripts/gate-blind.sh	STUB_DIRTY=0 scripts/gate-blind.sh dirty	scripts/gate-blind.sh clean
+scripts/gate-broken.sh	STUB_DIRTY=2 scripts/gate-broken.sh dirty	scripts/gate-broken.sh clean
+scripts/gate-noisy.sh	scripts/gate-noisy.sh dirty	STUB_CLEAN=1 scripts/gate-noisy.sh clean

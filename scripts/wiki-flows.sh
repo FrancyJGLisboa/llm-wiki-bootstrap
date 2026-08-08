@@ -75,7 +75,7 @@ if [ -f "$ROOT/log.md" ]; then
         if (degraded != "") print "\nDEGRADED vs the preceding month:" degraded
       }'
   else
-    echo "no metrics records yet — /wiki-ingest and /wiki-query append them via"
+    echo "no metrics records yet — /ctx-compile and /ctx-query append them via"
     echo "scripts/wiki-metrics.sh; without those lines this stays a page count,"
     echo "not a trend."
   fi

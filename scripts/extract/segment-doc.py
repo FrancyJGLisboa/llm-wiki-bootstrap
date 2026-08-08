@@ -4,15 +4,15 @@
 Ports the *idea* of PageIndex into the BYO-agent model: turn a long source
 into a hierarchy of sections with positional ranges, so that
 
-  - /wiki-ingest can author a compact summary TREE (one line per node) and
+  - /ctx-compile can author a compact summary TREE (one line per node) and
     read the source section-by-section instead of swallowing a flat blob, and
-  - /wiki-query can read the tree and fetch only the relevant sections via the
+  - /ctx-query can read the tree and fetch only the relevant sections via the
     existing `(source: raw/<file>#<anchor>)` citation-anchor machinery.
 
 This script is the DETERMINISTIC half (no LLM): it only segments and emits
 anchors. The agent writes the one-line summaries (ingest) and chooses which
 nodes to read (query). Mirrors scripts/vtt-to-md.sh: emits the BODY only to
-stdout; the caller (/wiki-extract) prepends frontmatter and the `# <title>`.
+stdout; the caller (/ctx-extract) prepends frontmatter and the `# <title>`.
 
 Output: markdown where every section is a heading
     #{level} <Title> (lines A-B)        # text / markdown sources

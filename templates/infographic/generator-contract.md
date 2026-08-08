@@ -1,7 +1,7 @@
 <!--
   Vendored from FrancyJGLisboa/Infographic-extractor (references/generator_handoff.md, v2).
   Bundled so produced wikis are self-contained. License pending upstream.
-  /wiki-diagram applies this contract to turn a chosen candidate's handoff block
+  /ctx-diagram applies this contract to turn a chosen candidate's handoff block
   into a renderable HTML poster. See example-poster.html for a worked scaffold.
 -->
 # Generator Contract (v2)

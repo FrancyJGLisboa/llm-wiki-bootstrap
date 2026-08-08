@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# scripts/eval-multi-hop.sh — multi-hop /wiki-query eval comparing typed vs baseline.
+# scripts/eval-multi-hop.sh — multi-hop /ctx-query eval comparing typed vs baseline.
 #
 # Reads tests/eval/multi-hop-questions.md. For each question:
-#   1. Runs the question through `claude -p '/wiki-query "<Q>" --no-promote'` against
+#   1. Runs the question through `claude -p '/ctx-query "<Q>" --no-promote'` against
 #      the typed fixture wiki (tests/eval/wiki-fixture/).
 #   2. Runs the same question against a baseline copy of the fixture where verbs in
 #      single-target `## Related` lines have been stripped.

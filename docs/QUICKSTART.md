@@ -1,21 +1,21 @@
-# QUICKSTART — `llm-wiki-bootstrap`
+# QUICKSTART — `context-compiler-bootstrap`
 
 From `git clone` to first useful answer in 5 minutes, across the supported AI tools.
 
 ## Fastest path (Claude Code)
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
 cd my-wiki && claude
 ```
 
 Then, inside Claude Code:
 
 ```
-/wiki-query "what is an llm-wiki, and why not just use RAG?"   # instant answer from the shipped demo — no setup
-/wiki-extract <your-url>                              # add your own source
-/wiki-ingest                                          # integrate it
-/wiki-query "what does that article say about X?"     # ask about it
+/ctx-query "what is an llm-wiki, and why not just use RAG?"   # instant answer from the shipped demo — no setup
+/ctx-extract <your-url>                              # add your own source
+/ctx-compile                                          # integrate it
+/ctx-query "what does that article say about X?"     # ask about it
 ```
 
 That's the loop. Everything below is depth — per-tool setup, the optional smoke test, cost, recovery. Skip to [The 5 operations](#the-5-operations) if you just want the commands.
@@ -26,23 +26,23 @@ That's the loop. Everything below is depth — per-tool setup, the optional smok
 
 1. **Clone and open** in VS Code:
    ```bash
-   git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+   git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
    code my-wiki
    ```
 2. Open **Copilot Chat** (`Ctrl+Shift+I` / `Cmd+Shift+I`) and **toggle Agent Mode** (classic Chat can't run multi-step workflows).
 3. Paste this one message to scaffold an **empty wiki and acquire your first source**:
    ```
-   Read AGENTS.md. Then scaffold an empty wiki by running /wiki-init per
-   .claude/commands/wiki-init.md, and fetch <your-url> into raw/ per
-   .claude/commands/wiki-extract.md. Show me each step.
+   Read AGENTS.md. Then scaffold an empty wiki by running /ctx-init per
+   .claude/commands/ctx-init.md, and fetch <your-url> into raw/ per
+   .claude/commands/ctx-extract.md. Show me each step.
    ```
-   **No bash *helper scripts* run in this step** — `/wiki-init` and URL `/wiki-extract` are pure agent work (file writes + `WebFetch`), so you reach your first source before the toolchain's `.sh` scripts (which start at `/wiki-ingest`) ever matter.
+   **No bash *helper scripts* run in this step** — `/ctx-init` and URL `/ctx-extract` are pure agent work (file writes + `WebFetch`), so you reach your first source before the toolchain's `.sh` scripts (which start at `/ctx-compile`) ever matter.
 4. Integrate it and ask a question:
    ```
-   Run /wiki-ingest per .claude/commands/wiki-ingest.md, then answer:
-   what does that source say about <topic>? Follow .claude/commands/wiki-query.md.
+   Run /ctx-compile per .claude/commands/ctx-compile.md, then answer:
+   what does that source say about <topic>? Follow .claude/commands/ctx-query.md.
    ```
-   `/wiki-ingest` is the first step that runs a bash helper (`scripts/body-hash.sh`) — which is exactly why Windows needs the one-time setup below.
+   `/ctx-compile` is the first step that runs a bash helper (`scripts/body-hash.sh`) — which is exactly why Windows needs the one-time setup below.
 
 ---
 
@@ -50,10 +50,10 @@ That's the loop. Everything below is depth — per-tool setup, the optional smok
 
 **On macOS or Linux? Skip this.** `bash`, `awk`, `openssl`, and `git` are already present; optionally install Python 3 for the graph/synthesis output. Go to [Before you start](#before-you-start).
 
-The wiki's helper scripts are **bash + Python** (e.g. `scripts/body-hash.sh`, which `/wiki-ingest` requires and must not be bypassed). VS Code's default terminal on Windows is **PowerShell**, which cannot run them — so the agent's `./scripts/*.sh` calls fail silently until you give it a real shell. Fix it once:
+The wiki's helper scripts are **bash + Python** (e.g. `scripts/body-hash.sh`, which `/ctx-compile` requires and must not be bypassed). VS Code's default terminal on Windows is **PowerShell**, which cannot run them — so the agent's `./scripts/*.sh` calls fail silently until you give it a real shell. Fix it once:
 
 1. **Install Git for Windows** → <https://git-scm.com/download/win>. One installer gives you **`git` *and* Git Bash**, and Git Bash bundles **`bash`, `awk`, and `openssl`** — every *hard* requirement, covered in a single step.
-2. **Install Python 3** → <https://www.python.org/downloads/> (tick **"Add python.exe to PATH"** in the installer). The core text loop (extract / ingest / query / lint) runs **without** Python; it's needed for the synthesis artifacts (`knowledge-graph.json`, the dashboards) and `/wiki-visualize`. The scripts accept either `python` or `python3`, so the standard python.org install just works.
+2. **Install Python 3** → <https://www.python.org/downloads/> (tick **"Add python.exe to PATH"** in the installer). The core text loop (extract / ingest / query / lint) runs **without** Python; it's needed for the synthesis artifacts (`knowledge-graph.json`, the dashboards) and `/ctx-visualize`. The scripts accept either `python` or `python3`, so the standard python.org install just works.
 3. **Make Git Bash the VS Code default terminal:** `Ctrl+Shift+P` → **"Terminal: Select Default Profile"** → **Git Bash**. Open a fresh terminal (``Ctrl+` ``); the prompt should read `MINGW64`.
 4. **Confirm you're ready** — from the repo root in that terminal:
    ```bash
@@ -95,7 +95,7 @@ Once `preflight.sh` is green, jump to the [Fastest path (VS Code + Copilot)](#fa
 **1. Clone the repo** where you want your wiki to live:
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
 cd my-wiki
 ```
 
@@ -103,7 +103,7 @@ cd my-wiki
 
 | Choice | Command | When |
 |---|---|---|
-| **Use the installer to generate a fresh skeleton** (recommended) | `./scripts/create-llm-wiki.sh ~/my-wiki` (manifest-driven; clean repo, no demo content) | You want to start your own wiki without doing a wipe. Cleanest path. |
+| **Use the installer to generate a fresh skeleton** (recommended) | `./scripts/create-context-compiler.sh ~/my-wiki` (manifest-driven; clean repo, no demo content) | You want to start your own wiki without doing a wipe. Cleanest path. |
 | **Keep + add alongside** | (do nothing) | You're learning the pattern. The meta-wiki + smoke stay as worked examples. |
 | **Wipe and start in-place** | `./scripts/wipe-meta-wiki.sh` (prompts; `--yes` to skip) | Edge case; the installer is preferable. |
 | **Archive to a reference folder** | `mkdir -p reference && git mv wiki reference/meta-wiki && mkdir wiki` | Best of both — keep the example, isolate your stuff. |
@@ -114,7 +114,7 @@ cd my-wiki
 
 ## Smoke test (optional — confirm your setup)
 
-**Just trying it out? Skip to [The 5 operations](#the-5-operations).** When you want confidence the whole thing works on your machine, two layers of smoke help: the umbrella for "does the whole pipeline run here"; the shape-check fixtures for "does `/wiki-extract` produce the right frontmatter shape for format X."
+**Just trying it out? Skip to [The 5 operations](#the-5-operations).** When you want confidence the whole thing works on your machine, two layers of smoke help: the umbrella for "does the whole pipeline run here"; the shape-check fixtures for "does `/ctx-extract` produce the right frontmatter shape for format X."
 
 ### End-to-end umbrella (Claude Code required)
 
@@ -122,20 +122,20 @@ cd my-wiki
 ./scripts/smoke-all.sh
 ```
 
-Runs the full pipeline: `claude -p` ingests a fictitious technical source (under `tests/smoke/`), queries it, and 13 binary checks (5 smoke C1–C5 + 8 regression guards R1–R8) assert that ingest produced wiki pages with the right anchors, `log.md` has the entry, `/wiki-query` recalled the fact and cited the source, and no schema/script invariants regressed. First run ~30-60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end.
+Runs the full pipeline: `claude -p` ingests a fictitious technical source (under `tests/smoke/`), queries it, and 13 binary checks (5 smoke C1–C5 + 8 regression guards R1–R8) assert that ingest produced wiki pages with the right anchors, `log.md` has the entry, `/ctx-query` recalled the fact and cited the source, and no schema/script invariants regressed. First run ~30-60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end.
 
 ### Shape-check smokes (per-format)
 
-Verify that `/wiki-extract` produces output with the right shape in your environment for individual formats. Three known-good fixtures ship with the repo.
+Verify that `/ctx-extract` produces output with the right shape in your environment for individual formats. Three known-good fixtures ship with the repo.
 
 ```
-/wiki-extract tests/canary/canary-smoke-test.md     # plain-text path
+/ctx-extract tests/canary/canary-smoke-test.md     # plain-text path
 ./scripts/verify-extract.sh canary-smoke-test
 
-/wiki-extract tests/canary/canary-csv.csv           # CSV path
+/ctx-extract tests/canary/canary-csv.csv           # CSV path
 ./scripts/verify-extract.sh canary-csv
 
-/wiki-extract tests/canary/canary-scanned.pdf       # scanned-PDF → LLM-vision path
+/ctx-extract tests/canary/canary-scanned.pdf       # scanned-PDF → LLM-vision path
 ./scripts/verify-extract.sh canary-scanned.pdf
 # the fixture has no text layer; check the sidecar recovered the codeword BLUE-HERON-7
 
@@ -152,7 +152,7 @@ Verify that `/wiki-extract` produces output with the right shape in your environ
 If sources arrive on a schedule (call transcripts, exported notes, watch folders), you don't have to paste them one by one. Drop files into `inbox/` and let cron drive the loop:
 
 ```bash
-./scripts/auto-ingest.sh              # inbox/ → /wiki-extract each file → /wiki-ingest
+./scripts/auto-ingest.sh              # inbox/ → /ctx-extract each file → /ctx-compile
 ./scripts/auto-ingest.sh --dry-run    # list what would be processed
 ```
 
@@ -160,7 +160,7 @@ Successfully extracted files move to `inbox/processed/`, so re-runs are no-ops. 
 
 ```cron
 */30 * * * *  cd /path/to/my-wiki && ./scripts/auto-ingest.sh >> .auto-ingest.log 2>&1
-0 6 * * *     cd /path/to/my-wiki && claude -p "/wiki-lint" >> .auto-ingest.log 2>&1
+0 6 * * *     cd /path/to/my-wiki && claude -p "/ctx-lint" >> .auto-ingest.log 2>&1
 ```
 
 ### Scale expectations (measured)
@@ -171,17 +171,17 @@ Successfully extracted files move to `inbox/processed/`, so re-runs are no-ops. 
 
 ## The 5 operations
 
-You will use the same 5 operations regardless of tool. Each one has two interchangeable Claude-Code slash-command forms: a short alias (`/extract`) and the prefixed canonical (`/wiki-extract`). Use whichever feels natural.
+You will use the same 5 operations regardless of tool. Each one has two interchangeable Claude-Code slash-command forms: a short alias (`/extract`) and the prefixed canonical (`/ctx-extract`). Use whichever feels natural.
 
 | Operation | Slash command | Purpose | When to run |
 |---|---|---|---|
-| **init** | `/init` or `/wiki-init` | Scaffold the directory structure (`raw/`, `wiki/`, `AGENTS.md`, `log.md`). Idempotent. | Once, only if you copied just `.claude/commands/` to a project. **Skip if you cloned this repo or used the installer** — structure is already there. |
-| **extract** `<sources>` | `/extract` or `/wiki-extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/` with frontmatter. Multi-source mode: paste several URLs or paths in one shot, get a consolidated OK/Degraded/Failed summary. Does **not** touch `wiki/`. | Every time you have new sources to add. Bulk mode is the realistic onboarding moment: paste 10 URLs at once. |
-| **ingest** `[<raw-file>]` | `/ingest` or `/wiki-ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every extract (or after manually editing a raw file). |
-| **query** `<question>` | `/query` or `/wiki-query` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. Add `--visual [html\|pdf\|png]` to also get a diagram of the answer (archetype auto-picked from the query). | Anytime you have a question. |
-| **lint** `[--apply]` | `/lint` or `/wiki-lint` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
+| **init** | `/init` or `/ctx-init` | Scaffold the directory structure (`raw/`, `wiki/`, `AGENTS.md`, `log.md`). Idempotent. | Once, only if you copied just `.claude/commands/` to a project. **Skip if you cloned this repo or used the installer** — structure is already there. |
+| **extract** `<sources>` | `/extract` or `/ctx-extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/` with frontmatter. Multi-source mode: paste several URLs or paths in one shot, get a consolidated OK/Degraded/Failed summary. Does **not** touch `wiki/`. | Every time you have new sources to add. Bulk mode is the realistic onboarding moment: paste 10 URLs at once. |
+| **ingest** `[<raw-file>]` | `/ingest` or `/ctx-compile` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via body hash. | After every extract (or after manually editing a raw file). |
+| **query** `<question>` | `/query` or `/ctx-query` | Read the wiki, synthesize an answer. Web-searches and promotes new knowledge as wiki pages on gaps. Add `--visual [html\|pdf\|png]` to also get a diagram of the answer (archetype auto-picked from the query). | Anytime you have a question. |
+| **lint** `[--apply]` | `/lint` or `/ctx-lint` | Health-check the wiki (broken links, orphans, contradictions, stale claims, gaps). | Periodically, or when answers feel inconsistent. |
 
-In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file (which acts as a portable workflow definition). The short-form alias files (`.claude/commands/{init,extract,ingest,query,lint}.md`) are thin delegators that point the AI at the canonical file — both names work identically.
+In Claude Code these are real slash commands. **In every other tool**, you invoke them by natural language and the AI agent follows the prompt body of the corresponding `.claude/commands/ctx-<name>.md` file (which acts as a portable workflow definition). The short-form alias files (`.claude/commands/{init,extract,ingest,query,lint}.md`) are thin delegators that point the AI at the canonical file — both names work identically.
 
 ---
 
@@ -191,10 +191,10 @@ Schema v2 (bumped 2026-05-26) added three opt-in extensions. None changes the th
 
 | Extension | What it is | How to use |
 |---|---|---|
-| **Journal entries** | A user-owned exception under `wiki/journal/<YYYY-MM-DD>-<slug>.md`. `/wiki-ingest` is forbidden from rewriting these. Template at `templates/journal-entry.md`. Cross-link to concept pages with `[[wiki-links]]`. Useful for time-stamped observations that should feed back into theory. | Copy the template, fill in body, drop into `wiki/journal/`. Use `[[]]` to link to existing concept pages. `/wiki-lint` catches broken links automatically. |
+| **Journal entries** | A user-owned exception under `wiki/journal/<YYYY-MM-DD>-<slug>.md`. `/ctx-compile` is forbidden from rewriting these. Template at `templates/journal-entry.md`. Cross-link to concept pages with `[[wiki-links]]`. Useful for time-stamped observations that should feed back into theory. | Copy the template, fill in body, drop into `wiki/journal/`. Use `[[]]` to link to existing concept pages. `/ctx-lint` catches broken links automatically. |
 | **Flashcards** | Any wiki page may declare a `## Flashcards` section with Q/A pairs. Exported to Anki-importable CSV by `./scripts/wiki-to-anki.sh > anki.csv`. Slug becomes the Anki tag. | Add the section to any page, run the exporter, import the CSV in Anki. |
 | **MCP read surface** | Optional. `./scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` against `wiki/` so any MCP-aware client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) can read + search the wiki without slash commands. BM25 search built in. | See [`MCP.md`](MCP.md) for per-client config snippets. |
-| **Typed relations** | Lines inside `## Related` can carry a verb (kebab-case) + optional attribute: `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Verb regex: `[a-z][a-z0-9-]*`. Untyped and multi-link lines collapse to implicit `related-to` for backward compat. Pure CommonMark, no rendering dependency. Graph viz colours and filters edges by verb. Empirical eval at `scripts/eval-multi-hop.sh` measures whether typed verbs actually improve `/wiki-query` recall vs. the same wiki with verbs stripped. | Add verbs to `## Related` lines as you ingest, validate with `./scripts/wiki-lint-typed-relations.sh wiki/`, regenerate the graph with `./scripts/visualize/graph.sh wiki/ > graph.html` to see verb-coloured edges + the verb-filter dropdown. Run the eval before deciding to invest in a parallel knowledge graph. Full spec in `AGENTS.md` → "Typed relations". |
+| **Typed relations** | Lines inside `## Related` can carry a verb (kebab-case) + optional attribute: `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Verb regex: `[a-z][a-z0-9-]*`. Untyped and multi-link lines collapse to implicit `related-to` for backward compat. Pure CommonMark, no rendering dependency. Graph viz colours and filters edges by verb. Empirical eval at `scripts/eval-multi-hop.sh` measures whether typed verbs actually improve `/ctx-query` recall vs. the same wiki with verbs stripped. | Add verbs to `## Related` lines as you ingest, validate with `./scripts/wiki-lint-typed-relations.sh wiki/`, regenerate the graph with `./scripts/visualize/graph.sh wiki/ > graph.html` to see verb-coloured edges + the verb-filter dropdown. Run the eval before deciding to invest in a parallel knowledge graph. Full spec in `AGENTS.md` → "Typed relations". |
 
 ---
 
@@ -214,35 +214,35 @@ claude          # open Claude Code in this directory
 Inside the Claude session, in order:
 
 ```
-/wiki-extract https://example.com/some-article
-/wiki-ingest
-/wiki-query "what does this article say about <topic>?"
+/ctx-extract https://example.com/some-article
+/ctx-compile
+/ctx-query "what does this article say about <topic>?"
 ```
 
 Periodically (e.g., once a week of active use):
 
 ```
-/wiki-lint
+/ctx-lint
 ```
 
 Render or export the wiki whenever you like (both are read-only on your wiki):
 
 ```
-/wiki-visualize          # interactive D3 graph of the whole wiki
-/wiki-flashcards         # export ## Flashcards sections to anki.csv
-/wiki-diagram "status of X for management"   # synthesize an audience-targeted poster
+/ctx-visualize          # interactive D3 graph of the whole wiki
+/ctx-flashcards         # export ## Flashcards sections to anki.csv
+/ctx-diagram "status of X for management"   # synthesize an audience-targeted poster
 ```
 
 **Gotchas:**
-- Type `/` and you'll see the `wiki-*` commands in the autocomplete — the five lifecycle commands plus the three output commands (`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`).
-- **Don't run `/wiki-init`** if you cloned this repo — the structure is already there.
+- Type `/` and you'll see the `wiki-*` commands in the autocomplete — the five lifecycle commands plus the three output commands (`/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`).
+- **Don't run `/ctx-init`** if you cloned this repo — the structure is already there.
 - First ingest may take 30-90 seconds depending on source size.
 
 ---
 
 ### Copilot CLI
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md` + `AGENTS.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. The path below is expected to work; if it does not, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md` + `AGENTS.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. The path below is expected to work; if it does not, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 `AGENTS.md` is auto-loaded by Copilot CLI on session start. Slash commands from `.claude/commands/` are not auto-discovered (Copilot CLI is a different CLI). You invoke workflows by natural language, referring to the workflow file.
 
@@ -256,27 +256,27 @@ Inside the session:
 ```
 Read AGENTS.md to learn this project's conventions. Then fetch
 https://example.com/some-article into raw/ as described in
-.claude/commands/wiki-extract.md.
+.claude/commands/ctx-extract.md.
 ```
 
 After fetch:
 
 ```
-Run the wiki-ingest workflow. The workflow steps are in
-.claude/commands/wiki-ingest.md — follow them exactly.
+Run the ctx-compile workflow. The workflow steps are in
+.claude/commands/ctx-compile.md — follow them exactly.
 ```
 
 Ask:
 
 ```
 Wiki-ask: "what does the article say about <topic>?"
-Use the workflow in .claude/commands/wiki-query.md.
+Use the workflow in .claude/commands/ctx-query.md.
 ```
 
 Lint:
 
 ```
-Run wiki-lint per .claude/commands/wiki-lint.md. Report issues
+Run ctx-lint per .claude/commands/ctx-lint.md. Report issues
 but don't apply fixes yet.
 ```
 
@@ -284,22 +284,22 @@ Output workflows use the same NL pattern — name the workflow and point at its 
 
 ```
 Make a poster — "status of X for management" — per
-.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+.claude/commands/ctx-diagram.md (or ctx-visualize / ctx-flashcards).
 ```
 
 **Gotchas:**
-- You'll explicitly reference the `.claude/commands/wiki-*.md` files in your first invocations. After a few rounds Copilot internalizes the pattern.
+- You'll explicitly reference the `.claude/commands/ctx-*.md` files in your first invocations. After a few rounds Copilot internalizes the pattern.
 - Cost-monitor your session — agentic loops can run long.
 
 ---
 
 ### VSCode + Copilot Chat (Agent Mode)
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.github/copilot-instructions.md`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the workflows. Classic Copilot Chat won't autonomously do multi-step ingest.
 
-> **Windows:** do the [one-time setup](#windows-setup-one-time--5-minutes) first so the agent's bash calls (during `/wiki-ingest`) actually run. Scaffolding and URL extract work without it, but ingest won't.
+> **Windows:** do the [one-time setup](#windows-setup-one-time--5-minutes) first so the agent's bash calls (during `/ctx-compile`) actually run. Scaffolding and URL extract work without it, but ingest won't.
 
 1. Open the directory:
    ```bash
@@ -312,35 +312,35 @@ Agent Mode (shipped 2025) is what makes Copilot Chat capable of running the work
 
 ```
 Read AGENTS.md to learn this project's conventions. Then scaffold an empty
-wiki by running /wiki-init per .claude/commands/wiki-init.md, and fetch
+wiki by running /ctx-init per .claude/commands/ctx-init.md, and fetch
 https://example.com/some-article into raw/ following
-.claude/commands/wiki-extract.md.
+.claude/commands/ctx-extract.md.
 ```
 
 Next message:
 
 ```
-Now run the wiki-ingest workflow per .claude/commands/wiki-ingest.md.
+Now run the ctx-compile workflow per .claude/commands/ctx-compile.md.
 Show me each step.
 ```
 
 Ask:
 
 ```
-Wiki-ask: <your question>. Follow .claude/commands/wiki-query.md.
+Wiki-ask: <your question>. Follow .claude/commands/ctx-query.md.
 ```
 
 Lint:
 
 ```
-Run wiki-lint per .claude/commands/wiki-lint.md.
+Run ctx-lint per .claude/commands/ctx-lint.md.
 ```
 
 Output workflows use the same NL pattern — name the workflow and point at its `.claude/commands/*.md`:
 
 ```
 Make a poster — "status of X for management" — per
-.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+.claude/commands/ctx-diagram.md (or ctx-visualize / ctx-flashcards).
 ```
 
 **Gotchas:**
@@ -352,7 +352,7 @@ Make a poster — "status of X for management" — per
 
 ### Cline (VSCode extension)
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.clinerules`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.clinerules`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Cline is open-source, free, and agentic by default. Best fit for users who want a Claude-Code-like loop without paying for Copilot.
 
@@ -367,14 +367,14 @@ Cline auto-reads `.clinerules` (ships in this project) at the start of every tas
 
 ```
 Fetch https://example.com/some-article into raw/ per the
-wiki-extract workflow defined in .claude/commands/wiki-extract.md.
+ctx-extract workflow defined in .claude/commands/ctx-extract.md.
 ```
 
 Next task:
 
 ```
 Run wiki-ingest. Follow the 7-step pipeline in
-.claude/commands/wiki-ingest.md.
+.claude/commands/ctx-compile.md.
 ```
 
 Ask:
@@ -393,7 +393,7 @@ Output workflows use the same NL pattern — name the workflow and point at its 
 
 ```
 Make a poster — "status of X for management" — per
-.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+.claude/commands/ctx-diagram.md (or ctx-visualize / ctx-flashcards).
 ```
 
 **Gotchas:**
@@ -404,9 +404,9 @@ Make a poster — "status of X for management" — per
 
 ### Cursor
 
-> **Status: documented, not yet e2e-verified.** The shim ships (`.cursor/rules/llm-wiki.mdc`, `alwaysApply: true`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** The shim ships (`.cursor/rules/context-compiler.mdc`, `alwaysApply: true`) and the workflow is specified, but only Claude Code is driven by the smoke harness. If this path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
-Cursor auto-loads `.cursor/rules/llm-wiki.mdc` (ships in this project, `alwaysApply: true`) on every session.
+Cursor auto-loads `.cursor/rules/context-compiler.mdc` (ships in this project, `alwaysApply: true`) on every session.
 
 1. Open the directory:
    ```bash
@@ -418,7 +418,7 @@ Invocations same shape as Cline:
 
 ```
 Fetch https://example.com/some-article into raw/ following the
-wiki-extract workflow.
+ctx-extract workflow.
 ```
 
 ```
@@ -437,7 +437,7 @@ Output workflows use the same NL pattern — name the workflow and point at its 
 
 ```
 Make a poster — "status of X for management" — per
-.claude/commands/wiki-diagram.md (or wiki-visualize / wiki-flashcards).
+.claude/commands/ctx-diagram.md (or ctx-visualize / ctx-flashcards).
 ```
 
 **Gotchas:**
@@ -448,19 +448,19 @@ Make a poster — "status of X for management" — per
 
 ### Other tools (Continue / Roo / Cody / Gemini CLI / Codex)
 
-> **Status: documented, not yet e2e-verified.** Gemini CLI reads `GEMINI.md`, Codex reads `AGENTS.md` (canonical), and the rest read the existing shims. Only Claude Code is driven by the smoke harness. If a path does not work, please [open an issue](https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues).
+> **Status: documented, not yet e2e-verified.** Gemini CLI reads `GEMINI.md`, Codex reads `AGENTS.md` (canonical), and the rest read the existing shims. Only Claude Code is driven by the smoke harness. If a path does not work, please [open an issue](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues).
 
 Same pattern as Cline / Cursor:
 
 1. Tool auto-loads its respective shim (`.clinerules`, `.cursor/rules/`, `AGENTS.md`, `GEMINI.md`, `.github/copilot-instructions.md`).
-2. Invoke workflows by natural language, referring to the corresponding `.claude/commands/wiki-<name>.md` file.
+2. Invoke workflows by natural language, referring to the corresponding `.claude/commands/ctx-<name>.md` file.
 
 ```
-Read AGENTS.md. Then run wiki-extract on https://example.com/foo
-following .claude/commands/wiki-extract.md.
+Read AGENTS.md. Then run ctx-extract on https://example.com/foo
+following .claude/commands/ctx-extract.md.
 ```
 
-(Then `wiki-ingest`, `wiki-query`, `wiki-lint` as needed. The output commands `wiki-visualize` / `wiki-flashcards` / `wiki-diagram` follow the same pattern — name the workflow and point at its `.claude/commands/*.md`.)
+(Then `ctx-compile`, `ctx-query`, `ctx-lint` as needed. The output commands `ctx-visualize` / `ctx-flashcards` / `ctx-diagram` follow the same pattern — name the workflow and point at its `.claude/commands/*.md`.)
 
 ---
 
@@ -483,7 +483,7 @@ The graph generator is stdlib-only Python — runs everywhere `python3` is avail
 
 ## What success looks like
 
-After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect:
+After your **first `ctx-extract` + `ctx-compile`** on a ~5-page article, expect:
 
 - A new file in `raw/` with frontmatter populated (`source_url`, `fetched_at`, `ingested_hash` no longer empty).
 - **3 to 10 new pages in `wiki/`:**
@@ -497,10 +497,10 @@ After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect
 
 | Symptom | Likely cause | Fix |
 |---|---|---|
-| Only 1 wiki page created | LLM skipped step 4 ("update existing pages") | Re-prompt: *"You only created 1 page. The pipeline says one source touches 10-15 pages. Re-run wiki-ingest and update all relevant concept pages."* |
-| No summary page | Step 3 skipped | Re-prompt: *"No summary page was created. Per step 3 of `.claude/commands/wiki-ingest.md`, every source needs a `<slug>-summary.md` page."* |
+| Only 1 wiki page created | LLM skipped step 4 ("update existing pages") | Re-prompt: *"You only created 1 page. The pipeline says one source touches 10-15 pages. Re-run ctx-compile and update all relevant concept pages."* |
+| No summary page | Step 3 skipped | Re-prompt: *"No summary page was created. Per step 3 of `.claude/commands/ctx-compile.md`, every source needs a `<slug>-summary.md` page."* |
 | No `log.md` entry | Step 7 skipped | Re-prompt: *"You didn't append to log.md. Per step 7, every ingest must log what changed."* |
-| Broken `[[wiki-links]]` | LLM linked to pages that don't exist | Run `wiki-lint`. It'll list broken links; choose to create stubs or remove. |
+| Broken `[[wiki-links]]` | LLM linked to pages that don't exist | Run `ctx-lint`. It'll list broken links; choose to create stubs or remove. |
 
 ---
 
@@ -508,12 +508,12 @@ After your **first `wiki-extract` + `wiki-ingest`** on a ~5-page article, expect
 
 ### Prevention: commit after every successful ingest
 
-`/wiki-ingest` is **not atomic**. It touches a summary page, several concept pages, the index, `log.md`, and the raw-file frontmatter. If a later ingest goes sideways, your only clean rollback path is `git`. Skip the commit and rollback also reverts the good ingest before it.
+`/ctx-compile` is **not atomic**. It touches a summary page, several concept pages, the index, `log.md`, and the raw-file frontmatter. If a later ingest goes sideways, your only clean rollback path is `git`. Skip the commit and rollback also reverts the good ingest before it.
 
 Recommended discipline (already shown in the README's "A typical session"):
 
 ```bash
-/wiki-ingest <raw-file-or-no-arg>
+/ctx-compile <raw-file-or-no-arg>
 
 # inspect briefly — does wiki/ look right? does log.md have an entry?
 git status
@@ -524,7 +524,7 @@ git add wiki/ log.md raw/
 git commit -m "ingest: <source title>"
 ```
 
-One ingest = one commit. Treat `/wiki-ingest` as the analog of `make` for the wiki: each successful run is a checkpoint worth pinning.
+One ingest = one commit. Treat `/ctx-compile` as the analog of `make` for the wiki: each successful run is a checkpoint worth pinning.
 
 ### Recovery: when an ingest produces garbage
 
@@ -562,10 +562,10 @@ For one source of ~5,000 words, on a modern frontier model:
 
 | Operation | Approx. tokens |
 |---|---|
-| `wiki-extract` | 1k (mostly the source body) |
-| `wiki-ingest` (7 steps, 5-10 pages touched) | 50k - 100k |
-| `wiki-query` (depends on wiki size + whether web search fires) | 5k - 20k |
-| `wiki-lint` (depends on wiki size) | 20k - 50k |
+| `ctx-extract` | 1k (mostly the source body) |
+| `ctx-compile` (7 steps, 5-10 pages touched) | 50k - 100k |
+| `ctx-query` (depends on wiki size + whether web search fires) | 5k - 20k |
+| `ctx-lint` (depends on wiki size) | 20k - 50k |
 
 These are estimates. **Heavy users should set token / cost limits in their tool** (most agentic CLIs and IDE extensions have them). Run a single small source first to calibrate cost-per-ingest for your model + your typical source size.
 
@@ -573,26 +573,26 @@ These are estimates. **Heavy users should set token / cost limits in their tool*
 
 ## Status
 
-**The 7-step `/wiki-ingest` pipeline is now demonstrated end-to-end** (2026-05-26). The smoke at `./scripts/smoke-all.sh` runs `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (under `tests/smoke/`); the resulting 4 wiki pages (with fictitious anchors) and the corresponding `log.md` entry are committed in the repo as empirical evidence the pipeline executes correctly on a fresh source. Per the resolution note in `wiki/open-questions.md`, this closes what was previously the project's top open question.
+**The 7-step `/ctx-compile` pipeline is now demonstrated end-to-end** (2026-05-26). The smoke at `./scripts/smoke-all.sh` runs `/ctx-compile` + `/ctx-query` against a fictitious technical fixture (under `tests/smoke/`); the resulting 4 wiki pages (with fictitious anchors) and the corresponding `log.md` entry are committed in the repo as empirical evidence the pipeline executes correctly on a fresh source. Per the resolution note in `wiki/open-questions.md`, this closes what was previously the project's top open question.
 
 What's still untested:
 
 - **Per-tool slash-command parity.** Only Claude Code (via `claude -p`) drove the smoke. Cursor / Copilot CLI / VSCode + Copilot Chat / Cline / Gemini CLI / Codex paths in this guide rely on the natural-language shim approach — they likely work but haven't been observed end-to-end.
-- **DOCX / XLSX** extraction handlers in `/wiki-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`, `canary-scanned.pdf`) cover plain-text, CSV, and the PDF-LLM-vision fallback (demonstrated 2026-06-10 — evidence in `raw/canary-scanned.pdf.md`). DOCX and XLSX remain specified, not demonstrated.
+- **DOCX / XLSX** extraction handlers in `/ctx-extract`. The shape-check fixtures (`canary-smoke-test.md`, `canary-csv.csv`, `canary-scanned.pdf`) cover plain-text, CSV, and the PDF-LLM-vision fallback (demonstrated 2026-06-10 — evidence in `raw/canary-scanned.pdf.md`). DOCX and XLSX remain specified, not demonstrated.
 - **Concurrency.** The video mentions parallel ingest agents; no locking or conflict resolution defined yet.
 
-If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/wiki-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/llm-wiki-bootstrap/issues, or open a PR with the prompt improvement.
+If your output for a real source doesn't match "What success looks like" above, the prompt in `.claude/commands/ctx-<name>.md` may need refinement for your tool. File an issue at https://github.com/FrancyJGLisboa/context-compiler-bootstrap/issues, or open a PR with the prompt improvement.
 
 ---
 
 ## Quick reference card
 
 ```
-clone                git clone https://github.com/FrancyJGLisboa/llm-wiki-bootstrap my-wiki && cd my-wiki
-fetch                /wiki-extract <url|file|image>
-ingest               /wiki-ingest                      (no arg = process all raw/ with new/changed hash)
-ask                  /wiki-query "<question>"            (--no-promote to skip auto-page-creation)
-lint                 /wiki-lint                        (--apply to write proposed fixes)
+clone                git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki && cd my-wiki
+fetch                /ctx-extract <url|file|image>
+ingest               /ctx-compile                      (no arg = process all raw/ with new/changed hash)
+ask                  /ctx-query "<question>"            (--no-promote to skip auto-page-creation)
+lint                 /ctx-lint                        (--apply to write proposed fixes)
 recover              git checkout -- wiki/ log.md raw/<file>
 ```
 

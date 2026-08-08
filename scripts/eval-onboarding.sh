@@ -2,7 +2,7 @@
 # scripts/eval-onboarding.sh — empirical newcomer ease-of-use eval.
 #
 # Turns "is this easier to use?" into a number. Drives `claude -p` as a brand-new
-# user in a FRESH wiki (built by create-llm-wiki.sh) whose only entry point is the
+# user in a FRESH wiki (built by create-context-compiler.sh) whose only entry point is the
 # README, hands it a source file + a question with a known answer, and measures
 # whether it reaches the answer and how much friction it hit. A separate doc-judge
 # scores the two checks that are document properties, not behaviours.
@@ -64,7 +64,7 @@ cleanup() { [ "$keep" -eq 1 ] && { echo "kept: $WORK" >&2; return; }; rm -rf "$W
 trap cleanup EXIT
 
 info "building a fresh wiki (what a newcomer gets) ..."
-"$SCRIPT_DIR/create-llm-wiki.sh" "$WIKI" >/dev/null 2>&1 || { echo "error: create-llm-wiki.sh failed" >&2; exit 2; }
+"$SCRIPT_DIR/create-context-compiler.sh" "$WIKI" >/dev/null 2>&1 || { echo "error: create-context-compiler.sh failed" >&2; exit 2; }
 mkdir -p "$WIKI/inbox"
 cp "$FIXTURE" "$WIKI/inbox/source.md"
 

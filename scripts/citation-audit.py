@@ -34,7 +34,7 @@ Output:
               a raw snapshot (`raw/<file>[#anchor]`) and the analysis marker
               (`analysis`). Every web form — scheme://, www., bare host, uppercase,
               protocol-less path — is caught by construction, no URL parsing. Web
-              sources must be snapshotted to raw/ first (via /wiki-extract), then cited
+              sources must be snapshotted to raw/ first (via /ctx-extract), then cited
               as raw/ so the claim is coverage-counted and entailment-checkable.
   --tsv     one TSV row per citation for the shell harness (always exit 0):
              tag<TAB>page<TAB>line<TAB>file<TAB>anchor<TAB>c1<TAB>c2<TAB>claim_b64<TAB>evidence_b64
@@ -377,7 +377,7 @@ def bare_url_cites(wiki_dir):
 
     Returns sorted [(page, line, target)]. Skips fenced code blocks (showing
     syntax, not citing) the same way audit() does. The ONLY legal citation
-    targets are `raw/<file>[#anchor]` (snapshot a web source via /wiki-extract
+    targets are `raw/<file>[#anchor]` (snapshot a web source via /ctx-extract
     first) and `analysis`; any other target — every web URL form by
     construction — is a VIOLATION.
     """
@@ -428,7 +428,7 @@ def main(argv):
         if not hits:
             print("  every citation target is raw/<file> or 'analysis'")
             return 0
-        print(f"  {len(hits)} non-raw citation(s) — citation target must be raw/<file> (snapshot web sources via /wiki-extract first) or 'analysis':")
+        print(f"  {len(hits)} non-raw citation(s) — citation target must be raw/<file> (snapshot web sources via /ctx-extract first) or 'analysis':")
         for page, line, target in hits:
             print(f"  ✗ {page}:{line} -> (source: {target})")
         return 1

@@ -2,7 +2,7 @@
 # scripts/eval-scale.sh — where does retrieval bend as the wiki grows?
 #
 # Runs the FULL retrieval eval (scripts/eval-retrieval.sh — real installer,
-# real /wiki-extract → /wiki-ingest, real /wiki-query) at increasing corpus
+# real /ctx-extract → /ctx-compile, real /ctx-query) at increasing corpus
 # sizes, with deterministic distractor filler injected before ingest, and
 # reports the curve: score and reads-per-answer at each size.
 #

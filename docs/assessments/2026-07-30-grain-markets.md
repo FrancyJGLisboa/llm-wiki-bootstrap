@@ -52,7 +52,7 @@ quarters. 40 sources for the gold set, 10 sealed for the holdout.
 
 ### F1 — Headless sharded ingest silently fails to commit
 
-`claude -p "/wiki-ingest raw/<file>"` ends its turn while the faithfulness gate
+`claude -p "/ctx-compile raw/<file>"` ends its turn while the faithfulness gate
 is still running. Observed verbatim in the run log:
 
 > Waiting on the gate — I'll pick up Steps 6–8 automatically when it completes.
@@ -68,7 +68,7 @@ repo already documents for this failure class: idempotence is broken (a re-run
 reprocesses everything), and every citation into an uncommitted body is
 unverifiable under the drift contract.
 
-The command file does **not** instruct backgrounding — `.claude/commands/wiki-ingest.md`
+The command file does **not** instruct backgrounding — `.claude/commands/ctx-compile.md`
 Step 5.5 says to run the gate and act on its verdicts. The agent chose to
 background a multi-minute serial job and end its turn. This is a headless-mode
 interaction bug, not a prompt bug.
@@ -173,7 +173,7 @@ The 8-hour turn was a 1,077-word source; the 65-minute one was **415 words**, so
 this is not corpus growth. An API probe immediately after returned in 8s, so the
 stalls were transient, not a hard cap.
 
-`ingest-corpus.sh` and the `/wiki-ingest` path alike have nothing bounding a
+`ingest-corpus.sh` and the `/ctx-compile` path alike have nothing bounding a
 turn, so one stalled call silently consumed a third of the night. Bounding it
 took three attempts and is worth recording as a harness lesson: an in-loop
 counter that assumed `sleep 5` costs 5s fired at 4.4x its budget under load, and
@@ -193,7 +193,7 @@ per-source-process shape is the architecture that experiment ruled out.
 
 Four differences account for the gap, in order of contribution:
 
-| | wiki-factory | llm-wiki-bootstrap |
+| | wiki-factory | context-compiler-bootstrap |
 |---|---|---|
 | unit of work | one `claude -p` for the whole corpus | one per source |
 | OS processes, 5 sources | 1 | ~5 ingest + ~75 auditors |
@@ -201,7 +201,7 @@ Four differences account for the gap, in order of contribution:
 | index | server-side Python at commit, once per corpus | model rewrites `wiki/index.md` per source |
 | entity dedup | 150-stem list injected once, selective reads | per-source sweep against the whole wiki |
 
-**What that speed costs, stated exactly.** llm-wiki-bootstrap enforces, blocking
+**What that speed costs, stated exactly.** context-compiler-bootstrap enforces, blocking
 and per source, that every cited claim is ENTAILED BY its cited span.
 wiki-factory enforces only that the citation POINTS AT SOMETHING REAL — the file
 exists, the anchor resolves, quoted text appears verbatim. Paraphrase drift,

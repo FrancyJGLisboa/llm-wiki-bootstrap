@@ -271,7 +271,7 @@
           <p>Um arquivo de config (um <span class="mono">AGENTS.md</span>) que diz ao LLM como a wiki é estruturada e quais fluxos seguir.</p>
         </div>
       </div>
-      <p class="reveal lead" style="margin-top:26px; font-size:clamp(15px,1.4vw,18px)">Modelo mental: a wiki é o <em>código</em>, o <span class="mono">/wiki-visualize</span> é o <em>visualizador</em>, o LLM é quem <em>escreve</em> e o schema é o <em>guia de estilo</em>.</p>
+      <p class="reveal lead" style="margin-top:26px; font-size:clamp(15px,1.4vw,18px)">Modelo mental: a wiki é o <em>código</em>, o <span class="mono">/ctx-visualize</span> é o <em>visualizador</em>, o LLM é quem <em>escreve</em> e o schema é o <em>guia de estilo</em>.</p>
     </div>
   </section>
 
@@ -401,7 +401,7 @@
           <div class="ri"><div><b>Planejar</b><span>Peça ao Claude (em modo de plano) para desenhar a wiki a partir das fontes de exemplo. Ele propõe as pastas, o schema <span class="mono">AGENTS.md</span> e o layout das páginas.</span></div></div>
           <div class="ri"><div><b>Montar o esqueleto</b><span>Aprove. Ele cria <span class="mono">raw/</span>, <span class="mono">wiki/</span>, o schema, um índice e um log.</span></div></div>
           <div class="ri"><div><b>Ingerir</b><span>Mande ingerir as fontes. Veja um arquivo criar páginas de conta, pessoa e concorrente — todas interligadas.</span></div></div>
-          <div class="ri"><div><b>Visualizar</b><span>Rode <span class="mono">/wiki-visualize</span> para renderizar o grafo de notas interligadas.</span></div></div>
+          <div class="ri"><div><b>Visualizar</b><span>Rode <span class="mono">/ctx-visualize</span> para renderizar o grafo de notas interligadas.</span></div></div>
           <div class="ri"><div><b>Consultar</b><span>"Quais são as principais objeções da Acme e como já lidamos com elas?" — respondido pela wiki, sem repesquisar.</span></div></div>
           <div class="ri"><div><b>Preencher ao vivo</b><span>Pergunte algo que ela não tem. Ela busca na web e arquiva a resposta como uma nova página.</span></div></div>
           <div class="ri"><div><b>Revisar</b><span>Rode o check-up — contradições, afirmações antigas, páginas órfãs, lacunas a preencher.</span></div></div>

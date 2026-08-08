@@ -1,6 +1,16 @@
 # log.md
 
-Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
+Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
+
+## 2026-08-08 — schema v5: the commands are `/ctx-*`, the project is `context-compiler-bootstrap`
+
+**Rationale.** The names had drifted from the thing. `/wiki-ingest` described the weakest part of what it does: the output carries provenance, typed relations, valid time, a portable bundle and its own verifier, and "wiki" named none of that. The canonical commands are now `/ctx-init`, `/ctx-extract`, `/ctx-compile`, `/ctx-query`, `/ctx-lint`, `/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`, `/ctx-discover`. The project is renamed `llm-wiki-bootstrap` → `context-compiler-bootstrap`, and `scripts/create-llm-wiki.sh` → `scripts/create-context-compiler.sh`.
+
+**Migration note: none required.** All nine `/wiki-*` names survive as forwarders that print one deprecation line and delegate to the canonical file; they are not scheduled for removal. `/ingest` still works alongside the new `/compile`. `scripts/create-llm-wiki.sh` remains as an `exec` forwarder. An older client that knows only the old names is fully functional.
+
+**What was deliberately NOT renamed.** `raw/` (immutable evidence — the old name appears inside sources and stays there), `log.md` history below this entry, committed test fixtures whose bytes are asserted, `.scratch/` design records, and the wiki page `okf-vs-llm-wiki-bootstrap.md`, whose slug names the project as it was called when that comparison was made. Tooling scripts keep their `wiki-*` names (`wiki-to-kg.py`, `wiki-metrics.sh`, `wiki-lint-*.sh`) — they operate on the wiki layer, which is still called `wiki/`.
+
+**Also in this change.** `docs/CONTEXT-COMPILER.md`'s Vocabulary section previously promised the opposite ("No identifier in this repo is named after the right-hand column ... they stay that way"); that paragraph is rewritten to say what changed and why, rather than quietly contradicted. Two new gates: `ALIAS-RESOLVES` (R37) proves every one of the 19 alias files resolves to an existing canonical command, and `EXEC-BIT-PRESERVED` (R38) catches the redirect-and-move rewrite that dropped `+x` from 55 scripts mid-rename.
 
 ## 2026-08-08 — valid-time contract satisfied: seven honest unknowns
 

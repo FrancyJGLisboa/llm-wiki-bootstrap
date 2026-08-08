@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 # scripts/ingest-corpus.sh — sharded, resumable, timed ingest of a staged corpus.
 #
-# `/wiki-ingest` with no argument walks all of raw/ in ONE agent turn
-# (.claude/commands/wiki-ingest.md), which cannot hold a large corpus in a
-# single context. This shards it: one `claude -p "/wiki-ingest raw/<file>"` per
+# `/ctx-compile` with no argument walks all of raw/ in ONE agent turn
+# (.claude/commands/ctx-compile.md), which cannot hold a large corpus in a
+# single context. This shards it: one `claude -p "/ctx-compile raw/<file>"` per
 # source, resumable, so a usage cap or a kill costs one source and not the run.
 #
 # It also records what the scale claim actually needs. Per-source elapsed time is
@@ -63,7 +63,7 @@ if PATH="$FLOOR_PATH" command -v claude >/dev/null 2>&1; then
 fi
 
 # A source is done when its frontmatter carries a non-empty ingested_hash. That
-# is the same signal /wiki-ingest itself uses to skip, so a resumed run agrees
+# is the same signal /ctx-compile itself uses to skip, so a resumed run agrees
 # with the pipeline instead of second-guessing it.
 committed_hash() {
   awk '/^ingested_hash:/ { gsub(/[" ]/, "", $2); print $2; exit }' "$1"
@@ -92,7 +92,7 @@ for src in "$WIKI"/raw/*.md; do
   # mode never happens. Skipping it removes a step the agent fails at, while the
   # harness runs the same gate to completion immediately after, in a shell that
   # can actually wait. Net effect is a gate that runs MORE reliably, not less.
-  prompt="/wiki-ingest $rel"
+  prompt="/ctx-compile $rel"
   if [ "$idx" -gt "$GATE_N" ]; then
     prompt="$prompt
 
@@ -126,7 +126,7 @@ idempotent."
     kill -TERM "$cpid" 2>/dev/null
     sleep 3
     kill -KILL "$cpid" 2>/dev/null
-    pkill -f "claude -p /wiki-ingest $rel" 2>/dev/null
+    pkill -f "claude -p /ctx-compile $rel" 2>/dev/null
     wait "$cpid" 2>/dev/null
     status="TIMEOUT"
     failed=$((failed + 1))

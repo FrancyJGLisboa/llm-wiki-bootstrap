@@ -13,7 +13,7 @@ properties of the artifact, and each one is measurable. See
 [Measuring the package](#measuring-the-package).
 
 This document defines that as a **category**, and shows that
-`llm-wiki-bootstrap` is a reference implementation of it. The category is the
+`context-compiler-bootstrap` is a reference implementation of it. The category is the
 point: the name of this repo, or of any other one, is incidental.
 
 ---
@@ -48,7 +48,7 @@ discovered by a skeptical reader.
 **There is no AST, and the transform is not reproducible.** The middle of the
 pipeline — reading a source, deciding which concepts it introduces, writing the
 summary, choosing which existing pages to update — is model judgment
-(`.claude/commands/wiki-ingest.md`, steps 2–5). Run it twice on the same input
+(`.claude/commands/ctx-compile.md`, steps 2–5). Run it twice on the same input
 and you get two defensible outputs, not identical bytes. `AGENTS.md` is careful
 about this already: it scopes its determinism claim narrowly, to the synthesis
 layer only.
@@ -74,14 +74,16 @@ job.
 ## The five properties
 
 A system is a context compiler if it has all five. Each is stated as a
-conformance question, with this repo's answer.
+conformance question, with this repo's answer. A sixth — **enforcement** — is
+listed after them, and is deliberately *not* part of the definition; see the
+note there.
 
 ### 1. Transformation — is there an input language and a build step?
 
 *Does heterogeneous, unstructured material get parsed and normalized into
 something with a shape, or is the output hand-authored?*
 
-`/wiki-extract` is the front end: a format-dispatch table (URL, YouTube, PDF,
+`/ctx-extract` is the front end: a format-dispatch table (URL, YouTube, PDF,
 DOCX, XLSX, CSV, image, plain text) where each format has a primary handler, a
 fallback chain, and a recorded `extraction_method`. Extraction never fails
 silently — a failure still writes a sidecar with `extraction_status: failed`
@@ -89,13 +91,13 @@ and an install hint. Long sources go through `scripts/extract/segment-doc.py`,
 a deterministic segmenter that turns a 200-page PDF into an anchored section
 tree.
 
-`/wiki-ingest` is the build: a 7-step pipeline (read → extract concepts,
+`/ctx-compile` is the build: a 7-step pipeline (read → extract concepts,
 entities, claims → write the summary page → update concept/entity pages → flag
 contradictions → update the index → append the log), followed by a mechanical
 regeneration of derived artifacts.
 
 The two stages are cleanly separated by ownership, the way a front end and a
-back end are: `/wiki-extract` never touches `wiki/`; `/wiki-ingest` never
+back end are: `/ctx-extract` never touches `wiki/`; `/ctx-compile` never
 writes to `raw/` except three commitment fields in frontmatter, as its last
 action.
 
@@ -113,7 +115,7 @@ single-regex typed-relation grammar
 (`- [[<target>]] <verb> [<attr>] — <prose>`), and a canonical causal
 vocabulary of five verbs with a direction table and explicit synonym rejection.
 
-The schema is enforced, not merely described: `/wiki-lint` check 7 catches
+The schema is enforced, not merely described: `/ctx-lint` check 7 catches
 schema drift, and every page carrying claims must have at least two resolving
 `## Related` links.
 
@@ -129,7 +131,7 @@ of notes, and it is the most heavily engineered part of this repo.
 
 - Every non-trivial claim carries an inline `(source: raw/<file>#<anchor>)`.
   The literal form matters, because `scripts/citation-audit.py` matches that
-  exact shape — `wiki-query.md` documents four near-miss forms that fail.
+  exact shape — `ctx-query.md` documents four near-miss forms that fail.
 - Anchors are load-bearing: every leaf anchor must resolve to a real heading in
   the source sidecar.
 - Web sources must be **snapshotted into `raw/` before being cited**. A bare
@@ -165,7 +167,7 @@ convention the repo materializes a real graph: `scripts/wiki-to-kg.py` emits
 regenerated from the same parser the visualizer uses, so the JSON and the
 picture can never diverge.
 
-At read time, `/wiki-query` walks the section tree and reads only the cited
+At read time, `/ctx-query` walks the section tree and reads only the cited
 sections of a long source rather than the whole file, routes temporal questions
 through a supersession check, and refuses to answer when its citations span
 fewer than two distinct assertion dates.
@@ -203,11 +205,63 @@ four ways, and asserts each tamper is caught.
 
 ---
 
+## The sixth property — enforcement (outside the definition)
+
+**Not part of the definition.** A system with the five properties above is a
+context compiler whether or not it has this one. Enforcement is listed here
+because it is the axis along which a context compiler stops being a very good
+filing system, and because leaving it out of the five is the honest position:
+plenty of useful compiled context is purely descriptive.
+
+**The question.** When a source states a *rule* rather than a fact, does the
+output only describe the rule — or does it also check it?
+
+The distinction is not academic, and it is sharpest for LLM consumers. Prose in
+a schema file is a **soft** constraint: the model can misread it, lose it under
+a longer instruction, or sincerely report compliance it did not achieve. Every
+one of those failure modes is silent. A script with an exit code is a **hard**
+constraint: it is either 0 or it is not.
+
+```
+"Don't do X"          ->  interpretation  ->  self-report
+gates/RULE-0007.sh    ->  exit 0 | 1 | 2  ->  artifact
+```
+
+Which means the useful test is not *did the agent follow the rule* but *what
+shows that it did*. Trust the context less; verify the consequences more.
+
+**How this repo answers it.** `/ctx-compile` step 2.5 separates normative
+statements from knowledge and classifies each `deterministic` / `heuristic` /
+`unverifiable`. Deterministic rules become gates via `/ctx-gate`, behind a
+five-way mutation proof and three declared blind spots. `/ctx-lint` R-01 reports
+any deterministic rule still enforced by prose alone.
+
+**Three things that keep this from being theatre**, each of which is a way the
+idea fails when implemented carelessly:
+
+1. **A gate that never fires is indistinguishable from a broken gate.** So every
+   gate ships with a fixture that must exit 1 and one that must exit 0, and
+   `gate-fixtures.sh` checks both directions on every gate, every run. An
+   unfixtured gate is a violation, not a skip.
+2. **A script that asks an LLM whether the rule holds is not a deterministic
+   gate.** It is a heuristic in a script costume: it can answer differently on
+   the same input tomorrow, so it cannot ratchet and its green proves nothing.
+   `/ctx-gate` refuses to build one.
+3. **Classifying a rule is not enforcing it.** A rule sitting in
+   `rules/deterministic/` with no gate is worse than an unclassified one — the
+   page reads like a control while nothing checks it. That is what R-01 is for.
+
+**Where it stops.** Only some rules are deterministic. "Forecasts must be
+readable" is real and no exit code will ever settle it; it stays a rule page and
+a reviewer's job. A compiler that pretended otherwise would be claiming
+enforcement it does not have — the failure this property exists to prevent, in
+the other direction.
+
 ## Two things that look like exceptions
 
 ### Dependency resolution — the compiler can fetch a missing source
 
-`/wiki-query` answers from the package. On a gap, it web-searches, snapshots
+`/ctx-query` answers from the package. On a gap, it web-searches, snapshots
 the result into `raw/`, and promotes a new or updated page — writing into its
 own source tree mid-run.
 
@@ -215,7 +269,7 @@ A traditional compiler doesn't do that. A **package manager** does: `npm
 install` resolves a missing dependency during a build and then the build
 proceeds. That is the right frame here. The fetched source is not special-cased
 — it goes through the same no-bare-URL rule, the same frontmatter spec, and the
-same entailment gate as anything acquired by `/wiki-extract`. A gap in the
+same entailment gate as anything acquired by `/ctx-extract`. A gap in the
 package is treated as an unresolved dependency, and resolving it is a build
 action, not a shortcut around one.
 
@@ -223,7 +277,7 @@ action, not a shortcut around one.
 
 ### The viewer tier — flashcards, slides, diagrams, journals
 
-`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`, `/wiki-discover`, and
+`/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`, `/ctx-discover`, and
 the user-owned `wiki/journal/` directory are **not compiler stages**. They are
 viewers and exporters that consume an already-built package. `AGENTS.md`
 already quarantines them as "not lifecycle steps" and holds them read-only on
@@ -362,22 +416,38 @@ worth deploying. This is the layer that produces the package.
 
 ## Vocabulary
 
-A reading aid for anyone who thinks in compilers. **No identifier in this repo
-is named after the right-hand column** — the commands are `/wiki-*` and the
-directories are `raw/` and `wiki/`, and they stay that way.
+A reading aid for anyone who thinks in compilers.
+
+**This section used to say the opposite.** Until schema v5 it read: *"No
+identifier in this repo is named after the right-hand column — the commands are
+`/wiki-*` and the directories are `raw/` and `wiki/`, and they stay that way."*
+The reasoning was that naming things after an analogy invites the analogy to be
+taken literally, and the file spends a whole section (*Compiler-inspired, not
+formal*) warning against exactly that.
+
+That reasoning still holds for the *analogy*. It stopped holding for the
+*names*, because the names had drifted from the thing. `/wiki-ingest` described
+the weakest part of what it does; the output carries provenance, typed
+relations, valid time, a portable bundle and its own verifier, and — since v5 —
+extracted rules with executable gates. "Wiki" named the least of that. The
+commands are now `/ctx-*`; every `/wiki-*` name still works as a forwarder.
+
+The caution the old paragraph was protecting is worth keeping in the reader's
+head: the right-hand column is a *reading aid*, not a claim that this is a
+compiler in the formal sense. Read the section above before leaning on it.
 
 | In this repo | Compiler term |
 |---|---|
 | `raw/` | source tree |
-| `/wiki-extract` | front end — acquire, parse, normalize |
+| `/ctx-extract` | front end — acquire, parse, normalize |
 | `scripts/extract/segment-doc.py` | lexing — anchored section tree over a long source |
-| `/wiki-ingest` | the build — source → target representation |
+| `/ctx-compile` | the build — source → target representation |
 | `wiki/` | target representation (the emitted context) |
 | `scripts/body-hash.sh` | build-cache key / incremental compilation |
-| `/wiki-lint` | semantic analysis — errors and warnings |
+| `/ctx-lint` | semantic analysis — errors and warnings |
 | synthesis artifacts | derived artifacts / linker output |
 | `scripts/verify-*.sh`, `gate-*.sh` | conformance suite |
-| `/wiki-query` (promote) | dependency resolution — fetch missing source, rebuild |
+| `/ctx-query` (promote) | dependency resolution — fetch missing source, rebuild |
 | `scripts/package-wiki.sh` | packager — emits the distributable |
 | the bundle + `MANIFEST` | **the context package** |
 | `log.md` | build log |
@@ -387,12 +457,13 @@ directories are `raw/` and `wiki/`, and they stay that way.
 
 | Clause of the definition | Implemented by | Verified by |
 |---|---|---|
-| transforms unstructured source material | `/wiki-extract`, `scripts/extract/segment-doc.py`, `/wiki-ingest` 7-step pipeline | `verify-extract.sh`, `verify-segment-doc.sh` |
+| transforms unstructured source material | `/ctx-extract`, `scripts/extract/segment-doc.py`, `/ctx-compile` 7-step pipeline | `verify-extract.sh`, `verify-segment-doc.sh` |
 | structured | page template, `type` enum, typed-relation grammar, causal vocabulary (`AGENTS.md`) | `wiki-lint-typed-relations.sh`, `wiki-lint-causal.sh` |
 | provenance-aware | `(source: raw/<file>#<anchor>)`, raw frontmatter spec, `body-hash.sh`, `asserted_at`, write-time entailment gate | `citation-audit.py`, `verify-citation-coverage.sh`, `verify-hash-drift.sh`, `verify-asserted-at.sh`, `gate-raw-append-only.sh` |
 | machine-navigable | `[[kebab-case]]` links, `wiki-to-kg.py`, `wiki-graph-walk.py`, `knowledge-graph.json`, MCP surface | `verify-graph-walk.sh`, `verify-synthesize.sh`, `gate-reachable.sh` |
 | context package | `scripts/package-wiki.sh` (G1–G4, `MANIFEST`, optional GPG) | `verify-bundle.sh`, `verify-bundle-roundtrip.sh` |
 | LLMs can navigate, retrieve from, and reason over | citation + temporal contracts, read-floor gate, faithfulness gate — and the eval suite that measures each verb | `verify-query-citation-contract.sh`, `verify-query-temporal-contract.sh`, `verify-faithfulness-gate.sh`, `eval-retrieval.sh` |
+| **rules the system enforces, not only describes** (the sixth property — outside the definition) | `type: rule` pages under `wiki/rules/{deterministic,heuristic,discarded}/`, `/ctx-compile` steps 2.5 + 4.5, `/ctx-rules`, `/ctx-gate`, gates under `gates/` with committed fixture pairs, `gates/baseline.tsv` | `ctx-lint-rules.sh` (R-01/R-02/R-05/R-06), `gate-fixtures.sh` (every gate fails its violating fixture and passes its clean one), `gate-ratchet.sh` (§6 ratchet; suppressions counted) |
 
 ## See also
 

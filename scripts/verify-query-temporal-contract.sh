@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/verify-query-temporal-contract.sh — guard the /wiki-query contract for
+# scripts/verify-query-temporal-contract.sh — guard the /ctx-query contract for
 # change-over-time questions. No LLM, no spend.
 #
 # Why this exists: cross-temporal questions ("how did his position change",
@@ -46,7 +46,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
-DOC=".claude/commands/wiki-query.md"
+DOC=".claude/commands/ctx-query.md"
 if [ -t 1 ]; then RED=$'\033[31m'; GREEN=$'\033[32m'; RESET=$'\033[0m'; else RED=; GREEN=; RESET=; fi
 failures=0
 ok()   { printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
@@ -162,7 +162,7 @@ fi
 
 echo
 if [ "$failures" -gt 0 ]; then
-  printf "%sFailed.%s %d /wiki-query temporal-contract check(s) did not pass.\n" "$RED" "$RESET" "$failures"
+  printf "%sFailed.%s %d /ctx-query temporal-contract check(s) did not pass.\n" "$RED" "$RESET" "$failures"
   exit 1
 fi
 printf "%sPassed.%s T1-T6 green — router unconditional, floor blocks, classifier measured.\n" "$GREEN" "$RESET"

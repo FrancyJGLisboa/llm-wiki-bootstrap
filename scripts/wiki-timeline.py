@@ -39,7 +39,7 @@ Usage:
     wiki-timeline.py --classify "<question>"              # TEMPORAL / SINGLE-POINT
     wiki-timeline.py --demo                               # self-check, asserts
 
-`--question` is the mode /wiki-query runs UNCONDITIONALLY at step 1. It decides
+`--question` is the mode /ctx-query runs UNCONDITIONALLY at step 1. It decides
 in code whether the question is cross-temporal, and only then prints the reading
 list and the directive. The first version of this feature left that decision to
 the model and measured 3/7 with median ZERO reads — see the note above classify().

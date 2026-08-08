@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """scripts/stage-corpus.py — stage a YouTube-transcript folder into raw/ with no LLM.
 
-For plain-markdown sources `/wiki-extract` is pure passthrough (AGENTS.md), so
+For plain-markdown sources `/ctx-extract` is pure passthrough (AGENTS.md), so
 driving an LLM turn per file buys nothing but latency and spend. This does the
 same work deterministically, and adds the two things a transcript needs before
 it can be cited:

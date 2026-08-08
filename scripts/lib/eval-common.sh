@@ -163,7 +163,7 @@ eval_run_questions() {
     for variant in baseline typed; do
       answer_file="$work/$variant.$qid.md"
       ( cd "$work/$variant" && \
-        claude -p "/wiki-query \"$question\" --no-promote" \
+        claude -p "/ctx-query \"$question\" --no-promote" \
           > "$answer_file" 2>"$work/$variant.$qid.err" ) || true
 
       pass=1

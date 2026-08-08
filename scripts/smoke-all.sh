@@ -95,11 +95,11 @@ fi
 
 # R4 — schema and core-script purity stay stable
 r4_ok=yes
-if ! grep -q '\*\*Schema version:\*\* 4' AGENTS.md; then
+if ! grep -q '\*\*Schema version:\*\* 5' AGENTS.md; then
   r4_ok=no
-  record_fail "R4 AGENTS.md schema version is not 4"
+  record_fail "R4 AGENTS.md schema version is not 5"
 fi
-if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal' AGENTS.md; then
+if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal.*rule' AGENTS.md; then
   r4_ok=no
   record_fail "R4 type enum line in AGENTS.md missing one or more expected values"
 fi
@@ -131,12 +131,12 @@ else
   record_fail "R6 wiki-lint-typed-relations.sh typed-relation checks regressed"
 fi
 
-# R7 — installer oracle (create-llm-wiki: tree shape EQUALS manifest + no dev-repo
+# R7 — installer oracle (create-context-compiler: tree shape EQUALS manifest + no dev-repo
 # string leakage + target preflight).
-if "$SCRIPT_DIR/verify-create-llm-wiki.sh" >/dev/null 2>&1; then
-  ok "R7 verify-create-llm-wiki.sh exits 0 (clean fresh-skeleton install)"
+if "$SCRIPT_DIR/verify-create-context-compiler.sh" >/dev/null 2>&1; then
+  ok "R7 verify-create-context-compiler.sh exits 0 (clean fresh-skeleton install)"
 else
-  record_fail "R7 verify-create-llm-wiki.sh exits non-zero (installer regression)"
+  record_fail "R7 verify-create-context-compiler.sh exits non-zero (installer regression)"
 fi
 
 # R8 — citation-faithfulness deterministic floor (C1+C2): the audit must catch
@@ -324,7 +324,7 @@ else
   record_fail "R24 verify-asserted-at.sh exits non-zero (valid-time contract regression)"
 fi
 
-# R25 — /wiki-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
+# R25 — /ctx-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
 # three eval runs and the cause was a spec gap, not the model: the output
 # template never asked for an inline `(source: raw/...)` at all, so the shape
 # varied per run and nothing could verify it. Q5 is the load-bearing one — the
@@ -332,7 +332,7 @@ fi
 if "$SCRIPT_DIR/verify-query-citation-contract.sh" >/dev/null 2>&1; then
   ok "R25 verify-query-citation-contract.sh exits 0 (citation form stated + grader-compatible)"
 else
-  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/wiki-query citation contract regression)"
+  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/ctx-query citation contract regression)"
 fi
 
 # R26 — the entity eval's graders. E1 recall and E2 precision are each trivially
@@ -358,7 +358,7 @@ else
   record_fail "R27 verify-corpus-eval.sh exits non-zero (real-corpus eval grader regression)"
 fi
 
-# R28 — /wiki-query's temporal contract. Cross-temporal questions scored 3/6
+# R28 — /ctx-query's temporal contract. Cross-temporal questions scored 3/6
 # against 16/16 for single-source recall, and the failures opened zero files:
 # they narrated a trajectory out of the synthesis artifacts, which aggregate the
 # timeline away. The router (wiki-timeline.py) and the read floor
@@ -368,7 +368,7 @@ fi
 if "$SCRIPT_DIR/verify-query-temporal-contract.sh" >/dev/null 2>&1; then
   ok "R28 verify-query-temporal-contract.sh exits 0 (router specified; read floor blocks single-date answers)"
 else
-  record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/wiki-query temporal contract regression)"
+  record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/ctx-query temporal contract regression)"
 fi
 
 # R29 — the eval's own prompt purity. Three separate author-side fields have
@@ -395,21 +395,17 @@ else
   record_fail "R30 gate-raw-append-only.sh exits non-zero (unauthorised write to the immutable raw layer)"
 fi
 
-# R31 — the gates' own fixtures. A gate that never fires is indistinguishable
-# from a broken one; these assert both directions on committed fixtures.
-gate_fixtures_ok=1
-"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/clean-questions.md >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/dirty-questions.md >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/clean.diff >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/dirty.diff >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/clean  >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/dirty  >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/clean >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
-if [ "$gate_fixtures_ok" = 1 ]; then
-  ok "R31 all four gates fail their violating fixture and pass their clean one"
+# R31 — the gates' own fixtures, both directions. Was a hardcoded list of four
+# gates; now scripts/gate-fixtures.sh discovers every gate and requires EXACTLY
+# exit 1 on its violating fixture and EXACTLY exit 0 on its clean one. "Exactly"
+# is load-bearing: exit 2 means the gate itself broke, and a check accepting any
+# non-zero reads that as a successful catch — which is precisely how a --count
+# flag added during the /ctx-* rename silently broke gate-eval-prompt-purity.sh
+# on BOTH fixtures. A gate with no fixtures at all is a violation, not a skip.
+if "$SCRIPT_DIR/gate-fixtures.sh" >/dev/null 2>&1; then
+  ok "R31 every gate fails its violating fixture and passes its clean one"
 else
-  record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, or misses a planted violation)"
+  record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, misses a planted violation, exits 2, or has no fixtures)"
 fi
 
 # R32 — the scale eval's own oracle (F1–F7). README names this as one of the
@@ -451,6 +447,66 @@ if "$SCRIPT_DIR/verify-package-quality.sh" >/dev/null 2>&1; then
   ok "R35 verify-package-quality.sh exits 0 (scorecard detects unsoundness, reads values not labels, read-only)"
 else
   record_fail "R35 verify-package-quality.sh exits non-zero (the quality scorecard can no longer be trusted)"
+fi
+
+# R36 — the ratchet. deterministic-gates §6 sat in the doctrine unimplemented:
+# nothing read a baseline, nothing failed on an increase, and no baseline file
+# existed. Without it, adopting a gate means fixing every historical violation
+# first — so the realistic alternative to a ratchet is not a stricter repo, it
+# is a gate nobody turns on. This also makes suppressions cost something:
+# gate-reachable.sh already counted its declared standalones and printed them,
+# but nothing consumed the number, so silencing an orphan oracle was free.
+if "$SCRIPT_DIR/gate-ratchet.sh" >/dev/null 2>&1; then
+  ok "R36 gate-ratchet.sh exits 0 (no gate's violations or suppressions exceed gates/baseline.tsv)"
+else
+  record_fail "R36 gate-ratchet.sh exits non-zero (a gate's violation or suppression count went up, or a gate has no baseline row)"
+fi
+
+# R37 — command aliases resolve. .claude/commands/ now holds three naming
+# generations (canonical ctx-*, short aliases, deprecated wiki-* forwarders);
+# 19 of the 28 files contain no procedure and only point elsewhere. A forwarder
+# whose target was renamed does not fail loudly — the agent cannot find the file
+# and improvises, so the damage surfaces as a bad wiki edit, not an error.
+if "$SCRIPT_DIR/gate-command-aliases.sh" >/dev/null 2>&1; then
+  ok "R37 gate-command-aliases.sh exits 0 (every alias resolves to an existing canonical command, no chains)"
+else
+  record_fail "R37 gate-command-aliases.sh exits non-zero (an alias points at a missing command, disagrees with its own body, or chains through another alias)"
+fi
+
+# R38 — executable bits survive bulk rewrites. Harvested from a real regression
+# in this session (deterministic-gates §7): a 128-file rename using
+# `cmd "$f" > "$f.new" && mv "$f.new" "$f"` replaced inodes and dropped +x on 55
+# scripts. The suite went 20-red and not one message named the cause — each
+# oracle reported a "regression" in its own subject. This gate detects nothing
+# the suite missed; it exists so the twenty-failure cascade reads as one line.
+if "$SCRIPT_DIR/gate-exec-bits.sh" >/dev/null 2>&1; then
+  ok "R38 gate-exec-bits.sh exits 0 (every file git records as 100755 is still executable)"
+else
+  record_fail "R38 gate-exec-bits.sh exits non-zero (a tracked executable lost its +x bit — usually a redirect-and-move rewrite)"
+fi
+
+# R39 — rule integrity. The compiler now emits rules classified deterministic /
+# heuristic / unverifiable; this is deterministic-gates §1 turned on that output.
+# A rule sitting in wiki/rules/deterministic/ with `gate: none` has been
+# IDENTIFIED as enforceable and then not enforced — strictly worse than never
+# classifying it, because the page reads like a control while nothing checks it.
+if "$SCRIPT_DIR/ctx-lint-rules.sh" >/dev/null 2>&1; then
+  ok "R39 ctx-lint-rules.sh exits 0 (no deterministic rule is prose-only; every gate exists and can fail)"
+else
+  record_fail "R39 ctx-lint-rules.sh exits non-zero (a deterministic rule has no gate, a gate is missing, or a gate cannot report its own failure)"
+fi
+
+# R40 — the compiled root resolves in all three layouts. Schema v5 renamed
+# wiki/ -> context/ and kept a committed `wiki -> context` symlink so the ~65
+# scripts hardcoding wiki/ did not need rewriting. That buys a lot and costs
+# one thing: compatibility now rests on a symlink, and a symlink degrades
+# quietly — into a real directory that drifts from context/, into a link
+# pointing outside the package, or into a text file on a checkout without
+# symlink support. Legacy wiki/-only bundles must keep resolving forever.
+if "$SCRIPT_DIR/gate-context-root.sh" >/dev/null 2>&1; then
+  ok "R40 gate-context-root.sh exits 0 (context/, context-only, and legacy wiki/ all resolve; compat link sound)"
+else
+  record_fail "R40 gate-context-root.sh exits non-zero (a root layout resolves wrongly, or wiki/ is not a symlink to context)"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────

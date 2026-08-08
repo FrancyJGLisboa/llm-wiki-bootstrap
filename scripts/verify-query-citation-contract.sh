@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# scripts/verify-query-citation-contract.sh — guard the /wiki-query output
+# scripts/verify-query-citation-contract.sh — guard the /ctx-query output
 # contract for raw citations. No LLM, no spend.
 #
 # Why this exists: the retrieval eval scored R4 at 0/5, 0/5 and 0/7 across three
-# runs, and the cause was not the model. `/wiki-query`'s output template asked
+# runs, and the cause was not the model. `/ctx-query`'s output template asked
 # for `- Wiki:` and `- Web:` and never asked for an inline
 # `(source: raw/<file>#<anchor>)` at all — so answers that emitted one were
 # improvising, and the shape varied per run: backticked paths, the path merged
@@ -29,7 +29,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$REPO_ROOT"
 
-DOC=".claude/commands/wiki-query.md"
+DOC=".claude/commands/ctx-query.md"
 if [ -t 1 ]; then RED=$'\033[31m'; GREEN=$'\033[32m'; RESET=$'\033[0m'; else RED=; GREEN=; RESET=; fi
 failures=0
 ok()   { printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
@@ -62,7 +62,7 @@ grep -qiE 'narrowest anchor|#L948. over|narrowest' "$DOC" \
   || fail "Q4 no guidance to prefer a tight anchor over a wide one"
 
 # Q5 — THE ONE THAT MATTERS: the form the doc teaches must be the form the audit
-# extracts. If these ever diverge, /wiki-query emits citations nothing can check
+# extracts. If these ever diverge, /ctx-query emits citations nothing can check
 # and R4 goes back to zero with no visible cause.
 sample=$(mktemp); trap 'rm -f "$sample"' EXIT
 printf 'The budget is 3 attempts (source: raw/retry-budget-memo-feb.md#L20-L22).\n' > "$sample"
@@ -75,7 +75,7 @@ fi
 
 echo
 if [ "$failures" -gt 0 ]; then
-  printf "%sFailed.%s %d /wiki-query citation-contract check(s) did not pass.\n" "$RED" "$RESET" "$failures"
+  printf "%sFailed.%s %d /ctx-query citation-contract check(s) did not pass.\n" "$RED" "$RESET" "$failures"
   exit 1
 fi
 printf "%sPassed.%s Q1-Q5 green — the citation contract is stated, exemplified, and grader-compatible.\n" "$GREEN" "$RESET"

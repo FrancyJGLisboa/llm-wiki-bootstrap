@@ -1,0 +1,74 @@
+---
+description: context-compiler-bootstrap project conventions
+globs: ["**/*"]
+alwaysApply: true
+---
+
+# context-compiler-bootstrap (Cursor rules)
+
+This project is an `context-compiler-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over. Operated via five named workflows.
+
+## Read this first
+
+**`AGENTS.md`** at the project root is the canonical schema. It defines the three-layer model (raw / wiki / schema), page conventions, link convention, raw source frontmatter spec, and the five workflows. Read it before doing any work in this directory.
+
+## Three-layer model
+
+- `raw/` — immutable source material curated by the user. **You may only read it.**
+- `wiki/` — LLM-owned markdown pages. **You are the sole writer.** The user does not edit `wiki/*.md` directly.
+- `AGENTS.md` — the schema. User and you co-evolve it.
+
+## Five workflows
+
+The same five operations exist as Claude Code slash commands at `.claude/commands/ctx-*.md`. In Cursor, invoke them by natural language ("run the ctx-compile workflow") — the prompt body of each command file is the workflow definition; follow it step-by-step.
+
+| Workflow | What it does | Trigger |
+|---|---|---|
+| `ctx-init` | Scaffold an empty wiki structure (idempotent). | User asks to "initialize the wiki." |
+| `ctx-extract <source>` | Acquire a URL / file / image into `raw/` with frontmatter. Does not touch `wiki/`. | User asks to "fetch X into raw." |
+| `ctx-compile [<raw-file>]` | Run the 7-step pipeline from `wiki/ingest-pipeline.md`. Use `scripts/body-hash.sh` for delta detection. | User asks to "ingest" / "process raw" / "update the wiki." |
+| `ctx-query <question>` | Answer from `wiki/`; web-search and auto-promote new knowledge on gaps. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked from the query). | User asks any substantive question about the wiki's domain. |
+| `ctx-lint` | Find broken links, orphans, contradictions, stale claims, gaps. Reports by default; applies under `--apply`. | User asks to "lint" / "check the wiki" / "find issues." |
+
+Plus two **output workflows** that render/export an already-built wiki. They are read-only on `raw/` and `wiki/` (write only new output artifacts) and sit outside the five-command lifecycle loop:
+
+| Workflow | What it does | Trigger |
+|---|---|---|
+| `ctx-visualize [graph\|mermaid\|slides\|serve] [target]` | Render the wiki as a D3 graph (default), MARP slides, or mermaid images, or serve it locally. Wraps `scripts/visualize/*`. Mechanical — renders existing structure. | User asks to "visualize" / "graph" / "show the wiki." |
+| `ctx-flashcards [dir]` | Export `## Flashcards` sections to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. | User asks to "export flashcards" / "make an Anki deck." |
+| `ctx-diagram "<intent>"` | Semantic — retrieve relevant pages, score the 8 archetypes (`templates/infographic/`), user picks, generate a self-contained HTML poster to `diagrams/`. Wiki-read-only. | User asks for "a diagram of X for <audience>" / "infographic" / "show the status of X." |
+
+## Hard rules
+
+1. **Never write to `raw/`.** You may only edit the `ingested_hash`, `ingested_at`, and `ingested_pages` fields in raw frontmatter — and only as the last step of `ctx-compile`.
+2. **Use `scripts/body-hash.sh`** to compute the canonical body hash. Do not reinvent this with inline `sha256sum` / `shasum` — different invocations produce different hashes and break idempotence.
+3. **Pure CommonMark.** No Obsidian callouts (`> [!note]`), no dataview blocks, no Cursor-specific markdown, no embeds. The wiki must render identically in `cat`, GitHub web, VSCode preview, or anywhere else.
+4. **Always cite raw sources** with `(source: raw/<file>#<anchor>)` for any non-trivial claim in a wiki page.
+5. **Append a log.md entry** for every `ctx-compile`, `ctx-query` promotion, or `ctx-lint --apply` you perform.
+
+## Frontmatter spec (recap from AGENTS.md)
+
+Every wiki page:
+```yaml
+title: <Title>
+type: concept | entity | summary | analysis | navigation
+source: video | analysis | external | mixed
+updated: YYYY-MM-DD
+tags: [...]
+```
+
+Every raw source:
+```yaml
+source_url: <url|n/a>
+source_type: <video-transcript | article | image | ...>
+source_title: "..."
+source_author: "..."
+fetched_at: YYYY-MM-DD
+ingested_hash: ""
+ingested_at: never
+ingested_pages: []
+```
+
+## When in doubt
+
+Read `AGENTS.md`. Then read `wiki/index.md`.

@@ -4,9 +4,9 @@
 # RULE: `raw/` is append-only. A change to an existing raw source may touch
 # nothing but the six authorised frontmatter fields:
 #   - `ingested_hash`, `ingested_at`, `ingested_pages` — the ingest commitment,
-#     written as the last step of /wiki-ingest (wiki-ingest.md:189-191);
+#     written as the last step of /ctx-compile (ctx-compile.md:189-191);
 #   - `asserted_at`, `asserted_at_source`, `asserted_at_note` — the valid-time
-#     axis, which /wiki-lint --apply is documented to write as "the one
+#     axis, which /ctx-lint --apply is documented to write as "the one
 #     sanctioned exception to never writing to raw/" (wiki-lint.md:132). It is
 #     frontmatter-only, so the body hash is unchanged and no citation moves.
 # Adding a new raw file is always allowed. Editing a body, changing any other
@@ -14,7 +14,7 @@
 #
 # The asserted_at family was missed on the first pass: the gate was written from
 # the "must NOT do" list in AGENTS.md, which names only the three ingest fields.
-# Enforcing that literally would have made `/wiki-lint --apply` — a shipped,
+# Enforcing that literally would have made `/ctx-lint --apply` — a shipped,
 # documented workflow — fail the gate on correct behaviour.
 #
 # WHY THIS GATE EXISTS: this is hard rule #1 (AGENTS.md "What the LLM must NOT
@@ -52,6 +52,10 @@
 # non-ingest frontmatter field across committed evidence.
 #
 # MODES:
+#   --count               print "<violations>TAB<suppressions>" and exit 0; the
+#                         ratchet (scripts/gate-ratchet.sh) reads this. Exit 2
+#                         still means the gate could not run. Combines with the
+#                         mode flags below; defaults to --worktree like normal.
 #   --worktree            (default) staged + unstaged changes vs HEAD
 #   --range <rev-range>   e.g. origin/main...HEAD, or a single SHA
 #   --diff <file>         read a unified diff from a file ("-" for stdin);
@@ -71,8 +75,10 @@ die2() { printf 'gate-raw-append-only: %s\n' "$1" >&2; exit 2; }
 
 MODE=worktree
 ARG=
+COUNT=0
 while [ "$#" -gt 0 ]; do
   case "$1" in
+    --count)    COUNT=1; shift ;;
     --worktree) MODE=worktree; shift ;;
     --range)    MODE=range; ARG="${2:-}"; [ -n "$ARG" ] || die2 "--range needs a revision range"; shift 2 ;;
     --diff)     MODE=diff;  ARG="${2:-}"; [ -n "$ARG" ] || die2 "--diff needs a file (or -)"; shift 2 ;;
@@ -89,13 +95,17 @@ case "$MODE" in
     command -v git >/dev/null 2>&1 || die2 "git not found (cannot read the worktree diff)"
     cd "$REPO_ROOT" || die2 "cannot cd to $REPO_ROOT"
     git rev-parse --git-dir >/dev/null 2>&1 || die2 "$REPO_ROOT is not a git repository"
-    # A repo with no commits yet — a wiki freshly made by create-llm-wiki.sh,
+    # A repo with no commits yet — a wiki freshly made by create-context-compiler.sh,
     # before the user's first `git commit`. There is no prior state, so every
     # file in raw/ is a new file, and new files are always authorised. Clean, not
     # exit 2: a brand-new wiki must not greet its owner with a gate error on turn
     # one. (This is a correct reading of the rule, not a convenience: with no
     # HEAD there is by construction nothing that could have been modified.)
     if ! git rev-parse --verify HEAD >/dev/null 2>&1; then
+      # In count mode this early exit must still emit a tally, or the ratchet
+      # reads empty stdout and cannot tell "zero violations" from "gate produced
+      # nothing" — which is the exit-2-collapsed-into-0 failure in another form.
+      if [ "$COUNT" = 1 ]; then printf '0\t0\n'; exit 0; fi
       printf 'gate-raw-append-only: clean — no commits yet, so every raw/ file is a new source.\n'
       exit 0
     fi
@@ -117,17 +127,18 @@ case "$MODE" in
     ;;
 esac
 
-awk -v rule="$RULE_ID" '
+awk -v rule="$RULE_ID" -v count_mode="$COUNT" '
   function flush_file() {
     # nothing to carry between files; state resets in the diff --git branch
   }
   function violation(msg,   _) {
+    violations++
+    if (count_mode) return
     printf "%s: %s\n", path, rule > "/dev/stderr"
     printf "  %s\n", msg          > "/dev/stderr"
     printf "  FIX: raw/ is read-only evidence. Revert this change. The only authorised\n" > "/dev/stderr"
-    printf "  writes are frontmatter: ingested_hash/at/pages (/wiki-ingest) and\n"        > "/dev/stderr"
-    printf "  asserted_at/_source/_note (/wiki-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
-    violations++
+    printf "  writes are frontmatter: ingested_hash/at/pages (/ctx-compile) and\n"        > "/dev/stderr"
+    printf "  asserted_at/_source/_note (/ctx-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
   }
 
   # ── file header ──
@@ -157,8 +168,8 @@ awk -v rule="$RULE_ID" '
   # ── content lines of a MODIFIED raw file ──
   /^[+-]/ {
     line = substr($0, 2)
-    # The six authorised frontmatter writes: the ingest commitment (/wiki-ingest)
-    # and the valid-time axis (/wiki-lint --apply). Both are frontmatter-only,
+    # The six authorised frontmatter writes: the ingest commitment (/ctx-compile)
+    # and the valid-time axis (/ctx-lint --apply). Both are frontmatter-only,
     # so neither moves the body hash or invalidates a citation anchor.
     if (line ~ /^ingested_hash:/)       next
     if (line ~ /^ingested_at:/)         next
@@ -178,9 +189,19 @@ awk -v rule="$RULE_ID" '
     next
   }
 
-  END { exit (violations > 0 ? 1 : 0) }
+  END {
+    # --count: raw/ has no suppression mechanism — there is no pragma that
+    # authorises an edit — so the second column is always 0.
+    if (count_mode) { printf "%d\t0\n", violations; exit 0 }
+    exit (violations > 0 ? 1 : 0)
+  }
 ' "$DIFF"
 status=$?
+
+if [ "$COUNT" = 1 ]; then
+  [ "$status" -eq 0 ] || die2 "awk exited $status in count mode (parse failure)"
+  exit 0
+fi
 
 if [ "$status" -eq 1 ]; then
   printf 'gate-raw-append-only: violation(s) found — %s\n' "$RULE_ID" >&2

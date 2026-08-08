@@ -1,0 +1,37 @@
+# gates/baseline.tsv — the ratchet baseline for scripts/gate-ratchet.sh
+# (deterministic-gates §6: "Existing violations are recorded in a committed
+# baseline. The gate fails if the count GOES UP; it never requires me to fix
+# the past.")
+#
+# Format: <gate_id><TAB><command><TAB><violations><TAB><suppressions><TAB><recorded_at><TAB><note>
+#
+# The command is run from the repo root and MUST support --count, printing
+# "<violations>TAB<suppressions>" on stdout and exiting 0. A command that exits
+# 2 fails the ratchet as a gate error — never as a pass.
+#
+# SUPPRESSIONS ARE VIOLATIONS. A declared standalone, a nolint pragma, a scope
+# exclusion — each counts in the second number. That is the whole anti-bypass
+# design: routing around a gate moves a number that is watched, so it can never
+# be the quiet option. §6 again: "If suppression does not enter the ratchet, you
+# will route around the gate instead of obeying it — and I want that to be
+# impossible, not merely discouraged."
+#
+# TO LOWER A NUMBER: fix the violations, then edit the row. Downward is silent.
+# TO RAISE A NUMBER: you must edit this file deliberately and say why in the
+# note. That edit is the artifact — it shows up in review as a decision, not as
+# an accident.
+#
+# EVERY gate-*.sh in scripts/ and context/gates/ must have a row here. A gate
+# with no row is a violation, not a skip — otherwise a new gate escapes the
+# ratchet simply by never being registered.
+#
+# gate_id	command	violations	suppressions	recorded_at	note
+RAW-APPEND-ONLY	scripts/gate-raw-append-only.sh --worktree	0	0	2026-08-08	worktree mode: only what is changing now. The three historical violations are recorded in the gate header, not here — the past is not required to be fixed.
+DOC-CLAIM-RECOMPUTE	scripts/gate-doc-claims.sh	0	0	2026-08-08
+EVAL-NO-METADATA-IN-PROMPT	scripts/gate-eval-prompt-purity.sh	0	0	2026-08-08
+GATE-REACHABLE	scripts/gate-reachable.sh	0	0	2026-08-08	suppressions = lines in scripts/gate-standalone.txt; currently none
+ALIAS-RESOLVES	scripts/gate-command-aliases.sh	0	0	2026-08-08	28 command files, 19 of them aliases
+EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08	104 tracked executables
+GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08	6 registered gates
+RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rule pages yet; the layer ships empty
+CTX-ROOT-COMPAT	scripts/gate-context-root.sh	0	0	2026-08-08	three layouts + link soundness

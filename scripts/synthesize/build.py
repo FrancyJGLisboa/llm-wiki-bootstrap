@@ -8,7 +8,7 @@ aggregation. This is what makes "regenerate on every wiki mutation" affordable
 changed).
 
 Generated pages (all `type: navigation`, all carrying the AUTO-GENERATED
-marker so /wiki-lint and humans leave them alone):
+marker so /ctx-lint and humans leave them alone):
 
   open-questions-dashboard.md  ← every `## Open questions on this page` section
   tensions.md                  ← every `> CONTRADICTION FLAGGED …` blockquote
@@ -46,7 +46,7 @@ BULLET_RE = re.compile(r"^-\s+(.*\S)\s*$")
 UPDATED_RE = re.compile(r"^updated:\s*(\d{4}-\d{2}-\d{2})\s*$")
 CONTRADICTION_RE = re.compile(r"^>\s*CONTRADICTION FLAGGED\s+(\d{4}-\d{2}-\d{2}):\s*(.*\S)\s*$")
 # Time is optional: log.md mixes timestamped command entries
-# (`## 2026-06-03 09:00 — /wiki-ingest`) with date-only summary headers
+# (`## 2026-06-03 09:00 — /ctx-compile`) with date-only summary headers
 # (`## 2026-06-09 — schema v2 → v3`). Both must appear on the timeline.
 LOG_ENTRY_RE = re.compile(r"^##\s+(\d{4}-\d{2}-\d{2})(?:\s+(\d{2}:\d{2}))?\s+[—-]\s+(.*\S)\s*$")
 DATE_FALLBACK = "1970-01-01"
@@ -58,7 +58,7 @@ def source_pages(wiki_dir: Path) -> list[Path]:
 
 
 def is_placeholder_question(text: str) -> bool:
-    """Skip the empty template stub `- ... (consumed by /wiki-lint)`."""
+    """Skip the empty template stub `- ... (consumed by /ctx-lint)`."""
     return text.startswith("...")
 
 
@@ -169,7 +169,7 @@ def render_tensions(rows: list[tuple[str, str, str]], updated: str) -> str:
         "",
         "Auto-aggregated from every `> CONTRADICTION FLAGGED` flag in the wiki. "
         "Each contradiction is flagged on both conflicting pages; resolve by editing "
-        "the raw source and re-running `/wiki-ingest`, or via `/wiki-lint --apply`.",
+        "the raw source and re-running `/ctx-compile`, or via `/ctx-lint --apply`.",
         "",
     ]
     if not rows:

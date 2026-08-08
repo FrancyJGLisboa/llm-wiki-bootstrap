@@ -8,7 +8,7 @@ tags: [navigation, index]
 
 # Index
 
-Entry point for the wiki. Add a source with `/wiki-extract <url-or-file>`, then `/wiki-ingest` to integrate it. This page is updated automatically as the wiki grows.
+Entry point for the wiki. Add a source with `/ctx-extract <url-or-file>`, then `/ctx-compile` to integrate it. This page is updated automatically as the wiki grows.
 
 ## Sources
 

@@ -1,0 +1,92 @@
+#!/usr/bin/env bash
+# gates/__RULE_ID__.sh — gate __RULE_ID__.
+#
+# RULE: __STATEMENT__
+#
+# WHY THIS GATE EXISTS: __WHY__
+# (Name the failure this prevents and what it costs when it slips through
+# silently. "Because the policy says so" is not a reason — the policy is in the
+# rule page. This line is for the person who finds the gate red at 2am.)
+#
+# SOURCE: __RULE_PAGE__
+#   -> cites __EVIDENCE_CITATION__
+#
+# DETECTION: __DETECTION__
+# (The mechanism, not the intention. Prefer a parser over a regex; if this is a
+# regex, every case it gets wrong belongs in FAILURE MODES below and in the rule
+# page's known_gaps.)
+#
+# FAILURE MODES — the honest ones. At least three, per deterministic-gates §5.3.
+# If you cannot name three ways around your own gate, you have not understood
+# the problem space yet; you have only observed that the gate passes.
+#   - __GAP_1__
+#   - __GAP_2__
+#   - __GAP_3__
+#
+# SCOPE: __SCOPE_INCLUDE__
+# EXCLUDED: __SCOPE_EXCLUDE__
+# (Every exclusion needs a reason, and each one counts as a suppression in
+# gates/baseline.tsv. Carving scope is the cheapest way to turn a gate green,
+# so it costs exactly what a violation costs.)
+#
+# EXIT: 0 = compliant · 1 = violation found · 2 = the gate itself failed
+#       (missing dependency, parse error, unreadable input).
+#       Never collapse 2 into 0. A gate that dies from a broken dependency and
+#       reports success is worse than no gate at all.
+#
+# MODES:
+#   (default)      check this repository
+#   --repo <dir>   check the tree at <dir> — fixture mode
+#   --count        print "<violations>TAB<suppressions>" and exit 0, for the
+#                  ratchet (scripts/gate-ratchet.sh). Exit 2 still means the
+#                  gate could not run.
+#
+# RUNTIME: __RUNTIME__
+# WIRED AT: __WIRING__
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
+
+# shellcheck source=../scripts/lib/gate-lib.sh
+. "$REPO_ROOT/scripts/lib/gate-lib.sh" || {
+  printf '__RULE_ID__: cannot source scripts/lib/gate-lib.sh\n' >&2; exit 2; }
+gate_init "__RULE_ID__" "__RULE_ID__"
+
+ROOT="$REPO_ROOT"
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --repo)  ROOT="${2:-}"; [ -n "$ROOT" ] || gate_die "--repo needs a directory"; shift 2 ;;
+    --count) GATE_COUNT_MODE=1; shift ;;
+    *) gate_die "unknown argument: $1" ;;
+  esac
+done
+[ -d "$ROOT" ] || gate_die "not a directory: $ROOT"
+cd "$ROOT" || gate_die "cannot cd to $ROOT"
+
+# Declare every external dependency. A missing one is exit 2, not a pass.
+# gate_need python3 jq
+
+checked=0
+
+# ── detection ──────────────────────────────────────────────────────────────
+#
+# Report each violation with gate_violation "<path>:<line>" "<how to fix it>".
+# The path:line is what makes the output actionable; the fix is what stops the
+# next person from suppressing the gate instead of obeying it.
+#
+#   while IFS= read -r f; do
+#     checked=$((checked + 1))
+#     ... || gate_violation "$f:$n" "do X instead of Y"
+#   done < <(find . -name '*.md')
+#
+# If the gate carves out a declared exclusion, record it — never skip silently:
+#   gate_suppression "$f" "reason this file is out of scope"
+
+# ── the gate is inspecting nothing = the gate is broken ────────────────────
+# A scope that matches zero files passes vacuously and looks identical to
+# compliance. Fail loudly instead.
+[ "$checked" -gt 0 ] || gate_die "scope matched no files — the gate is inspecting nothing, which is not the same as everything being compliant"
+
+gate_verdict "clean — $checked input(s) compliant."
