@@ -64,6 +64,40 @@ Read the file. For binaries (image, PDF), read the sidecar `.md` instead.
 
 Identify: concepts (ideas, terms, patterns), entities (people, tools, places, datasets), claims (statements that could be true or false), data points (numbers, dates, quotes).
 
+### Step 2.5 — Harvest normative statements
+
+Most of a source is knowledge. Some of it is **rules** — constraints on what
+something must or must not do. Separate them here, because they get different
+treatment: knowledge is written to be understood, a rule is written to be
+enforced.
+
+Scan the material for obligation. The reliable markers: `must`, `must not`,
+`never`, `always`, `shall`, `may only`, `only if`, `required`, `prohibited`,
+`no later than`, `at most`, `at least`, `before <event>`, `cannot exceed`.
+
+For each candidate, apply the triage in `AGENTS.md` → "Rules and executable
+context" and write down the class **with the reason**:
+
+- **DETERMINISTIC** — a parser, a schema check, or a command with an exit code
+  could settle it. State the exact detection mechanism now, in one line. If you
+  cannot state it, it is not deterministic.
+- **HEURISTIC** — settling it needs judgement ("forecasts must be reasonable").
+  Real, but no exit code can decide it.
+- **UNVERIFIABLE** — nothing could check it, even in principle.
+
+Three rules for this step, all of which exist because the failure is silent:
+
+1. **Only rules the source actually states.** Do not add best practices you
+   happen to know. A rule with no citable passage is your opinion wearing the
+   source's authority.
+2. **Do not write any code here.** A gate is only real once it has failed on a
+   violating fixture, and that proof belongs to `/ctx-gate`. Emitting a gate
+   script from this step would manufacture exactly the never-fires gate the
+   whole discipline exists to prevent.
+3. **Keep the unverifiable ones.** They go to `wiki/rules/discarded/` with a
+   `discard_reason`. Dropping them silently is indistinguishable from never
+   having read them.
+
 ### Step 3 — Write a summary page
 
 Create or update `wiki/<source-slug>-summary.md` with `type: summary`, `source: <type>` (matching the raw's `source_type` family — `video` for video-transcript, `external` for fetched web pages, etc.), and the source's main takeaways. Cite the raw inline with `(source: raw/<filename>#<anchor>)`.
@@ -108,6 +142,40 @@ For each concept and entity from step 2:
 - **Encode causation, don't bury it.** When the source states that one thing *causes / leads to / enables / prevents / contributes to* another, write that `## Related` link with a **canonical causal verb** — `causes`, `caused-by`, `enables`, `prevents`, or `contributes-to` (form: `- [[effect]] causes — <prose>`; put the inverse on the effect's page as `- [[cause]] caused-by — <prose>`). Do NOT flatten cause→effect into a plain `related-to`, and do NOT invent synonyms (`results-in`, `due-to`, `enabled-by`) — `scripts/wiki-lint-causal.sh` rejects those. These canonical edges are what let `/ctx-query` answer "what caused X / what does X enable / how does A connect to B" by graph traversal (see `AGENTS.md` → "Causal relations"). A multi-step causal story should become a *chain* of canonical edges across pages, not one lump.
 - **Type the links you already narrated, and let loops close.** Two failure modes to catch before leaving this step — both observed in real ingests: (1) a `## Related` line whose own prose narrates causation ("led to", "in response to", "drives", "feeds", "pressures", "accelerated") while the link itself is untyped — the prose knows the direction, the graph doesn't; retype it with the canonical verb. (2) Stopping one leg short of a cycle: when the source describes feedback (A pressures B, B responds by strengthening A), author EVERY leg — cycles are a payoff, not an error; `scripts/wiki-loops.py` reports them as reinforcing or balancing (an odd number of `prevents` legs flips the sign), and a loop you leave open is invisible to it. Self-check before Step 5: `python3 scripts/wiki-to-kg.py wiki/ --causal-only | wc -l` — a causally-rich source batch yielding near-zero causal edges means this bullet was skipped, not that the sources lacked causation.
 - **Encode supersession, don't bury it.** When a newer source replaces an older same-subject source's claim as the current value — even when no prose says so and the only evidence is two same-titled sources with different `Published:`/valid-time dates — author the typed edge on the newer source's page: `- [[old-page]] supersedes — <prose, name both dates>`, and the inverse on the older page: `- [[new-page]] superseded-by — <prose>`. Exactly these two verbs — no synonyms (`replaces`, `obsoletes`, `deprecates`, `replaced-by`), or the edge is invisible to traversal. Supersession is NOT contradiction: the older claim stays correct for its own period, so a clean vintage succession is never CONTRADICTION-flagged and neither body is rewritten. These edges are what let `/ctx-query` answer "what replaced X" by graph walk instead of prose-hunting.
+
+### Step 4.5 — Write rule pages
+
+For each rule harvested in step 2.5, write
+`wiki/rules/<class>/RULE-<NNNN>-<slug>.md` using the frontmatter spec in
+`AGENTS.md` → "Rules and executable context".
+
+Allocate `rule_id` by scanning existing pages for the highest `RULE-NNNN` and
+incrementing. **Ids are never reused**, including for deleted rules — a gate,
+a fixture directory, and a baseline row all key off the id, and recycling one
+silently re-points three other things.
+
+Non-negotiable on every rule page:
+
+- **`gate: none`.** Always, at compile time, for every class. Filing the rule
+  and building its gate are separate acts by design; `/ctx-gate <RULE-ID>` does
+  the second one, behind the mutation proof.
+- **A real citation** — `(source: raw/<file>#<anchor>)` anchored at the passage
+  that states the rule, not at the document generally. This is the whole basis
+  for a gate's authority; without it a gate enforces something nobody can trace.
+- **`statement`** in one sentence, in the imperative. If it takes two sentences,
+  it is two rules.
+- **`detection`** for deterministic rules only — the mechanism, not the
+  intention. "Compare max(asserted_at) against declared_cutoff" is a mechanism;
+  "check the dates are right" is not.
+- **`discard_reason`** on anything in `wiki/rules/discarded/`.
+
+Then link the rule into the graph like any other page: `## Related` with typed
+edges to the concepts and entities it constrains (`- [[forecast-methodology]]
+constrains — ...`), and a link back from the source summary page.
+
+**Report at the end of this step** how many rules were found per class. A source
+full of `must` that yields zero rules means this step was skipped, not that the
+source was permissive.
 
 ### Step 5 — Flag contradictions
 

@@ -155,7 +155,7 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 
 - `title` — Title Case display name (the file name is the slug).
 - `description` — OPTIONAL. One-sentence summary of the page, for progressive disclosure (scanning an index without opening pages) and 1:1 mapping onto the Open Knowledge Format's recommended `description` field at export (`scripts/wiki-to-okf.py`). When absent, the export derives it from the page's `## Definition / TL;DR`. Additive/opt-in — no schema bump (per the bump policy below); `/ctx-lint` must not flag its absence.
-- `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages), `journal` (user-owned time-stamped entry, lives only under `wiki/journal/`).
+- `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages), `journal` (user-owned time-stamped entry, lives only under `wiki/journal/`), `rule` (a normative constraint extracted from a source, lives only under `wiki/rules/` — see "Rules and executable context").
 - `source` — `video` (literal from a raw video transcript), `analysis` (LLM/user interpretation; must be honest about being interpretive), `external` (added from web search), `mixed` (both video and analysis).
 - `updated` — ISO date of last edit.
 - `tags` — array of kebab-case tags.
@@ -245,6 +245,94 @@ Rules:
 Export: `./scripts/wiki-to-anki.sh > anki.csv` scans every `.md` file under `wiki/` (or any directory you pass) and writes a CSV with columns `Front,Back,Tags`. The page slug becomes the single Anki tag, which lets you build subdecks per topic. Importing the CSV into Anki uses the default delimiter (comma).
 
 This convention is **viewer-agnostic** — `## Flashcards` reads as a plain markdown list in any renderer; only the exporter script treats it specially.
+
+## Rules and executable context
+
+Most of what a source says is **knowledge** — it needs to be understood. Some of
+what a source says is a **rule**: a constraint that something must or must not
+do. The difference matters because a rule written as prose is a *soft* constraint
+— an agent can misread it, forget it under a longer instruction, or believe it
+complied. A rule with a script behind it is a *hard* one: it exits 0 or 1.
+
+> **No deterministic rule stays prose-only.** This is the same standing rule the
+> maintainers of this repo follow (`docs/deterministic-gates.md` §1), applied to
+> the compiler's own output. `/ctx-lint` reports `R-01` for any rule classified
+> deterministic that still has `gate: none`.
+
+### The three classes
+
+Every rule is classified once, at compile time, and the class decides what
+happens to it:
+
+| Class | Means | Becomes |
+|---|---|---|
+| `deterministic` | Checkable by parsing / schema / a command with an exit code | A gate under `gates/`, built by `/ctx-gate` |
+| `heuristic` | Needs judgement; no exit code can settle it | A rule page only — an entry in a reviewer's rulebook |
+| `unverifiable` | Cannot be checked at all | `wiki/rules/discarded/`, with a `discard_reason` |
+
+Discarded rules are **recorded, not deleted**. "We looked at this and concluded
+nothing can check it" is a finding; silently dropping it looks identical to
+never having noticed it.
+
+**A script that calls an LLM is not a deterministic gate.** It is a heuristic
+wearing a script costume, and classifying it as deterministic is the one
+mislabel that makes the whole layer untrustworthy — a gate that returns a
+different answer on the same input cannot ratchet.
+
+### Where things live
+
+```
+wiki/rules/deterministic/RULE-0007-forecast-cutoff.md   the rule as knowledge
+wiki/rules/heuristic/...                                 judgement calls
+wiki/rules/discarded/...                                 with discard_reason
+gates/RULE-0007.sh                                       the executable
+gates/fixtures/RULE-0007/violating.csv                   must exit 1
+gates/fixtures/RULE-0007/clean.csv                       must exit 0
+gates/baseline.tsv                                       the ratchet
+```
+
+Rule pages are wiki pages: `[[links]]`, `## Related`, and the
+citation-coverage invariant all apply unchanged. A rule page **must** cite the
+raw source it came from — that citation is what makes a gate traceable back to
+the document that authorised it. Gates live outside `wiki/` because they are
+executables, not knowledge; `scripts/package-wiki.sh` includes `gates/` in the
+bundle, so a shipped context package carries its enforcement with it.
+
+### Rule page frontmatter
+
+```yaml
+---
+title: Forecast Data Cutoff
+type: rule
+rule_id: RULE-0007                # RULE-<4 digits>, unique, never reused
+rule_class: deterministic         # deterministic | heuristic | unverifiable
+source: external
+updated: 2026-08-08
+asserted_at: 2026-03-14           # when the rule became true, not when fetched
+statement: "A forecast must not use source data newer than its declared cutoff."
+detection: "max(source_timestamp over cited raws) <= declared_cutoff"
+scope_include: ["forecasts/**.md"]
+scope_exclude: ["forecasts/archive/**"]   # each exclusion needs a reason below
+gate: gates/RULE-0007.sh          # or `none` until /ctx-gate builds it
+fixtures: gates/fixtures/RULE-0007/
+wiring: ci                        # hook | pre-commit | ci | none
+known_gaps:                       # >= 3 required once a gate exists
+  - "A source with no timestamp is skipped, not failed."
+  - "A cutoff declared in prose rather than frontmatter is unparsed."
+  - "Data laundered through an undated intermediate page is invisible."
+tags: [policy, forecasting]
+---
+```
+
+`known_gaps` is not optional decoration. Three of them are required before a
+rule counts as gated, because an agent that cannot name a way around its own
+gate has not understood what the gate does — it has only confirmed that the
+gate passes. `/ctx-lint` reports `R-06` when fewer than three are listed.
+
+`scope_exclude` entries are **counted as suppressions in the ratchet**. Carving
+scope out of a gate is the cheapest way to make it green, so it costs the same
+as a violation. Watch this number: a run of new exclusions is the documented
+signal that there are too many gates, not that the gates need loosening.
 
 ## Raw source convention
 

@@ -99,7 +99,7 @@ if ! grep -q '\*\*Schema version:\*\* 5' AGENTS.md; then
   r4_ok=no
   record_fail "R4 AGENTS.md schema version is not 5"
 fi
-if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal' AGENTS.md; then
+if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal.*rule' AGENTS.md; then
   r4_ok=no
   record_fail "R4 type enum line in AGENTS.md missing one or more expected values"
 fi
