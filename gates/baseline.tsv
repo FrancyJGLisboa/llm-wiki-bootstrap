@@ -33,3 +33,4 @@ GATE-REACHABLE	scripts/gate-reachable.sh	0	0	2026-08-08	suppressions = lines in 
 ALIAS-RESOLVES	scripts/gate-command-aliases.sh	0	0	2026-08-08	28 command files, 19 of them aliases
 EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08	104 tracked executables
 GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08	6 registered gates
+RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rule pages yet; the layer ships empty

@@ -105,7 +105,18 @@ else
   git rev-parse --git-dir >/dev/null 2>&1 || gate_die "$ROOT is not a git repository (nothing records the intended modes, so there is nothing to compare against)"
   git ls-files -s > "$tmp/index" 2>"$tmp/err" || gate_die "git ls-files failed: $(head -1 "$tmp/err")"
 fi
-[ -s "$tmp/index" ] || gate_die "the mode listing is empty — the gate is inspecting nothing"
+# An empty listing has two very different causes, and collapsing them is how a
+# gate becomes either useless or annoying:
+#   - a repo with nothing committed yet (a compiler freshly made by the
+#     installer, before the user's first `git add`). There are no recorded modes
+#     because there is no history — genuinely nothing to compare, so clean.
+#   - a malformed or truncated --index file. That is a broken input: exit 2.
+if [ ! -s "$tmp/index" ]; then
+  if [ -n "$INDEX_FILE" ]; then
+    gate_die "the mode listing at $INDEX_FILE is empty — a supplied listing that parses to nothing is a broken input, not a clean repo"
+  fi
+  gate_verdict "clean — nothing is tracked yet, so no file has a recorded mode to lose."
+fi
 
 # ── compare ──
 checked=0
@@ -130,6 +141,6 @@ while IFS= read -r line; do
            [ -f \"\$f\" ] && [ ! -x \"\$f\" ] && chmod +x \"\$f\"; done"
 done < "$tmp/index"
 
-[ "$checked" -gt 0 ] || gate_die "no files recorded as 100755 — either the listing is malformed or this repo has no executables, and both mean the gate is checking nothing"
+[ "$checked" -gt 0 ] || gate_verdict "clean — no tracked file is recorded as executable, so none can have lost the bit."
 
 gate_verdict "clean — all $checked executable file(s) still carry their +x bit."

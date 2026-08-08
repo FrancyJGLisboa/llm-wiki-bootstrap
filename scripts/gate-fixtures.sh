@@ -170,6 +170,13 @@ for g in scripts/gate-*.sh; do
        Add both, then register the invocations in $TABLE."
 done
 
-[ "$pairs" -gt 0 ] || gate_die "found no fixture pairs at all — the gate is inspecting nothing"
+# No fixture pairs has two causes. A compiler freshly made by the installer
+# ships gates but no gates/ of its own and no fixture table — there is genuinely
+# nothing to check yet. A repo that HAS gates and no fixtures is the failure
+# this gate exists to name, and the loop above has already recorded one
+# violation per unfixtured gate, so falling through to the verdict is correct.
+if [ "$pairs" -eq 0 ] && [ "$GATE_VIOLATIONS" -eq 0 ]; then
+  gate_verdict "clean — no gates with fixtures yet; nothing claims to be proven."
+fi
 
 gate_verdict "clean — $pairs gate(s) fail their violating fixture and pass their clean one."

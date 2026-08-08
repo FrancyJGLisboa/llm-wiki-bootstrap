@@ -485,6 +485,17 @@ else
   record_fail "R38 gate-exec-bits.sh exits non-zero (a tracked executable lost its +x bit — usually a redirect-and-move rewrite)"
 fi
 
+# R39 — rule integrity. The compiler now emits rules classified deterministic /
+# heuristic / unverifiable; this is deterministic-gates §1 turned on that output.
+# A rule sitting in wiki/rules/deterministic/ with `gate: none` has been
+# IDENTIFIED as enforceable and then not enforced — strictly worse than never
+# classifying it, because the page reads like a control while nothing checks it.
+if "$SCRIPT_DIR/ctx-lint-rules.sh" >/dev/null 2>&1; then
+  ok "R39 ctx-lint-rules.sh exits 0 (no deterministic rule is prose-only; every gate exists and can fail)"
+else
+  record_fail "R39 ctx-lint-rules.sh exits non-zero (a deterministic rule has no gate, a gate is missing, or a gate cannot report its own failure)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —

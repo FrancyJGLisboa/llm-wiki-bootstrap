@@ -68,6 +68,19 @@ while IFS= read -r p; do
     README.md)
       source_path="$SRC/templates/README-fresh.md"
       ;;
+    gates/baseline.tsv)
+      # Seeded at zero for the shipped gates. Without it gate-ratchet arrives
+      # RED (gates exist, nothing records their counts) — and a gate that is
+      # red on arrival gets disabled rather than obeyed.
+      source_path="$SRC/templates/baseline-fresh.tsv"
+      ;;
+    scripts/gate-fixtures.tsv)
+      # The dev repo's table names gates that do not ship (eval-prompt-purity,
+      # reachable, doc-claims). A row naming an absent gate is exit 2, not a
+      # skip — deliberately, so a gate cannot vanish quietly — so the installed
+      # copy lists only the gates that ship.
+      source_path="$SRC/templates/gate-fixtures-fresh.tsv"
+      ;;
     .claude/settings.json)
       # Sourced from a template so the dev repo keeps no live settings.json of
       # its own — the generated wiki gets the auto-commit Stop hook; this repo

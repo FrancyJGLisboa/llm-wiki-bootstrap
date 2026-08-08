@@ -69,7 +69,29 @@ done
 cd "$ROOT" || gate_die "cannot cd to $ROOT"
 
 BASELINE="gates/baseline.tsv"
-[ -r "$BASELINE" ] || gate_die "cannot read $BASELINE (the baseline is this gate's input; without it there is nothing to ratchet against)"
+
+# No baseline has two causes that must not be collapsed:
+#   - no gates exist yet. A compiler freshly made by the installer has an empty
+#     gates/ until /ctx-gate builds the first one. Nothing to ratchet: clean.
+#   - gates exist but nobody recorded their counts. That is the escape this gate
+#     exists to close, and it is a violation, not a pass.
+if [ ! -r "$BASELINE" ]; then
+  _any_gate=0
+  for _g in scripts/gate-*.sh gates/*.sh; do
+    [ -f "$_g" ] || continue
+    case "$_g" in scripts/gate-ratchet.sh) continue ;; esac
+    _any_gate=1; break
+  done
+  if [ "$_any_gate" = 0 ]; then
+    gate_verdict "clean — no gates exist yet, so there are no counts to ratchet."
+  fi
+  gate_violation "$BASELINE:0" \
+"gates exist but $BASELINE does not, so no gate's violation count is watched by
+       anything. Create it — one row per gate:
+         <RULE-ID>TAB<command>TAB<violations>TAB<suppressions>TAB<date>
+       Get each pair with: bash <gate> --count"
+  gate_verdict "unreachable"
+fi
 
 tmp="$(mktemp -d)" || gate_die "mktemp failed"
 trap 'rm -rf "$tmp"' EXIT

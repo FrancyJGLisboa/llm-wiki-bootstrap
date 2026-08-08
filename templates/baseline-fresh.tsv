@@ -1,0 +1,31 @@
+# gates/baseline.tsv — the ratchet baseline (deterministic-gates §6).
+#
+# Seeded for a new context compiler: one row per shipped gate, all at zero,
+# because a fresh compiler has no violations yet. A gate that arrives RED gets
+# disabled by lunchtime; a gate that records the truth holds the line from here.
+#
+# Format: <gate_id><TAB><command><TAB><violations><TAB><suppressions><TAB><recorded_at><TAB><note>
+#
+# The command must support --count, printing "<violations>TAB<suppressions>"
+# and exiting 0. A command that exits 2 fails the ratchet as a gate error —
+# never as a pass.
+#
+# SUPPRESSIONS ARE VIOLATIONS. A scope_exclude on a rule, a declared standalone,
+# a nolint pragma — each counts in the second number. Routing around a gate
+# moves a watched number, so it can never be the quiet option.
+#
+# WHEN /ctx-gate BUILDS A GATE it adds a row here with the REAL violation count
+# from its whole-repo scan — not 0. Recording 0 when the repo has 12 makes the
+# gate red on arrival; recording 12 means the rule holds from now on without
+# requiring the past to be fixed first.
+#
+# TO LOWER A NUMBER: fix the violations, then edit the row. Downward is silent.
+# TO RAISE ONE: edit deliberately and say why in the note. That edit is the
+# record of the decision.
+#
+# gate_id	command	violations	suppressions	recorded_at	note
+RAW-APPEND-ONLY	scripts/gate-raw-append-only.sh --worktree	0	0	2026-08-08	worktree mode: only what is changing now
+ALIAS-RESOLVES	scripts/gate-command-aliases.sh	0	0	2026-08-08
+EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08
+GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08
+RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rules yet; /ctx-compile fills wiki/rules/

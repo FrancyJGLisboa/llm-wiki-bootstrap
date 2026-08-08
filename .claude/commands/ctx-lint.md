@@ -149,6 +149,53 @@ Run the deterministic lint:
 - Fix proposal (if `--apply`): read the source body, find where it states its own date, and write `asserted_at` + `asserted_at_source` pointing at that passage. **This is the one sanctioned exception to never writing to `raw/`** — it is the same class of write as the three `ingested_*` fields, and it is frontmatter only, so the body hash is unchanged.
 - **Never infer the date from `fetched_at`.** Stamping the fetch date makes every source look dated while encoding nothing and silently defeats every as-of query. The lint rejects it by name. When the body gives no date, write `unknown` with a reason — that is a legitimate outcome, not a failure.
 
+### 10. Rule integrity (`R-01` … `R-07`)
+
+The other nine checks ask whether the *knowledge* is sound. This one asks
+whether the *rules* are actually enforced. It is `docs/deterministic-gates.md`
+§1 applied to the compiler's own output:
+
+> **No deterministic rule stays prose-only.** If a script can settle it, a
+> script must settle it.
+
+Run the two scripts that own these checks:
+
+```bash
+./scripts/ctx-lint-rules.sh      # R-01, R-02, R-05, R-06
+./scripts/gate-fixtures.sh       # R-03, R-04
+./scripts/gate-ratchet.sh        # R-07
+```
+
+(Skip silently if a script is absent — older context package.)
+
+| ID | What it means | Why it is not merely tidiness |
+|---|---|---|
+| `R-01` | A `deterministic` rule still has `gate: none` | It was identified as enforceable and then not enforced. The page reads like a control while nothing checks it — worse than never classifying it. |
+| `R-02` | `gate:` names a missing or non-executable file | The page claims enforcement that does not exist. |
+| `R-03` | A gate has no fixture pair | An unfixtured gate is an unproven one; nothing shows it has ever fired. |
+| `R-04` | A gate does not discriminate | It passes its violating fixture, fires on its clean one, or exits 2 on both. A gate that never fires is indistinguishable from a broken gate. |
+| `R-05` | A gate has no reachable exit-2 path | It reports a missing dependency as compliance — worse than no gate at all. |
+| `R-06` | Fewer than 3 `known_gaps` | An author who cannot name three ways around their own gate has only observed that it passes. |
+| `R-07` | Violations or suppressions went up | The ratchet. Note that `scope_exclude` entries count here — carving scope is the cheapest way to make a gate green, so it costs what a violation costs. |
+
+**These are report-only. There is no `--apply` for any of them, by design.**
+Auto-fixing `R-01` would mean generating a gate without the five-way mutation
+proof — precisely the never-fires gate the discipline exists to prevent. The
+`--apply` path prints the command and stops:
+
+```
+RULE-0007 is deterministic and ungated — build it with:  /ctx-gate RULE-0007
+```
+
+A rule under `wiki/rules/discarded/` having no gate is **correct**, not a
+violation — but it must carry a `discard_reason`, or "we concluded nothing can
+check this" is indistinguishable from "we forgot".
+
+**If `R-01` is reported for many rules at once, do not batch-generate gates.**
+Take the one with the highest cost of *silent* failure first (`/ctx-rules`
+sorts by exactly that). A rule whose violation is loud already has a natural
+gate: the user notices.
+
 ## Output (report mode)
 
 ```
@@ -163,7 +210,9 @@ Run the deterministic lint:
 - N gaps
 - N schema-drift issues
 - N drifted raw sources (broken ingest commitments)
+- N unauthorised writes to raw/ (the drift cause)
 - N sources missing valid time (no as-of axis)
+- N rule-integrity issues (R-01…R-07; N of them prose-only deterministic rules)
 
 # Details
 [grouped output by check]

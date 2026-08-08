@@ -1,18 +1,16 @@
 # scripts/gate-fixtures.tsv — fixture invocations for scripts/gate-fixtures.sh.
 #
-# The hand-written gates in scripts/ predate the gates/fixtures/<RULE-ID>/
-# convention and take gate-specific flags (--diff, --repo, --index) that cannot
-# be guessed from a directory layout. This table names, per gate, the exact
-# command that MUST exit 1 and the exact command that MUST exit 0.
+# This is the FRESH copy installed into a new context compiler. It lists only
+# the gates that ship, because a table row naming an absent gate is an error
+# (exit 2), not a skip — a gate that vanishes must not be able to do so quietly.
 #
-# A gate absent from this table and without a gates/fixtures/ directory is a
-# violation — an unfixtured gate is an unproven one.
+# When /ctx-gate builds a gate under gates/, it does NOT need a row here: gates
+# in gates/ are discovered by the gates/fixtures/<RULE-ID>/ convention. This
+# table exists for the hand-written gates in scripts/, whose fixtures take
+# gate-specific flags that cannot be guessed from a directory layout.
 #
 # Format: <gate-path><TAB><violating-invocation><TAB><clean-invocation>
-scripts/gate-eval-prompt-purity.sh	scripts/gate-eval-prompt-purity.sh tests/gates/eval-purity/dirty-questions.md	scripts/gate-eval-prompt-purity.sh tests/gates/eval-purity/clean-questions.md
 scripts/gate-raw-append-only.sh	scripts/gate-raw-append-only.sh --diff tests/gates/raw-append-only/dirty.diff	scripts/gate-raw-append-only.sh --diff tests/gates/raw-append-only/clean.diff
-scripts/gate-reachable.sh	scripts/gate-reachable.sh --repo tests/gates/reachable/dirty	scripts/gate-reachable.sh --repo tests/gates/reachable/clean
-scripts/gate-doc-claims.sh	scripts/gate-doc-claims.sh --repo tests/gates/doc-claims/dirty	scripts/gate-doc-claims.sh --repo tests/gates/doc-claims/clean
 scripts/gate-command-aliases.sh	scripts/gate-command-aliases.sh --repo tests/gates/command-aliases/dirty	scripts/gate-command-aliases.sh --repo tests/gates/command-aliases/clean
 scripts/gate-exec-bits.sh	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/dirty --index tests/gates/exec-bits/dirty/index.txt	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/clean --index tests/gates/exec-bits/clean/index.txt
 scripts/gate-fixtures.sh	scripts/gate-fixtures.sh --repo tests/gates/fixtures/dirty	scripts/gate-fixtures.sh --repo tests/gates/fixtures/clean
