@@ -6,7 +6,7 @@ alwaysApply: true
 
 # llm-wiki-bootstrap (Cursor rules)
 
-This project is an `llm-wiki-bootstrap` instance — a personal LLM-wiki knowledge base operated via five named workflows.
+This project is an `llm-wiki-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package an LLM can rely on. Operated via five named workflows.
 
 ## Read this first
 

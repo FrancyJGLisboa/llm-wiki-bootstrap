@@ -31,6 +31,7 @@ The idea has since been formalized beyond Karpathy's sketch: in June 2026 Google
 ## Related
 
 - [[problem-with-naive-rag]] — what this is a reaction against
+- [[context-compiler]] — the category name for the idea: a build system whose output is context
 - [[knowledge-compounds]] — the engine that makes the idea pay off
 - [[three-layer-architecture]] — how the idea is structured into raw / wiki / schema
 - [[division-of-labor]] — who does what

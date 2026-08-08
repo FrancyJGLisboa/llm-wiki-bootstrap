@@ -1,5 +1,7 @@
 # llm-wiki-bootstrap (Claude Code)
 
+This project is a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package an LLM can rely on (see `docs/CONTEXT-COMPILER.md`).
+
 This project's canonical schema is **`AGENTS.md`** in the same directory. Modern Claude Code loads `AGENTS.md` automatically; this file exists for older Claude Code versions that only load `CLAUDE.md`.
 
 **Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the five slash commands.

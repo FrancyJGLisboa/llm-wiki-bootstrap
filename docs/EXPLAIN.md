@@ -6,7 +6,9 @@ For developers. If you've used `git`, `make` / `npm run build`, and `eslint`, ev
 
 ## The 30-second version
 
-It's a build system. Source files are PDFs, transcripts, articles, screenshots — anything you'd otherwise lose track of. The build output is an interlinked Markdown wiki the LLM writes and maintains. You curate sources and ask questions. The LLM does the bookkeeping (summaries, cross-links, contradiction-flagging, indexing). Five commands, three folders, no app to install, no embeddings, no vector DB. The pattern is Andrej Karpathy's; this repo is the smallest tool-agnostic implementation of it.
+It's a **context compiler** — which is to say, a build system whose output is context for an LLM. Source files are PDFs, transcripts, articles, screenshots — anything you'd otherwise lose track of. The build output is an interlinked Markdown wiki the LLM writes and maintains, with every claim traceable back to a source anchor. You curate sources and ask questions. The LLM does the bookkeeping (summaries, cross-links, contradiction-flagging, indexing). Five commands, three folders, no app to install, no embeddings, no vector DB. The pattern is Andrej Karpathy's; this repo is the smallest tool-agnostic implementation of it.
+
+This file maps that onto tools you already use. For the category itself — the formal definition, the five properties, where the compiler analogy breaks — see [`CONTEXT-COMPILER.md`](CONTEXT-COMPILER.md).
 
 ---
 
@@ -35,6 +37,10 @@ Read the table left-to-right. If you've ever maintained a `Makefile` or a `packa
 | `/wiki-lint` | `eslint --fix` | Catches broken links, orphans, contradictions, stale claims. |
 | `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Reads the wiki. On a gap, web-searches and *promotes* the answer as a new page. |
 | `log.md` | `CHANGELOG` | Append-only record of every ingest / promote / lint. |
+| `(source: raw/x.md#anchor)` | source maps / debug symbols | Every claim in the output points back at the byte range it came from. The build fails when that mapping breaks. |
+| `scripts/package-wiki.sh` | `npm pack` / a release tarball | Emits a versioned, hash-manifested bundle — with its own verifier inside, so a recipient checks it offline. |
+
+The last two rows are where this goes past `make`: a Makefile doesn't care where a line of output came from, and doesn't refuse to build when a claim loses its receipt. Those are the properties that make the output *context* rather than just a directory. See [`CONTEXT-COMPILER.md`](CONTEXT-COMPILER.md).
 
 The build-cache key is the single most important mechanical idea. Here's the entirety of how it's computed — note that it's deliberately one short shell script, not inline logic spread across the slash commands:
 

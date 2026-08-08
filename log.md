@@ -2,6 +2,21 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-08-08 — context-compiler framing (positioning, no mechanical change)
+
+"Wiki" names the shape of the output; it does not name the function of the system. Adopted **context compiler** as the category: *a context compiler transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that an LLM can reliably use.* Every clause of that definition was already implemented and already gated — extract/segment/ingest for the transform, the page template and typed-relation grammar for structure, the citation + hash + entailment stack for provenance, `[[link]]`/KG/MCP for navigability, and `package-wiki.sh` + `MANIFEST` + the in-bundle verifier for the package. So this is a naming change, not a build change.
+
+New `docs/CONTEXT-COMPILER.md` defines the category independently of this repo's name: the definition, the five conformance properties with their verify scripts, the vocabulary mapping, and — stated up front rather than buried — the limit. The transform stage is LLM judgment and is not reproducible; determinism is scoped to the body-hash cache key, the synthesis artifacts, the OKF export, and the manifest. The guarantee on offer is verifiable output, not reproducible output.
+
+Two features that look like exceptions are named instead of hidden. `/wiki-query` promotion writes into its own source tree mid-run — framed as **dependency resolution** (`npm install` fetching a missing dep during a build), since the fetched source goes through the same no-bare-URL, frontmatter, and entailment rules as any `/wiki-extract` acquisition. Flashcards, slides, diagrams, `/wiki-discover`, and `wiki/journal/` are a **viewer tier** over a built package, which is what `AGENTS.md` already said by calling them "not lifecycle steps".
+
+`AGENTS.md` gained a `## Output format — the context package` section: packaging existed only in shell scripts and `docs/SELLING.md`, so the schema layer had no notion of its own distributable — the weakest-surfaced clause of the definition. No `/wiki-export` was added; `wiki/commands.md` records that a unified exporter was deliberately rejected in favour of a split output tier, and that stands. Schema version deliberately **not** bumped: no command, frontmatter, or layer rule changed, and `smoke-all.sh` pins the literal `**Schema version:** 4`.
+
+- Created: `docs/CONTEXT-COMPILER.md`, `wiki/context-compiler.md`
+- Updated: `README.md` (lead, packaging framing, vision), `AGENTS.md` (what-this-is + output format), `docs/EXPLAIN.md` (source-maps and npm-pack rows), `site/index.html`, `CLAUDE.md`, `GEMINI.md`, `.clinerules`, `.github/copilot-instructions.md`, `.cursor/rules/llm-wiki.mdc`, `wiki/index.md`, `wiki/core-idea.md`
+- Unchanged on purpose: repo name, git remote, `/wiki-*` commands, `raw/` and `wiki/` paths, every script name, the bundle format
+- Contradictions flagged: none
+
 ## 2026-07-24 — cross-modality retrieval eval (the measuring instrument)
 
 "Can a bootstrapped wiki retrieve accurate, point-in-time info about anything?" was asserted, never measured — the existing evals cover multi-hop traversal and citation faithfulness, neither of which touches tabular or thread sources, and none of which has a time axis. Added `scripts/eval-retrieval.sh`: five binary checks (R1 needle retrieval per modality, R2 point-in-time as-of + current in one run, R3 refusal on absence, R4 citation locus, R5 stale evidence blocks the answer) run against a wiki built by the REAL installer and loaded through the REAL `/wiki-extract` → `/wiki-ingest` path — no hand-authored wiki fixture, because the gaps being hunted (tabular truncation past the 20-row preview, thread flattening) live in extract/ingest and a fixture would paper over exactly them.
