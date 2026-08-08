@@ -1,6 +1,6 @@
 ---
 title: Context Compiler
-description: The category this system belongs to — a build system whose output is structured, provenance-aware, machine-navigable context for an LLM.
+description: The category this system belongs to — a build system whose output is structured, provenance-aware, machine-navigable context that LLMs can navigate, retrieve from, and reason over.
 type: analysis
 source: mixed
 updated: 2026-08-08
@@ -11,7 +11,7 @@ tags: [system, framing, architecture, provenance]
 
 ## Definition / TL;DR
 
-A **context compiler** transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that an LLM can reliably use. It is the name for the category this project occupies: "wiki" describes the *shape of the output*, "context compiler" describes the *function of the system*.
+A **context compiler** transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that LLMs can navigate, retrieve from, and reason over. It is the name for the category this project occupies: "wiki" describes the *shape of the output*, "context compiler" describes the *function of the system*.
 
 > **This page is `source: mixed`.** The underlying pattern — three layers, ingest/query/lint, human curates and LLM maintains — is from the video. The compiler framing, the five properties, and the vocabulary mapping are this project's own interpretation, not claims made in any raw source.
 

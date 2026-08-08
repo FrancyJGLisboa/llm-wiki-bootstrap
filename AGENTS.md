@@ -6,7 +6,7 @@ This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-sche
 
 ## What this project is
 
-A **context compiler**: it transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that an LLM can reliably use. `raw/` is the source tree, `/wiki-ingest` is the build, `wiki/` is the emitted target representation, `/wiki-lint` is the semantic-analysis pass, and `scripts/package-wiki.sh` emits the distributable. The full category definition — including where the compiler analogy holds and where it deliberately breaks — is in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
+A **context compiler**: it transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that LLMs can navigate, retrieve from, and reason over. `raw/` is the source tree, `/wiki-ingest` is the build, `wiki/` is the emitted target representation, `/wiki-lint` is the semantic-analysis pass, and `scripts/package-wiki.sh` emits the distributable. The full category definition — including where the compiler analogy holds and where it deliberately breaks — is in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
 Operationally it is a personal LLM-wiki knowledge base, operated **exclusively via slash commands** in any agentic tool (Claude Code first; others follow). The wiki layer is **owned by the LLM** — the user curates raw sources and asks questions; the LLM does all writing, cross-referencing, and maintenance.
 

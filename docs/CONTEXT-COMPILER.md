@@ -1,8 +1,16 @@
 # The context compiler
 
 > **A context compiler transforms unstructured source material into a
-> structured, provenance-aware, machine-navigable context package that an LLM
-> can reliably use.**
+> structured, provenance-aware, machine-navigable context package that LLMs can
+> navigate, retrieve from, and reason over.**
+
+The last clause is deliberately three verbs rather than one adjective. An
+earlier draft ended *"…that an LLM can reliably use,"* and that word was wrong:
+a compiler controls the artifact, not the model that reads it. A flawless
+package can still be misread. **Reliability is not a property this layer can
+promise** — but navigability, retrievability, and reasoning support are
+properties of the artifact, and each one is measurable. See
+[Measuring the package](#measuring-the-package).
 
 This document defines that as a **category**, and shows that
 `llm-wiki-bootstrap` is a reference implementation of it. The category is the
@@ -228,6 +236,76 @@ build system.
 
 ---
 
+## Measuring the package
+
+The definition claims three verbs, so the three verbs have to be measurable.
+They split into two tiers, and the split matters: **one tier is a property of
+the artifact and recomputes on demand; the other is an event and must carry a
+date.**
+
+### Tier 1 — structural, recomputed, no LLM and no network
+
+These are properties of the package itself. They are true or false right now,
+they cost nothing to check, and they run in CI on every push. `scripts/package-quality.sh`
+aggregates them into one report.
+
+| Measure | Computed by |
+|---|---|
+| Citation resolution — every `(source: …)` lands on a real anchor | `scripts/citation-audit.py` |
+| Citation coverage — no claim-bearing page is unsourced | `scripts/citation-audit.py --coverage` |
+| Citation density — citations per claim-bearing page | `scripts/corpus-health.py` |
+| Ingest commitment — every cited source carries a derived `ingested_hash` | `scripts/wiki-lint-commitment.sh` |
+| Hash drift — no cited body changed since the ingest that cited it | `scripts/wiki-lint-hash-drift.sh` |
+| Valid time — sources carry a traceable `asserted_at`, unknowns explicit | `scripts/asserted-at-audit.py` |
+| Navigability — orphan rate, thin-page count, hub concentration, graph diameter | `scripts/corpus-health.py` |
+| Transcription check — verbatim overlap between wiki and raw (synthesis, not copying) | `scripts/corpus-health.py` |
+
+A high score here does not prove the package is *useful*. It proves it is
+*sound* — that nothing in it is unverifiable, unattributed, or unreachable.
+That is the floor, and the floor is enforceable.
+
+### Tier 2 — behavioral, measured by an eval run, dated
+
+These require driving a real model against a real corpus, so they cost
+`claude -p` invocations and they are **events, not properties**. A number here
+without a date is meaningless, which is the same rule
+`scripts/verify-site-claims.sh` already applies to every score claim on the
+public page.
+
+| Measure | Measured by |
+|---|---|
+| Retrieval recall, per modality | `eval-retrieval.sh` R1 (needle planted past each extractor's truncation boundary) |
+| Point-in-time correctness | `eval-retrieval.sh` R2 |
+| Refusal on absence | `eval-retrieval.sh` R3 |
+| Citation locus — the cite is tight *and* containing | `eval-retrieval.sh` R4 |
+| Stale-evidence detection | `eval-retrieval.sh` R5 |
+| Multi-hop and supersession | `eval-retrieval.sh` M1, M2, M5 |
+| Citation integrity under load | `eval-retrieval.sh` M6 |
+| Entity recall / precision | `eval-entities.sh` |
+| Citation faithfulness (entailment) | `eval-citation-faithfulness.sh` |
+| Behaviour at scale | `eval-scale.sh` |
+| Cold-start onboarding | `eval-onboarding.sh` |
+
+Every grader is itself verified with no LLM and no spend — an eval nobody
+checks measures nothing. A held-out question set (`--holdout`) is the
+anti-Goodhart control: never run by default, never in CI, never to be "fixed"
+by editing.
+
+### Passive measurement
+
+`scripts/wiki-metrics.sh` records integrity numbers for *real* operations, not
+just eval runs, appending a machine-readable line to `log.md` per ingest or
+query. The numbers are computed by code and never narrated by the model — a
+line the agent wrote from memory is an assertion, not a measurement.
+`scripts/wiki-flows.sh` turns that record into a time series.
+
+### On the word "reliable"
+
+If the two tiers both hold, and hold across runs, "reliable" stops being a
+marketing adjective and becomes a measured property of the artifact — with a
+number, a date, and a reproducible command behind it. Until then the definition
+claims only what the compiler controls.
+
 ## What a context compiler is not
 
 **Not RAG.** RAG defers the work to query time: embed, similarity-search,
@@ -314,7 +392,7 @@ directories are `raw/` and `wiki/`, and they stay that way.
 | provenance-aware | `(source: raw/<file>#<anchor>)`, raw frontmatter spec, `body-hash.sh`, `asserted_at`, write-time entailment gate | `citation-audit.py`, `verify-citation-coverage.sh`, `verify-hash-drift.sh`, `verify-asserted-at.sh`, `gate-raw-append-only.sh` |
 | machine-navigable | `[[kebab-case]]` links, `wiki-to-kg.py`, `wiki-graph-walk.py`, `knowledge-graph.json`, MCP surface | `verify-graph-walk.sh`, `verify-synthesize.sh`, `gate-reachable.sh` |
 | context package | `scripts/package-wiki.sh` (G1–G4, `MANIFEST`, optional GPG) | `verify-bundle.sh`, `verify-bundle-roundtrip.sh` |
-| an LLM can reliably use | citation + temporal contracts, read-floor gate, faithfulness gate | `verify-query-citation-contract.sh`, `verify-query-temporal-contract.sh`, `verify-faithfulness-gate.sh` |
+| LLMs can navigate, retrieve from, and reason over | citation + temporal contracts, read-floor gate, faithfulness gate — and the eval suite that measures each verb | `verify-query-citation-contract.sh`, `verify-query-temporal-contract.sh`, `verify-faithfulness-gate.sh`, `eval-retrieval.sh` |
 
 ## See also
 
