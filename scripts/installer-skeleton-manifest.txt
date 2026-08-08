@@ -37,6 +37,8 @@ LICENSE
 .claude/commands/compile.md
 .claude/commands/ctx-rules.md
 .claude/commands/rules.md
+.claude/commands/ctx-gate.md
+.claude/commands/gate.md
 scripts/body-hash.sh
 scripts/vtt-to-md.sh
 scripts/extract/segment-doc.py
@@ -79,6 +81,7 @@ templates/infographic/archetypes.md
 templates/infographic/scoring-rubric.md
 templates/infographic/generator-contract.md
 templates/infographic/example-poster.html
+templates/gate/gate.sh.tmpl
 docs/QUICKSTART.md
 docs/SELLING.md
 docs/EXPLAIN.md
@@ -120,6 +123,7 @@ scripts/synthesize/all.sh
 scripts/verify-synthesize.sh
 scripts/lib/gate-lib.sh
 scripts/gate-command-aliases.sh
+scripts/new-gate.sh
 raw/.gitkeep
 wiki/journal/.gitkeep
 wiki/index.md

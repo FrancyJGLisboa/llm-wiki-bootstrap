@@ -395,27 +395,17 @@ else
   record_fail "R30 gate-raw-append-only.sh exits non-zero (unauthorised write to the immutable raw layer)"
 fi
 
-# R31 — the gates' own fixtures. A gate that never fires is indistinguishable
-# from a broken one; these assert both directions on committed fixtures.
-gate_fixtures_ok=1
-"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/clean-questions.md >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-eval-prompt-purity.sh" tests/gates/eval-purity/dirty-questions.md >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/clean.diff >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-raw-append-only.sh" --diff tests/gates/raw-append-only/dirty.diff >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/clean  >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-reachable.sh"   --repo tests/gates/reachable/dirty  >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/clean >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/clean    >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/dirty    >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-command-aliases.sh" --repo tests/gates/command-aliases/clean >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-command-aliases.sh" --repo tests/gates/command-aliases/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-exec-bits.sh" --repo tests/gates/exec-bits/clean --index tests/gates/exec-bits/clean/index.txt >/dev/null 2>&1 || gate_fixtures_ok=0
-"$SCRIPT_DIR/gate-exec-bits.sh" --repo tests/gates/exec-bits/dirty --index tests/gates/exec-bits/dirty/index.txt >/dev/null 2>&1 && gate_fixtures_ok=0
-if [ "$gate_fixtures_ok" = 1 ]; then
-  ok "R31 all seven gates fail their violating fixture and pass their clean one"
+# R31 — the gates' own fixtures, both directions. Was a hardcoded list of four
+# gates; now scripts/gate-fixtures.sh discovers every gate and requires EXACTLY
+# exit 1 on its violating fixture and EXACTLY exit 0 on its clean one. "Exactly"
+# is load-bearing: exit 2 means the gate itself broke, and a check accepting any
+# non-zero reads that as a successful catch — which is precisely how a --count
+# flag added during the /ctx-* rename silently broke gate-eval-prompt-purity.sh
+# on BOTH fixtures. A gate with no fixtures at all is a violation, not a skip.
+if "$SCRIPT_DIR/gate-fixtures.sh" >/dev/null 2>&1; then
+  ok "R31 every gate fails its violating fixture and passes its clean one"
 else
-  record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, or misses a planted violation)"
+  record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, misses a planted violation, exits 2, or has no fixtures)"
 fi
 
 # R32 — the scale eval's own oracle (F1–F7). README names this as one of the
