@@ -4,6 +4,8 @@ source_type: article
 source_title: "Phase Coherence Engineering — A Primer"
 source_author: "Smoke test fixture (fictional)"
 fetched_at: 2026-05-26
+asserted_at: unknown
+asserted_at_note: "Synthetic test fixture on a fictitious subject; it has no real publication date. The 2019 dates in the body belong to invented events inside the fiction, not to this document. Unknown by design."
 ingested_hash: ba2159c8b5479db823817126786fbce1d2a86d902ce716d70d18294878df562c
 ingested_at: 2026-05-26 06:52
 ingested_pages: [wiki/smoke-source-summary.md, wiki/quortex-protocol.md, wiki/dr-alma-voss.md, wiki/phase-coherence-engineering.md, wiki/index.md]

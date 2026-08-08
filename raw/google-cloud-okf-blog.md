@@ -4,6 +4,8 @@ source_type: article
 source_title: "How the Open Knowledge Format can improve data sharing"
 source_author: "Google Cloud"
 fetched_at: 2026-07-07
+asserted_at: unknown
+asserted_at_note: "Retained body carries no publication date: the fetch was clamped mid-page (extraction_status: degraded) and any dateline sits in the part never returned. Resolve by re-running /wiki-extract from a session that can reach cloud.google.com."
 ingested_hash: 8d5556f60b157b294060240de9e8104a2b57274a9cf831e52265f9e1091bc3d8
 ingested_at: 2026-07-07 06:20
 ingested_pages: [wiki/google-cloud-okf-blog-summary.md, wiki/open-knowledge-format.md, wiki/okf-vs-llm-wiki-bootstrap.md, wiki/core-idea.md]

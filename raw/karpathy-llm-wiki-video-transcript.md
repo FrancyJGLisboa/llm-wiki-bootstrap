@@ -4,6 +4,8 @@ source_type: video-transcript
 source_title: "LLM-wiki knowledge bases (Karpathy concept) — YouTube walkthrough"
 source_author: third-party YouTube creator (not Karpathy)
 fetched_at: 2026-05-25
+asserted_at: unknown
+asserted_at_note: "Transcript contains no date of any kind — no dateline, no relative 'today', no dated reference. Resolve by recording the upload date of the source video."
 ingested_hash: "3054546faf0d367042739f090547e4714d47ea2caf82fd9fcf98cb17e40d612e"
 ingested_at: 2026-05-25 06:45
 ingested_pages:
