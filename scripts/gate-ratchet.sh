@@ -19,8 +19,18 @@
 #
 # DETECTION: for each row of gates/baseline.tsv, run the row's command with
 # --count, read "<violations>TAB<suppressions>" from stdout, compare against the
-# recorded pair. Then check the converse — every gate-*.sh under scripts/ and
-# context/gates/ must own a row, so a new gate cannot escape by omission.
+# recorded pair. Then check the converse — every gate-*.sh under scripts/, and
+# every gate under gates/ and context/gates/, must own a row, so a new gate
+# cannot escape by omission.
+#
+# The gates/ arm is load-bearing and was missing until 2026-08-08: /ctx-gate
+# writes its output to gates/<RULE-ID>.sh (scripts/new-gate.sh), which is
+# precisely the path a newly built gate takes. Scanning only scripts/ and
+# context/gates/ meant the first gate the compiler ever generated for itself was
+# exempt from the registration requirement — the escape gates/baseline.tsv
+# forbids in its header. It stayed invisible because gates/ held no .sh files
+# yet, and because the fixture that would have caught it plants its unregistered
+# gate under scripts/.
 #
 # FAILURE MODES — the honest ones:
 #   - A gate that miscounts its own violations ratchets against a wrong number.
@@ -33,10 +43,10 @@
 #     would mean a per-gate stable identifier, which several of these gates
 #     (diff-based, reachability-based) cannot produce.
 #
-# SCOPE: gates only — scripts/gate-*.sh and context/gates/*.sh. The wiki-lint-*
-# family and the verify-* oracles are excluded: lints report on user content
-# that is expected to churn, and verify-* scripts are tests of the gates, which
-# either pass or fail outright and have nothing to ratchet.
+# SCOPE: gates only — scripts/gate-*.sh, gates/*.sh, and context/gates/*.sh. The
+# wiki-lint-* family and the verify-* oracles are excluded: lints report on user
+# content that is expected to churn, and verify-* scripts are tests of the gates,
+# which either pass or fail outright and have nothing to ratchet.
 #
 # EXIT: 0 = no count went up · 1 = an increase, or a gate with no baseline row
 #       · 2 = the gate itself failed (missing/unparseable baseline, a listed
@@ -157,9 +167,13 @@ done < "$BASELINE"
 [ "$checked" -gt 0 ] || gate_die "$BASELINE parsed to zero rows — the ratchet is inspecting nothing"
 
 # ── the converse: a gate with no baseline row escapes the ratchet ──
-for f in scripts/gate-*.sh context/gates/*.sh; do
+for f in scripts/gate-*.sh gates/*.sh context/gates/*.sh; do
   [ -f "$f" ] || continue
-  # This script has no violations of its own to ratchet.
+  # This script has no violations of its own to ratchet, and no --count mode to
+  # report them with: "count your own violations" is undefined for the script
+  # that reads the baseline. A row naming it would also make it invoke itself
+  # once per run, forever. Its coverage comes from fixtures instead — two pairs
+  # in scripts/gate-fixtures.tsv, one per arm of the check below.
   [ "$f" = "scripts/gate-ratchet.sh" ] && continue
   grep -qxF "$f" "$tmp/registered" && continue
   gate_violation "$f:1" \

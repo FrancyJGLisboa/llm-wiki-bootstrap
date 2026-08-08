@@ -15,3 +15,5 @@ scripts/gate-command-aliases.sh	scripts/gate-command-aliases.sh --repo tests/gat
 scripts/gate-exec-bits.sh	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/dirty --index tests/gates/exec-bits/dirty/index.txt	scripts/gate-exec-bits.sh --repo tests/gates/exec-bits/clean --index tests/gates/exec-bits/clean/index.txt
 scripts/gate-fixtures.sh	scripts/gate-fixtures.sh --repo tests/gates/fixtures/dirty	scripts/gate-fixtures.sh --repo tests/gates/fixtures/clean
 scripts/ctx-lint-rules.sh	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/dirty	scripts/ctx-lint-rules.sh --repo tests/gates/ctx-lint-rules/clean
+scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean
+scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/gates-arm-dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean

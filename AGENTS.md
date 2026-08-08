@@ -23,6 +23,8 @@ The wiki currently shipped is *meta*: a wiki **about** the LLM-wiki pattern itse
 
 **On the two names.** The compiled root is `context/` from schema v5; it was `wiki/` before, and a committed `wiki -> context` symlink keeps every existing path working. Roughly 65 shipped scripts still say `wiki/` and were deliberately not rewritten — they are the oracles that constitute this project's safety net, and a mass sed across them would risk far more than the inconsistency it removes. **New code should resolve the root with `ctx_root()` from `scripts/lib/ctx-root.sh`** rather than hardcoding either name. Packages built before v5 have only `wiki/` and keep working permanently; `scripts/gate-context-root.sh` proves all three layouts resolve.
 
+That sentence used to be the entire enforcement. Since 2026-08-08 it is a gate: `scripts/gate-ctx-root.sh` (`CTX-ROOT-ADOPTION`, R41) counts hardcoded roots under `scripts/` and is ratcheted in `gates/baseline.tsv`. It is a **ratchet, not a migration order** — the shipped lines are recorded and stay legal, and only an increase fails. Nothing here asks for the bulk rewrite the paragraph above argues against.
+
 **Critical:** The LLM must never edit files in `raw/` (it may only read them). The user must never edit files in `context/` directly — instead, edit raw sources or use `/ctx-query` to file the new claim, then re-run `/ctx-compile` or `/ctx-lint`.
 
 ### Exception: `context/journal/`

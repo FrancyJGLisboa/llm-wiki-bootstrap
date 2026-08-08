@@ -41,10 +41,10 @@
 #     describes still passes, as long as the gate fires on it.
 #   - Exit codes only. A gate that fires with a useless message passes.
 #
-# SCOPE: scripts/gate-*.sh and gates/*.sh. Excludes gate-ratchet.sh and this
-# script (both have fixtures, but running them here would recurse), and excludes
-# the wiki-lint-* family, which reports on user content rather than asserting a
-# rule about the repo.
+# SCOPE: scripts/gate-*.sh and gates/*.sh. Excludes only this script (its own
+# fixture row runs, but the converse check would flag it against itself), and
+# excludes the wiki-lint-* family, which reports on user content rather than
+# asserting a rule about the repo.
 #
 # EXIT: 0 = every gate discriminates · 1 = a gate failed a direction, or has no
 #       fixtures · 2 = the gate itself failed (no gates found, unreadable table).
@@ -78,10 +78,17 @@ cd "$ROOT" || gate_die "cannot cd to $ROOT"
 TABLE="scripts/gate-fixtures.tsv"
 
 # Gates that cannot be checked from inside this script.
+#
+# gate-ratchet.sh used to be listed here as "invokes every gate; recurses". That
+# is true only of its DEFAULT invocation, which reads the real gates/baseline.tsv
+# — a row there names this script, so the two would call each other forever. In
+# --repo fixture mode it reads the FIXTURE's baseline, which lists stubs only,
+# and the cycle does not exist. So it is fixtured like everything else, via the
+# table. The exemption was costing real coverage: gate-ratchet.sh is the gate
+# that catches unregistered gates, and nothing was proving it could.
 self_exempt() {
   case "$1" in
     scripts/gate-fixtures.sh) return 0 ;;   # would recurse
-    scripts/gate-ratchet.sh)  return 0 ;;   # invokes every gate; recurses
     *) return 1 ;;
   esac
 }

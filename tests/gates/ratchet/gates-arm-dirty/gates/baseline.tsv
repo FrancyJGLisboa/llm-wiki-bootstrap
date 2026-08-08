@@ -1,0 +1,19 @@
+# Isolating fixture for the gates/ arm of the converse check.
+#
+# Every count here MATCHES what its stub reports, and scripts/ holds no
+# unregistered gate. So paths 1-3 of tests/gates/ratchet/dirty/ are all clean and
+# this tree has exactly ONE defect:
+#
+#   gates/RULE-9999.sh has no row.
+#
+# That isolation is the point. The sibling dirty/ tree fails for three other
+# reasons, so it exits 1 whether or not the ratchet scans gates/ at all — it
+# cannot distinguish a working converse check from one blind to the directory
+# /ctx-gate actually writes to (scripts/new-gate.sh writes gates/<RULE-ID>.sh).
+# Only a tree whose sole defect lives in gates/ can tell those apart.
+#
+# Against the pre-2026-08-08 glob (`scripts/gate-*.sh context/gates/*.sh`) this
+# tree exits 0. That is the bug, and this file is what fails when it returns.
+#
+# gate_id	command	violations	suppressions	recorded_at	note
+STUB	scripts/gate-stub.sh	2	1	2026-08-08	pair matches; not the defect under test
