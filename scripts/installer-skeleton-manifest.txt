@@ -30,6 +30,7 @@ scripts/vtt-to-md.sh
 scripts/extract/segment-doc.py
 scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
+scripts/lib/commitment.sh
 scripts/lib/eval-common.sh
 scripts/lib/wikitext.py
 scripts/preflight.sh

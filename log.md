@@ -2,6 +2,24 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-08-08 — the commitment lint was quote-blind (one reader, four copies)
+
+The new package-quality scorecard reported "4 of 6 cited sources lack an ingest commitment", and the obvious next move was to re-run `/wiki-ingest` on each. That would have been wrong, and expensive: **all four hashes were present, correct, and current.** Recomputing each with `scripts/body-hash.sh` matched the stored value exactly.
+
+The four store the hash **unquoted** (`ingested_hash: d1d2986…`). `wiki-lint-commitment.sh` tested for it with `grep -q 'ingested_hash: "[0-9a-f]'` — a literal opening double-quote. Unquoted is valid YAML, and `scripts/commit-source.py` (the canonical writer) *reads* quote-optionally at line 101 while always *writing* the quoted form at line 116. Tolerant reading was already the intended contract; two readers just did not implement it.
+
+The diagnosis was wrong in a second, worse way. The error text also claimed "hash-drift detection is disabled for this body". It is not — `wiki-lint-hash-drift.sh` reads the field through an awk helper that strips quotes. Verified empirically rather than by reading: tampering with two bodies in a temp copy, one quoted and one unquoted, produced `2 raw source(s) no longer match their ingest commitment`. Drift was being caught the whole time on exactly the sources the lint called uncommitted. Message corrected.
+
+The same inline grep had been written **four** times — `wiki-lint-commitment.sh`, `wiki-metrics.sh`, `eval-retrieval.sh`, and `verify-retrieval-eval.sh`. The last one is the oracle for the third, and it reimplemented the predicate instead of calling it, which is precisely why the bug outlived its own test. Replaced with `scripts/lib/commitment.sh` — one `has_commitment()`, quote-agnostic, sidecar-aware, hex-validated (a non-hex value is a hand-written receipt and must not read as verified). Same reasoning as `body-hash.sh` being the one hasher: a second implementation of a shared predicate does not stay identical to the first.
+
+`verify-metrics.sh`'s P1 fixture was all-quoted, which is how the bug survived. It now carries `committed-unquoted.md` with a bare hash, and `exp_ok/exp_total` moves 2/3 → 3/4. Mutation-tested: reverting the reader to quote-only makes the oracle report `committed=2/4`, i.e. it now fails.
+
+Net effect on the scorecard: **9/11 → 10/11**, with no model calls, no writes to `raw/`, and no wiki pages rewritten. The remaining red row is the `asserted_at` gap on 6 sources, which is genuine debt.
+
+- Created: `scripts/lib/commitment.sh` (added to `installer-skeleton-manifest.txt` — both callers ship in fresh installs)
+- Updated: `scripts/wiki-lint-commitment.sh` (reader + corrected message), `scripts/wiki-metrics.sh`, `scripts/eval-retrieval.sh`, `scripts/verify-retrieval-eval.sh`, `scripts/verify-metrics.sh` (fixture)
+- Contradictions flagged: none
+
 ## 2026-08-08 — context-compiler framing (positioning, no mechanical change)
 
 "Wiki" names the shape of the output; it does not name the function of the system. Adopted **context compiler** as the category: *a context compiler transforms unstructured source material into a structured, provenance-aware, machine-navigable context package that LLMs can navigate, retrieve from, and reason over.* Every clause of that definition was already implemented and already gated — extract/segment/ingest for the transform, the page template and typed-relation grammar for structure, the citation + hash + entailment stack for provenance, `[[link]]`/KG/MCP for navigability, and `package-wiki.sh` + `MANIFEST` + the in-bundle verifier for the package. So this is a naming change, not a build change.

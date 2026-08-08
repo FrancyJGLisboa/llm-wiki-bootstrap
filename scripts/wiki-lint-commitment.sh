@@ -17,6 +17,10 @@
 # Usage: scripts/wiki-lint-commitment.sh [<wiki-root>]
 
 set -uo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=scripts/lib/commitment.sh
+. "$SCRIPT_DIR/lib/commitment.sh"
+
 ROOT="${1:-.}"
 [ -d "$ROOT/wiki" ] || { echo "wiki-lint-commitment: $ROOT/wiki not found" >&2; exit 2; }
 [ -d "$ROOT/raw" ]  || { echo "wiki-lint-commitment: $ROOT/raw not found" >&2; exit 2; }
@@ -36,11 +40,10 @@ while IFS= read -r f; do
   fi
   cited=$((cited + 1))
 
-  if grep -q 'ingested_hash: "[0-9a-f]' "$f" 2>/dev/null \
-     || grep -q 'ingested_hash: "[0-9a-f]' "$f.md" 2>/dev/null; then
+  if has_commitment "$f"; then
     continue
   fi
-  echo "raw/$base: cited $n time(s) by wiki pages but carries no ingested_hash — those citations cannot be verified, and hash-drift detection is disabled for this body" >&2
+  echo "raw/$base: cited $n time(s) by wiki pages but carries no ingested_hash — those citations rest on a body nobody committed to, so drift has no baseline to detect against" >&2
   offenders=$((offenders + 1))
 done < <(find "$ROOT/raw" -type f 2>/dev/null | sort)
 

@@ -24,10 +24,19 @@ fail() { echo "  FAIL: $1" >&2; fails=$((fails + 1)); }
 tmp="$(mktemp -d -t verify-metrics.XXXXXX)"
 trap 'rm -rf "$tmp"' EXIT
 
-# A wiki with 3 sources: two committed, one not (the observed failure), plus a
+# A wiki with 4 sources: three committed, one not (the observed failure), plus a
 # .csv whose commitment lives on its parsed .md sidecar, plus scaffolding.
+#
+# committed-unquoted.md carries an UNQUOTED hash on purpose. Every reader of this
+# field was once an inline `grep 'ingested_hash: "[0-9a-f]'` demanding a literal
+# opening quote, so four of this repo's own sources — hash present, correct, and
+# current — were reported as carrying none, with "re-run /wiki-ingest" as the
+# advice. The fixture was all-quoted, which is exactly why the bug survived its
+# own oracle. Unquoted is valid YAML; the reader (scripts/lib/commitment.sh)
+# must accept it, and this fixture is what holds it to that.
 W="$tmp/w"; mkdir -p "$W/wiki" "$W/raw"
 printf -- '---\ningested_hash: "abc12345"\n---\nbody\n' > "$W/raw/committed-a.md"
+printf -- '---\ningested_hash: beef5678\n---\nbody\n'   > "$W/raw/committed-unquoted.md"
 printf -- '---\ningested_hash: ""\n---\nbody\n'         > "$W/raw/skipped-b.md"
 printf 'a,b\n1,2\n'                                      > "$W/raw/data.csv"
 printf -- '---\ningested_hash: "cafe9999"\n---\nparsed\n' > "$W/raw/data.csv.md"
@@ -41,7 +50,8 @@ printf 'x\n' > "$W/wiki/index.md"
 { printf 'Page.\n\n'
   printf 'A (source: raw/committed-a.md#L3) and again (source: raw/committed-a.md#L4).\n'
   printf 'B (source: raw/skipped-b.md#L3).\n'
-  printf 'C (source: raw/data.csv.md#L3).\n'; } > "$W/wiki/page-a.md"
+  printf 'C (source: raw/data.csv.md#L3).\n'
+  printf 'D (source: raw/committed-unquoted.md#L3).\n'; } > "$W/wiki/page-a.md"
 printf '# log.md\n\nAppend-only log. Newest at top.\n\n## 2026-06-01 — hand-written entry\n\nprose\n' > "$W/log.md"
 raw_before=$(find "$W/raw" -type f | sort | xargs cat 2>/dev/null | openssl dgst -sha256 | awk '{print $NF}')
 log_before=$(cat "$W/log.md")
@@ -55,8 +65,8 @@ rec=$(grep -m1 '^- metrics: op=ingest' "$W/log.md")
 # Denominator is CITED sources only: committed-a, skipped-b, data.csv (cited
 # via its sidecar). orphan.md is cited by nobody and must be excluded from the
 # rate but still counted as uncited — an exemption that stays visible.
-exp_total=3
-exp_ok=2      # committed-a + data.csv (commitment lives on its sidecar)
+exp_total=4
+exp_ok=3      # committed-a + data.csv (sidecar) + committed-unquoted (no quotes)
 case "$rec" in
   *"committed=$exp_ok/$exp_total"*) ok "committed=$exp_ok/$exp_total over CITED sources" ;;
   *) fail "commitment count wrong — want committed=$exp_ok/$exp_total, got: $rec" ;;
