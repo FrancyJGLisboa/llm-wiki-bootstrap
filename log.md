@@ -2,6 +2,23 @@
 
 Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
 
+## 2026-08-08 — valid-time contract satisfied: seven honest unknowns
+
+The last red row on the package-quality scorecard. Every one of the seven raw sources now records an `asserted_at`, and every one of them records **`unknown`** — with a specific reason and a specific way to resolve it.
+
+That is the honest answer, not an evasion. Each body was read looking for a passage that states the document's own date, and none has one. The near-miss is worth naming: the Devsplainers transcript says the OKF spec was published "On June 12th" — but that dates an **event the video reports**, not the video. It establishes only that the video postdates 2026-06-12, which is a lower bound, and writing a lower bound into a date field would be the same class of error as hand-writing a hash: a receipt nobody derived. The note records the bound instead. Two sources (the Google Cloud blog, the OKF spec) were fetched with `extraction_status: degraded`, so any dateline is in the part that never arrived — the note says so and names the fix. Two are synthetic fixtures with no real date and never will have one; those say "unknown by design". Copying `fetched_at` was never on the table — `/wiki-extract` forbids exactly that conflation.
+
+**The append-only gate caught a first attempt.** The notes were originally written as YAML block scalars (`asserted_at_note: |` plus indented lines). `gate-raw-append-only.sh` authorises the `asserted_at` family as keys, but its diff parser only recognises one continuation shape — `- wiki/…` under `ingested_pages:` — so the indented note lines read as an unauthorised body edit and all six files were rejected. Correct behaviour from the gate given what it can express. Rewritten as single-line double-quoted scalars, so every added line is a recognised `key: value`; no gate change was needed, and the contract stayed as documented.
+
+Frontmatter-only throughout: **every body hash is unchanged**, verified against `body-hash.sh` per file. No citation moved, no drift fired, nothing needed re-ingesting.
+
+`asserted-at-audit.py` is clean in both default and `--all` mode (the latter also covers `canary-scanned.pdf.md`, which nothing cites yet and which default mode skips — annotated too, so the stricter mode passes as well).
+
+**Scorecard: 10/11 → 11/11.** All eleven structural measures pass. Which is the floor, not the ceiling: it says the package is sound, not that it is useful. Tier 2 — the behavioural half — still has no measured numbers for this package.
+
+- Updated: all 7 files in `raw/`, frontmatter only (`asserted_at`, `asserted_at_note`)
+- Contradictions flagged: none
+
 ## 2026-08-08 — the commitment lint was quote-blind (one reader, four copies)
 
 The new package-quality scorecard reported "4 of 6 cited sources lack an ingest commitment", and the obvious next move was to re-run `/wiki-ingest` on each. That would have been wrong, and expensive: **all four hashes were present, correct, and current.** Recomputing each with `scripts/body-hash.sh` matched the stored value exactly.

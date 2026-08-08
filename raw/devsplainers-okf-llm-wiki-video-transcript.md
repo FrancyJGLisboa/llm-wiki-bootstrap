@@ -4,6 +4,8 @@ source_type: video-transcript
 source_title: "Devsplainers — OKF and the LLM Wiki (video transcript)"
 source_author: "Devsplainers (YouTube channel)"
 fetched_at: 2026-07-07
+asserted_at: unknown
+asserted_at_note: "Transcript states no publication date. It reports the OKF spec release as happening 'On June 12th' — an event it describes, not its own date — so the video postdates 2026-06-12. That is a lower bound, not a date. Resolve by recording the upload date at the source URL."
 ingested_hash: d1d2986d913d3ffd8da62ce9952b359d6153ecce3f64f0818e9cb3e04d87e542
 ingested_at: 2026-07-07 06:20
 ingested_pages: [wiki/devsplainers-okf-llm-wiki-video-transcript-summary.md, wiki/open-knowledge-format.md, wiki/okf-vs-llm-wiki-bootstrap.md, wiki/division-of-labor.md]

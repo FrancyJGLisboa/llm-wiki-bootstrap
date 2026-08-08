@@ -4,6 +4,8 @@ source_type: spec
 source_title: "Open Knowledge Format (OKF) v0.1 — SPEC.md"
 source_author: "Google Cloud (GoogleCloudPlatform/knowledge-catalog)"
 fetched_at: 2026-07-07
+asserted_at: unknown
+asserted_at_note: "Spec summary carries a version (v0.1) but no date, and the fetch was partial (extraction_status: degraded). A version is not a date — v0.1 can be republished. Resolve by recording the commit date of SPEC.md at the source URL."
 ingested_hash: 7d4121eedfa9b5639ba9d7b8a82aaaecb69c0634bde201bf5848269b531b4ec1
 ingested_at: 2026-07-07 06:20
 ingested_pages: [wiki/okf-spec-v0-1-summary.md, wiki/open-knowledge-format.md, wiki/okf-vs-llm-wiki-bootstrap.md]

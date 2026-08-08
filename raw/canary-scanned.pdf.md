@@ -4,6 +4,8 @@ source_type: pdf
 source_title: "Canary Scanned Document (image-only PDF, LLM-vision demonstration)"
 source_author: "llm-wiki-bootstrap test fixture"
 fetched_at: 2026-06-10
+asserted_at: unknown
+asserted_at_note: "Image-only PDF used to exercise the vision extraction path; the scan carries no dateline and the fixture has no real publication date. Unknown by design."
 ingested_hash: ""
 ingested_at: never
 ingested_pages: []

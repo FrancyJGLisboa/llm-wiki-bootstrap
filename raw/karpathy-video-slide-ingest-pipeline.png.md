@@ -4,6 +4,8 @@ source_type: image
 source_title: "Slide: What happens when you ingest a source (Deep Dive)"
 source_author: third-party YouTube creator (not Karpathy)
 fetched_at: 2026-05-25
+asserted_at: unknown
+asserted_at_note: "A slide captured from the Karpathy walkthrough; it inherits that video's date, which is itself unrecorded. Resolve together with raw/karpathy-llm-wiki-video-transcript.md."
 ingested_hash: "cfe8e91ada2df4764ca68650feb585d570ea6b2cc8152f82e8f1c4fc34443424"
 ingested_at: 2026-05-25 08:30
 ingested_pages:
