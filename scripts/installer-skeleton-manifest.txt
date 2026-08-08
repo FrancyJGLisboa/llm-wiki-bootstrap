@@ -169,7 +169,11 @@ scripts/gate-ratchet.sh
 scripts/gate-exec-bits.sh
 gates/baseline.tsv
 raw/.gitkeep
-wiki/journal/.gitkeep
-wiki/index.md
+context/journal/.gitkeep
+context/index.md
+context/rules/deterministic/.gitkeep
+context/rules/heuristic/.gitkeep
+context/rules/discarded/.gitkeep
+gates/fixtures/.gitkeep
 README.md
 log.md

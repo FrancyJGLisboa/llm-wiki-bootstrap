@@ -34,3 +34,4 @@ ALIAS-RESOLVES	scripts/gate-command-aliases.sh	0	0	2026-08-08	28 command files, 
 EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08	104 tracked executables
 GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08	6 registered gates
 RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rule pages yet; the layer ships empty
+CTX-ROOT-COMPAT	scripts/gate-context-root.sh	0	0	2026-08-08	three layouts + link soundness

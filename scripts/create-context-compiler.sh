@@ -4,7 +4,7 @@
 # Reads `scripts/installer-skeleton-manifest.txt` (the single source of truth) and
 # copies every listed path from the dev repo to <target-dir>. Three target-only
 # paths are sourced from FRESH templates:
-#   wiki/index.md  ←  wiki/index-FRESH.md
+#   wiki/index.md  ←  context/index-FRESH.md
 #   README.md      ←  templates/README-fresh.md
 #   log.md         ←  hard-coded 3-line stub
 #
@@ -62,8 +62,8 @@ while IFS= read -r p; do
 
   # Resolve source path per the three target-only specials.
   case "$p" in
-    wiki/index.md)
-      source_path="$SRC/wiki/index-FRESH.md"
+    context/index.md)
+      source_path="$SRC/context/index-FRESH.md"
       ;;
     README.md)
       source_path="$SRC/templates/README-fresh.md"
@@ -116,6 +116,25 @@ EOF
 done < "$MANIFEST"
 
 # Initialize a fresh git repo at the target. No initial commit — leave that to the user.
+# Compat symlink: `wiki -> context`. The compiled root was renamed in schema v5,
+# and ~65 shipped scripts still reference wiki/ by name. The symlink keeps every
+# one of them working without a mass rewrite of the oracles that ARE this
+# project's safety net. Relative and inside the tree, so package-wiki.sh's
+# escaping-symlink guard permits it and tar carries it into bundles.
+#
+# Not fatal if it cannot be made (Windows without core.symlinks): context/ is
+# the real directory and ctx_root() prefers it. Say so rather than failing.
+if [ ! -e "$TARGET/wiki" ]; then
+  if ( cd "$TARGET" && ln -s context wiki ) 2>/dev/null; then
+    :
+  else
+    printf 'note: could not create the wiki -> context compat symlink.\n' >&2
+    printf '      context/ is the real directory and is complete; scripts that\n' >&2
+    printf '      hardcode wiki/ will not resolve here. On Windows, enable it with\n' >&2
+    printf '      git config --global core.symlinks true\n' >&2
+  fi
+fi
+
 ( cd "$TARGET" && git init -q )
 
 cat <<EOF

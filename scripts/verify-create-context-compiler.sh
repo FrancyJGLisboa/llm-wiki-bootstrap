@@ -30,7 +30,12 @@ else
   RED=; GREEN=; YELLOW=; DIM=; RESET=
 fi
 
-ok()   { printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
+# Counted, not narrated. The banner used to print a hardcoded "All 7 installer
+# checks green", so adding I8 left it still claiming 7 — and REMOVING a check
+# would have left it claiming 7 too. A suite that reports a literal instead of
+# its own tally can lose coverage without the number ever moving.
+passes=0
+ok()   { passes=$((passes + 1)); printf "%s✓%s %s\n" "$GREEN" "$RESET" "$1"; }
 fail() { printf "%s✗%s %s\n" "$RED"   "$RESET" "$1"; }
 note() { printf "%s%s%s\n"   "$DIM"   "$1" "$RESET" >&2; }
 
@@ -42,7 +47,7 @@ find "$OUTPUT_DIR" -mindepth 1 -maxdepth 1 ! -name '.gitignore' -exec rm -rf {} 
 [ -f "$MANIFEST" ] || { fail "manifest missing: $MANIFEST"; exit 1; }
 [ -x "scripts/create-context-compiler.sh" ] || { fail "installer missing or not executable"; exit 1; }
 [ -f templates/README-fresh.md ] || { fail "templates/README-fresh.md missing"; exit 1; }
-[ -f wiki/index-FRESH.md ] || { fail "wiki/index-FRESH.md missing"; exit 1; }
+[ -f context/index-FRESH.md ] || { fail "context/index-FRESH.md missing"; exit 1; }
 
 # Create temp target.
 TS="$(date +%Y%m%d-%H%M%S)"
@@ -116,9 +121,9 @@ if ! cmp -s "$TGT/README.md" "templates/README-fresh.md"; then
   diff "templates/README-fresh.md" "$TGT/README.md" | head -20 | sed 's/^/    /' >&2
   substitution_ok=no
 fi
-if ! cmp -s "$TGT/wiki/index.md" "wiki/index-FRESH.md"; then
-  fail "I4(d) target wiki/index.md does not match wiki/index-FRESH.md"
-  diff "wiki/index-FRESH.md" "$TGT/wiki/index.md" | head -20 | sed 's/^/    /' >&2
+if ! cmp -s "$TGT/context/index.md" "context/index-FRESH.md"; then
+  fail "I4(d) target context/index.md does not match context/index-FRESH.md"
+  diff "context/index-FRESH.md" "$TGT/context/index.md" | head -20 | sed 's/^/    /' >&2
   substitution_ok=no
 fi
 if [ "$substitution_ok" = yes ]; then
@@ -128,10 +133,23 @@ else
 fi
 
 # I4(c) — wiki/index.md frontmatter has type + source + updated.
-if awk '/^---$/{n++} n==1 && /^type:/{t=1} n==1 && /^source:/{s=1} n==1 && /^updated:/{u=1} END{exit !(t&&s&&u)}' "$TGT/wiki/index.md"; then
-  ok "I4(c) target wiki/index.md frontmatter has type + source + updated"
+if awk '/^---$/{n++} n==1 && /^type:/{t=1} n==1 && /^source:/{s=1} n==1 && /^updated:/{u=1} END{exit !(t&&s&&u)}' "$TGT/context/index.md"; then
+  ok "I4(c) target context/index.md frontmatter has type + source + updated"
 else
-  fail "I4(c) target wiki/index.md missing one of: type, source, updated"
+  fail "I4(c) target context/index.md missing one of: type, source, updated"
+  failures=$((failures + 1))
+fi
+
+# I8 — the wiki -> context compat symlink shipped and resolves.
+# I4(a) compares `find -type f` against the manifest, and a symlink is type l —
+# so it is invisible to that check and would ship (or fail to ship) unnoticed.
+# ~65 shipped scripts reference wiki/ by name; without this link every one of
+# them breaks in a fresh install, which is exactly the class of failure the
+# installer oracle exists to catch before a user does.
+if [ -L "$TGT/wiki" ] && [ -d "$TGT/wiki" ] && [ -f "$TGT/wiki/index.md" ]; then
+  ok "I8 wiki -> context compat symlink present and resolving"
+else
+  fail "I8 wiki -> context compat symlink missing or broken in target"
   failures=$((failures + 1))
 fi
 
@@ -215,7 +233,7 @@ if [ "$failures" -gt 0 ]; then
   exit 1
 fi
 
-printf "%sPassed.%s All 7 installer checks green.\n" "$GREEN" "$RESET"
+printf "%sPassed.%s All %d installer checks green.\n" "$GREEN" "$RESET" "$passes"
 # Cleanup temp target on green.
 rm -rf "$TARGET_PARENT"
 exit 0

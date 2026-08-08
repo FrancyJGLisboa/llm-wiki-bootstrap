@@ -496,6 +496,19 @@ else
   record_fail "R39 ctx-lint-rules.sh exits non-zero (a deterministic rule has no gate, a gate is missing, or a gate cannot report its own failure)"
 fi
 
+# R40 — the compiled root resolves in all three layouts. Schema v5 renamed
+# wiki/ -> context/ and kept a committed `wiki -> context` symlink so the ~65
+# scripts hardcoding wiki/ did not need rewriting. That buys a lot and costs
+# one thing: compatibility now rests on a symlink, and a symlink degrades
+# quietly — into a real directory that drifts from context/, into a link
+# pointing outside the package, or into a text file on a checkout without
+# symlink support. Legacy wiki/-only bundles must keep resolving forever.
+if "$SCRIPT_DIR/gate-context-root.sh" >/dev/null 2>&1; then
+  ok "R40 gate-context-root.sh exits 0 (context/, context-only, and legacy wiki/ all resolve; compat link sound)"
+else
+  record_fail "R40 gate-context-root.sh exits non-zero (a root layout resolves wrongly, or wiki/ is not a symlink to context)"
+fi
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —
