@@ -43,6 +43,6 @@ Per [[division-of-labor]] and the video: humans abandon wikis because maintenanc
 
 ## Open questions on this page
 
-- What cadence makes sense? On every `/wiki-ingest`? Scheduled? After every N pages added?
+- What cadence makes sense? On every `/ctx-compile`? Scheduled? After every N pages added?
 - Should lint *propose* edits and require confirmation, or *apply* them when it's confident? (Current default: `--apply` flag required; otherwise propose only.)
 - How does lint handle a contradiction where both sides are sourced — flag for the user, or pick one?

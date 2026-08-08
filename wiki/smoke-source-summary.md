@@ -10,7 +10,7 @@ tags: [source-summary, smoke, fictional, fixture]
 
 ## Definition / TL;DR
 
-This is the per-source summary for `raw/smoke-source.md`, the end-to-end smoke fixture for `llm-wiki-bootstrap`. The source is an **intentionally fictional** primer on "phase coherence engineering," written so its content cannot overlap with any real-world LLM training corpus. If a wiki page produced from this source carries forward the source's literal anchors — "Quortex protocol", "Dr. Alma Voss", "47 phase rotations" — that is empirical evidence that `/wiki-ingest` actually read the file (source: raw/smoke-source.md#why-this-matters-for-the-smoke).
+This is the per-source summary for `raw/smoke-source.md`, the end-to-end smoke fixture for `llm-wiki-bootstrap`. The source is an **intentionally fictional** primer on "phase coherence engineering," written so its content cannot overlap with any real-world LLM training corpus. If a wiki page produced from this source carries forward the source's literal anchors — "Quortex protocol", "Dr. Alma Voss", "47 phase rotations" — that is empirical evidence that `/ctx-compile` actually read the file (source: raw/smoke-source.md#why-this-matters-for-the-smoke).
 
 ## What this source provides
 
@@ -30,9 +30,9 @@ The 47-rotation count is not arbitrary: Voss's 2019 paper showed any count below
 
 ## Why this source exists
 
-It exists to answer one question for a first-time user of `llm-wiki-bootstrap`: when I drop a source into `raw/` and run `/wiki-ingest`, does the LLM actually read the source and write durable wiki pages about it, or does it merely sound like it did? Because the field is fictional, a wiki page that uses the literal string "47 phase rotations" can only have come from this file (source: raw/smoke-source.md#why-this-matters-for-the-smoke).
+It exists to answer one question for a first-time user of `llm-wiki-bootstrap`: when I drop a source into `raw/` and run `/ctx-compile`, does the LLM actually read the source and write durable wiki pages about it, or does it merely sound like it did? Because the field is fictional, a wiki page that uses the literal string "47 phase rotations" can only have come from this file (source: raw/smoke-source.md#why-this-matters-for-the-smoke).
 
-The smoke check `C2` requires a newly-created `wiki/*.md` to contain the literal "Quortex" string; `C4` requires the literal "47 phase rotations" in a `/wiki-query` answer that also cites `raw/smoke-source.md`.
+The smoke check `C2` requires a newly-created `wiki/*.md` to contain the literal "Quortex" string; `C4` requires the literal "47 phase rotations" in a `/ctx-query` answer that also cites `raw/smoke-source.md`.
 
 ## Related
 
@@ -43,4 +43,4 @@ The smoke check `C2` requires a newly-created `wiki/*.md` to contain the literal
 ## Open questions on this page
 
 - Should the smoke fixture be expanded to also exercise contradiction-flagging (step 5 of the ingest pipeline)?
-- Should the "Related concepts" stub terms in the source (drift compensation, Linnaean Institute, coherence window) be promoted to their own pages, or remain as broken `[[links]]` to be surfaced by `/wiki-lint`?
+- Should the "Related concepts" stub terms in the source (drift compensation, Linnaean Institute, coherence window) be promoted to their own pages, or remain as broken `[[links]]` to be surfaced by `/ctx-lint`?

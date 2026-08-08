@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/smoke-causal.sh — LLM-gated acceptance for causal authoring (slice 4).
 #
-# Scaffolds a THROWAWAY wiki, drives `claude -p /wiki-ingest` on a source with an
+# Scaffolds a THROWAWAY wiki, drives `claude -p /ctx-compile` on a source with an
 # explicit causal chain, and asserts the agent ENCODED cause→effect as canonical
 # causal edges that actually traverse:
 #
@@ -38,8 +38,8 @@ printf '# index\n\n' > "$WORK/wiki/index.md"
 printf '# log.md\n\n'  > "$WORK/log.md"
 cp "$FIX" "$WORK/raw/causal-source.md"
 
-log "claude -p /wiki-ingest …"
-( cd "$WORK" && claude -p "/wiki-ingest raw/causal-source.md" ) > "$WORK/ingest.log" 2>&1 \
+log "claude -p /ctx-compile …"
+( cd "$WORK" && claude -p "/ctx-compile raw/causal-source.md" ) > "$WORK/ingest.log" 2>&1 \
   || { echo "ingest run failed; tail:" >&2; tail -20 "$WORK/ingest.log" >&2; }
 
 CANON='^- \[\[[a-z0-9-]+\]\] (causes|caused-by|enables|prevents|contributes-to)( |$)'

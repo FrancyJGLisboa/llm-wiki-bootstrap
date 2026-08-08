@@ -29,7 +29,7 @@ The ownership rule completes the analogy: the human curates inputs, the LLM main
 
 A system is a context compiler if it has all five. Each is a conformance question, not a feature list.
 
-1. **Transformation.** There is an input language and a build step — heterogeneous material is parsed and normalized, not hand-authored. Here: `/wiki-extract` dispatches by format, and `/wiki-ingest` runs the pipeline that reads a source, extracts concepts and entities, writes the summary, updates existing pages, and flags contradictions (source: raw/karpathy-llm-wiki-video-transcript.md#4:46). See [[ingest-pipeline]].
+1. **Transformation.** There is an input language and a build step — heterogeneous material is parsed and normalized, not hand-authored. Here: `/ctx-extract` dispatches by format, and `/ctx-compile` runs the pipeline that reads a source, extracts concepts and entities, writes the summary, updates existing pages, and flags contradictions (source: raw/karpathy-llm-wiki-video-transcript.md#4:46). See [[ingest-pipeline]].
 2. **Target schema.** The output has a specification a third party could validate against — page template, closed type enum, link grammar, causal vocabulary. See [[layer-wiki]] and [[layer-schema]].
 3. **Provenance.** Every claim points back at the bytes it came from, and the build fails when that mapping breaks. This is the property that most separates a compiler from a folder of notes; it is also the one the video does not specify, and this project's largest addition to the pattern. See [[source-attribution]].
 4. **Navigability.** A machine can traverse the output by following structure rather than by similarity search — plain `[[links]]` resolved by string match, with no viewer or index server in the loop. See [[four-principles]].
@@ -41,7 +41,7 @@ The middle of the pipeline is model judgment, not a deterministic transform. Rea
 
 Two features also sit outside a strict compiler model, and are better named than hidden:
 
-- **Query-time promotion.** `/wiki-query` may web-search on a gap and write the result back into `raw/` and `wiki/` mid-run. A compiler doesn't do that; a *package manager* does. A gap is an unresolved dependency, and resolving it is a build action subject to the same rules as any other acquisition. See [[query-as-write-loop]].
+- **Query-time promotion.** `/ctx-query` may web-search on a gap and write the result back into `raw/` and `wiki/` mid-run. A compiler doesn't do that; a *package manager* does. A gap is an unresolved dependency, and resolving it is a build action subject to the same rules as any other acquisition. See [[query-as-write-loop]].
 - **The viewer tier.** Flashcards, slides, diagrams, and graph views consume an already-built package; they are not build stages. That the output is human-readable as well as machine-navigable is a property of plain markdown, not a compromise.
 
 ### Why the framing matters

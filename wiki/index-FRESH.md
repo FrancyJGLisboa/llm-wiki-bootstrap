@@ -10,7 +10,7 @@ tags: [navigation, index]
 
 Your wiki is empty.
 
-Add a source with `/wiki-extract <url-or-file>`, then `/wiki-ingest` to integrate it. This page will be expanded automatically as the wiki grows — `/wiki-ingest` cross-links new pages here.
+Add a source with `/ctx-extract <url-or-file>`, then `/ctx-compile` to integrate it. This page will be expanded automatically as the wiki grows — `/ctx-compile` cross-links new pages here.
 
 ## Sources
 

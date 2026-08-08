@@ -1,8 +1,8 @@
 # Retrieval questions — cross-modality, point-in-time
 
 `scripts/eval-retrieval.sh` reads this file. Each question is run through
-`/wiki-query "<Q>" --no-promote` against a wiki built by the real installer and
-populated through the real `/wiki-extract` → `/wiki-ingest` path — so a failure
+`/ctx-query "<Q>" --no-promote` against a wiki built by the real installer and
+populated through the real `/ctx-extract` → `/ctx-compile` path — so a failure
 here is a failure a user would hit, not a fixture artifact.
 
 Every needle (`NEEDLE-<MODALITY>-<hex>`) is planted past the boundary its

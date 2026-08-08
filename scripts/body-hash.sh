@@ -2,7 +2,7 @@
 # scripts/body-hash.sh — canonical body hash for an llm-wiki-bootstrap raw source.
 #
 # This is the ONE allowed way to compute `ingested_hash`. The slash commands
-# `/wiki-ingest` and `/wiki-lint` MUST use this script; do not reinvent the
+# `/ctx-compile` and `/ctx-lint` MUST use this script; do not reinvent the
 # hashing logic inline, or idempotence will break across runs.
 #
 # Definition of "body":
@@ -30,7 +30,7 @@ fi
 
 # Frontmatter must open with --- on line 1 and have a closing --- delimiter.
 # Without this guard a missing closing --- yields the empty-string SHA (exit 0),
-# which /wiki-ingest would stamp as a valid hash and then skip forever — silent
+# which /ctx-compile would stamp as a valid hash and then skip forever — silent
 # data loss. Body horizontal-rule (---) lines are fine: count >= 2 still holds.
 delim_count=$(grep -c '^---$' "$file" || true)
 if [[ "$(head -n1 "$file")" != "---" ]] || (( delim_count < 2 )); then

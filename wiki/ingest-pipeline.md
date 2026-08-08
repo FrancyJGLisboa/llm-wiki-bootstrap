@@ -18,7 +18,7 @@ Verbatim from the video: *"What happens when you ingest a source — because thi
 
 | # | Step | What it does |
 |---|---|---|
-| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-extract`. |
+| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/ctx-extract`. |
 | 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
 | 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
 | 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` |
@@ -30,7 +30,7 @@ Verbatim from the video: *"What happens when you ingest a source — because thi
 
 After all seven steps: *"one source drops in and the entire wiki gets a little bit smarter."* `(source: raw/karpathy-llm-wiki-video-transcript.md#4:46)` This is why a single ingest typically touches **10 to 15 wiki pages**, not just one. `(source: raw/karpathy-llm-wiki-video-transcript.md#3:50)`
 
-### How `/wiki-ingest` implements this `(analysis)`
+### How `/ctx-compile` implements this `(analysis)`
 
 The slash command's prompt walks the LLM through these 7 steps explicitly, and at the end writes `ingested_hash`, `ingested_at`, `ingested_pages` into the raw file's frontmatter so subsequent runs can skip it.
 

@@ -48,7 +48,7 @@ discovered by a skeptical reader.
 **There is no AST, and the transform is not reproducible.** The middle of the
 pipeline — reading a source, deciding which concepts it introduces, writing the
 summary, choosing which existing pages to update — is model judgment
-(`.claude/commands/wiki-ingest.md`, steps 2–5). Run it twice on the same input
+(`.claude/commands/ctx-compile.md`, steps 2–5). Run it twice on the same input
 and you get two defensible outputs, not identical bytes. `AGENTS.md` is careful
 about this already: it scopes its determinism claim narrowly, to the synthesis
 layer only.
@@ -81,7 +81,7 @@ conformance question, with this repo's answer.
 *Does heterogeneous, unstructured material get parsed and normalized into
 something with a shape, or is the output hand-authored?*
 
-`/wiki-extract` is the front end: a format-dispatch table (URL, YouTube, PDF,
+`/ctx-extract` is the front end: a format-dispatch table (URL, YouTube, PDF,
 DOCX, XLSX, CSV, image, plain text) where each format has a primary handler, a
 fallback chain, and a recorded `extraction_method`. Extraction never fails
 silently — a failure still writes a sidecar with `extraction_status: failed`
@@ -89,13 +89,13 @@ and an install hint. Long sources go through `scripts/extract/segment-doc.py`,
 a deterministic segmenter that turns a 200-page PDF into an anchored section
 tree.
 
-`/wiki-ingest` is the build: a 7-step pipeline (read → extract concepts,
+`/ctx-compile` is the build: a 7-step pipeline (read → extract concepts,
 entities, claims → write the summary page → update concept/entity pages → flag
 contradictions → update the index → append the log), followed by a mechanical
 regeneration of derived artifacts.
 
 The two stages are cleanly separated by ownership, the way a front end and a
-back end are: `/wiki-extract` never touches `wiki/`; `/wiki-ingest` never
+back end are: `/ctx-extract` never touches `wiki/`; `/ctx-compile` never
 writes to `raw/` except three commitment fields in frontmatter, as its last
 action.
 
@@ -113,7 +113,7 @@ single-regex typed-relation grammar
 (`- [[<target>]] <verb> [<attr>] — <prose>`), and a canonical causal
 vocabulary of five verbs with a direction table and explicit synonym rejection.
 
-The schema is enforced, not merely described: `/wiki-lint` check 7 catches
+The schema is enforced, not merely described: `/ctx-lint` check 7 catches
 schema drift, and every page carrying claims must have at least two resolving
 `## Related` links.
 
@@ -129,7 +129,7 @@ of notes, and it is the most heavily engineered part of this repo.
 
 - Every non-trivial claim carries an inline `(source: raw/<file>#<anchor>)`.
   The literal form matters, because `scripts/citation-audit.py` matches that
-  exact shape — `wiki-query.md` documents four near-miss forms that fail.
+  exact shape — `ctx-query.md` documents four near-miss forms that fail.
 - Anchors are load-bearing: every leaf anchor must resolve to a real heading in
   the source sidecar.
 - Web sources must be **snapshotted into `raw/` before being cited**. A bare
@@ -165,7 +165,7 @@ convention the repo materializes a real graph: `scripts/wiki-to-kg.py` emits
 regenerated from the same parser the visualizer uses, so the JSON and the
 picture can never diverge.
 
-At read time, `/wiki-query` walks the section tree and reads only the cited
+At read time, `/ctx-query` walks the section tree and reads only the cited
 sections of a long source rather than the whole file, routes temporal questions
 through a supersession check, and refuses to answer when its citations span
 fewer than two distinct assertion dates.
@@ -207,7 +207,7 @@ four ways, and asserts each tamper is caught.
 
 ### Dependency resolution — the compiler can fetch a missing source
 
-`/wiki-query` answers from the package. On a gap, it web-searches, snapshots
+`/ctx-query` answers from the package. On a gap, it web-searches, snapshots
 the result into `raw/`, and promotes a new or updated page — writing into its
 own source tree mid-run.
 
@@ -215,7 +215,7 @@ A traditional compiler doesn't do that. A **package manager** does: `npm
 install` resolves a missing dependency during a build and then the build
 proceeds. That is the right frame here. The fetched source is not special-cased
 — it goes through the same no-bare-URL rule, the same frontmatter spec, and the
-same entailment gate as anything acquired by `/wiki-extract`. A gap in the
+same entailment gate as anything acquired by `/ctx-extract`. A gap in the
 package is treated as an unresolved dependency, and resolving it is a build
 action, not a shortcut around one.
 
@@ -223,7 +223,7 @@ action, not a shortcut around one.
 
 ### The viewer tier — flashcards, slides, diagrams, journals
 
-`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`, `/wiki-discover`, and
+`/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`, `/ctx-discover`, and
 the user-owned `wiki/journal/` directory are **not compiler stages**. They are
 viewers and exporters that consume an already-built package. `AGENTS.md`
 already quarantines them as "not lifecycle steps" and holds them read-only on
@@ -369,15 +369,15 @@ directories are `raw/` and `wiki/`, and they stay that way.
 | In this repo | Compiler term |
 |---|---|
 | `raw/` | source tree |
-| `/wiki-extract` | front end — acquire, parse, normalize |
+| `/ctx-extract` | front end — acquire, parse, normalize |
 | `scripts/extract/segment-doc.py` | lexing — anchored section tree over a long source |
-| `/wiki-ingest` | the build — source → target representation |
+| `/ctx-compile` | the build — source → target representation |
 | `wiki/` | target representation (the emitted context) |
 | `scripts/body-hash.sh` | build-cache key / incremental compilation |
-| `/wiki-lint` | semantic analysis — errors and warnings |
+| `/ctx-lint` | semantic analysis — errors and warnings |
 | synthesis artifacts | derived artifacts / linker output |
 | `scripts/verify-*.sh`, `gate-*.sh` | conformance suite |
-| `/wiki-query` (promote) | dependency resolution — fetch missing source, rebuild |
+| `/ctx-query` (promote) | dependency resolution — fetch missing source, rebuild |
 | `scripts/package-wiki.sh` | packager — emits the distributable |
 | the bundle + `MANIFEST` | **the context package** |
 | `log.md` | build log |
@@ -387,7 +387,7 @@ directories are `raw/` and `wiki/`, and they stay that way.
 
 | Clause of the definition | Implemented by | Verified by |
 |---|---|---|
-| transforms unstructured source material | `/wiki-extract`, `scripts/extract/segment-doc.py`, `/wiki-ingest` 7-step pipeline | `verify-extract.sh`, `verify-segment-doc.sh` |
+| transforms unstructured source material | `/ctx-extract`, `scripts/extract/segment-doc.py`, `/ctx-compile` 7-step pipeline | `verify-extract.sh`, `verify-segment-doc.sh` |
 | structured | page template, `type` enum, typed-relation grammar, causal vocabulary (`AGENTS.md`) | `wiki-lint-typed-relations.sh`, `wiki-lint-causal.sh` |
 | provenance-aware | `(source: raw/<file>#<anchor>)`, raw frontmatter spec, `body-hash.sh`, `asserted_at`, write-time entailment gate | `citation-audit.py`, `verify-citation-coverage.sh`, `verify-hash-drift.sh`, `verify-asserted-at.sh`, `gate-raw-append-only.sh` |
 | machine-navigable | `[[kebab-case]]` links, `wiki-to-kg.py`, `wiki-graph-walk.py`, `knowledge-graph.json`, MCP surface | `verify-graph-walk.sh`, `verify-synthesize.sh`, `gate-reachable.sh` |

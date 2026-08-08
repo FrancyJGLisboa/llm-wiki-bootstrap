@@ -324,7 +324,7 @@ else
   record_fail "R24 verify-asserted-at.sh exits non-zero (valid-time contract regression)"
 fi
 
-# R25 — /wiki-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
+# R25 — /ctx-query's raw-citation contract. R4 measured 0/5, 0/5, 0/7 across
 # three eval runs and the cause was a spec gap, not the model: the output
 # template never asked for an inline `(source: raw/...)` at all, so the shape
 # varied per run and nothing could verify it. Q5 is the load-bearing one — the
@@ -332,7 +332,7 @@ fi
 if "$SCRIPT_DIR/verify-query-citation-contract.sh" >/dev/null 2>&1; then
   ok "R25 verify-query-citation-contract.sh exits 0 (citation form stated + grader-compatible)"
 else
-  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/wiki-query citation contract regression)"
+  record_fail "R25 verify-query-citation-contract.sh exits non-zero (/ctx-query citation contract regression)"
 fi
 
 # R26 — the entity eval's graders. E1 recall and E2 precision are each trivially
@@ -358,7 +358,7 @@ else
   record_fail "R27 verify-corpus-eval.sh exits non-zero (real-corpus eval grader regression)"
 fi
 
-# R28 — /wiki-query's temporal contract. Cross-temporal questions scored 3/6
+# R28 — /ctx-query's temporal contract. Cross-temporal questions scored 3/6
 # against 16/16 for single-source recall, and the failures opened zero files:
 # they narrated a trajectory out of the synthesis artifacts, which aggregate the
 # timeline away. The router (wiki-timeline.py) and the read floor
@@ -368,7 +368,7 @@ fi
 if "$SCRIPT_DIR/verify-query-temporal-contract.sh" >/dev/null 2>&1; then
   ok "R28 verify-query-temporal-contract.sh exits 0 (router specified; read floor blocks single-date answers)"
 else
-  record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/wiki-query temporal contract regression)"
+  record_fail "R28 verify-query-temporal-contract.sh exits non-zero (/ctx-query temporal contract regression)"
 fi
 
 # R29 — the eval's own prompt purity. Three separate author-side fields have
@@ -408,8 +408,12 @@ gate_fixtures_ok=1
 "$SCRIPT_DIR/gate-doc-claims.sh"  --repo tests/gates/doc-claims/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
 "$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/clean    >/dev/null 2>&1 || gate_fixtures_ok=0
 "$SCRIPT_DIR/gate-ratchet.sh"     --repo tests/gates/ratchet/dirty    >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-command-aliases.sh" --repo tests/gates/command-aliases/clean >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-command-aliases.sh" --repo tests/gates/command-aliases/dirty >/dev/null 2>&1 && gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-exec-bits.sh" --repo tests/gates/exec-bits/clean --index tests/gates/exec-bits/clean/index.txt >/dev/null 2>&1 || gate_fixtures_ok=0
+"$SCRIPT_DIR/gate-exec-bits.sh" --repo tests/gates/exec-bits/dirty --index tests/gates/exec-bits/dirty/index.txt >/dev/null 2>&1 && gate_fixtures_ok=0
 if [ "$gate_fixtures_ok" = 1 ]; then
-  ok "R31 all five gates fail their violating fixture and pass their clean one"
+  ok "R31 all seven gates fail their violating fixture and pass their clean one"
 else
   record_fail "R31 a gate no longer discriminates on its own fixtures (it fires on clean input, or misses a planted violation)"
 fi
@@ -466,6 +470,29 @@ if "$SCRIPT_DIR/gate-ratchet.sh" >/dev/null 2>&1; then
   ok "R36 gate-ratchet.sh exits 0 (no gate's violations or suppressions exceed gates/baseline.tsv)"
 else
   record_fail "R36 gate-ratchet.sh exits non-zero (a gate's violation or suppression count went up, or a gate has no baseline row)"
+fi
+
+# R37 — command aliases resolve. .claude/commands/ now holds three naming
+# generations (canonical ctx-*, short aliases, deprecated wiki-* forwarders);
+# 19 of the 28 files contain no procedure and only point elsewhere. A forwarder
+# whose target was renamed does not fail loudly — the agent cannot find the file
+# and improvises, so the damage surfaces as a bad wiki edit, not an error.
+if "$SCRIPT_DIR/gate-command-aliases.sh" >/dev/null 2>&1; then
+  ok "R37 gate-command-aliases.sh exits 0 (every alias resolves to an existing canonical command, no chains)"
+else
+  record_fail "R37 gate-command-aliases.sh exits non-zero (an alias points at a missing command, disagrees with its own body, or chains through another alias)"
+fi
+
+# R38 — executable bits survive bulk rewrites. Harvested from a real regression
+# in this session (deterministic-gates §7): a 128-file rename using
+# `cmd "$f" > "$f.new" && mv "$f.new" "$f"` replaced inodes and dropped +x on 55
+# scripts. The suite went 20-red and not one message named the cause — each
+# oracle reported a "regression" in its own subject. This gate detects nothing
+# the suite missed; it exists so the twenty-failure cascade reads as one line.
+if "$SCRIPT_DIR/gate-exec-bits.sh" >/dev/null 2>&1; then
+  ok "R38 gate-exec-bits.sh exits 0 (every file git records as 100755 is still executable)"
+else
+  record_fail "R38 gate-exec-bits.sh exits non-zero (a tracked executable lost its +x bit — usually a redirect-and-move rewrite)"
 fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────

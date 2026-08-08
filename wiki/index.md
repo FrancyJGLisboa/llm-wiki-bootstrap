@@ -8,7 +8,7 @@ tags: [navigation, index]
 
 # Index
 
-> **This page is `source: analysis`.** Navigation pages are not extracted from raw sources — they're written by the LLM (and editable by `/wiki-lint`) to organize what already exists in the wiki.
+> **This page is `source: analysis`.** Navigation pages are not extracted from raw sources — they're written by the LLM (and editable by `/ctx-lint`) to organize what already exists in the wiki.
 
 Navigation page for the wiki. Pages are grouped by what they're about, not alphabetically. Start with [[core-idea]] if you've never seen this pattern before.
 
@@ -40,7 +40,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 
 ## This system specifically
 
-- [[commands]] — the five slash commands (`/wiki-init`, `/wiki-extract`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`)
+- [[commands]] — the five slash commands (`/ctx-init`, `/ctx-extract`, `/ctx-compile`, `/ctx-query`, `/ctx-lint`)
 - [`AGENTS.md`](../AGENTS.md) — the schema (root of the project)
 - [`README.md`](../README.md) — install + quickstart
 
@@ -84,7 +84,7 @@ Navigation page for the wiki. Pages are grouped by what they're about, not alpha
 
 ## How this page is maintained
 
-`/wiki-ingest` updates this index automatically when it creates new wiki pages. `/wiki-lint` flags entries here that point to missing pages, and flags wiki pages not listed here.
+`/ctx-compile` updates this index automatically when it creates new wiki pages. `/ctx-lint` flags entries here that point to missing pages, and flags wiki pages not listed here.
 
 ## Related
 

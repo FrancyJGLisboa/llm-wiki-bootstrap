@@ -13,7 +13,7 @@
 # Produces NUMBERS, not prose (philosophy of eval-multi-hop.sh: the deliverable
 # is the measurement). The default run costs zero LLM tokens. The one thing this
 # does NOT measure by default is LLM ingest itself — pass --llm-sample K to
-# additionally time K real `claude -p /wiki-ingest` runs and project per-source
+# additionally time K real `claude -p /ctx-compile` runs and project per-source
 # cost to the full corpus.
 #
 # Usage:
@@ -122,7 +122,7 @@ fi
 t1=$(now)
 echo "generate    $(elapsed "$t0" "$t1")s   ($N raw + $((N / 2 + 1)) wiki files written)"
 
-# ── Stage 1: hash-scan (what /wiki-ingest does to detect deltas) ────────────
+# ── Stage 1: hash-scan (what /ctx-compile does to detect deltas) ────────────
 t2=$(now)
 hashed=0
 for f in "$WORK"/raw/*.md; do
@@ -166,7 +166,7 @@ if [ "$LLM_SAMPLE" -gt 0 ]; then
     ok_runs=0
     for i in $(seq 0 $((LLM_SAMPLE - 1))); do
       src=$("$PYBIN" -c "print(f'raw/source-{$i:04d}.md')")
-      if (cd "$WORK" && claude -p "/wiki-ingest $src" >/dev/null 2>&1); then ok_runs=$((ok_runs + 1)); fi
+      if (cd "$WORK" && claude -p "/ctx-compile $src" >/dev/null 2>&1); then ok_runs=$((ok_runs + 1)); fi
     done
     t9=$(now)
     if [ "$ok_runs" -gt 0 ]; then

@@ -4,9 +4,9 @@
 # RULE: `raw/` is append-only. A change to an existing raw source may touch
 # nothing but the six authorised frontmatter fields:
 #   - `ingested_hash`, `ingested_at`, `ingested_pages` — the ingest commitment,
-#     written as the last step of /wiki-ingest (wiki-ingest.md:189-191);
+#     written as the last step of /ctx-compile (ctx-compile.md:189-191);
 #   - `asserted_at`, `asserted_at_source`, `asserted_at_note` — the valid-time
-#     axis, which /wiki-lint --apply is documented to write as "the one
+#     axis, which /ctx-lint --apply is documented to write as "the one
 #     sanctioned exception to never writing to raw/" (wiki-lint.md:132). It is
 #     frontmatter-only, so the body hash is unchanged and no citation moves.
 # Adding a new raw file is always allowed. Editing a body, changing any other
@@ -14,7 +14,7 @@
 #
 # The asserted_at family was missed on the first pass: the gate was written from
 # the "must NOT do" list in AGENTS.md, which names only the three ingest fields.
-# Enforcing that literally would have made `/wiki-lint --apply` — a shipped,
+# Enforcing that literally would have made `/ctx-lint --apply` — a shipped,
 # documented workflow — fail the gate on correct behaviour.
 #
 # WHY THIS GATE EXISTS: this is hard rule #1 (AGENTS.md "What the LLM must NOT
@@ -137,8 +137,8 @@ awk -v rule="$RULE_ID" -v count_mode="$COUNT" '
     printf "%s: %s\n", path, rule > "/dev/stderr"
     printf "  %s\n", msg          > "/dev/stderr"
     printf "  FIX: raw/ is read-only evidence. Revert this change. The only authorised\n" > "/dev/stderr"
-    printf "  writes are frontmatter: ingested_hash/at/pages (/wiki-ingest) and\n"        > "/dev/stderr"
-    printf "  asserted_at/_source/_note (/wiki-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
+    printf "  writes are frontmatter: ingested_hash/at/pages (/ctx-compile) and\n"        > "/dev/stderr"
+    printf "  asserted_at/_source/_note (/ctx-lint --apply). Re-extract, never edit.\n"  > "/dev/stderr"
   }
 
   # ── file header ──
@@ -168,8 +168,8 @@ awk -v rule="$RULE_ID" -v count_mode="$COUNT" '
   # ── content lines of a MODIFIED raw file ──
   /^[+-]/ {
     line = substr($0, 2)
-    # The six authorised frontmatter writes: the ingest commitment (/wiki-ingest)
-    # and the valid-time axis (/wiki-lint --apply). Both are frontmatter-only,
+    # The six authorised frontmatter writes: the ingest commitment (/ctx-compile)
+    # and the valid-time axis (/ctx-lint --apply). Both are frontmatter-only,
     # so neither moves the body hash or invalidates a citation anchor.
     if (line ~ /^ingested_hash:/)       next
     if (line ~ /^ingested_at:/)         next

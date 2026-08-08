@@ -32,10 +32,10 @@ Read the table left-to-right. If you've ever maintained a `Makefile` or a `packa
 | `raw/` | `src/` | The inputs. Immutable after fetch. You curate. |
 | `wiki/` | `dist/` | The build output. LLM-only. You never hand-edit. |
 | `AGENTS.md` | `Makefile` / `package.json scripts` | The declarative recipe — tells the agent how to build. |
-| `/wiki-ingest` | `npm run build` | Runs the 7-step pipeline raw → wiki. Hash-gated. |
+| `/ctx-compile` | `npm run build` | Runs the 7-step pipeline raw → wiki. Hash-gated. |
 | `scripts/body-hash.sh` | webpack content hash | The build-cache key. "If I've built this exact bytes before, skip." |
-| `/wiki-lint` | `eslint --fix` | Catches broken links, orphans, contradictions, stale claims. |
-| `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Reads the wiki. On a gap, web-searches and *promotes* the answer as a new page. |
+| `/ctx-lint` | `eslint --fix` | Catches broken links, orphans, contradictions, stale claims. |
+| `/ctx-query "..."` | `grep` + Stack Overflow + auto-PR | Reads the wiki. On a gap, web-searches and *promotes* the answer as a new page. |
 | `log.md` | `CHANGELOG` | Append-only record of every ingest / promote / lint. |
 | `(source: raw/x.md#anchor)` | source maps / debug symbols | Every claim in the output points back at the byte range it came from. The build fails when that mapping breaks. |
 | `scripts/package-wiki.sh` | `npm pack` / a release tarball | Emits a versioned, hash-manifested bundle — with its own verifier inside, so a recipient checks it offline. |
@@ -63,9 +63,9 @@ awk 'BEGIN{fm=0} /^---$/{fm++; next} fm>=2{print}' "$file" \
 | **Wiki** | `wiki/` | `dist/` — derived | LLM-only; rewritten freely |
 | **Schema** | `AGENTS.md`, `log.md` | `Makefile` + `CHANGELOG` | Co-evolved, human-readable |
 
-The hard boundary: **the LLM is forbidden from editing anything in `raw/` except three frontmatter fields (`ingested_hash`, `ingested_at`, `ingested_pages`) as the last step of `/wiki-ingest`.** That's not stylistic — it's structural. If the LLM could rewrite raw content, the hash key would shift under its own feet and idempotence would break. Same reason `make` doesn't let recipes rewrite `src/` mid-build.
+The hard boundary: **the LLM is forbidden from editing anything in `raw/` except three frontmatter fields (`ingested_hash`, `ingested_at`, `ingested_pages`) as the last step of `/ctx-compile`.** That's not stylistic — it's structural. If the LLM could rewrite raw content, the hash key would shift under its own feet and idempotence would break. Same reason `make` doesn't let recipes rewrite `src/` mid-build.
 
-Conversely, the user is forbidden from hand-editing `wiki/`. If you want to change a claim, edit the raw source (or file the new claim via `/wiki-query`) and re-run `/wiki-ingest`. Hand-editing `wiki/` is like hand-editing `dist/` after a webpack build — the next rebuild will eat your changes, and you'll never know exactly which file the build *would* have produced.
+Conversely, the user is forbidden from hand-editing `wiki/`. If you want to change a claim, edit the raw source (or file the new claim via `/ctx-query`) and re-run `/ctx-compile`. Hand-editing `wiki/` is like hand-editing `dist/` after a webpack build — the next rebuild will eat your changes, and you'll never know exactly which file the build *would* have produced.
 
 For the full layer treatment see [`wiki/three-layer-architecture.md`](../wiki/three-layer-architecture.md). For who-edits-what see [`wiki/division-of-labor.md`](../wiki/division-of-labor.md).
 
@@ -75,21 +75,21 @@ For the full layer treatment see [`wiki/three-layer-architecture.md`](../wiki/th
 
 | Command | Closest analog | What it does |
 |---|---|---|
-| `/wiki-init` | `git init` | Scaffold `raw/`, `wiki/`, `AGENTS.md`, `log.md`. Idempotent. |
-| `/wiki-extract <src>` | `git add` (sort of) | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/`. Parses binary formats to markdown via a graceful tool chain (`pdftotext`/`pandoc`/`xlsx2csv` first, LLM-vision fallback). Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | `npm run build` | The 7-step pipeline raw → wiki. Hash-gated; idempotent on unchanged sources. |
-| `/wiki-query "..."` | `grep` + Stack Overflow + auto-PR | Answer from the wiki. On gap → web-search → promote a new page. `--no-promote` to suppress. |
-| `/wiki-lint [--apply]` | `eslint --fix` | Find broken links, orphans, contradictions, stale claims. Reports by default; `--apply` writes fixes. |
+| `/ctx-init` | `git init` | Scaffold `raw/`, `wiki/`, `AGENTS.md`, `log.md`. Idempotent. |
+| `/ctx-extract <src>` | `git add` (sort of) | Pull a URL or local file (PDF, DOCX, XLSX, CSV, image, plain text) into `raw/`. Parses binary formats to markdown via a graceful tool chain (`pdftotext`/`pandoc`/`xlsx2csv` first, LLM-vision fallback). Does **not** touch `wiki/`. |
+| `/ctx-compile [<raw-file>]` | `npm run build` | The 7-step pipeline raw → wiki. Hash-gated; idempotent on unchanged sources. |
+| `/ctx-query "..."` | `grep` + Stack Overflow + auto-PR | Answer from the wiki. On gap → web-search → promote a new page. `--no-promote` to suppress. |
+| `/ctx-lint [--apply]` | `eslint --fix` | Find broken links, orphans, contradictions, stale claims. Reports by default; `--apply` writes fixes. |
 
 Two of these surprise devs every time:
 
-**`/wiki-query` is not search.** It's "read the wiki, synthesize an answer, and if there's a knowledge gap, go fetch + write a new wiki page so the gap is gone next time." The auto-promote step is what makes the wiki *compound* (see [`wiki/knowledge-compounds.md`](../wiki/knowledge-compounds.md)). It's the opposite of how a chat session works: every question leaves the knowledge base stronger instead of throwing the work away when the tab closes.
+**`/ctx-query` is not search.** It's "read the wiki, synthesize an answer, and if there's a knowledge gap, go fetch + write a new wiki page so the gap is gone next time." The auto-promote step is what makes the wiki *compound* (see [`wiki/knowledge-compounds.md`](../wiki/knowledge-compounds.md)). It's the opposite of how a chat session works: every question leaves the knowledge base stronger instead of throwing the work away when the tab closes.
 
 **A "command" is a Markdown prompt, not executable code.** Open one and you'll see this:
 
 ```markdown
-# $ sed -n '7,15p' .claude/commands/wiki-ingest.md
-You are executing `/wiki-ingest $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
+# $ sed -n '7,15p' .claude/commands/ctx-compile.md
+You are executing `/ctx-compile $ARGUMENTS` from the `llm-wiki-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
 
 ## Read first
 
@@ -100,7 +100,7 @@ Read `AGENTS.md` (conventions), `wiki/index.md` (what already exists), and `log.
 - If `$ARGUMENTS` is empty: walk all files in `raw/`. For each, compute the current body hash by running **`scripts/body-hash.sh <file>`** (this is the canonical algorithm — do NOT recompute the hash inline with `sha256sum`, `shasum`, or a different awk pattern, or idempotence will break). Skip files whose `ingested_hash` in frontmatter matches the current hash.
 ```
 
-The "executable" is the agent. The "program" is the prompt body. The slash-command files in `.claude/commands/` are workflow definitions, the shim files in the repo root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.clinerules`, `.cursor/rules/`, `.github/copilot-instructions.md`) point any agentic tool at those definitions. In tools that don't support real slash commands (Copilot CLI, Cursor, Cline), you invoke a workflow by saying *"run the wiki-ingest workflow per `.claude/commands/wiki-ingest.md`"* and the agent follows the file. Same workflow, different invocation surface.
+The "executable" is the agent. The "program" is the prompt body. The slash-command files in `.claude/commands/` are workflow definitions, the shim files in the repo root (`AGENTS.md`, `CLAUDE.md`, `GEMINI.md`, `.clinerules`, `.cursor/rules/`, `.github/copilot-instructions.md`) point any agentic tool at those definitions. In tools that don't support real slash commands (Copilot CLI, Cursor, Cline), you invoke a workflow by saying *"run the ctx-compile workflow per `.claude/commands/ctx-compile.md`"* and the agent follows the file. Same workflow, different invocation surface.
 
 ---
 
@@ -124,7 +124,7 @@ That's the whole repo. 38 Markdown files (this `EXPLAIN.md` included). One shell
 
 Reframe your model:
 
-- **The prompts are the program.** `.claude/commands/wiki-*.md` are the verbs.
+- **The prompts are the program.** `.claude/commands/ctx-*.md` are the verbs.
 - **The AI tool is the runtime.** Claude Code, Cursor agent mode, Cline, Copilot CLI — interchangeable runtimes for the same program.
 - **The Markdown files are the database.** No Postgres, no SQLite, no vector store. `grep` is your query planner. `git` is your write-ahead log.
 
@@ -132,7 +132,7 @@ That's why the [four principles](../wiki/four-principles.md) — explicit, yours
 
 ---
 
-## What happens when you run `/wiki-ingest`
+## What happens when you run `/ctx-compile`
 
 You drop a transcript into `raw/`. You run one command. 30–90 seconds later you have 5–10 new wiki pages plus updates to existing pages. The 7 steps that happen, lifted verbatim from [`wiki/ingest-pipeline.md`](../wiki/ingest-pipeline.md):
 
@@ -140,7 +140,7 @@ You drop a transcript into `raw/`. You run one command. 30–90 seconds later yo
 # $ sed -n '19,27p' wiki/ingest-pipeline.md
 | # | Step | What it does |
 |---|---|---|
-| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/wiki-extract`. |
+| 1 | **Read the raw source** | LLM reads the file in `raw/`. For images / PDFs, reads the sidecar `.md` produced by `/ctx-extract`. |
 | 2 | **Extract key information** | Pulls out concepts, entities, claims, data points. `(source: raw/karpathy-llm-wiki-video-transcript.md#4:55-5:00)` |
 | 3 | **Write a summary page** | New `wiki/<source-slug>-summary.md` (or similar) with the source's main takeaways, metadata, tags. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:00-5:04)` |
 | 4 | **Update existing entity / concept pages** | Integrate the new information into pages that already exist. A new claim about Concept X gets added to `wiki/x.md`. `(source: raw/karpathy-llm-wiki-video-transcript.md#5:04-5:11)` |
@@ -153,7 +153,7 @@ The payoff property is step 4: **one source touches 10–15 wiki pages, not one.
 
 ### Status of this pipeline (updated 2026-05-26)
 
-The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/wiki-ingest` + `/wiki-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 13 binary checks (5 smoke C1–C5 + 8 regression R1–R8) gate the demonstration; passing them is what "the pipeline works" means.
+The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/ctx-compile` + `/ctx-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 13 binary checks (5 smoke C1–C5 + 8 regression R1–R8) gate the demonstration; passing them is what "the pipeline works" means.
 
 On a fresh real source, the most common failure modes remain step 5 (contradiction-flagging skipped) and step 3 (summary page skipped). [`QUICKSTART.md`](QUICKSTART.md) has the exact re-prompts. The per-tool parity for Cursor / Copilot / Gemini / Codex paths is **still undemonstrated** — they likely work via the natural-language shims but haven't been observed.
 
@@ -165,12 +165,12 @@ Three opt-in extensions, none of which changes the three-layer model or the five
 
 | Extension | Mental model |
 |---|---|
-| **`wiki/journal/` exception** | One narrow violation of "user must never edit `wiki/`": time-stamped observations live under `wiki/journal/<YYYY-MM-DD>-<slug>.md` and are user-owned. `/wiki-ingest` is forbidden from rewriting them. Use them when practice should feed back into theory — log a trade, an experiment, an incident, with `[[wiki-link]]` cross-references to concept pages. `/wiki-lint` catches broken links here too. |
+| **`wiki/journal/` exception** | One narrow violation of "user must never edit `wiki/`": time-stamped observations live under `wiki/journal/<YYYY-MM-DD>-<slug>.md` and are user-owned. `/ctx-compile` is forbidden from rewriting them. Use them when practice should feed back into theory — log a trade, an experiment, an incident, with `[[wiki-link]]` cross-references to concept pages. `/ctx-lint` catches broken links here too. |
 | **`## Flashcards` content convention** | Any wiki page may declare Q/A pairs in a `## Flashcards` section. `scripts/wiki-to-anki.sh` exports them to an Anki-importable CSV with the page slug as the card tag. Pure content convention — no schema change, no plugin needed. |
-| **MCP read surface** | A parallel programmatic door into the wiki. `scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` against `wiki/`; any MCP-aware AI client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) can then `read_note` / `search_notes` (BM25) / `list_directory` without going through the slash commands. **Read-by-convention** — writes should still flow through `/wiki-ingest` so `log.md` stays accurate. |
-| **Typed relations** (added 2026-05-27) | Lines inside `## Related` can carry a verb + optional attribute: `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark content convention — no frontmatter change, no rendering dependency. Verb regex `[a-z][a-z0-9-]*`. Untyped and multi-link lines collapse to implicit `related-to` so existing wikis pass the new lint untouched. The dev pain it answers: people want a parallel knowledge graph for multi-hop queries; this is the markdown-only "try the cheap thing first" experiment. Tooling: `scripts/wiki-lint-typed-relations.sh` validates the regex; the graph viz (`scripts/visualize/graph.sh`) colours and filters edges by verb; `scripts/eval-multi-hop.sh` measures empirically whether typed verbs improve `/wiki-query` recall vs. the same wiki with verbs stripped — first run on a Wikipedia-derived fixture produced a null-result (LLM inferred verbs from rich prose), see `log.md` 2026-05-27 entry. |
+| **MCP read surface** | A parallel programmatic door into the wiki. `scripts/mcp-server.sh` launches `@bitbonsai/mcpvault` against `wiki/`; any MCP-aware AI client (Claude Desktop, Cursor, ChatGPT Desktop, etc.) can then `read_note` / `search_notes` (BM25) / `list_directory` without going through the slash commands. **Read-by-convention** — writes should still flow through `/ctx-compile` so `log.md` stays accurate. |
+| **Typed relations** (added 2026-05-27) | Lines inside `## Related` can carry a verb + optional attribute: `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark content convention — no frontmatter change, no rendering dependency. Verb regex `[a-z][a-z0-9-]*`. Untyped and multi-link lines collapse to implicit `related-to` so existing wikis pass the new lint untouched. The dev pain it answers: people want a parallel knowledge graph for multi-hop queries; this is the markdown-only "try the cheap thing first" experiment. Tooling: `scripts/wiki-lint-typed-relations.sh` validates the regex; the graph viz (`scripts/visualize/graph.sh`) colours and filters edges by verb; `scripts/eval-multi-hop.sh` measures empirically whether typed verbs improve `/ctx-query` recall vs. the same wiki with verbs stripped — first run on a Wikipedia-derived fixture produced a null-result (LLM inferred verbs from rich prose), see `log.md` 2026-05-27 entry. |
 
-The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a version bump; the journal exception is the rule change that bumped 1→2 (a v1 client running `/wiki-ingest` on a v2 repo could clobber a journal entry — see `log.md`'s 2026-05-26 05:30 migration note).
+The schema-bump policy in `AGENTS.md` says behavior-changing edits trigger a version bump; the journal exception is the rule change that bumped 1→2 (a v1 client running `/ctx-compile` on a v2 repo could clobber a journal entry — see `log.md`'s 2026-05-26 05:30 migration note).
 
 ## Three escape hatches the v2 era adds
 
@@ -186,7 +186,7 @@ The "does my install actually work" command. Composes the end-to-end ingest smok
 
 ### The visualization wrappers — `scripts/visualize/`
 
-Five opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The others — `slides.sh`, `mermaid.sh`, `serve.sh` (wrapping `npx` packages and a Python HTTP server), and `render.sh` (HTML poster → PDF/PNG via a headless browser or puppeteer, with graceful HTML fallback; backs `/wiki-query --visual` and `/wiki-diagram --pdf/--png`). None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
+Five opt-in OSS wrappers that turn the wiki from "text the LLM maintains" into a navigable visual space. The marquee piece is a bespoke Python+D3 graph generator (stdlib only — no npm, no Docker, no Hugo). The others — `slides.sh`, `mermaid.sh`, `serve.sh` (wrapping `npx` packages and a Python HTTP server), and `render.sh` (HTML poster → PDF/PNG via a headless browser or puppeteer, with graceful HTML fallback; backs `/ctx-query --visual` and `/ctx-diagram --pdf/--png`). None requires Obsidian. Heavier alternatives (Quartz, mdBook, SilverBullet) are documented in [`VISUALIZATION.md`](VISUALIZATION.md) for users who want a full static-site experience.
 
 ## The four principles, with a "you'd lose this if…" for each
 
@@ -211,13 +211,13 @@ Three files, in order. ~10 minutes total.
 
 [`AGENTS.md`](../AGENTS.md) is the spec the *agent* reads on session start. You don't need to read it cover-to-cover until you want to change behavior — the `README` + `QUICKSTART` + `wiki/index.md` path covers usage.
 
-The `[[kebab-case]]` link syntax you'll see throughout `wiki/` is resolved by string-match, not by any viewer. `[[foo-bar]]` means "the file `wiki/foo-bar.md`." `/wiki-lint` flags any `[[link]]` with no matching file.
+The `[[kebab-case]]` link syntax you'll see throughout `wiki/` is resolved by string-match, not by any viewer. `[[foo-bar]]` means "the file `wiki/foo-bar.md`." `/ctx-lint` flags any `[[link]]` with no matching file.
 
 ---
 
 ## Status, post-2026-05-26 (replaces the prior "untested" caveat)
 
-The 7-step `/wiki-ingest` pipeline is **demonstrated** via `./scripts/smoke-all.sh`. The full chain — `/wiki-ingest raw/smoke-source.md` → 4 new wiki pages with the fictitious anchors → `log.md` entry → `/wiki-query` recalling the fact + citing the source — runs green on Claude Code (`claude -p`). The artifacts are committed; the smoke is reproducible.
+The 7-step `/ctx-compile` pipeline is **demonstrated** via `./scripts/smoke-all.sh`. The full chain — `/ctx-compile raw/smoke-source.md` → 4 new wiki pages with the fictitious anchors → `log.md` entry → `/ctx-query` recalling the fact + citing the source — runs green on Claude Code (`claude -p`). The artifacts are committed; the smoke is reproducible.
 
 What's still observational, not proven:
 

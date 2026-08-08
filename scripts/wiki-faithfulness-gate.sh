@@ -144,8 +144,8 @@ done
 # Citation-target floor (BOTH modes): a target page must not carry a citation
 # whose target isn't on the allowlist (raw/<file> or 'analysis'). A web source
 # must be snapshotted into raw/ first and cited as raw/ — only then is the claim
-# coverage-counted and entailment-checkable. This makes both /wiki-ingest and
-# /wiki-query promotion mechanically unable to leave a non-raw cite.
+# coverage-counted and entailment-checkable. This makes both /ctx-compile and
+# /ctx-query promotion mechanically unable to leave a non-raw cite.
 # REUSES citation-audit.py --no-bare-urls per target-page root (deterministic,
 # raw-dir-independent). Runs on ingest too: an ingest-produced page must not carry
 # a non-raw external citation either.

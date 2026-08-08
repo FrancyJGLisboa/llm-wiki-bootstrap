@@ -6,7 +6,7 @@
 #   H2 drift caught           : body edited after ingest → exit≠0 AND stderr names
 #                               the file AND the ingested_pages now at risk
 #                               (a lint that only counts fails this)
-#   H3 never-ingested skipped : ingested_hash: "" → exit 0 (that's /wiki-ingest's
+#   H3 never-ingested skipped : ingested_hash: "" → exit 0 (that's /ctx-compile's
 #                               job, not drift — noise here would train users to
 #                               ignore the lint)
 #   H4 unhashable not silent  : recorded hash + malformed frontmatter → exit≠0
@@ -58,7 +58,7 @@ elif [ "$rc" -eq 0 ]; then fail "H2 drifted source wrongly accepted (exit 0)"; f
 
 # H3 — never-ingested is not drift
 if "$LINT" "$FIX/fresh.md" >/dev/null 2>&1; then ok "H3 never-ingested source skipped (not reported as drift)"
-else fail "H3 never-ingested source flagged (ingested_hash is empty — /wiki-ingest's job)"; fi
+else fail "H3 never-ingested source flagged (ingested_hash is empty — /ctx-compile's job)"; fi
 
 # H4 — a commitment that cannot be recomputed must not pass green
 printf -- '---\ningested_hash: deadbeefdeadbeef\nbody with no closing delimiter\n' > "$FIX/broken.md"

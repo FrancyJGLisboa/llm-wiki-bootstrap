@@ -4,7 +4,7 @@ The bootstrap is viewer-agnostic by design (pure CommonMark, no rendering depend
 
 All four scripts are opt-in. None modifies your wiki — they read your markdown and emit derived artifacts (HTML, slide decks, diagram images, a local server).
 
-**From inside your AI tool**, you don't have to remember the script paths: run `/wiki-visualize` (alias `/visualize`) and it dispatches to the right backend — `/wiki-visualize` alone builds the graph, `/wiki-visualize slides <page>`, `/wiki-visualize mermaid <page>`, and `/wiki-visualize serve` map to the scripts below. It also checks that `python3` / `npx` are installed and surfaces the install hint if not. The scripts remain the single source of truth; the command is a thin dispatcher over them.
+**From inside your AI tool**, you don't have to remember the script paths: run `/ctx-visualize` (alias `/visualize`) and it dispatches to the right backend — `/ctx-visualize` alone builds the graph, `/ctx-visualize slides <page>`, `/ctx-visualize mermaid <page>`, and `/ctx-visualize serve` map to the scripts below. It also checks that `python3` / `npx` are installed and surfaces the install hint if not. The scripts remain the single source of truth; the command is a thin dispatcher over them.
 
 ## 1. `graph.sh` — interactive force-directed graph (no install required)
 
@@ -72,7 +72,7 @@ For automated checks: setting `VISUALIZE_DRY_RUN=1` prints what it would do and 
 ./scripts/visualize/render.sh diagrams/my-poster.html --pdf --out /tmp/out.pdf
 ```
 
-This is what backs `/wiki-query --visual pdf|png` and `/wiki-diagram --pdf|--png` — it converts the self-contained HTML poster produced from the `templates/infographic/` generator contract into a raster/vector file. PDF is single-page (height fit to content); PNG is a full-page @2× screenshot.
+This is what backs `/ctx-query --visual pdf|png` and `/ctx-diagram --pdf|--png` — it converts the self-contained HTML poster produced from the `templates/infographic/` generator contract into a raster/vector file. PDF is single-page (height fit to content); PNG is a full-page @2× screenshot.
 
 **Renderer detection (graceful — never silent):**
 1. a system headless browser — Google Chrome / Chromium / Edge / Brave (PATH or, on macOS, the `/Applications` bundle) — fast, no download, else
@@ -108,7 +108,7 @@ Each requires its own setup (Node + Hugo for Quartz; Cargo for mdBook; Deno for 
 - **Docker / Kroki** — diagram server requires container infra. Out of scope for the persona.
 - **GUI / Electron app** — out of scope.
 - **PDF/PPTX from slides.sh** — MARP can do it, but requires Chromium auto-fetch. Recipe in the MARP docs.
-- **Native /wiki-visualize slash command** — these wrappers are plain bash; agentic tools call them via natural language.
+- **Native /ctx-visualize slash command** — these wrappers are plain bash; agentic tools call them via natural language.
 
 ## Troubleshooting
 

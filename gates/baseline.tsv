@@ -30,3 +30,5 @@ RAW-APPEND-ONLY	scripts/gate-raw-append-only.sh --worktree	0	0	2026-08-08	worktr
 DOC-CLAIM-RECOMPUTE	scripts/gate-doc-claims.sh	0	0	2026-08-08
 EVAL-NO-METADATA-IN-PROMPT	scripts/gate-eval-prompt-purity.sh	0	0	2026-08-08
 GATE-REACHABLE	scripts/gate-reachable.sh	0	0	2026-08-08	suppressions = lines in scripts/gate-standalone.txt; currently none
+ALIAS-RESOLVES	scripts/gate-command-aliases.sh	0	0	2026-08-08	28 command files, 19 of them aliases
+EXEC-BIT-PRESERVED	scripts/gate-exec-bits.sh	0	0	2026-08-08	104 tracked executables

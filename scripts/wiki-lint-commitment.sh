@@ -52,7 +52,7 @@ if [ "$uncited" -gt 0 ]; then
 fi
 
 if [ "$offenders" -gt 0 ]; then
-  echo "wiki-lint-commitment: $offenders of $cited cited source(s) lack an ingest commitment. Re-run /wiki-ingest on each so it records ingested_hash + ingested_pages; do NOT hand-write the hash — a commitment nobody derived is a fabricated receipt." >&2
+  echo "wiki-lint-commitment: $offenders of $cited cited source(s) lack an ingest commitment. Re-run /ctx-compile on each so it records ingested_hash + ingested_pages; do NOT hand-write the hash — a commitment nobody derived is a fabricated receipt." >&2
   exit 1
 fi
 echo "wiki-lint-commitment: all $cited cited source(s) carry an ingest commitment." >&2

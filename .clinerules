@@ -14,27 +14,27 @@ This project is an `llm-wiki-bootstrap` instance — a **context compiler**: it 
 
 ## Five workflows
 
-Implemented as Claude Code slash commands at `.claude/commands/wiki-*.md`. In Cline, the user invokes them by natural language; you follow the prompt body of the corresponding `.claude/commands/wiki-<name>.md` file step-by-step.
+Implemented as Claude Code slash commands at `.claude/commands/ctx-*.md`. In Cline, the user invokes them by natural language; you follow the prompt body of the corresponding `.claude/commands/ctx-<name>.md` file step-by-step.
 
 | Workflow | Purpose |
 |---|---|
-| `wiki-init` | Scaffold an empty wiki structure (idempotent). |
-| `wiki-extract <source>` | Acquire URL / file / image into `raw/`. |
-| `wiki-ingest [<raw-file>]` | Run the 7-step pipeline. Hash via `scripts/body-hash.sh`. |
-| `wiki-query <question>` | Answer from wiki; web-search + promote on gaps. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked). |
-| `wiki-lint [--apply]` | Find issues; propose / apply fixes. |
+| `ctx-init` | Scaffold an empty wiki structure (idempotent). |
+| `ctx-extract <source>` | Acquire URL / file / image into `raw/`. |
+| `ctx-compile [<raw-file>]` | Run the 7-step pipeline. Hash via `scripts/body-hash.sh`. |
+| `ctx-query <question>` | Answer from wiki; web-search + promote on gaps. `--visual [html\|pdf\|png]` also emits a diagram of the answer (archetype auto-picked). |
+| `ctx-lint [--apply]` | Find issues; propose / apply fixes. |
 
 Plus two **output workflows** that render/export an already-built wiki (read-only on `raw/` and `wiki/`):
 
 | Workflow | Purpose |
 |---|---|
-| `wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | Graph / slides / mermaid / local server. Wraps `scripts/visualize/*`. Mechanical: renders existing structure. |
-| `wiki-flashcards [dir]` | Export `## Flashcards` sections to an Anki CSV. Wraps `scripts/wiki-to-anki.sh`. |
-| `wiki-diagram "<intent>"` | Semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
+| `ctx-visualize [graph\|mermaid\|slides\|serve] [target]` | Graph / slides / mermaid / local server. Wraps `scripts/visualize/*`. Mechanical: renders existing structure. |
+| `ctx-flashcards [dir]` | Export `## Flashcards` sections to an Anki CSV. Wraps `scripts/wiki-to-anki.sh`. |
+| `ctx-diagram "<intent>"` | Semantic: retrieve from wiki, score the 8 archetypes, user picks, generate a self-contained HTML poster to `diagrams/`. Contracts in `templates/infographic/`. |
 
 ## Hard rules
 
-1. **Never write to `raw/`** except the three `ingested_*` frontmatter fields, only as the last step of `wiki-ingest`.
+1. **Never write to `raw/`** except the three `ingested_*` frontmatter fields, only as the last step of `ctx-compile`.
 2. **`scripts/body-hash.sh`** is the canonical hash. Do not inline a different algorithm.
 3. **Pure CommonMark.** No Obsidian / Cursor / IDE-specific extensions.
 4. **Cite raw sources** inline with `(source: raw/<file>#<anchor>)`.

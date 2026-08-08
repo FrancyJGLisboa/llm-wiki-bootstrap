@@ -93,7 +93,7 @@ check_c4() {
   fi
 }
 
-# C5 — raw/smoke-source.md has non-empty ingested_hash (proof /wiki-ingest ran)
+# C5 — raw/smoke-source.md has non-empty ingested_hash (proof /ctx-compile ran)
 check_c5() {
   if [ ! -f "$RAW" ]; then
     fail "C5 raw/smoke-source.md missing"

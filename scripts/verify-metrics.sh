@@ -30,7 +30,7 @@ trap 'rm -rf "$tmp"' EXIT
 # committed-unquoted.md carries an UNQUOTED hash on purpose. Every reader of this
 # field was once an inline `grep 'ingested_hash: "[0-9a-f]'` demanding a literal
 # opening quote, so four of this repo's own sources — hash present, correct, and
-# current — were reported as carrying none, with "re-run /wiki-ingest" as the
+# current — were reported as carrying none, with "re-run /ctx-compile" as the
 # advice. The fixture was all-quoted, which is exactly why the bug survived its
 # own oracle. Unquoted is valid YAML; the reader (scripts/lib/commitment.sh)
 # must accept it, and this fixture is what holds it to that.

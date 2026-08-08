@@ -38,7 +38,7 @@ horizontal-rule lines, which push the count past 2 on perfectly valid files.
 **Why:** The UX stress-test report's suggested fix ("count `^---$`; if ≠ 2,
 exit 1") would have rejected any extracted article/PDF containing a thematic
 break. The actual bug being fixed was a *missing closing* delimiter (count < 2)
-yielding the empty-string SHA (`e3b0c442…`, exit 0) → `/wiki-ingest` stamps a
+yielding the empty-string SHA (`e3b0c442…`, exit 0) → `/ctx-compile` stamps a
 placeholder hash and idempotence skips the file forever (silent data loss).
 
 **When to apply:** Any change to the hashing/idempotence core. Also: the fix is

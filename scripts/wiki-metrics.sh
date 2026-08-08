@@ -2,13 +2,13 @@
 # scripts/wiki-metrics.sh — record integrity numbers for a REAL operation.
 #
 # The eval harness measures commitment rate and citation resolution on every
-# question it asks; a real `/wiki-query` or `/wiki-ingest` measured nothing, so
+# question it asks; a real `/ctx-query` or `/ctx-compile` measured nothing, so
 # the failures the harness catches were invisible in actual use. Observed: an
 # ingest wrote correct, correctly-cited pages and silently skipped the raw/
 # frontmatter commitment step — every citation into those bodies became
 # unverifiable and no user would ever have known.
 #
-# This turns monitoring from pull (a human runs /wiki-lint) into passive record
+# This turns monitoring from pull (a human runs /ctx-lint) into passive record
 # (every operation leaves a machine-readable line), which is what gives
 # scripts/wiki-flows.sh an actual time series to trend.
 #
@@ -21,7 +21,7 @@
 #
 # `--temporal` additionally GATES the answer: exit 4 unless its resolving
 # citations span >= 2 distinct `asserted_at` dates. For change-over-time
-# questions only — see the temporal traversal section of wiki-query.md.
+# questions only — see the temporal traversal section of ctx-query.md.
 #
 # Appends one line to log.md, inside a per-day `## <date> — metrics` section
 # (created at the top, newest-at-top, if today's does not exist yet):

@@ -280,7 +280,7 @@ done
 
 # E7 — the eval must refuse to score an unpopulated wiki, and must never let a
 # nested claude inherit the question loop's stdin. Both were live bugs: a run
-# reported 6/12 (R1 3/3, R2 2/2) against an empty wiki, because /wiki-query fell
+# reported 6/12 (R1 3/3, R2 2/2) against an empty wiki, because /ctx-query fell
 # back to reading raw/ directly, and the first question's args had the rest of
 # the eval table leaked into them off the loop's stdin.
 EVAL="$SCRIPT_DIR/eval-retrieval.sh"

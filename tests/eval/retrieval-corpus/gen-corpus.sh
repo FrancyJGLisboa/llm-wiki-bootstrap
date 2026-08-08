@@ -87,7 +87,7 @@ fi
 } > "$TARGET/sales-2026.csv"
 
 # ── 2. Email thread: 14 messages, needle in message 11 ────────────────────────
-# Plain RFC-822-ish text. /wiki-extract has no .eml handler — it falls through to
+# Plain RFC-822-ish text. /ctx-extract has no .eml handler — it falls through to
 # passthrough — so this measures whether a flattened thread stays retrievable at
 # message granularity, or only as one undifferentiated blob.
 {
@@ -170,7 +170,7 @@ SECTIONS="Scope and Method|Prior Baseline|Ingest Path|Storage Layout|Index Build
 # ── 4. Two vintages of one fact (point-in-time) ───────────────────────────────
 # The vintage lives in the BODY TEXT — real documents state their own reporting
 # period. These two are the GENEROUS case: they say "reporting period", "figure
-# of record for Q1", "supersedes ... as the current number". /wiki-extract lifts
+# of record for Q1", "supersedes ... as the current number". /ctx-extract lifts
 # such a date into `asserted_at`; the T2 pair below removes the relational prose
 # so the as-of answer cannot lean on it.
 cat > "$TARGET/capacity-report-q1.md" <<'Q1'
@@ -223,7 +223,7 @@ Q3
 #
 # Honest limit: the date still lives in the body, so this does not prove the
 # `asserted_at` FIELD is load-bearing — a source with no date anywhere would be
-# unsatisfiable, since /wiki-extract would correctly record `unknown`. What T2
+# unsatisfiable, since /ctx-extract would correctly record `unknown`. What T2
 # proves is narrower and still worth having: as-of survives with no relational
 # scaffolding to lean on.
 #

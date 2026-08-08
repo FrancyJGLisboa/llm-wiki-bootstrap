@@ -25,10 +25,10 @@
 # to a real passage costs more to fake than to read off the page.
 #
 # Never-ingested sources (`ingested_hash: ""`) are skipped by default, same as
-# the drift lint — in a /wiki-lint pass, frontmatter that /wiki-extract has not
+# the drift lint — in a /ctx-lint pass, frontmatter that /ctx-extract has not
 # finished with yet is noise, and noise trains users to ignore the lint.
 #
-# `--all` audits them too, and is what /wiki-extract uses: right after extract
+# `--all` audits them too, and is what /ctx-extract uses: right after extract
 # every file is by definition never-ingested, so the default mode would skip
 # all of them and report a vacuous "clean". That is not hypothetical — it was
 # the first thing a real run did, and an extract-time check that silently

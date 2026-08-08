@@ -2,8 +2,8 @@
 
 Make this wiki readable — and optionally writable — by any MCP-aware AI client without going through the slash commands. Useful when:
 
-- You want Claude Desktop, ChatGPT Desktop, Cursor, or another client to answer questions from the wiki directly (no `/wiki-query` indirection).
-- You're running a non-Claude-Code agent that can't load `.claude/commands/wiki-*.md`.
+- You want Claude Desktop, ChatGPT Desktop, Cursor, or another client to answer questions from the wiki directly (no `/ctx-query` indirection).
+- You're running a non-Claude-Code agent that can't load `.claude/commands/ctx-*.md`.
 - You want BM25 search over the wiki without writing a custom indexer.
 
 This is an **optional read surface**. The three-layer model and the five slash commands are unchanged. MCP doesn't replace them — it adds a parallel programmatic door into the same files.
@@ -105,7 +105,7 @@ Per `@bitbonsai/mcpvault`'s feature list, the server provides ~14 MCP tools:
 | Frontmatter | `get_frontmatter`, `update_frontmatter` |
 | Tags | `manage_tags` (add / remove / list) |
 
-The write tools respect frontmatter — they parse with gray-matter and preserve formatting on fields they don't touch. That matters for this repo: `ingested_hash`, `ingested_at`, and `ingested_pages` should only be touched by `/wiki-ingest`. Out of band MCP writes that overwrite them will break ingest idempotence.
+The write tools respect frontmatter — they parse with gray-matter and preserve formatting on fields they don't touch. That matters for this repo: `ingested_hash`, `ingested_at`, and `ingested_pages` should only be touched by `/ctx-compile`. Out of band MCP writes that overwrite them will break ingest idempotence.
 
 ## Recommended posture: read-only by default
 
@@ -119,7 +119,7 @@ In the current repo we recommend treating MCP as a **read** surface only. Writes
 | `npx: command not found` | Node.js missing | Install Node ≥18 (https://nodejs.org), rerun `./scripts/preflight.sh` |
 | Server starts then hangs | Normal | MCP is stdio-based; the server waits for the client to speak first |
 | BM25 returns nothing | First run | The server indexes on connect; give it a few seconds the first time |
-| YAML corruption after writes | Out-of-band write hit a field `/wiki-ingest` owns | Run `/wiki-lint`; surface the contradiction and re-ingest from `raw/` |
+| YAML corruption after writes | Out-of-band write hit a field `/ctx-compile` owns | Run `/ctx-lint`; surface the contradiction and re-ingest from `raw/` |
 
 ## See also
 

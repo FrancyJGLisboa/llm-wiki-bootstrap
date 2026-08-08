@@ -6,8 +6,8 @@
 # (visualize/graph-html.py --json) so the JSON and the rendered graph can never
 # diverge.
 #
-# Called as the final step of every wiki-mutating command (/wiki-ingest always,
-# /wiki-query on promote, /wiki-lint --apply) so the synthesis pages can't drift.
+# Called as the final step of every wiki-mutating command (/ctx-compile always,
+# /ctx-query on promote, /ctx-lint --apply) so the synthesis pages can't drift.
 # Output is deterministic — re-running with no wiki change rewrites nothing.
 #
 # Usage:

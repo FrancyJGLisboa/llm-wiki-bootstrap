@@ -4,7 +4,7 @@
 #
 # Scaffolds a THROWAWAY wiki (never touches the real repo's raw//wiki/), places
 # a pre-segmented Vantel sidecar in raw/, then drives `claude -p` through
-# /wiki-ingest and /wiki-query and asserts:
+# /ctx-compile and /ctx-query and asserts:
 #
 #   C6 — the source's summary page is a section TREE whose every
 #        (source: raw/<slug>.md#<anchor>) resolves to a real heading in the
@@ -15,7 +15,7 @@
 #
 # Needs the `claude` CLI and python3. Exit 0 iff C6 and C7 pass.
 # Reuses the deterministic segmenter to BUILD the fixture sidecar, so the
-# agent is fed exactly the artifact /wiki-extract would have produced.
+# agent is fed exactly the artifact /ctx-extract would have produced.
 
 set -uo pipefail
 
@@ -39,7 +39,7 @@ SLUG="vantel-array"
 [ -f "$FIX" ] || { echo "fixture missing: $FIX" >&2; exit 2; }
 
 # Kebab-case slug of a heading TITLE (range already stripped), matching the
-# `<section-slug>` rule documented in /wiki-ingest + AGENTS.md.
+# `<section-slug>` rule documented in /ctx-compile + AGENTS.md.
 slugify() {
   printf '%s' "$1" | tr '[:upper:]' '[:lower:]' \
     | sed -E 's/[^a-z0-9]+/-/g; s/^-+//; s/-+$//'
@@ -86,13 +86,13 @@ grep -E '^#{1,6} ' "$RAW" \
   | while IFS= read -r title; do slugify "$title"; done | sort -u > "$VALID"
 
 # --- Drive the agent ---------------------------------------------------------
-log "claude -p /wiki-ingest …"
-( cd "$WORK" && claude -p "/wiki-ingest raw/$SLUG.md" ) > "$WORK/ingest.log" 2>&1 \
+log "claude -p /ctx-compile …"
+( cd "$WORK" && claude -p "/ctx-compile raw/$SLUG.md" ) > "$WORK/ingest.log" 2>&1 \
   || { echo "ingest run failed; tail:" >&2; tail -20 "$WORK/ingest.log" >&2; }
 
 QUESTION='What is the Halverson coefficient, and at what junction temperature do Vantel nodes enter throttled sampling? Cite the specific source section.'
-log "claude -p /wiki-query …"
-( cd "$WORK" && claude -p "/wiki-query \"$QUESTION\" --no-promote" ) > "$WORK/answer.md" 2>"$WORK/query.log" \
+log "claude -p /ctx-query …"
+( cd "$WORK" && claude -p "/ctx-query \"$QUESTION\" --no-promote" ) > "$WORK/answer.md" 2>"$WORK/query.log" \
   || { echo "query run failed; tail:" >&2; tail -20 "$WORK/query.log" >&2; }
 
 # --- C6: summary tree anchors all resolve ------------------------------------

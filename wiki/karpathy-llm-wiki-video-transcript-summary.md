@@ -47,7 +47,7 @@ See [[source-attribution]] for the full provenance discussion and the gaps.
 
 ## Pages touched on first ingest
 
-The first ingest (a manual one, done during the design conversation rather than via `/wiki-ingest`) produced the 20 initial wiki pages and then [[knowledge-compounds]] in a follow-up pass. See `log.md` for the full list and the entries dated 2026-05-25.
+The first ingest (a manual one, done during the design conversation rather than via `/ctx-compile`) produced the 20 initial wiki pages and then [[knowledge-compounds]] in a follow-up pass. See `log.md` for the full list and the entries dated 2026-05-25.
 
 ## Related
 
@@ -59,4 +59,4 @@ The first ingest (a manual one, done during the design conversation rather than 
 ## Open questions on this page
 
 - The YouTuber names but does not show Karpathy's original tweet or follow-ups. Fetching them into `raw/` would let us downgrade some `source: video` claims to direct Karpathy quotes (`source: external` from his actual writing) and surface any paraphrase drift.
-- Are there other YouTubers / blog posts on the same Karpathy tweet that would triangulate? Worth a `/wiki-extract` round.
+- Are there other YouTubers / blog posts on the same Karpathy tweet that would triangulate? Worth a `/ctx-extract` round.

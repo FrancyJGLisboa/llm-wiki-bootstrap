@@ -88,7 +88,7 @@ def audit(raw_dir: str, audit_all: bool = False) -> list[str]:
         if not fm:
             continue  # no frontmatter at all is a different lint's business
         if not audit_all and not fm.get("ingested_hash", "").strip().strip('"'):
-            continue  # never ingested — /wiki-extract's job, not ours
+            continue  # never ingested — /ctx-extract's job, not ours
 
         value = fm.get("asserted_at", "").strip().strip('"')
         if not value:

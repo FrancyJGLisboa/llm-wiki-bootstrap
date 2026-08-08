@@ -101,9 +101,9 @@ if [ -f "$RAW" ] && [ "$RAW_HASH" = "$FIXTURE_HASH" ]; then
   fi
   log "raw in sync, but last-answer.md missing — redrive query only"
   : > "$BUILD_LOG"
-  if ! claude -p "/wiki-query \"$(cat "$QUERY_FILE")\"" \
+  if ! claude -p "/ctx-query \"$(cat "$QUERY_FILE")\"" \
         > "$LAST_ANSWER" 2>> "$BUILD_LOG"; then
-    die "claude -p '/wiki-query …' failed; see $BUILD_LOG"
+    die "claude -p '/ctx-query …' failed; see $BUILD_LOG"
   fi
   exit 0
 fi
@@ -151,18 +151,18 @@ if [ "$COPIED_HASH" != "$FIXTURE_HASH" ]; then
 fi
 log "raw/smoke-source.md written; body-hash matches fixture"
 
-# Step 7: drive /wiki-ingest then /wiki-query.
+# Step 7: drive /ctx-compile then /ctx-query.
 : > "$BUILD_LOG"
 
-log "running claude -p '/wiki-ingest raw/smoke-source.md' …"
-if ! claude -p "/wiki-ingest raw/smoke-source.md" >> "$BUILD_LOG" 2>&1; then
-  die "claude -p '/wiki-ingest …' failed; see $BUILD_LOG"
+log "running claude -p '/ctx-compile raw/smoke-source.md' …"
+if ! claude -p "/ctx-compile raw/smoke-source.md" >> "$BUILD_LOG" 2>&1; then
+  die "claude -p '/ctx-compile …' failed; see $BUILD_LOG"
 fi
 
-log "running claude -p '/wiki-query …' …"
-if ! claude -p "/wiki-query \"$(cat "$QUERY_FILE")\"" \
+log "running claude -p '/ctx-query …' …"
+if ! claude -p "/ctx-query \"$(cat "$QUERY_FILE")\"" \
       > "$LAST_ANSWER" 2>> "$BUILD_LOG"; then
-  die "claude -p '/wiki-query …' failed; see $BUILD_LOG"
+  die "claude -p '/ctx-query …' failed; see $BUILD_LOG"
 fi
 
 log "${GREEN}build complete${RESET}"

@@ -82,7 +82,7 @@ done < <(grep -nE '[0-9]+ ?/ ?[0-9]+' "$PAGE" | grep -v 'minmax\|1fr\|/>' | cut 
 # tripwire on the exact figures that were wrong.
 #
 # `31</b><span>deterministic` was on this list: the page once claimed 31 while
-# the suite had 30. R28 (the /wiki-query temporal contract) made 31 the true
+# the suite had 30. R28 (the /ctx-query temporal contract) made 31 the true
 # count, so the tripwire started firing on the CORRECT figure. Removed rather
 # than bumped — a hardcoded list of wrong numbers has to be retired as the repo
 # grows past them, or it outlives the error it was written for and blocks the

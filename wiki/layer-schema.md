@@ -27,7 +27,7 @@ We chose `AGENTS.md` as the canonical schema name. Reasons:
 - Emerging cross-tool standard (Claude Code recent versions, Codex, others adopting)
 - Tool-agnostic by design — no Claude / Cursor / Gemini-specific naming
 - For tools that don't auto-load `AGENTS.md`, the README documents the one-line symlink: `ln -s AGENTS.md CLAUDE.md` (or equivalent)
-- The five slash commands (`/wiki-init` etc.) also instruct explicit reading of `AGENTS.md` so that auto-load behavior is a bonus, not a requirement
+- The five slash commands (`/ctx-init` etc.) also instruct explicit reading of `AGENTS.md` so that auto-load behavior is a bonus, not a requirement
 
 ### What lives in the schema
 
@@ -52,6 +52,6 @@ The schema is the **one place** in the system where the user is a peer writer wi
 
 ## Open questions on this page
 
-- At what cadence should the schema be reviewed? Currently: ad-hoc. Worth a `/wiki-lint --schema-review` mode?
-- What happens when the schema changes and existing wiki pages don't match the new convention? Should `/wiki-ingest` or `/wiki-lint` migrate them?
+- At what cadence should the schema be reviewed? Currently: ad-hoc. Worth a `/ctx-lint --schema-review` mode?
+- What happens when the schema changes and existing wiki pages don't match the new convention? Should `/ctx-compile` or `/ctx-lint` migrate them?
 - Should the schema be split (e.g., `AGENTS.md` for cross-tool basics + `SCHEMA.md` for project-specific) once the system grows?

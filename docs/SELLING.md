@@ -67,7 +67,7 @@ Why these fields earn their keep:
 - `assisted_by` + `verified_on` make **model-version rot inspectable**. Prompts
   are model-sensitive; a buyer can see at a glance that a page was verified on
   the model they use, this quarter — instead of discovering staleness in
-  production. `/wiki-lint` already hunts stale claims; dated fields give it
+  production. `/ctx-lint` already hunts stale claims; dated fields give it
   teeth.
 - `status` makes honesty cheap. A page marked `broken-since-2026-05` is more
   credible than a catalog where everything silently "works".

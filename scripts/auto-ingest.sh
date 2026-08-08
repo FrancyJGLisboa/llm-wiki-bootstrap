@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # scripts/auto-ingest.sh — unattended inbox → extract → ingest, for cron/launchd.
 #
-# The manual loop is: drop a file somewhere, run /wiki-extract, run /wiki-ingest.
+# The manual loop is: drop a file somewhere, run /ctx-extract, run /ctx-compile.
 # This script automates exactly that and nothing more: if inbox/ contains files,
 # drive the headless AI tool (`claude -p`, same driver as scripts/smoke-build.sh)
 # to extract each one and then ingest. Files that extracted successfully are
@@ -11,7 +11,7 @@
 # from cron. Example crontab (every 30 min, plus a nightly lint):
 #
 #   */30 * * * *  cd /path/to/my-wiki && ./scripts/auto-ingest.sh >> .auto-ingest.log 2>&1
-#   0 6 * * *     cd /path/to/my-wiki && claude -p "/wiki-lint" >> .auto-ingest.log 2>&1
+#   0 6 * * *     cd /path/to/my-wiki && claude -p "/ctx-lint" >> .auto-ingest.log 2>&1
 #
 # Usage:
 #   ./scripts/auto-ingest.sh [--inbox <dir>] [--dry-run]
@@ -48,7 +48,7 @@ log() { printf '[auto-ingest %s] %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1"; }
 
 # Wiki-root sanity — same guard as the slash commands.
 if [ ! -d raw ] || [ ! -d wiki ]; then
-  log "error: $WIKI_ROOT is not a wiki root (no raw/ + wiki/). Run /wiki-init first."
+  log "error: $WIKI_ROOT is not a wiki root (no raw/ + wiki/). Run /ctx-init first."
   exit 2
 fi
 
@@ -66,7 +66,7 @@ if [ "${#pending[@]}" -eq 0 ]; then
 fi
 
 if ! command -v claude >/dev/null 2>&1; then
-  log "error: claude CLI not on PATH — cannot run unattended. Install Claude Code, or extract manually with /wiki-extract."
+  log "error: claude CLI not on PATH — cannot run unattended. Install Claude Code, or extract manually with /ctx-extract."
   exit 2
 fi
 
@@ -93,7 +93,7 @@ mkdir -p "$INBOX/processed"
 failures=0
 for f in "${pending[@]}"; do
   log "extracting: $f"
-  if claude -p "/wiki-extract \"$f\"" >/dev/null 2>&1; then
+  if claude -p "/ctx-extract \"$f\"" >/dev/null 2>&1; then
     mv "$f" "$INBOX/processed/"
     log "ok: $f → $INBOX/processed/"
   else
@@ -105,11 +105,11 @@ done
 processed=$(( ${#pending[@]} - failures ))
 if [ "$processed" -gt 0 ]; then
   log "ingesting $processed extracted source(s)…"
-  if claude -p "/wiki-ingest" >/dev/null 2>&1; then
+  if claude -p "/ctx-compile" >/dev/null 2>&1; then
     log "ingest complete."
   else
     failures=$((failures + 1))
-    log "FAILED: /wiki-ingest — sources are in raw/ with ingested_at: never; next run (or a manual /wiki-ingest) will pick them up."
+    log "FAILED: /ctx-compile — sources are in raw/ with ingested_at: never; next run (or a manual /ctx-compile) will pick them up."
   fi
 fi
 

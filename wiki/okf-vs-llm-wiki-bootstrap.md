@@ -34,7 +34,7 @@ The convergence is no accident: Google describes OKF as a formalization of the L
 
 The Devsplainers commentary names three weaknesses of container-only standardization (source: raw/devsplainers-okf-llm-wiki-video-transcript.md#4:54). Each maps to an existing mechanism in this system:
 
-1. **Staleness — "a field is not a process."** OKF has a `timestamp`; nothing updates it. Here, freshness is a *process*: `/wiki-lint` checks stale claims, `/wiki-ingest` re-processes on body-hash change, and every mutation appends to `log.md`.
+1. **Staleness — "a field is not a process."** OKF has a `timestamp`; nothing updates it. Here, freshness is a *process*: `/ctx-lint` checks stale claims, `/ctx-compile` re-processes on body-hash change, and every mutation appends to `log.md`.
 2. **The messy librarian.** OKF handles LLM-mangled markdown by ordering readers to forgive it. Here the librarian is *checked instead of forgiven*: lint fails on broken links and schema drift, citations are audited deterministically, and derived views are regenerated mechanically so they cannot drift.
 3. **Container, not meaning.** OKF's free-form `type` lets every producer speak a different language. Here `type` is a controlled vocabulary (concept / entity / summary / analysis / navigation / journal) and causal `## Related` verbs are canonicalized, so meaning is machine-traversable.
 

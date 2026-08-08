@@ -52,7 +52,7 @@ A reader who wants only the literal video content runs: `grep -l "source: video"
 - Eu Jin's diagram that the YouTuber says broke down the pattern nicely
 - Any of Karpathy's own writing about the system
 
-If you want the wiki to reflect Karpathy more directly, the natural next step is to fetch the original tweet(s) into `raw/` and run `/wiki-ingest`. That would add a `source: external` lineage that's closer to ground truth.
+If you want the wiki to reflect Karpathy more directly, the natural next step is to fetch the original tweet(s) into `raw/` and run `/ctx-compile`. That would add a `source: external` lineage that's closer to ground truth.
 
 ## The video's own attribution caveats
 
@@ -60,8 +60,8 @@ The YouTuber occasionally distinguishes Karpathy's claims from their own comment
 
 ## What the project authors decided (and is not in the video)
 
-- The five-slash-command split (`/wiki-init`, `/wiki-extract`, `/wiki-ingest`, `/wiki-query`, `/wiki-lint`) — see [[commands]].
-- The split into separate `/wiki-extract` and `/wiki-ingest` (the video treats source-drop and processing as a single act).
+- The five-slash-command split (`/ctx-init`, `/ctx-extract`, `/ctx-compile`, `/ctx-query`, `/ctx-lint`) — see [[commands]].
+- The split into separate `/ctx-extract` and `/ctx-compile` (the video treats source-drop and processing as a single act).
 - Using `AGENTS.md` as the canonical schema name (the video says "like a CLAUDE.md").
 - The `[[wiki-link]]` syntax as a *textual-only* convention without a viewer dependency — see [[implicit-constraints]] #9.
 - The frontmatter spec (the video doesn't show what raw or wiki frontmatter looks like).

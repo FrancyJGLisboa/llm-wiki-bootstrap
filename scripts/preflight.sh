@@ -4,7 +4,7 @@
 # Purpose:
 #   Verify hard requirements are present, report which optional shell tools
 #   the host has, and detect installed AI runtimes. Helps users see whether
-#   /wiki-extract's primary handlers will run first-try or fall back to
+#   /ctx-extract's primary handlers will run first-try or fall back to
 #   LLM-vision / failed-sidecar.
 #
 # Usage:
@@ -85,7 +85,7 @@ if [ -d "$REPO_ROOT/raw" ]; then
   if [ -w "$REPO_ROOT/raw" ]; then ok "raw/ write" "OK"
   else fail "raw/ write" "no write permission on raw/ (fix: chmod u+w \"$REPO_ROOT/raw\")"; fi
 else
-  warn "raw/" "directory missing — run mkdir raw, or /wiki-init in your AI tool"
+  warn "raw/" "directory missing — run mkdir raw, or /ctx-init in your AI tool"
 fi
 
 # wiki/ permissions
@@ -93,7 +93,7 @@ if [ -d "$REPO_ROOT/wiki" ]; then
   if [ -w "$REPO_ROOT/wiki" ]; then ok "wiki/ write" "OK"
   else fail "wiki/ write" "no write permission on wiki/ (fix: chmod u+w \"$REPO_ROOT/wiki\")"; fi
 else
-  warn "wiki/" "directory missing — run mkdir wiki, or /wiki-init in your AI tool"
+  warn "wiki/" "directory missing — run mkdir wiki, or /ctx-init in your AI tool"
 fi
 
 echo
@@ -118,7 +118,7 @@ else warn "yt-dlp" "missing — YouTube URLs will produce extraction_status: fai
 # python interpreter + modules. Windows' python.org build ships `python`, not
 # `python3`; accept either. Python is optional for the core text loop
 # (ingest/query/lint) but required for the synthesis dashboards, the
-# knowledge-graph.json, /wiki-visualize, and the DOCX/XLSX extract fallbacks.
+# knowledge-graph.json, /ctx-visualize, and the DOCX/XLSX extract fallbacks.
 PYBIN="$(command -v python3 || command -v python || true)"
 if [ -n "$PYBIN" ]; then
   ok "python" "present (${PYBIN##*/})"
@@ -133,7 +133,7 @@ if [ -n "$PYBIN" ]; then
     warn "openpyxl" "missing (install: pip install openpyxl)"
   fi
 else
-  warn "python" "missing — synthesis dashboards, knowledge-graph.json, /wiki-visualize, and DOCX/XLSX fallbacks unavailable; the text loop still works (install: ${INSTALL_CMD} python3)"
+  warn "python" "missing — synthesis dashboards, knowledge-graph.json, /ctx-visualize, and DOCX/XLSX fallbacks unavailable; the text loop still works (install: ${INSTALL_CMD} python3)"
 fi
 
 # npx — only needed for the optional MCP server (scripts/mcp-server.sh).

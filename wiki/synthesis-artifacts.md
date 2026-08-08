@@ -24,7 +24,7 @@ The key design choice is that synthesis does **no semantic work**. The LLM alrea
 - `wiki/open-questions-dashboard.md` — every `## Open questions on this page` section, grouped by page. Distinct from the manually-authored [[open-questions]] (system-level gaps); the dashboard links to it.
 - `wiki/tensions.md` — every `> CONTRADICTION FLAGGED` flag across the wiki, newest first.
 - `wiki/decision-timeline.md` — reverse-chronological activity timeline parsed from `log.md` headers. An activity trail, not a record of domain decisions.
-- `wiki/knowledge-graph.json` — the `[[link]]` graph as deterministic JSON, emitted by `scripts/visualize/graph-html.py --json` — the same parser `/wiki-visualize` uses, so the JSON and the rendered graph never diverge.
+- `wiki/knowledge-graph.json` — the `[[link]]` graph as deterministic JSON, emitted by `scripts/visualize/graph-html.py --json` — the same parser `/ctx-visualize` uses, so the JSON and the rendered graph never diverge.
 
 ### When it runs
 
@@ -38,7 +38,7 @@ The three markdown pages are `type: navigation` and carry an `<!-- AUTO-GENERATE
 
 - [[ingest-pipeline]] produces-markers-for — the 7 steps write the open-questions and contradiction markers synthesis aggregates
 - [[operation-ingest]] runs — invokes synthesis as Step 8
-- [[commands]] documented-in — the command surface (including `/wiki-visualize`, whose graph parser synthesis reuses)
+- [[commands]] documented-in — the command surface (including `/ctx-visualize`, whose graph parser synthesis reuses)
 - [[open-questions]] aggregated-by — the manual gaps page the dashboard links to
 
 ## Open questions on this page

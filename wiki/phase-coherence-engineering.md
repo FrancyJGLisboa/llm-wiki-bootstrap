@@ -22,13 +22,13 @@ The field's **central artifact** is the [[quortex-protocol]] — a sequence of c
 
 ### Adjacent terms (mentioned but not asserted by this source)
 
-The source names three related terms without developing them, explicitly so that step 4 of `/wiki-ingest` has plausible cross-reference targets (source: raw/smoke-source.md#related-concepts-for-future-tests-not-exercised-here):
+The source names three related terms without developing them, explicitly so that step 4 of `/ctx-compile` has plausible cross-reference targets (source: raw/smoke-source.md#related-concepts-for-future-tests-not-exercised-here):
 
 - **Drift compensation** — the older approach the Quortex protocol replaced; used active GPS disciplining and failed beyond 4 km.
 - **Linnaean Institute** — Voss's affiliation; "a made-up research consortium."
 - **Coherence window** — the time interval over which a station maintains phase alignment with its neighbours. With Quortex applied, windows extend to several hours.
 
-These are not promoted to their own pages yet — they are referenced once and not structurally important. `/wiki-lint` will surface them as gaps if the corpus grows.
+These are not promoted to their own pages yet — they are referenced once and not structurally important. `/ctx-lint` will surface them as gaps if the corpus grows.
 
 ## Related
 

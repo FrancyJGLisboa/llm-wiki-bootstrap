@@ -39,8 +39,8 @@ Every raw file starts with frontmatter capturing where it came from and when, pl
 
 Two paths to get a source into `raw/`:
 
-1. **`/wiki-extract <source>`** — preferred. URL → markdown via WebFetch; local file → copy; image → vision + sidecar. Frontmatter populated automatically.
-2. **Manual drop** — `cp` or paste the file in. The user must add frontmatter by hand, or rely on `/wiki-ingest` to prompt for missing fields.
+1. **`/ctx-extract <source>`** — preferred. URL → markdown via WebFetch; local file → copy; image → vision + sidecar. Frontmatter populated automatically.
+2. **Manual drop** — `cp` or paste the file in. The user must add frontmatter by hand, or rely on `/ctx-compile` to prompt for missing fields.
 
 ### What the LLM may NOT do here
 
@@ -56,6 +56,6 @@ Two paths to get a source into `raw/`:
 
 ## Open questions on this page
 
-- What happens when a raw source is a *live URL* whose content changes over time? Manual re-fetch + `/wiki-ingest` handles it, but there's no automation.
+- What happens when a raw source is a *live URL* whose content changes over time? Manual re-fetch + `/ctx-compile` handles it, but there's no automation.
 - How big is too big? A 50-page PDF probably fits one raw file; a 50-hour podcast series probably doesn't.
 - Are sub-folders in `raw/` ever useful (e.g., `raw/podcasts/`, `raw/papers/`)? Current default: flat. May revisit.

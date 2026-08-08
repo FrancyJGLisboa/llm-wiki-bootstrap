@@ -28,7 +28,7 @@
 #  A11 real raw/           : the repo's own raw/ is reported, advisory only —
 #                            these sources predate the field
 #  A12 --all mode           : never-ingested sources ARE audited with --all, and
-#                            still skipped without it. /wiki-extract needs --all:
+#                            still skipped without it. /ctx-extract needs --all:
 #                            everything it just wrote has ingested_hash "", so
 #                            default mode would inspect nothing and report clean
 #
@@ -146,7 +146,7 @@ if "$LINT" "$d" >/dev/null 2>&1; then ok "A10 sidecar pair audited once, on the 
 else fail "A10 sidecar pair flagged (the binary half has no frontmatter by design)"; fi
 
 # A12 — `--all` audits never-ingested sources. Without it, an extract-time check
-# inspects NOTHING (everything /wiki-extract just wrote has ingested_hash "")
+# inspects NOTHING (everything /ctx-extract just wrote has ingested_hash "")
 # and reports a clean pass. A check that silently audits nothing is worse than no
 # check: it reads as verification. This is a real observed failure, not a
 # hypothetical — the first T2 run reported "clean" on 7 unaudited files.

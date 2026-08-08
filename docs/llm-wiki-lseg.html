@@ -271,7 +271,7 @@
           <p>A config file (an <span class="mono">AGENTS.md</span>) telling the LLM how the wiki is structured and which workflows to follow.</p>
         </div>
       </div>
-      <p class="reveal lead" style="margin-top:26px; font-size:clamp(15px,1.4vw,18px)">Mental model: the wiki is a <em>codebase</em>, <span class="mono">/wiki-visualize</span> is the <em>viewer</em>, the LLM is the <em>writer</em>, and the schema is the <em>style guide</em>.</p>
+      <p class="reveal lead" style="margin-top:26px; font-size:clamp(15px,1.4vw,18px)">Mental model: the wiki is a <em>codebase</em>, <span class="mono">/ctx-visualize</span> is the <em>viewer</em>, the LLM is the <em>writer</em>, and the schema is the <em>style guide</em>.</p>
     </div>
   </section>
 
@@ -401,7 +401,7 @@
           <div class="ri"><div><b>Plan</b><span>Ask Claude (in plan mode) to design the wiki from the sample sources. It proposes the folders, the <span class="mono">AGENTS.md</span> schema, and a page layout.</span></div></div>
           <div class="ri"><div><b>Build the scaffold</b><span>Approve. It creates <span class="mono">raw/</span>, <span class="mono">wiki/</span>, the schema, an index, and a log.</span></div></div>
           <div class="ri"><div><b>Ingest</b><span>Tell it to ingest the sources. Watch one file create account, person, and competitor pages — all cross-linked.</span></div></div>
-          <div class="ri"><div><b>Visualize</b><span>Run <span class="mono">/wiki-visualize</span> to render the graph of interlinked notes.</span></div></div>
+          <div class="ri"><div><b>Visualize</b><span>Run <span class="mono">/ctx-visualize</span> to render the graph of interlinked notes.</span></div></div>
           <div class="ri"><div><b>Query</b><span>"What are Acme's top objections and how have we handled them?" — answered from the wiki, no re-research.</span></div></div>
           <div class="ri"><div><b>Backfill live</b><span>Ask something it doesn't have. It web-searches and files the answer back as a new page.</span></div></div>
           <div class="ri"><div><b>Lint</b><span>Run the maintenance pass — contradictions, stale claims, orphan pages, gaps to fill.</span></div></div>

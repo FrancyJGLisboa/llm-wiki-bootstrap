@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# scripts/verify-extract.sh — verify that /wiki-extract produced output with the expected shape.
+# scripts/verify-extract.sh — verify that /ctx-extract produced output with the expected shape.
 #
 # Purpose:
-#   After an AI runtime runs `/wiki-extract <source>`, this script checks that
+#   After an AI runtime runs `/ctx-extract <source>`, this script checks that
 #   the resulting `raw/<slug>.<ext>` (or its sidecar `.md`) has the expected
 #   frontmatter shape: required fields present, non-empty values where
 #   applicable, frontmatter delimiters intact, body non-empty.
@@ -30,7 +30,7 @@
 #
 # Example workflow:
 #   # In your AI runtime:
-#   /wiki-extract tests/canary/canary-smoke-test.md
+#   /ctx-extract tests/canary/canary-smoke-test.md
 #
 #   # Then in shell:
 #   ./scripts/verify-extract.sh canary-smoke-test
@@ -71,7 +71,7 @@ ok()   { printf "%s✓%s %s\n" "$GREEN"  "$RESET" "$1"; }
 warn() { printf "%s⚠%s %s\n" "$YELLOW" "$RESET" "$1"; }
 fail() { printf "%s✗%s %s\n" "$RED"    "$RESET" "$1"; failures=$((failures + 1)); }
 
-# Find the produced file. /wiki-extract may produce one of:
+# Find the produced file. /ctx-extract may produce one of:
 #   raw/<slug>.<ext>           — for text sources (no sidecar)
 #   raw/<slug>.<ext>.md        — sidecar for binaries (pdf/docx/xlsx/image/csv)
 # Try common patterns in order of likelihood.
@@ -95,7 +95,7 @@ done
 if [ -z "$target" ]; then
   fail "no file found for slug '${slug}' (looked in raw/${slug}.md and common sidecar patterns)"
   echo
-  printf "%sNot ready.%s Run /wiki-extract <source> in your AI tool first, then re-run this verifier.\n" \
+  printf "%sNot ready.%s Run /ctx-extract <source> in your AI tool first, then re-run this verifier.\n" \
     "$RED" "$RESET"
   exit 1
 fi
@@ -145,13 +145,13 @@ for field in source_url source_type fetched_at extraction_method; do
   check_required "$field"
 done
 
-# ingested_hash should be PRESENT but may be EMPTY (set later by /wiki-ingest).
+# ingested_hash should be PRESENT but may be EMPTY (set later by /ctx-compile).
 if echo "$frontmatter" | grep -qE '^ingested_hash:'; then
   hash_value=$(get_field "ingested_hash")
   if [ -z "$hash_value" ] || [ "$hash_value" = '""' ]; then
-    ok "field 'ingested_hash': present and empty (correct — /wiki-ingest will populate)"
+    ok "field 'ingested_hash': present and empty (correct — /ctx-compile will populate)"
   else
-    warn "field 'ingested_hash': already set to '${hash_value}' — /wiki-extract should leave this empty"
+    warn "field 'ingested_hash': already set to '${hash_value}' — /ctx-extract should leave this empty"
   fi
 else
   fail "field 'ingested_hash': missing (should be present, even if empty)"

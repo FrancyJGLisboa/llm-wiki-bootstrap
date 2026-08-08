@@ -166,15 +166,15 @@ base. You query it with the AI tool you already use — no service, no account.
 1. Unpack this bundle anywhere and open the directory in an agentic AI tool
    (Claude Code: \`cd\` here, run \`claude\`). Run \`./scripts/preflight.sh\`
    to confirm your environment.
-2. Ask your first question: \`/wiki-query "<anything about this topic>"\`
+2. Ask your first question: \`/ctx-query "<anything about this topic>"\`
 3. Every answer cites its sources — raw material ships in \`raw/\`, claims
    link to it. Verify citation integrity (intact + citations resolve +
    every claim-bearing page is sourced) at any time:
 
        ./scripts/verify-bundle.sh
 
-4. The wiki is yours to extend: \`/wiki-extract <your-source>\` then
-   \`/wiki-ingest\`. Your additions never overwrite the purchased provenance.
+4. The wiki is yours to extend: \`/ctx-extract <your-source>\` then
+   \`/ctx-compile\`. Your additions never overwrite the purchased provenance.
 
 Integrity: MANIFEST lists a SHA-256 for every file in this bundle.
 EOF

@@ -147,8 +147,8 @@ fi
 # existing in it. The manifest is a hand-maintained list, so it happily ships a
 # script while leaving the module that script imports behind: four core scripts
 # (citation-audit.py, wiki-to-kg.py, asserted-at-audit.py, wiki-to-okf.py) all
-# import scripts/lib/wikitext.py, which was never listed — so `/wiki-lint` and
-# `/wiki-discover` crashed on import in EVERY fresh install while the file-level
+# import scripts/lib/wikitext.py, which was never listed — so `/ctx-lint` and
+# `/ctx-discover` crashed on import in EVERY fresh install while the file-level
 # manifest check stayed green. Exit codes alone can't catch it either: a Python
 # ModuleNotFoundError exits 1, which is indistinguishable from "the lint found
 # issues". So this asserts a real verdict — bounded exit code AND stderr free of

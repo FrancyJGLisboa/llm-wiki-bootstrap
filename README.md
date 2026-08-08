@@ -4,9 +4,9 @@
 
 **A context compiler for LLMs.** It turns unstructured sources — PDFs, articles, transcripts, spreadsheets, screenshots — into a **structured, provenance-aware, machine-navigable context package** your AI tool can navigate, retrieve from, and reason over. You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian, no vector DB. The pattern is Andrej Karpathy's; the compiler framing is spelled out in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
-![/wiki-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
+![/ctx-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
-> A replay of a real `/wiki-query` against the shipped demo wiki — the answer text is verbatim; terminal timing is illustrative. Reproduce it yourself with the block below (zero setup).
+> A replay of a real `/ctx-query` against the shipped demo wiki — the answer text is verbatim; terminal timing is illustrative. Reproduce it yourself with the block below (zero setup).
 
 ## Quick start — first answer in one block
 
@@ -20,15 +20,15 @@ cd my-wiki && claude          # open Claude Code in the repo
 The repo ships with a working demo wiki, so the **very first command already returns an answer — zero setup:**
 
 ```
-/wiki-query "what is an llm-wiki, and why not just use RAG?"   # answered from the shipped wiki
+/ctx-query "what is an llm-wiki, and why not just use RAG?"   # answered from the shipped wiki
 ```
 
 That's the whole pitch: you just queried a knowledge base nobody hand-wrote. Now make it yours — start building your own:
 
 ```
-/wiki-extract https://example.com/some-article   # pull a source into raw/
-/wiki-ingest                                       # integrate it into the wiki
-/wiki-query "what does that article say about X?"  # ask — answers now include your source
+/ctx-extract https://example.com/some-article   # pull a source into raw/
+/ctx-compile                                       # integrate it into the wiki
+/ctx-query "what does that article say about X?"  # ask — answers now include your source
 ```
 
 That's the whole loop. The wiki that ships here is *meta* — a wiki about the LLM-wiki pattern itself ([`wiki/index.md`](wiki/index.md)), there as a working example. **Make it yours:** keep adding sources alongside it, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
@@ -55,12 +55,12 @@ claude                                     # open Claude Code in the new wiki
 Then, inside Claude Code:
 
 ```
-/wiki-extract https://example.com/some-article     # pull a source into raw/
-/wiki-ingest                                       # integrate every un-ingested raw/ file
-/wiki-query "what does that article say about X?"  # ask
+/ctx-extract https://example.com/some-article     # pull a source into raw/
+/ctx-compile                                       # integrate every un-ingested raw/ file
+/ctx-query "what does that article say about X?"  # ask
 ```
 
-The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/wiki-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
+The skeleton ships the slash commands and an empty `raw/` + a stub `wiki/index.md`, so this works immediately — no `/ctx-init` needed. The installer is manifest-driven (`scripts/installer-skeleton-manifest.txt`) and verified by `scripts/verify-create-llm-wiki.sh`.
 
 **The compiler's output format is a portable context package.** `scripts/package-wiki.sh` builds a versioned, hash-manifested bundle that refuses to ship a wiki failing its own citation gates, and carries its own verifier inside — so a recipient confirms integrity offline, needing nothing from you. That makes a curated wiki a transferable asset; [`docs/SELLING.md`](docs/SELLING.md) covers one thing you can do with that (schema, packaging, the raw-rights rule).
 
@@ -73,7 +73,7 @@ Just trying it out? Skip this. When you want to confirm the whole pipeline works
 ./scripts/smoke-all.sh    # full pipeline (extract → ingest → query) on a fictitious fixture; 13 binary checks
 ```
 
-`preflight.sh` tells you in advance which `/wiki-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but knowing in advance avoids surprises).
+`preflight.sh` tells you in advance which `/ctx-extract` formats your environment supports first-try (PDF needs `pdftotext`; DOCX needs `pandoc`; XLSX needs `xlsx2csv` — each has a fallback, but knowing in advance avoids surprises).
 
 `smoke-all.sh` drives `claude -p` on a small fixture, asks the wiki a question, and confirms the answer recalls the fact and cites the source. First run takes ~30–60s (LLM); subsequent runs sub-second (idempotent via body-hash). All 13 green = your install works end-to-end. Spec at [`.scratch/plug-and-play-curator-smoke/GOAL.md`](.scratch/plug-and-play-curator-smoke/GOAL.md).
 
@@ -85,15 +85,15 @@ The project ships shim files for every major agentic tool. Whatever you use, the
 
 | Tool | Shim file (already in repo) | Invocation | Status |
 |---|---|---|---|
-| Claude Code (modern) | `AGENTS.md` (canonical) | `/wiki-init`, `/wiki-extract`, etc. — real slash commands | **e2e-verified** (driven by `scripts/smoke-all.sh`) |
+| Claude Code (modern) | `AGENTS.md` (canonical) | `/ctx-init`, `/ctx-extract`, etc. — real slash commands | **e2e-verified** (driven by `scripts/smoke-all.sh`) |
 | Claude Code (legacy) | `CLAUDE.md` | same as modern | e2e-verified |
-| Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run wiki-ingest" | Documented, not yet e2e-verified |
+| Cursor | `.cursor/rules/llm-wiki.mdc` | natural language: "run ctx-compile" | Documented, not yet e2e-verified |
 | Cline (VSCode) | `.clinerules` | natural language | Documented, not yet e2e-verified |
 | GitHub Copilot | `.github/copilot-instructions.md` | natural language | Documented, not yet e2e-verified |
 | Gemini CLI | `GEMINI.md` | natural language | Documented, not yet e2e-verified |
 | OpenAI Codex | `AGENTS.md` (canonical — auto-loads) | natural language | Documented, not yet e2e-verified |
 
-The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/commands/wiki-*.md` as the workflow definitions. Tools without first-class slash commands (Cursor, Cline, Copilot, Gemini, Codex) invoke the workflows by natural language; the LLM follows the prompt body of the corresponding command file step-by-step.
+The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/commands/ctx-*.md` as the workflow definitions. Tools without first-class slash commands (Cursor, Cline, Copilot, Gemini, Codex) invoke the workflows by natural language; the LLM follows the prompt body of the corresponding command file step-by-step.
 
 **"Documented, not yet e2e-verified"** means: the shim file ships, the natural-language workflow is specified, and the pattern is expected to work — but the smoke harness only drives Claude Code, so these paths have not been observed end-to-end by the project. If you use one of these tools and something does not work, that is a reportable bug — please open an issue.
 
@@ -101,15 +101,15 @@ The shim files all point at `AGENTS.md` as the canonical schema and at `.claude/
 
 ## The five slash commands
 
-Every command has both a prefixed form (`/wiki-extract`) and a short alias (`/extract`). The short forms are the ones you'll actually type once you're inside a fresh installed repo; the prefixed form is there for global use where namespace collisions matter. Both resolve to the exact same procedure.
+Every command has both a prefixed form (`/ctx-extract`) and a short alias (`/extract`). The short forms are the ones you'll actually type once you're inside a fresh installed repo; the prefixed form is there for global use where namespace collisions matter. Both resolve to the exact same procedure.
 
 | Prefixed | Short | What it does |
 |---|---|---|
-| `/wiki-init` | `/init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
-| `/wiki-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Bulk mode: pass multiple sources space- or newline-separated and they're all extracted in one pass with a consolidated OK/Degraded/Failed summary at the end. Parses binary content to markdown when a handler exists. Also accepts **pasted inline text** via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
-| `/wiki-ingest [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
-| `/wiki-query <question>` | `/query` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. `--no-promote` suppresses promotion. **`--visual [html\|pdf\|png]`** also emits a diagram of the answer, archetype auto-picked from the query (same design system as `/wiki-diagram`). |
-| `/wiki-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
+| `/ctx-init` | `/init` | Scaffold the wiki structure (raw/, wiki/, AGENTS.md, README.md, log.md). Idempotent. Use only if you copied just `.claude/commands/` into an existing project — cloning this repo already gives you the structure. |
+| `/ctx-extract <urls-or-files>` | `/extract` | Pull **one or many** URLs / local files (PDF, DOCX, XLSX, CSV, image, or plain text) into `raw/` with frontmatter. Bulk mode: pass multiple sources space- or newline-separated and they're all extracted in one pass with a consolidated OK/Degraded/Failed summary at the end. Parses binary content to markdown when a handler exists. Also accepts **pasted inline text** via `--text [--title "..."] <content>` (single source, never whitespace-split). Does **not** touch `wiki/`. |
+| `/ctx-compile [<raw-file>]` | `/ingest` | Process `raw/` → `wiki/` using the 7-step pipeline. Detects deltas via hash; idempotent on unchanged sources. |
+| `/ctx-query <question>` | `/query` | Answer from the wiki; web-search and auto-promote new knowledge if there's a gap. `--no-promote` suppresses promotion. **`--visual [html\|pdf\|png]`** also emits a diagram of the answer, archetype auto-picked from the query (same design system as `/ctx-diagram`). |
+| `/ctx-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
 
@@ -119,24 +119,24 @@ Two more commands render or export an **already-built** wiki — they sit outsid
 
 | Prefixed | Short | What it does |
 |---|---|---|
-| `/wiki-visualize [graph\|mermaid\|slides\|serve] [target]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Thin wrapper over `scripts/visualize/*`; checks `python3`/`npx` and prints install hints. |
-| `/wiki-flashcards [dir]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. |
-| `/wiki-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve relevant pages, score the 8 archetypes, you pick, it generates a self-contained HTML poster. Output to `diagrams/`. |
+| `/ctx-visualize [graph\|mermaid\|slides\|serve] [target]` | `/visualize` | Render the wiki as an interactive D3 graph (default), MARP slides, or mermaid images, or serve it locally. Thin wrapper over `scripts/visualize/*`; checks `python3`/`npx` and prints install hints. |
+| `/ctx-flashcards [dir]` | `/flashcards` | Export every `## Flashcards` section to an Anki-importable CSV. Wraps `scripts/wiki-to-anki.sh`. |
+| `/ctx-diagram "<intent>"` | `/diagram` | Synthesize an audience-targeted diagram from an intent — retrieve relevant pages, score the 8 archetypes, you pick, it generates a self-contained HTML poster. Output to `diagrams/`. |
 
-`/wiki-visualize` is **mechanical** (renders the structure that already exists); `/wiki-diagram` is **semantic** (composes a new poster by reasoning over a query). See the diagram contracts in `templates/infographic/`.
+`/ctx-visualize` is **mechanical** (renders the structure that already exists); `/ctx-diagram` is **semantic** (composes a new poster by reasoning over a query). See the diagram contracts in `templates/infographic/`.
 
-**Optional: typed relations.** Inside `## Related`, you can attach a verb to a link — `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark; backward-compat with untyped lines. Verb regex: `[a-z][a-z0-9-]*`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Full spec in [`AGENTS.md`](AGENTS.md) → "Typed relations". An empirical eval (`scripts/eval-multi-hop.sh`) measures whether typed verbs improve `/wiki-query` recall over the same wiki with verbs stripped — see [`.scratch/typed-wikilinks-semantic-viz/GOAL.md`](.scratch/typed-wikilinks-semantic-viz/GOAL.md) for the methodology and current null-result on a Wikipedia-derived fixture.
+**Optional: typed relations.** Inside `## Related`, you can attach a verb to a link — `- [[embrapa]] founded-by 1973 — Brazilian R&D agency`. Pure CommonMark; backward-compat with untyped lines. Verb regex: `[a-z][a-z0-9-]*`. Validate with `./scripts/wiki-lint-typed-relations.sh wiki/`; the graph viz colours and filters edges by verb. Full spec in [`AGENTS.md`](AGENTS.md) → "Typed relations". An empirical eval (`scripts/eval-multi-hop.sh`) measures whether typed verbs improve `/ctx-query` recall over the same wiki with verbs stripped — see [`.scratch/typed-wikilinks-semantic-viz/GOAL.md`](.scratch/typed-wikilinks-semantic-viz/GOAL.md) for the methodology and current null-result on a Wikipedia-derived fixture.
 
 ## Visualize your wiki
 
-From inside your AI tool, just run `/wiki-visualize` (alias `/visualize`) — it dispatches to the right backend and checks the required tool is installed. Or call the scripts directly:
+From inside your AI tool, just run `/ctx-visualize` (alias `/visualize`) — it dispatches to the right backend and checks the required tool is installed. Or call the scripts directly:
 
 ```bash
 ./scripts/visualize/graph.sh wiki/ > graph.html   # interactive D3 force graph (no install)
 ./scripts/visualize/serve.sh                     # browse the wiki + graph locally
 ```
 
-Five opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, `serve.sh` (MARP / mermaid-CLI / local HTTP), and `render.sh` (HTML poster → PDF/PNG, used by `/wiki-query --visual` and `/wiki-diagram --pdf/--png`; graceful fallback to HTML when no browser/Node). All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
+Five opt-in wrappers under `scripts/visualize/`: a Python+D3 graph generator (zero dependencies), plus `slides.sh`, `mermaid.sh`, `serve.sh` (MARP / mermaid-CLI / local HTTP), and `render.sh` (HTML poster → PDF/PNG, used by `/ctx-query --visual` and `/ctx-diagram --pdf/--png`; graceful fallback to HTML when no browser/Node). All open source; no Obsidian required. Heavier alternatives (Quartz, mdBook, SilverBullet) covered in [`docs/VISUALIZATION.md`](docs/VISUALIZATION.md).
 
 ## MCP access (optional)
 
@@ -150,7 +150,7 @@ For client config snippets (Claude Desktop, Claude Code, Cursor) and the recomme
 
 ## Flashcards (optional)
 
-Any wiki page may declare a `## Flashcards` section with `Q: …` / `A: …` bullet pairs. Export to an Anki-importable CSV with `/wiki-flashcards` (alias `/flashcards`) from inside your AI tool, or run the script directly:
+Any wiki page may declare a `## Flashcards` section with `Q: …` / `A: …` bullet pairs. Export to an Anki-importable CSV with `/ctx-flashcards` (alias `/flashcards`) from inside your AI tool, or run the script directly:
 
 ```bash
 ./scripts/wiki-to-anki.sh > anki.csv
@@ -162,29 +162,29 @@ The page slug becomes the Anki tag for that card. See the convention notes in [`
 
 ```
 # add a source
-/wiki-extract https://example.com/some-article
+/ctx-extract https://example.com/some-article
 
 # integrate it
-/wiki-ingest
+/ctx-compile
 
 # commit before the next ingest — git is your rollback (no atomic writes inside the pipeline)
 git add wiki/ log.md raw/
 git commit -m "ingest: <source title>"
 
 # ask the wiki something
-/wiki-query "what does this article say about X?"
+/ctx-query "what does this article say about X?"
 
 # periodically tidy up
-/wiki-lint
+/ctx-lint
 ```
 
-Commit-per-ingest is the recommended discipline: `/wiki-ingest` touches many files (a summary page, several concept pages, the index, `log.md`, raw-file frontmatter) and is not atomic. If a future ingest goes sideways, `git checkout -- wiki/ log.md raw/<file>` is your only clean recovery path. Skip the commit and the rollback also rolls back the good ingest before it.
+Commit-per-ingest is the recommended discipline: `/ctx-compile` touches many files (a summary page, several concept pages, the index, `log.md`, raw-file frontmatter) and is not atomic. If a future ingest goes sideways, `git checkout -- wiki/ log.md raw/<file>` is your only clean recovery path. Skip the commit and the rollback also rolls back the good ingest before it.
 
 ## Make it yours
 
 The shipped wiki content is illustrative — it's a wiki *about* the LLM-wiki pattern, derived from the YouTube transcript in `raw/karpathy-llm-wiki-video-transcript.md`. To start your own:
 
-1. **Keep it as reference and add alongside:** drop your own sources into `raw/`, run `/wiki-ingest`. Your pages live next to the meta-wiki content.
+1. **Keep it as reference and add alongside:** drop your own sources into `raw/`, run `/ctx-compile`. Your pages live next to the meta-wiki content.
 2. **Replace it:** `./scripts/wipe-meta-wiki.sh` (prompts for confirmation; `--yes` to skip). Wipes `wiki/*.md` and `raw/*`, resets `wiki/index.md` and `log.md` to minimal stubs.
 
 The `AGENTS.md` schema is project-agnostic — it works the same whether the wiki is about LLM-wikis, trading, M&A, your team's roadmap, or anything else.
@@ -203,11 +203,11 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── log.md                          # append-only log of ingests, schema bumps, infra changes
 ├── .claude/
 │   └── commands/                   # Claude Code slash commands (canonical + aliases)
-│       ├── wiki-init.md
-│       ├── wiki-extract.md
-│       ├── wiki-ingest.md
-│       ├── wiki-query.md
-│       └── wiki-lint.md
+│       ├── ctx-init.md
+│       ├── ctx-extract.md
+│       ├── ctx-compile.md
+│       ├── ctx-query.md
+│       └── ctx-lint.md
 ├── .cursor/
 │   └── rules/
 │       └── llm-wiki.mdc            # Cursor shim
@@ -223,15 +223,15 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 │   └── pitch-vscode.html           # self-contained pitch page (PT, internal reference)
 ├── scripts/
 │   ├── body-hash.sh                # canonical SHA-256 over a raw file's body
-│   ├── preflight.sh                # environment & dependency check (run before first /wiki-extract)
+│   ├── preflight.sh                # environment & dependency check (run before first /ctx-extract)
 │   ├── wipe-meta-wiki.sh           # remove shipped meta-wiki content for a clean start
-│   ├── verify-extract.sh           # shape-check /wiki-extract output
+│   ├── verify-extract.sh           # shape-check /ctx-extract output
 │   ├── wiki-to-anki.sh             # export ## Flashcards sections to Anki CSV
 │   ├── verify-wiki-to-anki.sh      # shape-check the Anki exporter
 │   ├── mcp-server.sh               # launch @bitbonsai/mcpvault pointed at wiki/
 │   ├── smoke-build.sh              # LLM-driven build phase (drives claude -p)
 │   ├── smoke-check.sh              # pure-shell asserts C1–C5 on the smoke artifacts
-│   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R36<!-- /claim --> regression guards
+│   ├── smoke-all.sh                # umbrella: build + check + <!-- claim:smoke-guard-range -->R1–R38<!-- /claim --> regression guards
 │   ├── r3-obsidian-patterns.txt    # patterns file for the no-Obsidian-syntax check
 │   ├── create-llm-wiki.sh          # manifest-driven installer for a fresh skeleton
 │   ├── verify-create-llm-wiki.sh   # oracle for the installer (I1–I5)
@@ -326,7 +326,7 @@ See `wiki/four-principles.md` for the full account.
 
 V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, and Codex are all in place. Real slash commands exist only for Claude Code; other tools invoke the workflows by natural language using the same prompt bodies.
 
-**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 39 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, and ratchet gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
+**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 41 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, and ratchet gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 

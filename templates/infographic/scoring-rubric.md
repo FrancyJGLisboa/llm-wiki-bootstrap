@@ -1,7 +1,7 @@
 <!--
   Vendored from FrancyJGLisboa/Infographic-extractor (references/scoring_rubric.md).
   Bundled so produced wikis are self-contained. License pending upstream.
-  /wiki-diagram scores every archetype candidate with this rubric.
+  /ctx-diagram scores every archetype candidate with this rubric.
 -->
 # Scoring Rubric
 
@@ -67,4 +67,4 @@ No weighting — all four count equally.
 - **1.5-2.4**: Weak. Probably skip.
 - **<1.5**: Route to `archetype_gaps` or exclude.
 
-`/wiki-diagram` surfaces candidates scoring **≥ 3.5** in the menu it presents the user, lists lower-scoring ones briefly, and reports `archetype_gaps` separately.
+`/ctx-diagram` surfaces candidates scoring **≥ 3.5** in the menu it presents the user, lists lower-scoring ones briefly, and reports `archetype_gaps` separately.

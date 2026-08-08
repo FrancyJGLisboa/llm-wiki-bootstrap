@@ -80,7 +80,7 @@ while IFS= read -r p; do
       cat > "$TARGET/$p" <<'EOF'
 # log.md
 
-Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
+Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top.
 EOF
       copies=$((copies + 1))
       continue
@@ -112,7 +112,7 @@ Next steps:
   cd "$TARGET"
   ./scripts/preflight.sh           # confirm hard requirements + optional tools
   # then open the directory in Claude Code (or another agentic tool) and
-  # run /wiki-extract on your first source.
+  # run /ctx-extract on your first source.
 
 Repo is git-initialized but uncommitted — review the tree, then:
   git add -A && git commit -m "initial commit"

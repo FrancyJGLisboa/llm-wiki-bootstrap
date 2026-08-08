@@ -99,15 +99,15 @@ tags: [navigation]
 
 # Wiki Index
 
-_(empty — run \`/wiki-extract <source>\` then \`/wiki-ingest\` in your AI tool to populate.)_
+_(empty — run \`/ctx-extract <source>\` then \`/ctx-compile\` in your AI tool to populate.)_
 EOF
 
 # Reset log.md to header only
 cat > "$REPO_ROOT/log.md" <<'EOF'
 # log.md
 
-Append-only log of every `/wiki-ingest`, `/wiki-query` promotion, and `/wiki-lint --apply` operation. Newest at top.
+Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top.
 EOF
 
 echo "Wiped. wiki/ and raw/ are empty."
-echo "Next: run /wiki-extract <source> in your AI tool to add your first source."
+echo "Next: run /ctx-extract <source> in your AI tool to add your first source."

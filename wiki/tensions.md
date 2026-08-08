@@ -10,6 +10,6 @@ tags: [synthesis, contradictions, navigation]
 
 # Tensions
 
-Auto-aggregated from every `> CONTRADICTION FLAGGED` flag in the wiki. Each contradiction is flagged on both conflicting pages; resolve by editing the raw source and re-running `/wiki-ingest`, or via `/wiki-lint --apply`.
+Auto-aggregated from every `> CONTRADICTION FLAGGED` flag in the wiki. Each contradiction is flagged on both conflicting pages; resolve by editing the raw source and re-running `/ctx-compile`, or via `/ctx-lint --apply`.
 
 _No contradictions currently flagged._

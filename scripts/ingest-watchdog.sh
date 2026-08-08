@@ -14,14 +14,14 @@
 # at least N seconds, which is exactly the bound wanted.
 #
 # Usage: scripts/ingest-watchdog.sh [--max SECONDS] [--pattern PATTERN]
-# Defaults: --max 1200, --pattern 'claude -p /wiki-ingest'
+# Defaults: --max 1200, --pattern 'claude -p /ctx-compile'
 #
 # Run it in the background beside the driver; Ctrl-C or kill to stop.
 
 set -uo pipefail
 
 MAX=1200
-PATTERN='claude -p /wiki-ingest'
+PATTERN='claude -p /ctx-compile'
 while [ $# -gt 0 ]; do
   case "$1" in
     --max)     MAX="${2:-1200}"; shift 2 ;;

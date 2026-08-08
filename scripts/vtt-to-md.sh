@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # scripts/vtt-to-md.sh — convert a WebVTT/SRT subtitle file to a markdown
-# transcript body for /wiki-extract's YouTube handler.
+# transcript body for /ctx-extract's YouTube handler.
 #
 # YouTube auto-generated captions arrive as "rolling" VTT: every cue repeats
 # the previous line plus inline word-timing tags (<00:00:01.319><c> word</c>).
@@ -15,7 +15,7 @@
 #      seconds — citation anchors matching the style of existing
 #      video-transcript raw files (see raw/karpathy-llm-wiki-video-transcript.md)
 #
-# Output is the transcript BODY only (stdout). The caller (/wiki-extract)
+# Output is the transcript BODY only (stdout). The caller (/ctx-extract)
 # prepends the frontmatter and the `# <title>` heading.
 #
 # Usage:

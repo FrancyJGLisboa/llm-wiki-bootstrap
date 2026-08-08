@@ -13,41 +13,41 @@ tags: [system, commands, spec]
 
 ## Definition / TL;DR
 
-`llm-wiki-bootstrap` exposes five slash commands that together let any user operate an LLM-wiki from any agentic tool. Three implement the video's named operations ([[operation-ingest]], [[operation-query]], [[operation-lint]]); two ([[#wiki-init]], [[#wiki-extract]]) handle bootstrap and source acquisition.
+`llm-wiki-bootstrap` exposes five slash commands that together let any user operate an LLM-wiki from any agentic tool. Three implement the video's named operations ([[operation-ingest]], [[operation-query]], [[operation-lint]]); two ([[#ctx-init]], [[#ctx-extract]]) handle bootstrap and source acquisition.
 
-Three further **output commands** (`/wiki-visualize`, `/wiki-flashcards`, `/wiki-diagram`) sit outside this lifecycle loop — they render, export, or synthesize from an already-built wiki rather than acquiring or maintaining it. They are documented in [Output commands](#output-commands) below.
+Three further **output commands** (`/ctx-visualize`, `/ctx-flashcards`, `/ctx-diagram`) sit outside this lifecycle loop — they render, export, or synthesize from an already-built wiki rather than acquiring or maintaining it. They are documented in [Output commands](#output-commands) below.
 
 ## The five
 
 | Command | Purpose | Maps to |
 |---|---|---|
-| `/wiki-init` | Scaffold an empty wiki structure in the current directory. | (bootstrap) |
-| `/wiki-extract <source>` | Acquire a URL / file / image — or pasted inline text (`--text`) — into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
-| `/wiki-ingest [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]], then regenerate [[synthesis-artifacts]] (Step 8). | [[operation-ingest]] |
-| `/wiki-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. `--visual [html\|pdf\|png]` also emits a diagram of the answer. | [[operation-query]] + [[query-as-write-loop]] |
-| `/wiki-lint` | Maintenance pass: broken links, orphans, contradictions, gaps. | [[operation-lint]] |
+| `/ctx-init` | Scaffold an empty wiki structure in the current directory. | (bootstrap) |
+| `/ctx-extract <source>` | Acquire a URL / file / image — or pasted inline text (`--text`) — into `raw/` with frontmatter. | (acquisition; precedes [[operation-ingest]]) |
+| `/ctx-compile [<raw-file>]` | Process `raw/` → `wiki/` via the 7-step [[ingest-pipeline]], then regenerate [[synthesis-artifacts]] (Step 8). | [[operation-ingest]] |
+| `/ctx-query <question>` | Answer from wiki; web-search and auto-promote when gaps appear. `--visual [html\|pdf\|png]` also emits a diagram of the answer. | [[operation-query]] + [[query-as-write-loop]] |
+| `/ctx-lint` | Maintenance pass: broken links, orphans, contradictions, gaps. | [[operation-lint]] |
 
-Implementations live at `.claude/commands/wiki-*.md`.
+Implementations live at `.claude/commands/ctx-*.md`.
 
 ## Why five (not three)
 
 The video names three operations. We chose to add two more commands because:
 
-- **Bootstrap is its own act.** Creating the directory layout and seeding `AGENTS.md` is a one-time setup that needs a single user-facing affordance. Folding it into `/wiki-ingest` would conflate two unrelated things.
+- **Bootstrap is its own act.** Creating the directory layout and seeding `AGENTS.md` is a one-time setup that needs a single user-facing affordance. Folding it into `/ctx-compile` would conflate two unrelated things.
 - **Acquisition is its own act.** "Fetch a URL and deposit it in `raw/`" is a distinct user intent from "process raw into wiki." Separating them lets the user (a) review the raw before ingesting, (b) re-ingest after manually editing raw, (c) batch ingestion across many fetches.
 
-We considered a sixth — `/wiki-promote` (manually promote a query answer to a page). Cut. Promotion is a default behavior of `/wiki-query`; a separate command would be used too rarely to justify a slot in the budget of five.
+We considered a sixth — `/wiki-promote` (manually promote a query answer to a page). Cut. Promotion is a default behavior of `/ctx-query`; a separate command would be used too rarely to justify a slot in the budget of five.
 
 ## Design constraints we honored
 
 - **Prefix `wiki-`** to avoid colliding with other slash command namespaces in the user's tool.
-- **Idempotent where possible:** `/wiki-init` won't overwrite; `/wiki-ingest` skips unchanged raws via hash.
-- **Reports before applies:** `/wiki-lint` proposes by default, applies with `--apply`. `/wiki-query` auto-promotes by default, suppresses with `--no-promote`.
+- **Idempotent where possible:** `/ctx-init` won't overwrite; `/ctx-compile` skips unchanged raws via hash.
+- **Reports before applies:** `/ctx-lint` proposes by default, applies with `--apply`. `/ctx-query` auto-promotes by default, suppresses with `--no-promote`.
 - **No viewer dependency:** none of the commands assume Obsidian or any specific renderer. See [[implicit-constraints]].
 
 ## Command-by-command spec
 
-### /wiki-init
+### /ctx-init
 
 **Purpose.** Create the project skeleton in the current working directory.
 
@@ -58,7 +58,7 @@ We considered a sixth — `/wiki-promote` (manually promote a query answer to a 
 
 **When used.** When the user copied just `.claude/commands/` into an existing project and wants the wiki structure scaffolded. **Not used** when the user cloned this whole repo — the structure is already there.
 
-### /wiki-extract <source>
+### /ctx-extract <source>
 
 **Purpose.** Acquire content into `raw/` without touching `wiki/`. Parses binary formats to markdown when a handler exists.
 
@@ -79,9 +79,9 @@ Two optional frontmatter fields document the run: `extraction_method` (which han
 
 **Tool policy.** Every shell binary (`pdftotext`, `pandoc`, `xlsx2csv`, `python3`) is **optional with a documented fallback**. A user with none of them installed still gets a functional repo — only the formats whose only handler is the shell tool degrade. See `AGENTS.md` "Supported source formats and extraction" for the matrix.
 
-**Never modifies** `wiki/`. Run `/wiki-ingest` next to integrate.
+**Never modifies** `wiki/`. Run `/ctx-compile` next to integrate.
 
-### /wiki-ingest [<raw-file>]
+### /ctx-compile [<raw-file>]
 
 **Purpose.** Process raw → wiki per [[ingest-pipeline]].
 
@@ -93,7 +93,7 @@ Two optional frontmatter fields document the run: `extraction_method` (which han
 - Append a `log.md` entry summarizing what changed.
 - **Step 8 (once, after all files — even on a no-op run):** regenerate the [[synthesis-artifacts]] via `scripts/synthesize/all.sh`.
 
-### /wiki-query <question>
+### /ctx-query <question>
 
 **Purpose.** Answer the user's question. Compound the wiki when the answer required new knowledge.
 
@@ -107,9 +107,9 @@ Two optional frontmatter fields document the run: `extraction_method` (which han
 
 Flag `--no-promote` skips step 5.
 
-Flag `--visual [html|pdf|png]` (bare ⇒ `html`) adds a step 5.5: score the 8 archetypes in `templates/infographic/` against the synthesized answer, **auto-pick** the top (override with `--archetype <name>`), generate a self-contained HTML poster to `diagrams/query-<slug>.html`, and — for pdf/png — render it via `scripts/visualize/render.sh` (graceful HTML fallback if no browser/Node). The text answer is always produced; the visual is additive. Same archetype system as `/wiki-diagram`, but the diagram is of the *answer* and the archetype is auto-selected.
+Flag `--visual [html|pdf|png]` (bare ⇒ `html`) adds a step 5.5: score the 8 archetypes in `templates/infographic/` against the synthesized answer, **auto-pick** the top (override with `--archetype <name>`), generate a self-contained HTML poster to `diagrams/query-<slug>.html`, and — for pdf/png — render it via `scripts/visualize/render.sh` (graceful HTML fallback if no browser/Node). The text answer is always produced; the visual is additive. Same archetype system as `/ctx-diagram`, but the diagram is of the *answer* and the archetype is auto-selected.
 
-### /wiki-lint
+### /ctx-lint
 
 **Purpose.** Health-check the wiki.
 
@@ -127,11 +127,11 @@ With `--apply`: write proposed fixes (create stub pages for broken links, delete
 
 ## Output commands
 
-Three commands sit **outside** the five-command lifecycle. They do not acquire, process, or maintain — they take an already-built wiki and render, export, or synthesize from it. All three are **read-only on `raw/` and `wiki/`**: they only ever write new output artifacts (`*.html`, `*.png`, `*.svg`, `anki.csv`), so the "LLM owns `wiki/`" rule from [[layer-wiki]] is never violated. Two of them (`/wiki-visualize`, `/wiki-flashcards`) are **thin dispatchers** over existing scripts — they never reimplement the scripts' parsing, the same single-source-of-truth discipline the project applies to `scripts/body-hash.sh`. The third (`/wiki-diagram`) is a **semantic synthesizer**: it reasons over a query, scores diagram archetypes, and generates a poster; its contracts are vendored in `templates/infographic/`.
+Three commands sit **outside** the five-command lifecycle. They do not acquire, process, or maintain — they take an already-built wiki and render, export, or synthesize from it. All three are **read-only on `raw/` and `wiki/`**: they only ever write new output artifacts (`*.html`, `*.png`, `*.svg`, `anki.csv`), so the "LLM owns `wiki/`" rule from [[layer-wiki]] is never violated. Two of them (`/ctx-visualize`, `/ctx-flashcards`) are **thin dispatchers** over existing scripts — they never reimplement the scripts' parsing, the same single-source-of-truth discipline the project applies to `scripts/body-hash.sh`. The third (`/ctx-diagram`) is a **semantic synthesizer**: it reasons over a query, scores diagram archetypes, and generates a poster; its contracts are vendored in `templates/infographic/`.
 
 These commands resolve the former open question about a `/wiki-export` affordance: rather than one monolithic exporter, the output tier is split by artifact type.
 
-### /wiki-visualize [graph|mermaid|slides|serve] [target] [--out <path>]
+### /ctx-visualize [graph|mermaid|slides|serve] [target] [--out <path>]
 
 **Purpose.** Turn the wiki (or a single page) into a visual artifact by dispatching to the right script under `scripts/visualize/`.
 
@@ -142,36 +142,36 @@ These commands resolve the former open question about a `/wiki-export` affordanc
 - **`slides <page.md>`** → `scripts/visualize/slides.sh` — MARP HTML slides from a page. Needs `npx`.
 - **`serve [dir] [port]`** → `scripts/visualize/serve.sh` — foreground `http.server` on `localhost` (default port 8000). Needs `python3`.
 
-Each backing script guards its own dependency and prints an install hint; the command surfaces that hint and stops rather than failing silently. After a `graph` run it offers `/wiki-visualize serve` as the follow-up.
+Each backing script guards its own dependency and prints an install hint; the command surfaces that hint and stops rather than failing silently. After a `graph` run it offers `/ctx-visualize serve` as the follow-up.
 
-### /wiki-flashcards [dir] [--out <path>]
+### /ctx-flashcards [dir] [--out <path>]
 
 **Purpose.** Export spaced-repetition cards declared in `## Flashcards` sections to an Anki-importable CSV.
 
 **Behavior.** Runs `scripts/wiki-to-anki.sh <dir>` (default `wiki`), writing `Front,Back,Tags` to `anki.csv` (or `--out`). Each card's Anki tag is its source page slug, enabling per-topic subdecks. "No flashcards found" exits cleanly with a header-only CSV — it is not an error. The `## Flashcards` convention itself is specified in [[layer-schema]] / `AGENTS.md`.
 
-### /wiki-diagram "<intent>"
+### /ctx-diagram "<intent>"
 
-**Purpose.** Synthesize an audience-targeted diagram from a natural-language intent — the semantic counterpart to `/wiki-visualize`'s mechanical render.
+**Purpose.** Synthesize an audience-targeted diagram from a natural-language intent — the semantic counterpart to `/ctx-visualize`'s mechanical render.
 
 **Behavior.**
 1. Parse the intent + audience from the argument.
-2. Retrieve relevant pages (reusing `/wiki-query` discipline — read `index.md`, then the pages bearing on the intent). These become the diagram's cited `source_pages`.
+2. Retrieve relevant pages (reusing `/ctx-query` discipline — read `index.md`, then the pages bearing on the intent). These become the diagram's cited `source_pages`.
 3. Scan **all 8 archetypes** (`templates/infographic/archetypes.md`) against the retrieved material, scoring each on the 4-dimension rubric (`templates/infographic/scoring-rubric.md`).
 4. Present a candidate menu: surface candidates scoring ≥ 3.5, list lower ones briefly, flag `archetype_gaps` (visualizable content no archetype captured).
 5. The user picks one or more. For each, apply the generation contract (`templates/infographic/generator-contract.md`; scaffold in `example-poster.html`) to produce a **single self-contained HTML poster** (no JavaScript, only Google Fonts) at `diagrams/<slug>.html`, footer citing `source_pages`. Flags `--pdf` / `--png` also render each poster via `scripts/visualize/render.sh`.
 
-**Boundary vs `/wiki-visualize`.** Visualize is mechanical (renders structure that already exists); diagram is semantic (composes a new artifact by reasoning over a query). **Wiki-only by default** — no web search, no promotion; if the wiki can't answer the intent, it hands the user back to `/wiki-query`. Diagrams are interpretive (`source: analysis`-equivalent) — grounded in cited pages, not extracted verbatim.
+**Boundary vs `/ctx-visualize`.** Visualize is mechanical (renders structure that already exists); diagram is semantic (composes a new artifact by reasoning over a query). **Wiki-only by default** — no web search, no promotion; if the wiki can't answer the intent, it hands the user back to `/ctx-query`. Diagrams are interpretive (`source: analysis`-equivalent) — grounded in cited pages, not extracted verbatim.
 
 ## Related
 
 - [[operation-ingest]], [[operation-query]], [[operation-lint]] — the video-named operations these commands implement
-- [[ingest-pipeline]] — what `/wiki-ingest` runs internally
-- [[query-as-write-loop]] — the mechanism inside `/wiki-query`
+- [[ingest-pipeline]] — what `/ctx-compile` runs internally
+- [[query-as-write-loop]] — the mechanism inside `/ctx-query`
 - [[layer-schema]] — `AGENTS.md` references this command set
 - [[implicit-constraints]] — the design constraints these commands honor
 
 ## Open questions on this page
 
-- Should commands accept stdin / chained input (e.g., `/wiki-extract <url> | /wiki-ingest`)? Probably not — slash commands are not Unix pipes.
+- Should commands accept stdin / chained input (e.g., `/ctx-extract <url> | /ctx-compile`)? Probably not — slash commands are not Unix pipes.
 - Versioning the schema: if `AGENTS.md` changes, do existing commands still work? Need a compatibility note.

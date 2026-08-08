@@ -3,7 +3,7 @@ Fixture: CLEAN — must exit 0.
 Three authorised shapes in one diff:
   1. a brand-new raw source (extract) — allowed wholesale
   2. an ingest commitment stamped on an existing source — the only write
-     /wiki-ingest is permitted to make
+     /ctx-compile is permitted to make
   3. a block-style ingested_pages list
 
 Prose above the first `diff --git` is ignored by the parser, which is why this

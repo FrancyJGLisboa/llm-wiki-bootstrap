@@ -154,7 +154,7 @@ while IFS=$'\t' read -r qid question modality expects cite span forbids refusal;
     echo "[$LABEL] $qid — cached, regrading" >&2
   else
     echo "[$LABEL] $qid" >&2
-    ( cd "$WIKI" && claude -p "/wiki-query \"$question\" --no-promote" \
+    ( cd "$WIKI" && claude -p "/ctx-query \"$question\" --no-promote" \
         --output-format stream-json --verbose ) \
       >"$WORK/$qid.stream" 2>"$WORK/$qid.err" </dev/null || true
     python3 "$QUERY_TRACE" "$WORK/$qid.stream" --counts "$WORK/$qid.reads" \

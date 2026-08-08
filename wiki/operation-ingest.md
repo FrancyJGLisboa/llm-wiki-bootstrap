@@ -10,7 +10,7 @@ tags: [operations, ingest]
 
 ## Definition / TL;DR
 
-**Ingest** is the operation that processes a raw source into wiki pages. The user drops a source into `raw/` and runs `/wiki-ingest`; the LLM reads, extracts, summarizes, cross-links, flags contradictions, updates the index, and logs the change.
+**Ingest** is the operation that processes a raw source into wiki pages. The user drops a source into `raw/` and runs `/ctx-compile`; the LLM reads, extracts, summarizes, cross-links, flags contradictions, updates the index, and logs the change.
 
 ## Body
 
@@ -23,7 +23,7 @@ From the video: *"You drop a new source into a raw folder and tell the LLM to pr
 
 ### Step 8 — synthesis artifacts `(analysis: project convention, schema v3)`
 
-After the per-file 7-step loop (and even on a no-op run), ingest runs one mechanical, deterministic pass — `scripts/synthesize/all.sh` — that regenerates four derived views from markers already in the wiki: an open-questions dashboard, a tensions (contradictions) tracker, a decision/activity timeline, and `knowledge-graph.json`. No LLM work, no churn when nothing changed. The same pass also runs after a `/wiki-query` promote and a `/wiki-lint --apply`. See [[synthesis-artifacts]].
+After the per-file 7-step loop (and even on a no-op run), ingest runs one mechanical, deterministic pass — `scripts/synthesize/all.sh` — that regenerates four derived views from markers already in the wiki: an open-questions dashboard, a tensions (contradictions) tracker, a decision/activity timeline, and `knowledge-graph.json`. No LLM work, no churn when nothing changed. The same pass also runs after a `/ctx-query` promote and a `/ctx-lint --apply`. See [[synthesis-artifacts]].
 
 ### Compounding effect
 
@@ -33,7 +33,7 @@ For the full step-by-step, see [[ingest-pipeline]].
 
 ### Delta detection `(analysis: project convention)`
 
-`/wiki-ingest` runs over all raw files by default; it skips any whose body hash matches `ingested_hash` in their frontmatter. To re-ingest a single file, edit it or pass it explicitly: `/wiki-ingest raw/foo.md`.
+`/ctx-compile` runs over all raw files by default; it skips any whose body hash matches `ingested_hash` in their frontmatter. To re-ingest a single file, edit it or pass it explicitly: `/ctx-compile raw/foo.md`.
 
 ### Relation to other operations
 
@@ -43,9 +43,9 @@ For the full step-by-step, see [[ingest-pipeline]].
 
 ## Verification status (as of 2026-06-08)
 
-**Status note** `(source: analysis)`: the 7-step pipeline is **demonstrated end-to-end and CI-gated**. `scripts/smoke-build.sh` drives a real LLM session — `claude -p "/wiki-ingest raw/smoke-source.md"` — and `scripts/smoke-all.sh` runs it on every push; the C1 check confirms a follow-up `/wiki-query` against the result reaches the right answer. `scripts/eval-onboarding.sh` independently drives a fresh newcomer through extract→ingest→query. So `/wiki-ingest` is now **observed working**, not just specified.
+**Status note** `(source: analysis)`: the 7-step pipeline is **demonstrated end-to-end and CI-gated**. `scripts/smoke-build.sh` drives a real LLM session — `claude -p "/ctx-compile raw/smoke-source.md"` — and `scripts/smoke-all.sh` runs it on every push; the C1 check confirms a follow-up `/ctx-query` against the result reaches the right answer. `scripts/eval-onboarding.sh` independently drives a fresh newcomer through extract→ingest→query. So `/ctx-compile` is now **observed working**, not just specified.
 
-Honest nuance: the original meta-wiki pages (the karpathy-derived set) were hand-bootstrapped by direct file writes during the design conversation, with the LLM playing /wiki-ingest by hand — those specific pages were not machine-ingested. The smoke-fixture pages (`smoke-source-summary.md` and friends) **were** produced by the real command, which is what makes them the proof.
+Honest nuance: the original meta-wiki pages (the karpathy-derived set) were hand-bootstrapped by direct file writes during the design conversation, with the LLM playing /ctx-compile by hand — those specific pages were not machine-ingested. The smoke-fixture pages (`smoke-source-summary.md` and friends) **were** produced by the real command, which is what makes them the proof.
 
 What the smoke test does **not** granularly assert (residual unknowns):
 

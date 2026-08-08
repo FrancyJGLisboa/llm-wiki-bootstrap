@@ -16,7 +16,7 @@
 # Batching amortises the fixed tax across K sources and keeps the wiki's page
 # list warm in one context instead of re-reading it K times from cold.
 #
-# Batching is the ONLY change: same /wiki-ingest command, same faithfulness gate
+# Batching is the ONLY change: same /ctx-compile command, same faithfulness gate
 # run by the harness afterward, same commitment via body-hash.sh. If throughput
 # improves, F6's recommendation is demonstrated rather than asserted. If it does
 # not, that is equally a result and the report says so.
@@ -84,7 +84,7 @@ while :; do
   for f in "${todo[@]}"; do list="$list
 - raw/$(basename "$f")"; done
 
-  prompt="/wiki-ingest
+  prompt="/ctx-compile
 
 Ingest these ${#todo[@]} sources in THIS single turn, one after another:$list
 
@@ -108,7 +108,7 @@ page authoring for every listed source over bookkeeping."
   while kill -0 "$cpid" 2>/dev/null && [ "$(date +%s)" -lt "$deadline" ]; do sleep 10; done
   if kill -0 "$cpid" 2>/dev/null; then
     kill -TERM "$cpid" 2>/dev/null; sleep 3; kill -KILL "$cpid" 2>/dev/null
-    pkill -f 'claude -p /wiki-ingest' 2>/dev/null
+    pkill -f 'claude -p /ctx-compile' 2>/dev/null
     status=TIMEOUT
   elif wait "$cpid"; then status=ok; else status=FAIL; fi
   elapsed=$(( $(date +%s) - start ))

@@ -1,12 +1,12 @@
 # contradiction-fixture
 
-Two mirror-flagged wiki pages that exercise the `/wiki-ingest` → `/wiki-lint`
+Two mirror-flagged wiki pages that exercise the `/ctx-compile` → `/ctx-lint`
 **contradiction round-trip** (report finding #25 — the path was specified but
 never demonstrated).
 
-- `/wiki-ingest` step 5 *produces* the flag: a blockquote line containing the
+- `/ctx-compile` step 5 *produces* the flag: a blockquote line containing the
   literal token `CONTRADICTION FLAGGED` plus a `[[other-page]]` back-reference.
-- `/wiki-lint` check #3 *consumes* it: `grep -rn 'CONTRADICTION FLAGGED' wiki/`.
+- `/ctx-lint` check #3 *consumes* it: `grep -rn 'CONTRADICTION FLAGGED' wiki/`.
 
 Each page flags the other, so the contradiction is visible from both sides.
 

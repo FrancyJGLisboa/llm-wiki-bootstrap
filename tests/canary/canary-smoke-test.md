@@ -1,10 +1,10 @@
 # Canary Smoke Test
 
-This file is a tiny plain-markdown source used to verify that `/wiki-extract` works end-to-end in your AI tool. It exists purely so the *first* invocation of `/wiki-extract` you run in this repo is a known-good case with a known-good expected output, instead of being whatever real source you happened to bring.
+This file is a tiny plain-markdown source used to verify that `/ctx-extract` works end-to-end in your AI tool. It exists purely so the *first* invocation of `/ctx-extract` you run in this repo is a known-good case with a known-good expected output, instead of being whatever real source you happened to bring.
 
 ## What this exercises
 
-When you run `/wiki-extract tests/canary/canary-smoke-test.md` in your AI runtime, the agent should:
+When you run `/ctx-extract tests/canary/canary-smoke-test.md` in your AI runtime, the agent should:
 
 1. Detect this as **plain text** (`.md` extension).
 2. Copy it to `raw/canary-smoke-test.md`.
@@ -15,11 +15,11 @@ It should **NOT**:
 
 - Modify anything under `wiki/`.
 - Write to `log.md`.
-- Set `ingested_hash` to a non-empty value (that's `/wiki-ingest`'s job, not `/wiki-extract`'s).
+- Set `ingested_hash` to a non-empty value (that's `/ctx-compile`'s job, not `/ctx-extract`'s).
 
 ## How to verify
 
-After running `/wiki-extract` in your AI tool, from a shell:
+After running `/ctx-extract` in your AI tool, from a shell:
 
 ```bash
 ./scripts/verify-extract.sh canary-smoke-test

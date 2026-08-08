@@ -11,7 +11,7 @@
 # calling it. All four demanded a literal opening double-quote. `ingested_hash:
 # d1d2986…` is valid YAML and is what four of this repo's own raw sources carry,
 # so the lint reported "carries no ingested_hash" for sources whose hash was
-# present, correct, and current — and advised re-running /wiki-ingest, which
+# present, correct, and current — and advised re-running /ctx-compile, which
 # would have spent real model calls rewriting pages to fix a regex.
 #
 # The diagnosis was wrong in a second, worse way: the message also claimed

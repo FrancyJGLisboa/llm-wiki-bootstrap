@@ -26,15 +26,15 @@ Concrete unknowns:
 - Does the `xlsx2csv` → markdown-table pipeline produce something the LLM can actually reason over, or does the loss of cell formatting break things?
 - For CSVs with >100 rows, is "first 20 + truncated" the right cutoff? Or should we sample (header + 20 random) for better representativeness?
 - For PDF-LLM-vision fallback: does the agent actually engage vision on a PDF when `pdftotext` returns near-empty? How does it know "near-empty" — character count threshold?
-- Does the `extraction_status: failed` sidecar pattern actually surface usefully to `/wiki-ingest` later, or does ingest treat it the same as a successful extraction and pollute the wiki?
+- Does the `extraction_status: failed` sidecar pattern actually surface usefully to `/ctx-compile` later, or does ingest treat it the same as a successful extraction and pollute the wiki?
 
-First real `/wiki-extract` on each format is the smoke test. Until then, the matrix in `AGENTS.md` describes what the system *intends to do*, not what it has been observed doing.
+First real `/ctx-extract` on each format is the smoke test. Until then, the matrix in `AGENTS.md` describes what the system *intends to do*, not what it has been observed doing.
 
 **Partial status (2026-05-25):** the markdown and CSV paths are now covered by canary fixtures (`tests/canary/canary-smoke-test.md`, `tests/canary/canary-csv.csv`) and shape-checked by `scripts/verify-extract.sh`. DOCX, XLSX, and the PDF-LLM-vision fallback remain undemonstrated.
 
 ### The most important open question: do the 7 steps actually happen?
 
-**Resolved 2026-05-26.** The end-to-end smoke at `scripts/smoke-all.sh` (driven by `.scratch/plug-and-play-curator-smoke/GOAL.md`) drove `/wiki-ingest` on a fictitious fixture (`tests/smoke/smoke-source.md` — "phase coherence engineering" / Quortex protocol / Dr. Alma Voss) on first try, and produced: 4 new wiki pages (`smoke-source-summary`, `quortex-protocol`, `dr-alma-voss`, `phase-coherence-engineering`), an update to `wiki/index.md` cross-referencing the new pages, a fully-populated `ingested_*` frontmatter block on `raw/smoke-source.md`, and a structured `log.md` entry covering all 4 sub-actions (Processed / Created / Updated / Contradictions flagged). A subsequent `/wiki-query` answered with the literal "47 phase rotations" anchor AND a citation back to `raw/smoke-source.md`. All 9 smoke checks passed (5 behavioral + 4 regression guards). The original concrete unknowns are now answered observationally:
+**Resolved 2026-05-26.** The end-to-end smoke at `scripts/smoke-all.sh` (driven by `.scratch/plug-and-play-curator-smoke/GOAL.md`) drove `/ctx-compile` on a fictitious fixture (`tests/smoke/smoke-source.md` — "phase coherence engineering" / Quortex protocol / Dr. Alma Voss) on first try, and produced: 4 new wiki pages (`smoke-source-summary`, `quortex-protocol`, `dr-alma-voss`, `phase-coherence-engineering`), an update to `wiki/index.md` cross-referencing the new pages, a fully-populated `ingested_*` frontmatter block on `raw/smoke-source.md`, and a structured `log.md` entry covering all 4 sub-actions (Processed / Created / Updated / Contradictions flagged). A subsequent `/ctx-query` answered with the literal "47 phase rotations" anchor AND a citation back to `raw/smoke-source.md`. All 9 smoke checks passed (5 behavioral + 4 regression guards). The original concrete unknowns are now answered observationally:
 
 - *Will the LLM perform all 7 steps?* Yes on this fixture. Steps 3 (summary page) and 5 (contradictions flagged) both happened; the log entry includes the "Contradictions flagged: none" line correctly.
 - *Step 4 blast radius?* On this small (51-line) fixture: 4 created + 1 updated. Below the video's 10-15 target, consistent with the fixture being shorter than the video transcripts.
@@ -43,7 +43,7 @@ First real `/wiki-extract` on each format is the smoke test. Until then, the mat
 
 Below is the original framing, kept for context.
 
-Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/wiki-ingest.md`. Demonstrated nowhere. `/wiki-ingest` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.
+Specified in three places — the source slide, [[ingest-pipeline]], and the prompt body of `.claude/commands/ctx-compile.md`. Demonstrated nowhere. `/ctx-compile` has never been invoked in this project; the initial wiki was hand-written during the design conversation, simulating the pipeline.
 
 Concrete unknowns:
 
@@ -52,14 +52,14 @@ Concrete unknowns:
 - For step 5, what counts as a contradiction subtle enough to flag? Naive string-mismatch is too narrow; deep semantic comparison may exceed the LLM's reliability.
 - Token / time budget per ingest call?
 
-The smoke test is the first invocation of `/wiki-ingest <new-source>`. Until then, the operation pages describe an intention, not a measurement. See [[operation-ingest]]'s "Verification status" section.
+The smoke test is the first invocation of `/ctx-compile <new-source>`. Until then, the operation pages describe an intention, not a measurement. See [[operation-ingest]]'s "Verification status" section.
 
 ### Concurrency
 
 The video mentions the YouTuber's Claude Code running *two parallel ingest agents* during the initial ingestion of 8 transcripts. `(source: raw/karpathy-llm-wiki-video-transcript.md#10:08)` But it doesn't say:
 
 - What happens if both agents try to update the same wiki page simultaneously?
-- Should `/wiki-ingest` run sources serially or in parallel by default?
+- Should `/ctx-compile` run sources serially or in parallel by default?
 - Is there a locking mechanism, or are conflicts resolved post-hoc by [[operation-lint]]?
 
 Likely tentative answer: serial by default; future versions can opt into parallelism with a coarse lock per page or a merge step.
@@ -76,7 +76,7 @@ The video says step 5 of [[ingest-pipeline]] flags contradictions. But it doesn'
 
 [[operation-lint]] is described but not scheduled. Questions:
 
-- Should `/wiki-lint` run automatically after every `/wiki-ingest`?
+- Should `/ctx-lint` run automatically after every `/ctx-compile`?
 - Periodically (cron-style)?
 - Only on user demand?
 - On wiki size thresholds (e.g., every 50 new pages)?
@@ -86,8 +86,8 @@ The video says step 5 of [[ingest-pipeline]] flags contradictions. But it doesn'
 The video doesn't discuss version control. Questions:
 
 - Is the wiki under git by default? (Probably yes — it's just markdown.)
-- Does `/wiki-ingest` commit after each ingest? Or batch?
-- How are bad ingests rolled back? `git reset` or `/wiki-lint --rollback`?
+- Does `/ctx-compile` commit after each ingest? Or batch?
+- How are bad ingests rolled back? `git reset` or `/ctx-lint --rollback`?
 
 ### Multi-user
 
@@ -161,7 +161,7 @@ None of this is described in the video. It's a promising path but entirely outsi
 
 ### MCP / API surface
 
-**Resolved 2026-05-26.** `scripts/mcp-server.sh` launches [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault) pointed at `wiki/`, exposing read, BM25 search, and (optionally) write tools to any MCP-aware client (Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc.). The integration is opt-in and additive — no change to the three-layer model or the five slash commands. Recommended posture is read-only via MCP; writes still flow through `/wiki-ingest` and `/wiki-query` so `log.md` stays accurate. Setup details in [`docs/MCP.md`](../docs/MCP.md). The remaining sub-question is whether out-of-band MCP writes that touch `ingested_*` fields will break ingest idempotence in practice — to be observed once real users start writing through MCP.
+**Resolved 2026-05-26.** `scripts/mcp-server.sh` launches [`@bitbonsai/mcpvault`](https://github.com/bitbonsai/mcpvault) pointed at `wiki/`, exposing read, BM25 search, and (optionally) write tools to any MCP-aware client (Claude Desktop, Claude Code, Cursor, ChatGPT Desktop, etc.). The integration is opt-in and additive — no change to the three-layer model or the five slash commands. Recommended posture is read-only via MCP; writes still flow through `/ctx-compile` and `/ctx-query` so `log.md` stays accurate. Setup details in [`docs/MCP.md`](../docs/MCP.md). The remaining sub-question is whether out-of-band MCP writes that touch `ingested_*` fields will break ingest idempotence in practice — to be observed once real users start writing through MCP.
 
 ## Use-of-this-page
 
