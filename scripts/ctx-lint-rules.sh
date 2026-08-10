@@ -104,6 +104,7 @@ count_list() {
 }
 
 pages=0
+ungated_world=0
 while IFS= read -r f; do
   [ -f "$f" ] || continue
   pages=$((pages + 1))
@@ -127,20 +128,56 @@ while IFS= read -r f; do
       # have is the reason, or "we discarded it" is indistinguishable from
       # "we forgot about it".
       [ -n "$(fm "$f" discard_reason)" ] || gate_violation "$f:1" \
-"R-01 discarded rule has no \`discard_reason\`. Recording that nothing can check
+"R-00 discarded rule has no \`discard_reason\`. Recording that nothing can check
        this rule is a finding; dropping it without the reason looks identical to
        never having noticed it."
       continue ;;
   esac
 
-  # ── R-01 — the standing rule ──
+  # ── R-01 — the standing rule, scoped to rules THIS PACKAGE can actually check ──
+  #
+  # A deterministic rule has a checkable SHAPE. That is not the same as having a
+  # checkable SUBJECT here, and `rule_domain` is the difference:
+  #
+  #   artifact  constrains something in this repository — a page, a frontmatter
+  #             field, a build output. R-01 applies: a script can settle it, so
+  #             a script must.
+  #   world     extracted from a source, constrains external reality — a
+  #             shipment, a tax filing, a fuel blend. Knowledge with a normative
+  #             shape, not a control this package can operate.
+  #
+  # WHY THE SPLIT EXISTS. Compiling 279 GAIN reports harvested 540 deterministic
+  # rules, every one of the second kind: "a soybean meal import into Indonesia
+  # must hold a permit issued under MOT 11/2026". Perfectly deterministic and
+  # completely uncheckable here, because this package contains no consignments.
+  # All 540 defaulted to scope_include ["wiki/**.md"] — the compiler had no
+  # better answer, and an identical placeholder on every rule is the tell.
+  #
+  # Demanding gates for those is a category error with a real cost: the count
+  # grew with every batch of a 2,412-source ingest, so the ratchet went red every
+  # few minutes and got bumped three times in one session. A number bumped on a
+  # schedule is a number nobody reads. docs/deterministic-gates.md §1 is about
+  # rules the maintainers must obey; it assumed the output's rules are about the
+  # output, which holds for a repo and fails for a document corpus.
+  #
+  # World rules are not excused — they are counted and printed below. And if one
+  # declares a gate anyway, R-02..R-07 still apply in full: a gate that exists
+  # must work, whatever domain its rule describes.
+  domain="$(fm "$f" rule_domain)"
+  [ -n "$domain" ] || domain="world"   # harvested from a source unless declared
+
   if [ "$class" = "deterministic" ] && { [ -z "$gate" ] || [ "$gate" = "none" ]; }; then
-    gate_violation "$f:1" \
-"R-01 $rule_id is classified deterministic but has \`gate: none\` — it is enforced
-       by prose alone. A script can settle it, so a script must:
+    if [ "$domain" = "artifact" ]; then
+      gate_violation "$f:1" \
+"R-01 $rule_id constrains this package (\`rule_domain: artifact\`), is classified
+       deterministic, and has \`gate: none\` — enforced by prose alone. A script
+       can settle it, so a script must:
          /ctx-gate $rule_id
        (Not auto-fixable: a gate generated without the five-way mutation proof
        is the never-fires gate this whole discipline exists to prevent.)"
+    else
+      ungated_world=$((ungated_world + 1))
+    fi
     continue
   fi
 
@@ -180,4 +217,12 @@ if [ "$pages" -eq 0 ]; then
   gate_verdict "clean — $RULES_DIR/ exists but holds no rule pages yet."
 fi
 
-gate_verdict "clean — $pages rule page(s); every deterministic rule is gated, every gate exists and can fail."
+# World rules are reported, never hidden. If this number is large and nobody
+# ever looks at it, that is a finding about the corpus — but a finding made
+# visible, not a violation ratcheted on a schedule.
+if [ "$ungated_world" -gt 0 ] && ! gate_count_mode; then
+  printf '%s: %d deterministic rule(s) describe the world rather than this package (rule_domain: world) and carry no gate — catalogued and citable, not enforceable here.\n' \
+    "$GATE_LABEL" "$ungated_world"
+fi
+
+gate_verdict "clean — $pages rule page(s); every artifact rule is gated, every gate exists and can fail."

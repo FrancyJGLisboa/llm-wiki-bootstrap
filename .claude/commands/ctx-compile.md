@@ -27,7 +27,7 @@ Inlined so you don't have to cross-reference `AGENTS.md`. Pure CommonMark — no
 ---
 title: <Title Case>
 type: concept | entity | summary | analysis | navigation
-source: video | analysis | external | mixed
+source: document | video | analysis | external | mixed   # `document` for a raw/ corpus; `external` means web-fetched
 updated: YYYY-MM-DD
 tags: [...]
 ---
@@ -159,6 +159,23 @@ Non-negotiable on every rule page:
 - **`gate: none`.** Always, at compile time, for every class. Filing the rule
   and building its gate are separate acts by design; `/ctx-gate <RULE-ID>` does
   the second one, behind the mutation proof.
+- **`rule_domain`** — write it explicitly, do not lean on the default:
+  - `world` for anything harvested from a source that constrains external
+    reality (a shipment, a filing, a blend level, a tariff window). For a
+    document corpus this is almost always the answer, because a rule extracted
+    from a report is a rule about the world the report describes.
+  - `artifact` only when the rule constrains *this package* — a page, a
+    frontmatter field, a build output — so a script could be run against
+    something actually present. R-01 demands a gate for these and only these.
+
+  Guessing `artifact` is the expensive direction, and quiet: it makes the
+  rule-integrity count grow with every source ingested, so the ratchet reddens on
+  a schedule and gets bumped without being read. If you cannot name what in this
+  repository a gate would open and inspect, the answer is `world`.
+- **`scope_include`** — meaningful only for `artifact` rules. Do not emit a
+  placeholder like `["wiki/**.md"]` on a world rule to fill the field: a scope
+  naming files the rule has nothing to say about is worse than an absent one,
+  because it reads as a considered decision.
 - **A real citation** — `(source: raw/<file>#<anchor>)` anchored at the passage
   that states the rule, not at the document generally. This is the whole basis
   for a gate's authority; without it a gate enforces something nobody can trace.

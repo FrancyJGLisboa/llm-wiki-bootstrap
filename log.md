@@ -2,6 +2,64 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-10 — schema v6: the schema can now describe a document corpus honestly
+
+**Rationale.** v5 could compile a corpus of reports; it could not label one
+truthfully. Both gaps were found by building a compiler over 2,413 USDA FAS GAIN
+attaché reports, and both bite on day one of any document corpus.
+
+**(a) `source: document`.** The page enum was `video | analysis | external |
+mixed` — no value for a document. Compiling GAIN, the agent reasoned correctly
+that a USDA report is neither a video nor its own analysis and wrote `external`
+on every page: the value reserved for material fetched off the open web, and in a
+closed-corpus deployment the value that means *contaminated*. 43 pages, each
+citing its source perfectly, were indistinguishable from 43 pages pulled off a
+search engine. The mislabel is invisible — the page is right, the citation
+resolves, only the frontmatter lies.
+
+**(b) `rule_domain: artifact | world`, and R-01 is now scoped to `artifact`.**
+`rule_class` asks whether a rule has a checkable SHAPE. It does not ask whether
+the rule has a checkable SUBJECT here. Compiling 279 reports harvested 540
+deterministic rules, every one of the second kind:
+
+    "A soybean meal import into Indonesia must hold a permit issued under the
+     MOT 11/2026 and MOA 11/2026 licensing procedures."
+
+Perfectly deterministic. Completely uncheckable in that package, which contains
+no consignments — a gate for it would have nothing to open. All 540 defaulted to
+`scope_include: ["wiki/**.md"]`; the same placeholder on every single rule is the
+tell that the field was meaningless for them.
+
+The cost was not theoretical. R-01's count then grows with every source ingested,
+so the ratchet reddens on a schedule and gets bumped without being read — three
+times in one session before the category error underneath was spotted. §1 of
+docs/deterministic-gates.md is about rules the MAINTAINERS must obey; it quietly
+assumed the output's rules are about the output. True for a repository, false for
+a document corpus.
+
+World rules are not excused: `/ctx-lint` counts and prints them every run, they
+stay catalogued and citable, and one that declares a gate anyway still faces
+R-02..R-07 in full.
+
+**A dead fixture, found by making this change.** With `world` as the fallback the
+dirty fixture's prose-only rule stopped firing R-01 — and the pair still went red,
+so it looked fine. Two different checks were both labelled R-01: the real one and
+the discarded-rule/`discard_reason` check. The label collision hid the loss. The
+discarded check is now **R-00**, the prose-only fixture declares
+`rule_domain: artifact` (which is what it tests), and the clean tree gained a
+NEGATIVE CONTROL — an ungated world rule that must stay green, so the exemption is
+proven to work rather than merely to exist.
+
+**Migration for an older client: none required.** `rule_domain` defaults to
+`world`, so an older `/ctx-compile` that never writes the field produces exactly
+the new behaviour. `source: document` is opt-in and nothing validates the enum
+mechanically. The one visible change is R-01 no longer firing on harvested rules —
+deliberately.
+
+**Files.** `AGENTS.md` (enum, `rule_domain` section, version), `scripts/ctx-lint-rules.sh`,
+`.claude/commands/ctx-compile.md`, `tests/gates/ctx-lint-rules/{clean,dirty}/**`,
+`scripts/smoke-all.sh` (R4's version pin).
+
 ## 2026-08-08 — three enforcement gaps closed: the standing rule applied to this repo
 
 **Rationale.** `docs/deterministic-gates.md` §1 says no deterministic rule stays
