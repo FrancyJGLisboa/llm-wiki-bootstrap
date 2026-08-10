@@ -46,6 +46,11 @@ scripts/auto-commit-wiki.sh
 scripts/lib/platform-hint.sh
 scripts/lib/commitment.sh
 scripts/lib/ctx-root.sh
+scripts/stage-corpus.py
+scripts/new-corpus.sh
+scripts/gate-adapter-contract.sh
+templates/corpus/transport.py.tmpl
+templates/corpus/watchd.sh.tmpl
 scripts/lib/eval-common.sh
 scripts/lib/wikitext.py
 scripts/preflight.sh

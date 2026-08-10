@@ -1,283 +1,379 @@
 #!/usr/bin/env python3
-"""scripts/stage-corpus.py — stage a YouTube-transcript folder into raw/ with no LLM.
+"""scripts/stage-corpus.py — stage a harvested archive into raw/, with no LLM.
+
+CORPUS-AGNOSTIC. Everything this needs to know about a particular source lives
+in corpus.json; this file contains only the logic, which is the same for every
+document corpus. It replaces the GAIN-specific stage-gain.py, and the reason it
+could is worth recording: an audit of that file found every corpus-specific line
+was a field NAME or a format STRING. Not one was corpus-specific LOGIC. So the
+names moved to configuration and the logic stayed here.
+
+The practical consequence is the point of the exercise: pointing a context
+compiler at a new source costs a fetch client and a corpus.json, not a second
+copy of this file that will drift from the first.
 
 For plain-markdown sources `/ctx-extract` is pure passthrough (AGENTS.md), so
-driving an LLM turn per file buys nothing but latency and spend. This does the
-same work deterministically, and adds the two things a transcript needs before
-it can be cited:
+driving an LLM turn per file buys nothing but latency and spend. At 2,413 sources
+that is the difference between a deterministic minute and days of metered
+inference before the real ingest starts.
 
-  1. `## Source metadata` — a heading whose section contains the `**Uploaded:**`
-     date, so `asserted_at` has a resolving `asserted_at_source` anchor. Without
-     valid time an as-of question has nothing to resolve against.
-  2. `## (M:SS)` section headings mirroring each inline `**[MM:SS]**` marker.
+WHAT IT ADDS over a plain copy:
 
-(2) exists because timestamp-anchor resolution is padding-sensitive:
-citation-audit.py matches the anchor as a whole token bounded by
-`(?<![\\d:])...(?![\\d:])`, so against a body that writes `[04:41]` the anchor
-`#04:41` resolves and `#4:41` does NOT — while the meta-wiki's own convention is
-the unpadded `#0:51`. An author following house style would silently break every
-citation into a sub-10-minute timestamp. Emitting the heading UNPADDED alongside
-the padded inline marker makes both forms resolve, so the measurement reflects
-retrieval quality rather than a formatting accident. The heading also gives
-citation-audit's HEADING_RE branch a tight, semantically-bounded passage
-(heading → next heading) instead of a fixed 8-line window.
+  1. The compiler's raw frontmatter spec, mapped from the source's own. The
+     mapping that matters is the TIME AXES — `time.valid` -> asserted_at (what
+     the document speaks for) and `time.transaction` -> fetched_at (when it was
+     pulled). Conflating them is exactly what wiki-lint-asserted-at.sh catches,
+     and it is silent when it goes wrong: every point-in-time question resolves
+     against the acquisition date and answers confidently.
 
-Sampling is seeded and stratified by upload year-quarter, so a run is
-reproducible from the manifest: same seed + same source dir => same files.
+  2. A metadata section, so `asserted_at_source` has a short stable anchor that
+     resolves. Its first row carries the valid-time date, because the audit
+     resolves the anchor and then requires the date to be IN that passage.
+
+  3. Section trees for long sources, via the deterministic segmenter.
+
+IDEMPOTENCE is what makes this the steady-state sync tool. Re-running is a no-op
+on everything already staged, and it NEVER touches a source the compiler has
+already ingested — see stage_one(). That rule was learned the hard way: an
+earlier version re-rendered committed files and, because its flat frontmatter
+reader cannot represent a block-style YAML list, silently emptied
+`ingested_pages` on 261 of them.
+
+READ-ONLY on the archive. The harvester owns those files and
+scripts/gate-archive-immutable.sh keeps them append-only.
 
 Usage:
-  scripts/stage-corpus.py <src-dir> <wiki-root> [--n N | --all] [--seed S]
-                          [--reserved-months K] [--manifest FILE] [--dry-run]
+  scripts/stage-corpus.py <archive-dir> <raw-dir> [--config corpus.json]
+                          [--dry-run] [--limit N] [--no-segment] [--quiet]
 
-Exit: 0 staged (or dry-run), 2 usage/setup error.
+Exit: 0 = staged (or nothing to do) · 1 = one or more files failed · 2 = usage.
 """
+from __future__ import annotations
 
 import argparse
-import hashlib
+import json
 import os
-import random
 import re
+import subprocess
 import sys
 
-FIELD_RE = re.compile(r"^- \*\*(?P<key>[A-Za-z]+):\*\*\s*(?P<val>.*?)\s*$")
-TS_LINE_RE = re.compile(r"^\*\*\[(?P<h>\d{1,2}):(?P<m>\d{2})\]\(")
-DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-VIDEO_ID_RE = re.compile(r"\[([A-Za-z0-9_-]{6,})\]\s*$")
+_HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, os.path.join(_HERE, "lib"))
+from wikitext import parse_frontmatter  # noqa: E402
+
+SEGMENTER = os.path.join(_HERE, "extract", "segment-doc.py")
+
+# The three ingest-commitment fields /ctx-compile owns. Never invented here.
+COMMITMENT_KEYS = ("ingested_hash", "ingested_at", "ingested_pages")
+
+ISO_DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
+HEADING_RE = re.compile(r"^#{1,6}\s+")
 
 
-def slugify(text):
+def die(msg: str, code: int = 2):
+    print(f"stage-corpus: {msg}", file=sys.stderr)
+    raise SystemExit(code)
+
+
+def load_config(path: str) -> dict:
+    try:
+        with open(path, encoding="utf-8") as fh:
+            cfg = json.load(fh)
+    except OSError as e:
+        die(f"cannot read {path}: {e}")
+    except json.JSONDecodeError as e:
+        die(f"{path} is not valid JSON: {e}")
+
+    # Fail loudly on an incomplete declaration. A stager that quietly defaults a
+    # missing time axis would produce a corpus whose dates are all wrong and all
+    # plausible — the failure this whole layer exists to prevent.
+    for key in ("name", "source_type", "id_field", "slug", "time"):
+        if not cfg.get(key):
+            die(f"{path}: missing required key '{key}'")
+    if "valid" not in cfg["time"] or "transaction" not in cfg["time"]:
+        die(f"{path}: time needs both 'valid' and 'transaction' "
+            f"(use null for valid if the corpus genuinely has no document date)")
+    return cfg
+
+
+def slugify(text: str) -> str:
+    """GitHub-style heading slug — the same rule citation-audit.py applies.
+
+    Must agree with it exactly: this produces the anchor, that resolves it.
+    """
     text = text.strip().lower()
     text = re.sub(r"[^\w\s-]", "", text)
     text = re.sub(r"[\s_]+", "-", text)
     return re.sub(r"-+", "-", text).strip("-")
 
 
-def parse_transcript(path):
-    """Pull the header fields and body out of one yt2md markdown file."""
-    with open(path, encoding="utf-8") as fh:
-        lines = fh.read().split("\n")
-
-    title = ""
-    fields = {}
-    for i, line in enumerate(lines):
-        if not title and line.startswith("# "):
-            title = line[2:].strip()
-        m = FIELD_RE.match(line)
-        if m:
-            fields[m.group("key")] = m.group("val")
-        if line.strip() == "## Transcript":
-            return title, fields, lines[i + 1:]
-    return title, fields, []
+def unquote(v: str) -> str:
+    v = v.strip()
+    if len(v) >= 2 and v[0] == v[-1] and v[0] in "\"'":
+        return v[1:-1]
+    return v
 
 
-def restage_body(body_lines):
-    """Mirror each inline **[MM:SS]** marker with an unpadded `## (M:SS)` heading."""
-    out = []
-    for line in body_lines:
-        m = TS_LINE_RE.match(line)
-        if m:
-            unpadded = "%d:%s" % (int(m.group("h")), m.group("m"))
-            if out and out[-1].strip():
-                out.append("")
-            out.append("## (%s)" % unpadded)
-            out.append("")
-        out.append(line)
-    return out
+def yaml_quote(v: str) -> str:
+    """Double-quote a scalar, escaping what would break the block.
 
-
-def yaml_quote(text):
-    return '"%s"' % text.replace("\\", "\\\\").replace('"', '\\"')
-
-
-def build_source(title, fields, body_lines, fetched_at):
-    uploaded = fields.get("Uploaded", "")
-    url = fields.get("Video", "").strip("<>")
-    channel = fields.get("Channel", "")
-    channel_name = channel.split("](")[0].lstrip("[") if "](" in channel else channel
-
-    if DATE_RE.match(uploaded):
-        asserted = "asserted_at: %s\nasserted_at_source: #source-metadata" % uploaded
-    else:
-        asserted = (
-            "asserted_at: unknown\n"
-            "asserted_at_note: source carries no parseable Uploaded date"
-        )
-
-    head = [
-        "---",
-        "source_url: %s" % (url or "n/a"),
-        "source_type: video-transcript",
-        "source_title: %s" % yaml_quote(title),
-        "source_author: %s" % yaml_quote(channel_name),
-        "fetched_at: %s" % fetched_at,
-        asserted,
-        'ingested_hash: ""',
-        "ingested_at: never",
-        "extraction_method: passthrough",
-        "---",
-        "",
-        "# %s" % title,
-        "",
-        "## Source metadata",
-        "",
-    ]
-    for key in ("Video", "Channel", "Uploaded", "Duration", "Captions"):
-        if key in fields:
-            head.append("- **%s:** %s" % (key, fields[key]))
-    head += ["", "## Transcript", ""]
-    return "\n".join(head + restage_body(body_lines)).rstrip("\n") + "\n"
-
-
-def stable_name(path, title, uploaded):
-    m = VIDEO_ID_RE.search(os.path.splitext(os.path.basename(path))[0])
-    vid = m.group(1) if m else hashlib.sha256(path.encode()).hexdigest()[:11]
-    stem = slugify(title)[:60].strip("-") or "untitled"
-    date = uploaded if DATE_RE.match(uploaded) else "0000-00-00"
-    return "%s-%s-%s.md" % (date, stem, vid.lower())
-
-
-def quarter(uploaded):
-    if not DATE_RE.match(uploaded):
-        return "unknown"
-    year, month = uploaded[:4], int(uploaded[5:7])
-    return "%s-Q%d" % (year, (month - 1) // 3 + 1)
-
-
-def collect(src_dir):
-    """Every transcript in src_dir, sorted deterministically."""
-    found = []
-    for entry in sorted(os.listdir(src_dir)):
-        if not entry.endswith(".md"):
-            continue
-        path = os.path.join(src_dir, entry)
-        if not os.path.isfile(path):
-            continue
-        title, fields, body = parse_transcript(path)
-        if not body:
-            continue
-        found.append(
-            {
-                "path": path,
-                "title": title,
-                "fields": fields,
-                "body": body,
-                "uploaded": fields.get("Uploaded", ""),
-                "quarter": quarter(fields.get("Uploaded", "")),
-            }
-        )
-    found.sort(key=lambda s: (s["uploaded"], s["path"]))
-    return found
-
-
-def stratified_sample(sources, n, seed):
-    """Round-robin across year-quarters so the full time span is covered."""
-    if n >= len(sources):
-        return list(sources)
-    buckets = {}
-    for src in sources:
-        buckets.setdefault(src["quarter"], []).append(src)
-
-    rng = random.Random(seed)
-    for key in buckets:
-        rng.shuffle(buckets[key])
-
-    picked, keys = [], sorted(buckets)
-    while len(picked) < n:
-        progressed = False
-        for key in keys:
-            if buckets[key] and len(picked) < n:
-                picked.append(buckets[key].pop())
-                progressed = True
-        if not progressed:
-            break
-    picked.sort(key=lambda s: (s["uploaded"], s["path"]))
-    return picked
-
-
-def pick_reserved(picked, frac, seed):
-    """A seeded fraction of the SAMPLE held back for the sealed holdout set.
-
-    Reserving whole upload-months reads better but does not survive a sparse
-    stratified sample: at n=50 over ~24 quarters, three whole months caught 2
-    files — too thin to author a holdout from. Reserving a fraction of the
-    sampled files keeps the slice disjoint from the gold set (which is all the
-    holdout needs) and scales with n instead of against it.
+    Titles carry colons, which would otherwise parse as a nested mapping and
+    silently truncate the value.
     """
-    if frac <= 0 or not picked:
-        return set()
-    k = max(1, int(round(len(picked) * frac)))
-    return set(random.Random(seed + 1).sample([s["path"] for s in picked], min(k, len(picked))))
+    return '"' + str(v).replace("\\", "\\\\").replace('"', '\\"') + '"'
 
 
-def main():
-    ap = argparse.ArgumentParser(add_help=True)
-    ap.add_argument("src_dir")
-    ap.add_argument("wiki_root")
-    ap.add_argument("--n", type=int, default=150)
-    ap.add_argument("--all", action="store_true")
-    ap.add_argument("--seed", type=int, default=20260730)
-    ap.add_argument("--reserved-frac", type=float, default=0.2)
-    ap.add_argument("--manifest")
-    ap.add_argument("--fetched-at", default="2026-07-30")
+def body_of(text: str) -> str:
+    lines = text.splitlines()
+    if lines[:1] != ["---"]:
+        return text
+    try:
+        close = lines.index("---", 1)
+    except ValueError:
+        return text
+    return "\n".join(lines[close + 1:]).lstrip("\n")
+
+
+def segment(path: str) -> tuple[str | None, int]:
+    """Deterministic section tree; degrades to (None, 0) rather than raising."""
+    try:
+        out = subprocess.run([sys.executable, SEGMENTER, path],
+                             capture_output=True, text=True, timeout=120)
+    except (OSError, subprocess.SubprocessError):
+        return None, 0
+    if out.returncode != 0 or not out.stdout.strip():
+        return None, 0
+    return out.stdout, sum(1 for ln in out.stdout.splitlines()
+                           if HEADING_RE.match(ln))
+
+
+def resolve(field: str, fm: dict, cfg: dict, capture: str) -> str:
+    """Resolve a metadata-row field reference: @-computed, or a source key."""
+    if field == "@valid":
+        return fm.get(cfg["time"]["valid"] or "", "")
+    if field == "@transaction":
+        return fm.get(cfg["time"]["transaction"], "")
+    if field == "@author_capture":
+        return capture
+    return fm.get(field, "")
+
+
+def build_metadata_section(fm: dict, cfg: dict, capture: str) -> str:
+    sec = cfg.get("metadata_section") or {}
+    heading = sec.get("heading", "Source metadata")
+    rows = [f"## {heading}", ""]
+    for row in sec.get("rows", []):
+        val = resolve(row["field"], fm, cfg, capture)
+        if val:
+            rows.append(f"**{row['label']}:** {val}")
+    rows.append("")
+    return "\n".join(rows)
+
+
+def render(fm: dict, cfg: dict, capture: str, body: str,
+           segmented: bool, segments: int, commitments: dict) -> str:
+    valid_key = cfg["time"]["valid"]
+    title = fm.get(cfg.get("title_field", "title")) or fm.get(cfg["id_field"], cfg["name"])
+    method = "passthrough+segment-doc" if segmented else "passthrough"
+
+    author_cfg = cfg.get("author") or {}
+    if capture and author_cfg.get("template"):
+        author = author_cfg["template"].replace("{capture}", capture).strip()
+    else:
+        author = author_cfg.get("fallback", "")
+
+    out = [
+        "---",
+        f"source_url: {fm.get(cfg.get('url_field', 'source_url'), 'n/a')}",
+        f"source_type: {cfg['source_type']}",
+        f"source_title: {yaml_quote(title)}",
+        f"source_author: {yaml_quote(author)}",
+        # Transaction time: when this was acquired.
+        f"fetched_at: {fm['@fetched_at']}",
+    ]
+    # Valid time: what the document speaks for. `unknown` is a first-class
+    # answer — a corpus with no document date must say so, not fabricate one.
+    if valid_key and fm.get(valid_key):
+        anchor = slugify((cfg.get("metadata_section") or {}).get("heading", "Source metadata"))
+        out.append(f"asserted_at: {fm[valid_key]}")
+        out.append(f'asserted_at_source: "#{anchor}"')
+    else:
+        out.append("asserted_at: unknown")
+        out.append(f'asserted_at_note: "{cfg["name"]} sources carry no document '
+                   f'date; only the acquisition time is known"')
+    out += [
+        f"ingested_hash: {commitments.get('ingested_hash', '\"\"')}",
+        f"ingested_at: {commitments.get('ingested_at', 'never')}",
+        f"ingested_pages: {commitments.get('ingested_pages', '[]')}",
+        f"extraction_method: {method}",
+    ]
+    for k in cfg.get("passthrough", []):
+        if fm.get(k):
+            out.append(f"{k}: {yaml_quote(fm[k])}")
+    if segmented:
+        out.append("segmented: true")
+        out.append(f"segments: {segments}")
+    out.append("---")
+
+    return "\n".join(out) + "\n\n" + body.rstrip("\n") + "\n"
+
+
+def is_committed(path: str) -> bool:
+    """True once /ctx-compile has ingested this staged source."""
+    if not os.path.exists(path):
+        return False
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            fm = parse_frontmatter(fh.read().splitlines())
+    except OSError:
+        return False
+    return bool(unquote(fm.get("ingested_hash", "")).strip())
+
+
+def read_commitments(path: str) -> dict:
+    if not os.path.exists(path):
+        return {}
+    try:
+        with open(path, encoding="utf-8", errors="replace") as fh:
+            fm = parse_frontmatter(fh.read().splitlines())
+    except OSError:
+        return {}
+    return {k: fm[k] for k in COMMITMENT_KEYS if k in fm}
+
+
+def stage_one(src: str, raw_dir: str, cfg: dict, allow_segment: bool):
+    try:
+        with open(src, encoding="utf-8", errors="replace") as fh:
+            text = fh.read()
+    except OSError as e:
+        return "failed", f"unreadable: {e}"
+
+    fm = {k: unquote(v) for k, v in parse_frontmatter(text.splitlines()).items()}
+    if fm.get("source") and fm["source"] != cfg["name"]:
+        return "skipped", f"not a {cfg['name']} source"
+
+    ident = fm.get(cfg["id_field"], "")
+    if not ident:
+        return "failed", f"no {cfg['id_field']}"
+
+    valid_key = cfg["time"]["valid"]
+    valid = fm.get(valid_key, "") if valid_key else ""
+    if valid_key and not ISO_DATE_RE.match(valid):
+        return "failed", f"{valid_key} {valid!r} is not YYYY-MM-DD"
+
+    trans = fm.get(cfg["time"]["transaction"], "")
+    # fetched_at is a DATE in the raw spec; the source may carry a timestamp.
+    fm["@fetched_at"] = (trans.split("T", 1)[0] if trans else valid) or "unknown"
+
+    slug = (cfg["slug"]
+            .replace("{valid}", valid)
+            .replace("{id}", re.sub(r"[^a-z0-9]+", "-", ident.lower()).strip("-")))
+    target = os.path.join(raw_dir, slug + ".md")
+
+    # HANDS OFF A COMMITTED SOURCE. Once /ctx-compile has ingested a file its
+    # frontmatter belongs to the compiler, including whatever shape it chose.
+    # Re-rendering can only do harm: at best a no-op, at worst it flattens a
+    # value this module's flat frontmatter reader cannot represent — which is
+    # how 261 files lost their ingested_pages.
+    if is_committed(target):
+        return "skipped", "already ingested"
+
+    original_body = body_of(text)
+    capture = ""
+    pat = (cfg.get("author") or {}).get("from_body")
+    if pat:
+        m = re.search(pat, original_body, re.MULTILINE)
+        if m:
+            capture = m.group(1).strip()
+
+    segmented, segments = False, 0
+    body = original_body
+    threshold = cfg.get("segment_word_threshold", 6000)
+    if allow_segment and threshold and len(original_body.split()) >= threshold:
+        seg, n = segment(src)
+        if seg is not None:
+            body, segmented, segments = seg, True, n
+
+    meta = build_metadata_section(fm, cfg, capture)
+    title_line = f"# {fm.get(cfg.get('title_field', 'title'), ident)}"
+    # Drop the source's own leading H1: it is replaced by title_line, and two
+    # H1s give the file two heading slugs competing for the same anchor.
+    body_lines = body.lstrip("\n").splitlines()
+    if body_lines and body_lines[0].startswith("# "):
+        body_lines = body_lines[1:]
+    body = "\n".join(body_lines).lstrip("\n")
+
+    rendered = render(fm, cfg, capture, f"{title_line}\n\n{meta}\n{body}",
+                      segmented, segments, read_commitments(target))
+
+    existed = os.path.exists(target)
+    if existed:
+        try:
+            with open(target, encoding="utf-8", errors="replace") as fh:
+                if fh.read() == rendered:
+                    return "skipped", "unchanged"
+        except OSError:
+            pass
+
+    try:
+        with open(target, "w", encoding="utf-8") as fh:
+            fh.write(rendered)
+    except OSError as e:
+        return "failed", f"write failed: {e}"
+    return ("updated" if existed else "staged"), os.path.basename(target)
+
+
+def main(argv: list[str]) -> int:
+    ap = argparse.ArgumentParser(prog="stage-corpus.py")
+    ap.add_argument("archive", help="harvested archive directory (read-only)")
+    ap.add_argument("raw", help="destination raw/ directory")
+    ap.add_argument("--config", default="corpus.json")
     ap.add_argument("--dry-run", action="store_true")
-    args = ap.parse_args()
+    ap.add_argument("--limit", type=int)
+    ap.add_argument("--no-segment", action="store_true")
+    ap.add_argument("--quiet", action="store_true")
+    a = ap.parse_args(argv[1:])
 
-    if not os.path.isdir(args.src_dir):
-        print("error: no such directory: %s" % args.src_dir, file=sys.stderr)
-        return 2
+    cfg = load_config(a.config)
+    if not os.path.isdir(a.archive):
+        die(f"not a directory: {a.archive}")
+    if not a.dry_run and not os.path.isdir(a.raw):
+        die(f"not a directory: {a.raw}")
+    if not os.path.exists(SEGMENTER) and not a.no_segment:
+        die(f"missing segmenter: {SEGMENTER}")
 
-    sources = collect(args.src_dir)
+    sources = []
+    for dirpath, _d, filenames in os.walk(a.archive):
+        sources += [os.path.join(dirpath, f) for f in filenames if f.endswith(".md")]
+    # Newest first: an interrupted backlog leaves the most relevant end done.
+    sources.sort(reverse=True)
+    if a.limit:
+        sources = sources[:a.limit]
     if not sources:
-        print("error: no transcripts found in %s" % args.src_dir, file=sys.stderr)
-        return 2
+        print(f"stage-corpus: no .md sources under {a.archive}")
+        return 0
 
-    picked = sources if args.all else stratified_sample(sources, args.n, args.seed)
-    reserved = pick_reserved(picked, args.reserved_frac, args.seed)
+    tally = {"staged": 0, "updated": 0, "skipped": 0, "failed": 0}
+    failures = []
+    for src in sources:
+        if a.dry_run:
+            tally["staged"] += 1
+            continue
+        status, detail = stage_one(src, a.raw, cfg, not a.no_segment)
+        tally[status] += 1
+        if status == "failed":
+            failures.append(f"{os.path.basename(src)}: {detail}")
+        elif not a.quiet and status in ("staged", "updated"):
+            print(f"  {status}: {detail}")
 
-    raw_dir = os.path.join(args.wiki_root, "raw")
-    if not args.dry_run:
-        os.makedirs(raw_dir, exist_ok=True)
-
-    rows = []
-    for src in picked:
-        name = stable_name(src["path"], src["title"], src["uploaded"])
-        text = build_source(src["title"], src["fields"], src["body"], args.fetched_at)
-        digest = hashlib.sha256(text.encode("utf-8")).hexdigest()
-        if not args.dry_run:
-            with open(os.path.join(raw_dir, name), "w", encoding="utf-8") as fh:
-                fh.write(text)
-        rows.append(
-            (
-                name,
-                src["uploaded"],
-                src["quarter"],
-                "reserved" if src["path"] in reserved else "main",
-                digest,
-                os.path.basename(src["path"]),
-            )
-        )
-
-    header = "# staged: %d of %d source(s)  seed=%d  reserved-frac=%s\n" % (
-        len(rows),
-        len(sources),
-        args.seed,
-        args.reserved_frac,
-    )
-    body = "".join("\t".join(r) + "\n" for r in rows)
-    if args.manifest and not args.dry_run:
-        os.makedirs(os.path.dirname(os.path.abspath(args.manifest)), exist_ok=True)
-        with open(args.manifest, "w", encoding="utf-8") as fh:
-            fh.write("# name\tuploaded\tquarter\tslice\tsha256\tsrc_basename\n")
-            fh.write(header)
-            fh.write(body)
-
-    sys.stdout.write(header)
-    n_reserved = sum(1 for r in rows if r[3] == "reserved")
-    print("quarters covered: %d" % len({r[2] for r in rows}))
-    print("reserved slice:   %d file(s) sealed for the holdout" % n_reserved)
-    print("manifest sha256:  %s" % hashlib.sha256((header + body).encode()).hexdigest())
-    return 0
+    verb = "would stage" if a.dry_run else "staged"
+    print(f"stage-corpus[{cfg['name']}]: {verb} {tally['staged']}, "
+          f"updated {tally['updated']}, skipped {tally['skipped']}, "
+          f"failed {tally['failed']} (of {len(sources)} source files)")
+    for f in failures[:20]:
+        print(f"  FAILED {f}", file=sys.stderr)
+    return 1 if tally["failed"] else 0
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    raise SystemExit(main(sys.argv))

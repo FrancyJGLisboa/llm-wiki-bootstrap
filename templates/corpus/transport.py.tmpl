@@ -1,0 +1,106 @@
+# templates/corpus/transport.py.tmpl — the source-agnostic half of a harvester.
+#
+# Lifted verbatim into every adapter scripts/new-corpus.sh scaffolds. Nothing
+# here knows what it is fetching; all of it is what talking to ANY HTTP source
+# requires, and every guard is scar tissue from a real incident against a real
+# government API:
+#
+#   * a hard wall-clock deadline around the WHOLE call, because DNS ignores
+#     urlopen's timeout and a source that stalls before the first byte is
+#     invisible to a deadline checked inside the read loop
+#   * Content-Length truncation detection, because a premature server close
+#     reads as clean EOF and a short body poisons the parser downstream
+#   * retry with backoff, and pacing between fetches
+#
+# An adapter that starts without these relearns each of them in production.
+
+class HarvestError(RuntimeError):
+    pass
+
+
+class _DeadlineExceeded(BaseException):
+    """Deliberately a BaseException.
+
+    The retry loop catches `Exception`. A deadline derived from Exception would
+    be swallowed and immediately re-blocked — the alarm fires once, and the next
+    attempt hangs unbounded with no alarm armed. Same reason KeyboardInterrupt
+    sits outside Exception.
+    """
+
+
+@contextlib.contextmanager
+def _hard_deadline(seconds: int, url: str):
+    """Wall-clock bound on the WHOLE fetch, not just its read loop.
+
+    The in-loop check below bounds a connection that is dripping bytes but NOT
+    one that never delivers a first chunk. SIGALRM, so unix + main thread only;
+    a threaded caller silently keeps the unbounded behaviour rather than
+    crashing on signal.signal — better to not cover it than to lie about
+    covering it.
+    """
+    if not hasattr(signal, "SIGALRM") or \
+            threading.current_thread() is not threading.main_thread():
+        yield
+        return
+
+    def _fire(_signum, _frame):
+        raise _DeadlineExceeded
+
+    prev = signal.signal(signal.SIGALRM, _fire)
+    signal.alarm(max(1, int(seconds)))
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, prev)
+
+
+def _fetch(url: str, tries: int = 4, timeout: int = 90,
+           total_deadline: int = 600, data: bytes | None = None,
+           headers: dict | None = None) -> bytes:
+    """GET/POST with a TOTAL deadline, truncation detection and retries.
+
+    ALL outbound requests route through here, POSTs included, so every fetch
+    gets the same protection. There is no second path.
+    """
+    try:
+        with _hard_deadline(total_deadline, url):
+            return _attempts(url, tries, timeout, total_deadline, data, headers)
+    except _DeadlineExceeded:
+        raise HarvestError(
+            f"hard deadline: >{total_deadline}s for {url} "
+            f"(stalled before any data arrived — DNS or connect)") from None
+
+
+def _attempts(url, tries, timeout, total_deadline, data, headers) -> bytes:
+    last = None
+    for i in range(tries):
+        try:
+            req = urllib.request.Request(
+                url, data=data,
+                headers={"User-Agent": "gain-context/1.0", **(headers or {})},
+            )
+            start = time.monotonic()
+            with urllib.request.urlopen(req, timeout=timeout,
+                                        context=_SSL_CTX) as r:
+                expected = r.headers.get("Content-Length")
+                chunks, got = [], 0
+                while chunk := r.read(1 << 20):
+                    if time.monotonic() - start > total_deadline:
+                        raise HarvestError(
+                            f"drip-feed: >{total_deadline}s for {url}")
+                    chunks.append(chunk)
+                    got += len(chunk)
+                body = b"".join(chunks)
+                # A premature close reads as clean EOF; verify the length or a
+                # truncated body reaches the parser looking whole.
+                if expected and len(body) != int(expected):
+                    raise HarvestError(
+                        f"truncated: {len(body)}/{expected}B for {url}")
+                return body
+        except Exception as e:  # noqa: BLE001 — transient network; retry all
+            last = e
+            time.sleep(2 * (i + 1))
+    raise HarvestError(f"fetch failed after {tries} tries: {url}\n  {last}")
+
+

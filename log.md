@@ -2,6 +2,54 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-10 — the adapter blueprint moves upstream, where compilers are generated
+
+**Rationale.** `new-corpus.sh` and `gate-adapter-contract.sh` were built in one
+deployment while compiling a 2,413-document corpus. They are the machinery that
+makes pointing a compiler at a NEW source a bounded job — and they were trapped
+in the single deployment they were meant to generalise beyond. A freshly
+generated compiler got none of it. They now ship in the installer manifest.
+
+**What a new corpus costs, after this.** A `corpus-<name>.json` declaration and
+two functions — `_catalog()` and `_fetch_one()`. Everything else is generic or
+scaffolded, and `ADAPTER-CONTRACT` settles with an exit code whether the result
+is something this compiler can actually compile.
+
+**A name collision, resolved honestly.** `scripts/stage-corpus.py` already
+existed here and was YouTube-transcript-specific despite the general name — down
+to the padded/unpadded timestamp headings it emits. It is now
+`stage-transcripts.py`, which is what it always was, and the corpus-agnostic
+stager takes the general name. Its oracle (`verify-corpus-eval.sh`, R27) moved
+with it and stays green.
+
+**TWO BUGS THE PORT ITSELF EXPOSED**, both invisible in the source repo:
+
+1. `new-corpus.sh` scaffolded a **0-byte daemon** and reported success. It sed'd
+   from `gain-watchd.sh`, which exists only in the deployment it came from. A
+   scaffolder whose output is empty is worse than one that fails, because the
+   file looks written. The daemon is now a template
+   (`templates/corpus/watchd.sh.tmpl`), a missing template is an error, and an
+   empty result is refused. R43 checks the scaffold produces a non-empty, fully
+   substituted, parseable adapter.
+
+2. `gate-adapter-contract.sh` exited 2 in a freshly generated compiler, failing
+   the installer's own I6 check, because there was no `corpus.json` yet. That
+   conflated DECLARED-AND-BROKEN with NOT-DECLARED. A compiler may legitimately
+   have no harvest adapter and feed `raw/` by hand through `/ctx-extract` — the
+   same reasoning `ctx-lint-rules.sh` already applies to an absent `rules/`
+   directory. An absent declaration is now clean and says so.
+
+**New checks.** R42 (an adapter's output is compilable) and R43 (the scaffold
+produces real files). The suite goes 44 -> 46; the bound `smoke-guard-range`
+claim, the published page's count and README's all moved with it, because three
+separate gates refused to let them drift.
+
+**Files.** `scripts/{stage-corpus.py,new-corpus.sh,gate-adapter-contract.sh}`
+(new), `scripts/stage-transcripts.py` (renamed), `templates/corpus/*.tmpl` (new),
+`tests/gates/adapter-contract/**` (new), `scripts/installer-skeleton-manifest.txt`,
+`scripts/smoke-all.sh`, `gates/baseline.tsv`, `scripts/gate-fixtures.tsv`,
+`README.md`, `site/index.html`, `.github/workflows/ci.yml`.
+
 ## 2026-08-10 — schema v6: the schema can now describe a document corpus honestly
 
 **Rationale.** v5 could compile a corpus of reports; it could not label one
