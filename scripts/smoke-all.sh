@@ -95,9 +95,9 @@ fi
 
 # R4 — schema and core-script purity stay stable
 r4_ok=yes
-if ! grep -q '\*\*Schema version:\*\* 5' AGENTS.md; then
+if ! grep -q '\*\*Schema version:\*\* 6' AGENTS.md; then
   r4_ok=no
-  record_fail "R4 AGENTS.md schema version is not 5"
+  record_fail "R4 AGENTS.md schema version is not 6"
 fi
 if ! grep -qE '^- .type. — .concept.*entity.*summary.*analysis.*navigation.*journal.*rule' AGENTS.md; then
   r4_ok=no

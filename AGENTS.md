@@ -1,6 +1,6 @@
 # AGENTS.md — `context-compiler-bootstrap` schema
 
-**Schema version:** 5 — bumped 2026-08-08 (was: 4 from 2026-06-18, 3 from 2026-06-09, 2 from 2026-05-26, 1 from 2026-05-25). v5 **renames the commands**: the canonical names are now `/ctx-*`, and `/wiki-ingest` in particular became `/ctx-compile` because compiling is what it does — the output is a context package with provenance, typed relations, valid time, and a portable verifiable bundle, not a wiki. **Nothing breaks:** all nine `/wiki-*` names survive as forwarders that print one deprecation line and delegate, and they are not scheduled for removal; `/ingest` still works alongside the new `/compile`. The project itself is renamed `llm-wiki-bootstrap` → `context-compiler-bootstrap`, `scripts/create-llm-wiki.sh` → `scripts/create-context-compiler.sh` (old name forwards), and the compiled root `wiki/` → `context/` with a committed `wiki -> context` symlink so every existing path keeps resolving. v5 also adds the **rules layer**: `type: rule` pages under `context/rules/{deterministic,heuristic,discarded}/`, harvested by `/ctx-compile` steps 2.5 and 4.5, gated by `/ctx-gate` into `gates/`. Migration note for an older client: none required — every old name resolves. v4 adds the **long-source segmentation layer**: `/ctx-extract` runs the deterministic `scripts/extract/segment-doc.py` to turn long sources (≥ 20-page PDFs or ≥ 6000-word bodies) into anchored section trees; `/ctx-compile` authors the summary as a tree of one-line node summaries, each citing a `#<section-slug>` anchor; `/ctx-query` walks that tree and reads only the cited sections. Additive and backward-compatible — older clients simply skip segmentation. v3 adds the **synthesis layer**: `/ctx-compile` (and `/ctx-query` promote, `/ctx-lint --apply`) now mechanically regenerate four derived artifacts — `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json` — via `scripts/synthesize/all.sh`. This partially and deliberately re-introduces aggregate-view machinery cut on 2026-06-08 (`a76196f`), but only the narrow, deterministic core. v2 added the `wiki/journal/` user-owned exception (and `type: journal`), the `## Flashcards` convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
+**Schema version:** 6 — bumped 2026-08-10 (was: 5 from 2026-08-08, 4 from 2026-06-18, 3 from 2026-06-09, 2 from 2026-05-26, 1 from 2026-05-25). v6 makes the schema usable for a **document corpus**, which v5 could describe but could not label honestly. Two additions, one of which changes behaviour. (a) `source: document` joins the page enum, so `external` goes back to meaning *fetched off the open web* — compiling a report corpus against the old four values forces every page to `external`, which in a closed-corpus deployment is the value meaning contaminated. (b) `rule_domain: artifact | world` joins the rule frontmatter, and **R-01 now applies only to `artifact` rules** — a rule extracted from a source ("a shipment must hold a permit") is deterministic in shape and uncheckable in this package, and demanding a gate for it makes the rule-integrity count grow with every source ingested. **Migration for an older client: none required.** `rule_domain` defaults to `world`, so an older `/ctx-compile` that never writes the field produces exactly the new behaviour; `source: document` is opt-in and nothing validates the enum mechanically. The one visible change is that R-01 stops firing on harvested rules — deliberately, and they are counted and printed instead of ignored. Previously: 5 — bumped 2026-08-08 (was: 4 from 2026-06-18, 3 from 2026-06-09, 2 from 2026-05-26, 1 from 2026-05-25). v5 **renames the commands**: the canonical names are now `/ctx-*`, and `/wiki-ingest` in particular became `/ctx-compile` because compiling is what it does — the output is a context package with provenance, typed relations, valid time, and a portable verifiable bundle, not a wiki. **Nothing breaks:** all nine `/wiki-*` names survive as forwarders that print one deprecation line and delegate, and they are not scheduled for removal; `/ingest` still works alongside the new `/compile`. The project itself is renamed `llm-wiki-bootstrap` → `context-compiler-bootstrap`, `scripts/create-llm-wiki.sh` → `scripts/create-context-compiler.sh` (old name forwards), and the compiled root `wiki/` → `context/` with a committed `wiki -> context` symlink so every existing path keeps resolving. v5 also adds the **rules layer**: `type: rule` pages under `context/rules/{deterministic,heuristic,discarded}/`, harvested by `/ctx-compile` steps 2.5 and 4.5, gated by `/ctx-gate` into `gates/`. Migration note for an older client: none required — every old name resolves. v4 adds the **long-source segmentation layer**: `/ctx-extract` runs the deterministic `scripts/extract/segment-doc.py` to turn long sources (≥ 20-page PDFs or ≥ 6000-word bodies) into anchored section trees; `/ctx-compile` authors the summary as a tree of one-line node summaries, each citing a `#<section-slug>` anchor; `/ctx-query` walks that tree and reads only the cited sections. Additive and backward-compatible — older clients simply skip segmentation. v3 adds the **synthesis layer**: `/ctx-compile` (and `/ctx-query` promote, `/ctx-lint --apply`) now mechanically regenerate four derived artifacts — `wiki/open-questions-dashboard.md`, `wiki/tensions.md`, `wiki/decision-timeline.md`, and `wiki/knowledge-graph.json` — via `scripts/synthesize/all.sh`. This partially and deliberately re-introduces aggregate-view machinery cut on 2026-06-08 (`a76196f`), but only the narrow, deterministic core. v2 added the `wiki/journal/` user-owned exception (and `type: journal`), the `## Flashcards` convention, and the optional MCP read surface. Changes to this number signal that slash commands, frontmatter conventions, or layer rules have shifted in a way older clients may need to adapt for. See "Schema versioning" near the bottom for the bump policy.
 
 This file is the **schema** layer of the LLM-wiki pattern (see [`wiki/layer-schema.md`](wiki/layer-schema.md)). It tells any AI agent operating on this directory how the wiki is structured and how to work with it.
 
@@ -161,7 +161,9 @@ Free-form prose. Inline `[[wiki-links]]` to related pages, and `(source: <raw-fi
 - `title` — Title Case display name (the file name is the slug).
 - `description` — OPTIONAL. One-sentence summary of the page, for progressive disclosure (scanning an index without opening pages) and 1:1 mapping onto the Open Knowledge Format's recommended `description` field at export (`scripts/wiki-to-okf.py`). When absent, the export derives it from the page's `## Definition / TL;DR`. Additive/opt-in — no schema bump (per the bump policy below); `/ctx-lint` must not flag its absence.
 - `type` — `concept` (idea/term), `entity` (named thing/person/tool), `summary` (per-source recap), `analysis` (interpretation, not in raw), `navigation` (index/TOC pages), `journal` (user-owned time-stamped entry, lives only under `wiki/journal/`), `rule` (a normative constraint extracted from a source, lives only under `wiki/rules/` — see "Rules and executable context").
-- `source` — `video` (literal from a raw video transcript), `analysis` (LLM/user interpretation; must be honest about being interpretive), `external` (added from web search), `mixed` (both video and analysis).
+- `source` — `document` (extracted from a document corpus in `raw/` — reports, filings, papers, transcripts of record), `video` (literal from a raw video transcript), `analysis` (LLM/user interpretation; must be honest about being interpretive), `external` (**added from web search** — see the warning below), `mixed` (more than one of the above).
+
+  **`document` exists so `external` keeps meaning what it says.** The enum was originally `video | analysis | external | mixed`, which has no value for a corpus of documents. Compiling one, an agent reasons correctly that a USDA report is neither a video nor its own analysis, and labels every page `external` — the value reserved for *material fetched off the open web*. In a deployment whose guarantee is "answers come only from this corpus", that is precisely the value meaning **contaminated**, and it was written onto 43 pages that were each citing their source perfectly. The mislabel is invisible: the page is correct, the citation resolves, and only the frontmatter lies. Use `document` for anything compiled from `raw/`; reserve `external` for what genuinely came from a search.
 - `updated` — ISO date of last edit.
 - `tags` — array of kebab-case tags.
 
@@ -311,6 +313,7 @@ title: Forecast Data Cutoff
 type: rule
 rule_id: RULE-0007                # RULE-<4 digits>, unique, never reused
 rule_class: deterministic         # deterministic | heuristic | unverifiable
+rule_domain: artifact             # artifact | world — see below; defaults to world
 source: external
 updated: 2026-08-08
 asserted_at: 2026-03-14           # when the rule became true, not when fetched
@@ -328,6 +331,45 @@ known_gaps:                       # >= 3 required once a gate exists
 tags: [policy, forecasting]
 ---
 ```
+
+### `rule_domain` — can this package check the rule at all?
+
+`rule_class` asks whether a rule has a **checkable shape**. `rule_domain` asks
+whether it has a **checkable subject in this package**. They are independent, and
+conflating them is expensive.
+
+| Value | Means | R-01 |
+|---|---|---|
+| `artifact` | constrains something here — a page, a frontmatter field, a build output | applies: a script can settle it, so a script must |
+| `world` | extracted from a source, constrains external reality — a shipment, a filing, a blend level | does not apply |
+
+**Where this was learned.** A compiler over 279 agricultural attaché reports
+harvested 540 deterministic rules, every one of the second kind: *"a soybean meal
+import must hold a permit issued under MOT 11/2026"*. Perfectly deterministic,
+and completely uncheckable there — the package contains no consignments, so a
+gate for it would have nothing to open. All 540 defaulted to
+`scope_include: ["wiki/**.md"]`; an identical placeholder on every single rule is
+the tell that the field was meaningless for them.
+
+The cost was not theoretical. R-01's count then grows with every source ingested,
+so the ratchet reddens on a schedule and gets bumped without being read — three
+times in one session before the category error underneath was spotted. §1 of
+[`docs/deterministic-gates.md`](docs/deterministic-gates.md) is about rules **the
+maintainers** must obey; it quietly assumed the output's rules are about the
+output. True for a repository. False for a document corpus, where the rules
+describe the world the documents are about.
+
+**World rules are not excused.** `/ctx-lint` counts and prints them on every run,
+they stay catalogued and citable — which is their actual value — and if one
+declares a `gate:` anyway then R-02–R-07 apply to it in full: a gate that exists
+must work, whatever its rule describes.
+
+The default is `world`, because a rule under `rules/` was harvested from a source
+unless someone says otherwise. Rules about the package itself must say
+`rule_domain: artifact` explicitly, and `/ctx-compile` writes the field rather
+than relying on the default. Guessing `artifact` is the expensive direction: if
+you cannot name what in this repository a gate would open and inspect, the answer
+is `world`.
 
 `known_gaps` is not optional decoration. Three of them are required before a
 rule counts as gated, because an agent that cannot name a way around its own
