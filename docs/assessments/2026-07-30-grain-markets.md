@@ -104,7 +104,7 @@ accidents.
 This is not hypothetical for this corpus: the live run produced citations
 `#1:03`, `#0:31`, `#4:08` — all unpadded.
 
-**Mitigation used:** `stage-corpus.py` emits an unpadded `## (M:SS)` heading
+**Mitigation used:** `stage-corpus.py (renamed stage-transcripts.py on 2026-08-10)` emits an unpadded `## (M:SS)` heading
 beside each padded inline `**[MM:SS]**` marker, so both conventions resolve. It
 also gives `citation-audit.py`'s `HEADING_RE` branch a tight,
 semantically-bounded passage (heading → next heading) instead of a fixed 8-line

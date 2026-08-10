@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# scripts/verify-corpus-eval.sh — oracle for stage-corpus.py + eval-corpus.sh.
+# scripts/verify-corpus-eval.sh — oracle for stage-transcripts.py + eval-corpus.sh.
 #
 # No LLM, no spend, no network. Every answer is pre-seeded into the work dir,
 # which eval-corpus.sh reuses verbatim ("cached, regrading"), so the entire
@@ -30,7 +30,7 @@ set -uo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-STAGE="$SCRIPT_DIR/stage-corpus.py"
+STAGE="$SCRIPT_DIR/stage-transcripts.py"
 EVAL="$SCRIPT_DIR/eval-corpus.sh"
 AUDIT="$SCRIPT_DIR/citation-audit.py"
 

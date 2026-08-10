@@ -21,3 +21,7 @@ scripts/gate-context-root.sh	scripts/gate-context-root.sh --repo tests/gates/con
 scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean
 scripts/gate-ratchet.sh	scripts/gate-ratchet.sh --repo tests/gates/ratchet/gates-arm-dirty	scripts/gate-ratchet.sh --repo tests/gates/ratchet/clean
 scripts/gate-ctx-root.sh	scripts/gate-ctx-root.sh --repo tests/gates/ctx-root/dirty	scripts/gate-ctx-root.sh --repo tests/gates/ctx-root/clean
+scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-frontmatter	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
+scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-collapsed-time	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
+scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-anchor	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
+scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-slug	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean

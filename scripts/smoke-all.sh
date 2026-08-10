@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R41) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R43) into a single exit-code-
 # driven test.
 #
 # Exit 0 iff every check passes (the suite counts its own tally; see `passes`).
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
 #   only the deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R41 guards). This is the CI path — the build phase is a precondition that
+#   R1–R43 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -58,8 +58,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R41 ────
-section "Regression guards (R1–R41)"
+# ──── REGRESSION GUARDS R1–R43 ────
+section "Regression guards (R1–R43)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -538,6 +538,33 @@ if tally="$("$SCRIPT_DIR/gate-ctx-root.sh" --count 2>/dev/null)" \
 else
   record_fail "R41 gate-ctx-root.sh --count did not print '<violations>TAB<suppressions>' and exit 0 — the gate is unrunnable, so the ratchet has nothing to compare and CTX-ROOT-ADOPTION is unenforced"
 fi
+
+# R42 — an adapter's output is compilable, and the scaffold produces real files.
+# Bare, this repo answers "no corpus declared" — it GENERATES compilers, it is
+# not one. So the fixture tree is what exercises the check here, and R31 proves
+# the pair discriminates.
+if "$SCRIPT_DIR/gate-adapter-contract.sh" --repo tests/gates/adapter-contract/clean >/dev/null 2>&1; then
+  ok "R42 gate-adapter-contract.sh exits 0 on a conforming adapter fixture"
+else
+  record_fail "R42 gate-adapter-contract.sh fails its clean fixture — an adapter that satisfies the contract is being reported as broken"
+fi
+
+# R43 — new-corpus.sh scaffolds files that are real, not stubs that look real.
+# It once emitted a 0-byte daemon after being ported to a repo where its sed
+# source did not exist, and reported success.
+r43_tmp="$(mktemp -d)"
+if ( cd "$r43_tmp" && mkdir -p scripts templates/corpus \
+     && cp "$SCRIPT_DIR/new-corpus.sh" scripts/ \
+     && cp "$REPO_ROOT"/templates/corpus/*.tmpl templates/corpus/ \
+     && ./scripts/new-corpus.sh probe >/dev/null 2>&1 \
+     && [ -s scripts/harvest-probe.py ] && [ -s scripts/probe-watchd.sh ] \
+     && ! grep -q '__NAME__' scripts/probe-watchd.sh \
+     && python3 -c "import ast,sys; ast.parse(open('scripts/harvest-probe.py').read())" ); then
+  ok "R43 new-corpus.sh scaffolds a non-empty, fully-substituted, parseable adapter"
+else
+  record_fail "R43 new-corpus.sh produced an empty, unsubstituted or unparseable scaffold"
+fi
+rm -rf "$r43_tmp"
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the

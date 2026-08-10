@@ -1,0 +1,10 @@
+{
+  "name": "fixture",
+  "source_type": "report",
+  "markers": ["source_type", "report_number"],
+  "id_field": "report_number",
+  "slug": "fx-{valid}-{id}",
+  "time": { "valid": "release_date", "transaction": "retrieved_at" },
+  "metadata_section": { "heading": "Report metadata",
+    "rows": [ { "label": "Released", "field": "@valid" } ] }
+}

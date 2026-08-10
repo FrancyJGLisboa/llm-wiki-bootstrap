@@ -49,3 +49,4 @@ GATE-DISCRIMINATES	scripts/gate-fixtures.sh	0	0	2026-08-08	6 registered gates
 RULE-INTEGRITY	scripts/ctx-lint-rules.sh	0	0	2026-08-08	no rule pages yet; the layer ships empty
 CTX-ROOT-COMPAT	scripts/gate-context-root.sh	0	0	2026-08-08	three layouts + link soundness
 CTX-ROOT-ADOPTION	scripts/gate-ctx-root.sh	80	0	2026-08-08	AGENTS.md:24 says new code uses ctx_root(); 41 files predate it. Ratchet, not migration order — AGENTS.md argues against a bulk rewrite of the oracles.
+ADAPTER-CONTRACT	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean	0	0	2026-08-10	no corpus.json in this repo (it generates compilers, it is not one) — ratcheted against the fixture so the gate stays exercised

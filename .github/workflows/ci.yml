@@ -44,7 +44,7 @@ jobs:
           python3 --version
           awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
           locale
-      - name: Run the deterministic checks (C1–C5 + R1–R41) under LC_ALL=${{ matrix.locale }}
+      - name: Run the deterministic checks (C1–C5 + R1–R43) under LC_ALL=${{ matrix.locale }}
         env:
           LC_ALL: ${{ matrix.locale }}
         run: bash scripts/smoke-all.sh --no-build | tee "smoke-${{ matrix.locale }}.log"

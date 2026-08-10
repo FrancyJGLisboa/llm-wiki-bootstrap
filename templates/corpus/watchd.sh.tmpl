@@ -1,0 +1,250 @@
+#!/usr/bin/env bash
+# TEMPLATE — scaffolded per corpus by scripts/new-corpus.sh, which substitutes
+# __NAME__. Do not run this file directly; it is not a working daemon until the
+# substitution happens.
+#
+# scripts/__NAME__-watchd.sh — keep raw/ continuously current, unattended.
+#
+# The compiler acquires its own evidence (scripts/harvest-__NAME__.py) but nothing
+# made that happen on a schedule. This is the loop: poll the source, harvest what is
+# new, stage it, commit it, and compile it when it is safe to do so.
+#
+# CADENCE: 45 minutes, matching the harvester this was modelled on. many sources have no
+# release slot — reports land continuously and irregularly — so the only way to
+# bound latency is to poll, and 45 minutes is what makes that affordable given
+# the novelty check below.
+#
+# THE NOVELTY CHECK IS WHAT MAKES THE CADENCE CHEAP. A full harvest reads a
+# ~50 MB catalog. Doing that every 45 minutes is the traffic pattern that got
+# the original tarpitted. Instead the tick asks one question — is the newest
+# in-scope publish date newer than the one we last saw — and only then harvests.
+# harvest-gain.py's own 20h catalog cache backstops this: even a forced run
+# re-fetches the catalog at most once a day.
+#
+# THE COMPILE INTERLOCK IS NOT OPTIONAL. /ctx-compile rewrites context/index.md
+# on every run. Two drivers doing that concurrently is the O(corpus) contention
+# batching exists to avoid, and the loser is a corrupted index rather than a
+# slow run. So: if any ingest driver is alive, this tick stages and commits but
+# does NOT compile. Nothing is lost — the backlog driver is newest-first and
+# re-reads pending each batch, so a report staged mid-run is picked up by the
+# run already in flight.
+#
+# EVIDENCE IS NEVER COMMITTED BLIND. gate-raw-append-only runs before the commit.
+# If something has edited raw/ outside the authorised frontmatter fields, the
+# tick refuses to commit and says so. A daemon that commits whatever it finds
+# would launder a tamper into history at 3am.
+#
+# Usage:
+#   scripts/__NAME__-watchd.sh                 # loop forever (launchd entry point)
+#   scripts/__NAME__-watchd.sh --once          # a single tick, then exit
+#   scripts/__NAME__-watchd.sh --once --dry-run
+#
+# Exit: 0 = tick(s) completed · 1 = a tick failed · 2 = setup error.
+
+set -uo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="$(cd "$SCRIPT_DIR/.." && pwd)"
+cd "$REPO" || { echo "__NAME__-watchd: cannot cd to $REPO" >&2; exit 2; }
+
+INTERVAL=${__UNAME___WATCH_INTERVAL:-2700}   # 45 minutes
+ONCE=0; DRY=0
+while [ "$#" -gt 0 ]; do
+  case "$1" in
+    --once)     ONCE=1; shift ;;
+    --dry-run)  DRY=1; shift ;;
+    --interval) INTERVAL="${2:?--interval needs seconds}"; shift 2 ;;
+    -h|--help)  sed -n '2,40p' "$0"; exit 0 ;;
+    *) echo "__NAME__-watchd: unknown argument: $1" >&2; exit 2 ;;
+  esac
+done
+
+STATE_DIR="$REPO/.cache"
+STATE="$STATE_DIR/gain-watch.json"
+mkdir -p "$STATE_DIR" || { echo "__NAME__-watchd: cannot create $STATE_DIR" >&2; exit 2; }
+
+command -v python3 >/dev/null 2>&1 || { echo "__NAME__-watchd: python3 required" >&2; exit 2; }
+command -v git    >/dev/null 2>&1 || { echo "__NAME__-watchd: git required" >&2; exit 2; }
+
+log() { printf '%s __NAME__-watchd: %s\n' "$(date -u '+%Y-%m-%dT%H:%M:%SZ')" "$*"; }
+
+# State is a flat JSON object written by python3 (no jq dependency). A daemon
+# that cannot say when it last succeeded cannot be debugged at 3am.
+state_get() {
+  python3 - "$STATE" "$1" <<'PY' 2>/dev/null || printf ''
+import json, sys
+try:
+    with open(sys.argv[1]) as f:
+        print(json.load(f).get(sys.argv[2], "") or "")
+except Exception:
+    print("")
+PY
+}
+state_set() {
+  python3 - "$STATE" "$1" "$2" <<'PY' 2>/dev/null
+import json, os, sys
+path, key, val = sys.argv[1], sys.argv[2], sys.argv[3]
+try:
+    with open(path) as f:
+        d = json.load(f)
+except Exception:
+    d = {}
+d[key] = val
+tmp = path + ".tmp"
+with open(tmp, "w") as f:
+    json.dump(d, f, indent=2, sort_keys=True)
+os.replace(tmp, path)
+PY
+}
+
+# A sticky last_error is worse than none: it survives every subsequent success,
+# so the state file reports a failure that was resolved hours ago and the one
+# number an operator checks first is permanently wrong. Cleared on every tick
+# that completes without setting a new one.
+state_clear_error() {
+  python3 - "$STATE" <<'PY' 2>/dev/null
+import json, os, sys
+path = sys.argv[1]
+try:
+    with open(path) as f:
+        d = json.load(f)
+except Exception:
+    d = {}
+if d.pop("last_error", None) is not None:
+    tmp = path + ".tmp"
+    with open(tmp, "w") as f:
+        json.dump(d, f, indent=2, sort_keys=True)
+    os.replace(tmp, path)
+PY
+}
+
+# Newest in-scope publishDate in the source catalog. Reuses harvest-gain.py's own
+# catalog fetch + cache rather than opening a second path to the API — a second
+# fetcher would need its own deadline, retry and truncation handling, and would
+# drift from the one that has them.
+catalog_head() {
+  python3 - "$REPO" <<'PY' 2>/dev/null || printf ''
+import sys, importlib.util
+from pathlib import Path
+repo = Path(sys.argv[1])
+spec = importlib.util.spec_from_file_location("hg", repo / "scripts" / "harvest-gain.py")
+hg = importlib.util.module_from_spec(spec)
+try:
+    spec.loader.exec_module(hg)
+    recs = [r for r in hg._catalog(repo / "archive", lambda *_: None)
+            if r.get("isPublic") and r.get("fileName")
+            and any(c in (r.get("reportCategory") or "") for c in hg.CATEGORIES)]
+    print(max((str(r.get("publishDate", ""))[:10] for r in recs), default=""))
+except Exception:
+    print("")
+PY
+}
+
+compile_blocked() {
+  pgrep -f 'scripts/ingest-(batch|corpus)\.sh' >/dev/null 2>&1
+}
+
+tick() {
+  local head last new_files rc=0
+  log "tick start"
+
+  head="$(catalog_head)"
+  if [ -z "$head" ]; then
+    log "catalog head unavailable (network or API) — will retry next tick"
+    state_set last_error "$(date -u '+%Y-%m-%dT%H:%M:%SZ') catalog unreachable"
+    return 1
+  fi
+  last="$(state_get last_head)"
+  log "catalog head=$head last_seen=${last:-none}"
+
+  if [ -n "$last" ] && [ "$head" = "$last" ]; then
+    log "nothing new — sleeping"
+    state_set last_poll "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    state_clear_error
+    return 0
+  fi
+
+  if [ "$DRY" = 1 ]; then
+    log "DRY RUN: would harvest, stage, commit$(compile_blocked && echo ' (compile deferred)' || echo ' and compile')"
+    return 0
+  fi
+
+  # ── harvest ───────────────────────────────────────────────────────────────
+  if ! python3 scripts/harvest-__NAME__.py --root archive --since 2020 --quiet; then
+    log "harvest reported a problem (a republished report, or a failed fetch)"
+    rc=1   # keep going: whatever DID land should still be staged and committed
+  fi
+
+  # ── stage ─────────────────────────────────────────────────────────────────
+  python3 scripts/stage-corpus.py archive/__NAME__ raw/ --config corpus-__NAME__.json --quiet || {
+    log "staging FAILED — not committing"
+    state_set last_error "$(date -u '+%Y-%m-%dT%H:%M:%SZ') stage failed"
+    return 1
+  }
+
+  new_files="$(git status --porcelain archive raw | wc -l | tr -d ' ')"
+  if [ "$new_files" = 0 ]; then
+    log "no filesystem change despite a newer catalog head (already had it)"
+    state_set last_head "$head"
+    state_set last_poll "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    [ "$rc" = 0 ] && state_clear_error
+    return "$rc"
+  fi
+
+  # ── refuse to commit tampered evidence, at BOTH links of the chain ────────
+  # archive/ first: it is the point of capture, and staging is idempotent on
+  # unchanged input, so a doctored archive file would propagate into raw/ on
+  # this very tick and look like a legitimate derivation.
+  if ! ./scripts/gate-archive-immutable.sh >/dev/null 2>&1; then
+    log "ARCHIVE-IMMUTABLE violation — a captured report was modified or deleted."
+    log "  NOT committing. Run: ./scripts/gate-archive-immutable.sh"
+    state_set last_error "$(date -u '+%Y-%m-%dT%H:%M:%SZ') archive-immutable violation"
+    return 1
+  fi
+  if ! ./scripts/gate-raw-append-only.sh --worktree >/dev/null 2>&1; then
+    log "RAW-APPEND-ONLY violation — raw/ was modified outside the authorised"
+    log "  frontmatter fields. NOT committing. Run:"
+    log "  ./scripts/gate-raw-append-only.sh --worktree"
+    state_set last_error "$(date -u '+%Y-%m-%dT%H:%M:%SZ') raw-append-only violation"
+    return 1
+  fi
+
+  # ── commit: git is the mutation record ────────────────────────────────────
+  local n
+  n="$(git status --porcelain archive | grep -c '^??' || true)"
+  git add archive raw
+  git commit -q -m "harvest: gain $(date -u '+%Y-%m-%d') — ${n} new report(s)" \
+    || log "nothing to commit"
+  log "committed ${n} new report(s)"
+
+  state_set last_head "$head"
+  state_set last_harvest "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+
+  # ── compile, only when no other driver owns the index ─────────────────────
+  if compile_blocked; then
+    log "compile DEFERRED — an ingest driver is running; it will pick these up"
+    state_set last_compile_deferred "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+    return "$rc"
+  fi
+  if ! command -v claude >/dev/null 2>&1; then
+    log "claude not on PATH — staged and committed, compile skipped"
+    return "$rc"
+  fi
+  log "compiling new sources"
+  ./scripts/ingest-batch.sh . --size 5 --newest-first --timeout 3600 \
+      --log .bench/watch-ingest.tsv >/dev/null 2>&1 \
+    && log "compile done" || log "compile reported a failure — see .bench/watch-ingest.tsv"
+  state_set last_compile "$(date -u '+%Y-%m-%dT%H:%M:%SZ')"
+  [ "$rc" = 0 ] && state_clear_error
+  return "$rc"
+}
+
+if [ "$ONCE" = 1 ]; then
+  tick; exit $?
+fi
+
+log "starting: interval=${INTERVAL}s repo=$REPO"
+while :; do
+  tick || log "tick returned non-zero — continuing"
+  sleep "$INTERVAL"
+done
