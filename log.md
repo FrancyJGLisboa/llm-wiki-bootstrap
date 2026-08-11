@@ -2,6 +2,47 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-11 — segmented-source anchors never resolved, and nothing checked
+
+**Rationale.** `AGENTS.md` tells `/ctx-compile` to cite a segmented section with
+its positional range dropped — `## Power Envelope (lines 13-19)` → `#power-envelope`.
+`citation-audit.py` only ever slugified the whole heading, giving
+`power-envelope-lines-13-19`. The schema and the resolver could never agree, and
+the compiler was following the schema exactly.
+
+Measured downstream on a 2,414-source corpus: **15,440 unresolvable citations,
+82% of all failures**, none of them the compiler's fault. Eleven gates in that
+repository ran green throughout, because no gate ran C1/C2 resolution over the
+compiled root. A broken anchor fails silently — the page renders, names a real
+file, and reads as sourced.
+
+**The resolver was wrong, not the convention.** A line range belongs to one
+segmentation run: an anchor carrying it breaks the moment the source is
+re-segmented with a different word budget, which is precisely the fragility the
+schema's form avoids. Both forms now resolve, so packages already citing the
+full slug keep working. Ambiguity stays fatal — if dropping ranges makes two
+headings collide, that is a coin flip, not a match.
+
+**Regression test, and it fails without the fix.** `verify-citation-audit.sh`
+gained a case running the real engine against the schema's own example, asserting
+the range-dropped form resolves, the full form still resolves, and a nonexistent
+heading still does not — the third clause being what stops the "fix" from being
+a resolver that says yes. Reverting the one-line change turns it red.
+
+**CITATION-FLOOR (R44), the gate whose absence caused this to run unnoticed.**
+It runs the audit over the compiled root and fails when an anchor does not
+resolve. Detection delegated wholesale to `citation-audit.py` — a second
+implementation of "does this anchor resolve" would eventually disagree with the
+first, and then a corpus is sound by one and broken by the other.
+
+**Found by the gate it exposed.** `CTX-ROOT-ADOPTION` went 80 → 81 on the new
+gate's own error message, which named the legacy root as a literal. Reworded
+rather than baselined up — declared failure mode 2 of that gate, met for the
+second time.
+
+Suite 46 → 47. `verify-site-claims` and `gate-doc-claims` both billed for the
+change, as designed.
+
 ## 2026-08-10 — the adapter blueprint moves upstream, where compilers are generated
 
 **Rationale.** `new-corpus.sh` and `gate-adapter-contract.sh` were built in one

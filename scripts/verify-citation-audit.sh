@@ -43,6 +43,35 @@ printf '%s' "$report" | grep -q 'page-broken-file.md.*file missing' \
   && ok "C1 flags the nonexistent raw file" \
   || fail "C1 did not flag page-broken-file.md"
 
+# 2b. A SEGMENTED heading resolves by the anchor AGENTS.md tells the compiler to
+# write — the title with its positional range dropped.
+#
+# This is a regression test for a bug that produced 15,440 unresolvable citations
+# in a real 2,414-source corpus without a single check going red. AGENTS.md says
+# to cite `## Power Envelope (lines 13-19)` as `#power-envelope`; the resolver
+# slugified the whole heading, giving `power-envelope-lines-13-19`, so the two
+# could never agree and every citation into a segmented source failed. The
+# compiler was following the schema exactly.
+#
+# Both forms must resolve — the range-dropped one because it is what the schema
+# asks for, the full one so packages already citing it keep working. A
+# nonexistent heading must still fail, or this "fix" is just a resolver that
+# says yes.
+seg_probe="$(python3 - "$AUDIT" <<'PYEOF'
+import importlib.util, sys
+spec = importlib.util.spec_from_file_location("ca", sys.argv[1])
+ca = importlib.util.module_from_spec(spec); spec.loader.exec_module(ca)
+lines = ["---", "a: b", "---", "", "## Power Envelope (lines 13-19)", "", "body text."]
+dropped = ca.resolve_anchor("power-envelope", lines)[0]
+full    = ca.resolve_anchor("power-envelope-lines-13-19", lines)[0]
+absent  = ca.resolve_anchor("no-such-heading", lines)[0]
+print("PASS" if (dropped and full and not absent) else f"FAIL dropped={dropped} full={full} absent={absent}")
+PYEOF
+)"
+[ "$seg_probe" = "PASS" ] \
+  && ok "C2 resolves a segmented heading by its range-dropped anchor (AGENTS.md form)" \
+  || fail "C2 segmented-anchor resolution: $seg_probe"
+
 # 3. The broken-anchor case is flagged (C2).
 printf '%s' "$report" | grep -q 'page-broken-anchor.md.*anchor unresolved' \
   && ok "C2 flags the nonexistent heading anchor" \
