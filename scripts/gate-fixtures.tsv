@@ -25,3 +25,4 @@ scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/g
 scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-collapsed-time	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
 scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-anchor	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
 scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-slug	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
+scripts/gate-citation-floor.sh	scripts/gate-citation-floor.sh --repo tests/gates/citation-floor/dirty	scripts/gate-citation-floor.sh --repo tests/gates/citation-floor/clean

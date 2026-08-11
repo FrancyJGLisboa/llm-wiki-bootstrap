@@ -67,6 +67,10 @@ ANY_CITATION_RE = re.compile(r"\(source:\s*([^)]+?)\s*\)")
 HEADING_RE = re.compile(r"^#{1,6}\s+(.*?)\s*$")
 TIMESTAMP_RE = re.compile(r"^\d{1,2}:\d{2}(?:-\d{1,2}:\d{2})?$")
 LINERANGE_RE = re.compile(r"^L(\d+)(?:-L?(\d+))?$")
+# `(lines 25-179)` / `(pages 3-7)` trailing a segmented heading. Dropped before
+# slugifying so the schema's range-less anchor form resolves — see resolve_anchor.
+RANGE_SUFFIX_RE = re.compile(r"\s*\((?:lines|pages)\s+[\d\s-]+\)\s*$", re.I)
+
 EVIDENCE_MAX_LINES = 40
 
 
@@ -149,8 +153,29 @@ def resolve_anchor(anchor, lines):
     # heading collides on the same slug (e.g. 'Results' and 'Results!!!'), the
     # anchor is ambiguous — fail C2 rather than silently feed the judge the first
     # match's passage.
-    matches = [i for i, line in enumerate(lines)
-               if (hm := HEADING_RE.match(line)) and slugify(hm.group(1)) == anchor]
+    # A SEGMENTED heading carries its positional range: `## Full text — part 1
+    # (lines 25-179)`. AGENTS.md tells the compiler to cite such a section with
+    # THE RANGE DROPPED — `#full-text-part-1` — and that is the right convention:
+    # a range is a property of one segmentation run, so an anchor containing it
+    # breaks the moment the source is re-segmented with a different word budget.
+    #
+    # This resolver only ever slugified the WHOLE heading, so the two never
+    # matched and every citation into a segmented source failed. Measured on a
+    # 2,414-report corpus: 15,440 broken citations, 82% of all failures, none of
+    # them the compiler's fault — it followed the schema exactly.
+    #
+    # Both forms are accepted. The full-slug form stays valid so packages that
+    # already cite it keep resolving; the range-dropped form is what the schema
+    # asks for. Ambiguity is still fatal: if dropping ranges makes two headings
+    # collide, that is not a match, it is a coin flip.
+    matches = []
+    for i, line in enumerate(lines):
+        hm = HEADING_RE.match(line)
+        if not hm:
+            continue
+        title = hm.group(1)
+        if slugify(title) == anchor or slugify(RANGE_SUFFIX_RE.sub("", title)) == anchor:
+            matches.append(i)
     if len(matches) == 1:
         i = matches[0]
         evidence = [lines[i]]

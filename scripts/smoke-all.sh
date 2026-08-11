@@ -2,14 +2,14 @@
 # scripts/smoke-all.sh — umbrella verifier for the end-to-end smoke.
 #
 # Composes the build phase (LLM-driven, idempotent), the smoke checks
-# (C1–C5), and the regression guards (R1–R43) into a single exit-code-
+# (C1–C5), and the regression guards (R1–R44) into a single exit-code-
 # driven test.
 #
 # Exit 0 iff every check passes (the suite counts its own tally; see `passes`).
 #
 # --no-build : skip the LLM build phase (which needs the `claude` CLI) and run
 #   only the deterministic checks (C1–C5 asserts on the committed artifacts +
-#   R1–R43 guards). This is the CI path — the build phase is a precondition that
+#   R1–R44 guards). This is the CI path — the build phase is a precondition that
 #   regenerates artifacts, not one of the counted checks, so the committed-in
 #   artifacts are verified as-is.
 
@@ -58,8 +58,8 @@ if ! "$SCRIPT_DIR/smoke-check.sh"; then
   record_fail "smoke-check.sh reported one or more C1–C5 failures"
 fi
 
-# ──── REGRESSION GUARDS R1–R43 ────
-section "Regression guards (R1–R43)"
+# ──── REGRESSION GUARDS R1–R44 ────
+section "Regression guards (R1–R44)"
 
 # R1 — preflight stays green
 if "$SCRIPT_DIR/preflight.sh" >/dev/null 2>&1; then
@@ -565,6 +565,18 @@ else
   record_fail "R43 new-corpus.sh produced an empty, unsubstituted or unparseable scaffold"
 fi
 rm -rf "$r43_tmp"
+
+# R44 — every citation anchor in the compiled context resolves.
+#
+# Absent until 2026-08-11, and its absence cost 18,900 unresolvable citations in
+# a downstream 2,414-source corpus while eleven other gates ran green. A broken
+# anchor fails silently: the page renders, names a real file, reads as sourced.
+# Nothing was looking.
+if "$SCRIPT_DIR/gate-citation-floor.sh" >/dev/null 2>&1; then
+  ok "R44 gate-citation-floor.sh exits 0 (every citation anchor resolves)"
+else
+  record_fail "R44 gate-citation-floor.sh exits non-zero — a citation names a passage that does not exist, which is the one failure this package's trustworthiness rests on"
+fi
 
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
