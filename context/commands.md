@@ -9,6 +9,15 @@ tags: [system, commands, spec]
 
 # The Five Slash Commands
 
+## Guided workspace commands
+
+- `/ctx-start` (`/start`) — inspect setup, active profile, and pending evidence,
+  then give one plain-language next action.
+- `/ctx-inbox` (`/inbox`) — safely extract new or changed `EVIDENCE-INBOX/` evidence, record
+  its raw mapping, and compile it.
+- `/ctx-create-profile` (`/create-profile`) — interview the user, generate a bounded
+  profile extension, validate its portable assets, and ask before activation.
+
 ## Optional client-decision commands
 
 An explicitly active `client-decision` profile adds `/client-brief`, `/client-delta`,

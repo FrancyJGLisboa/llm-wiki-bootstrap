@@ -125,6 +125,27 @@ class ClientContextTest(unittest.TestCase):
         self.assertIn("unknown_decision_owners", lint)
         self.assertNotIn("score", lint)
 
+    def test_saved_views_use_bounded_deterministic_output_folders(self):
+        brief = self.invoke("brief", "northstar-feeds", "--save")
+        saved_brief = self.root / "BRIEFS/northstar-feeds-brief.json"
+        self.assertTrue(saved_brief.is_file())
+        self.assertEqual(brief, json.loads(saved_brief.read_text(encoding="utf-8")))
+        first = saved_brief.read_bytes()
+        self.invoke("brief", "northstar-feeds", "--save")
+        self.assertEqual(first, saved_brief.read_bytes())
+
+        review = self.invoke("review", "northstar-feeds", "--save")
+        saved_review = self.root / "REVIEWS/northstar-feeds-review.json"
+        self.assertEqual(review, json.loads(saved_review.read_text(encoding="utf-8")))
+
+        rejected = subprocess.run(
+            [sys.executable, str(REPO / "scripts/client-context.py"), "--root", str(self.root), "brief", "../escape", "--save"],
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(2, rejected.returncode)
+        self.assertFalse((self.root.parent / "escape-brief.json").exists())
+
 
 if __name__ == "__main__":
     unittest.main()

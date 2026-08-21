@@ -77,7 +77,7 @@
 
   <section class="wrap flow">
     <h2>The daily workflow starts with evidence, not configuration.</h2>
-    <p>After specialization, users normally do not edit claims or graphs. They add evidence and consume focused views.</p>
+    <p>After specialization, users normally do not edit claims or graphs. They drop evidence into <code>EVIDENCE-INBOX/</code>, read useful outputs in <code>BRIEFS/</code>, and inspect only exceptions in <code>REVIEWS/</code>.</p>
     <ol class="steps">
       <li class="step">
         <span class="stage">morning</span>
@@ -125,14 +125,14 @@
 
   <section class="wrap start" id="start">
     <h2>Create your first specialized compiler.</h2>
-    <p>You need Git plus VS Code or another agentic coding environment. The included profile provides a working client-decision specialization; the generic default remains available.</p>
+    <p>You need Git plus VS Code or another agentic coding environment. The included profile provides a working client-decision specialization; the generic default remains available. The generated workspace opens with <code>START-HERE.md</code> and one-click VS Code tasks.</p>
     <pre class="term">git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
 ./bootstrap/scripts/create-context-compiler.sh ./northstar-client-context
 cd ./northstar-client-context
 ./scripts/use-profile.sh client-decision</pre>
-    <p class="after">Then open the directory in your coding agent, add evidence, and run:</p>
-    <pre class="term">/ctx-compile
-/client-brief northstar-feeds</pre>
+    <p class="after">Then open <code>START-HERE.md</code>, drop evidence into <code>EVIDENCE-INBOX/</code>, and tell the AI:</p>
+    <pre class="term">Compile my inbox.
+Prepare a brief for northstar-feeds.</pre>
     <p class="after"><strong>Current boundary:</strong> this is a developer-oriented factory, not a no-code generator. Creating a new profile still requires an LLM-assisted development session. Daily operation assumes basic familiarity with files, commands, and Git.</p>
     <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#create-a-specialized-context-compiler">Read the full factory and operating guide →</a></p>
   </section>

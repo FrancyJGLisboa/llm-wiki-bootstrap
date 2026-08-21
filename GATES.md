@@ -1,28 +1,28 @@
-# Gates: Decision Context Milestone
+# Gates: Guided context-compiler workspace
 
-Scope: A generic context compiler can load the client-decision profile and reproducibly reconstruct Northstar decision state without regressing generic workflows.
+Scope: Make generated compilers approachable from VS Code through a guided workspace, inbox workflow, natural-language routing, and profile-creation contract without weakening the generic core.
 
-- [x] G1: Profile activation is opt-in and generic installs remain functional.
-  CHECK: bash scripts/verify-profile-resolution.sh && bash scripts/verify-create-context-compiler.sh
-  EXPECT: /profile resolution.*PASS|Passed/
-  EVIDENCE: [verifier] cleaning prior tests/installer-output/* … | [verifier] target: tests/installer-output/20260821-111319/freshrepo
+- [x] G1: A fresh installed compiler opens with START-HERE, EVIDENCE-INBOX, BRIEFS, REVIEWS, and valid VS Code recommendations/tasks.
+  CHECK: bash scripts/verify-guided-workspace.sh
+  EXPECT: /guided workspace: PASS/
+  EVIDENCE: daily routing: PASS | guided workspace: PASS
 
-- [x] G2: Claim schema, provenance, speaker, temporal state, and UNKNOWN rules are mechanically validated.
-  CHECK: bash scripts/verify-claim-core.sh
-  EXPECT: idempotence: PASS
-  EVIDENCE: Ran 16 tests in 0.387s | OK
+- [x] G2: Inbox import is deterministic, incremental, non-destructive, collision-safe, and rejects symlinks/path escapes.
+  CHECK: python3 tests/guided-workspace/test_inbox_import.py
+  EXPECT: /^OK$/m
+  EVIDENCE: OK
 
-- [x] G3: Client brief, delta, why, history, review, and lint workflows pass acceptance fixtures.
-  CHECK: bash scripts/verify-client-workflows.sh
-  EXPECT: unknown/review: PASS
-  EVIDENCE: Ran 5 tests in 1.566s | OK
+- [x] G3: Profile creation has a guided command and a generic deterministic profile-package validator; client-decision passes it and unsafe manifests fail.
+  CHECK: python3 tests/guided-workspace/test_profile_check.py
+  EXPECT: /^OK$/m
+  EVIDENCE: OK
 
-- [x] G4: The 24-source Northstar benchmark is leakage-resistant and emits measured results for compiled, long-context, and BM25 retrieval arms.
-  CHECK: bash scripts/verify-northstar-benchmark.sh
-  EXPECT: baseline arms: PASS
-  EVIDENCE: Ran 6 tests in 0.580s | OK
+- [x] G4: Natural-language daily operations map to stable compiler commands and generated outputs have explicit BRIEFS/REVIEWS ownership rules.
+  CHECK: bash scripts/verify-guided-workspace.sh
+  EXPECT: /daily routing: PASS/
+  EVIDENCE: daily routing: PASS | guided workspace: PASS
 
-- [x] G5: Existing generic behavior, packaging, quality, and all regression guards remain green.
-  CHECK: bash scripts/smoke-all.sh --no-build && bash scripts/quality.sh --ci
-  EXPECT: quality gate passed
-  EVIDENCE: Reminder: run /ctx-lint for markdown health (links, orphans, contradictions). | ✓ quality gate passed
+- [x] G5: Installer, profile, decision-context, site-claim, quality, and full keyless regression suites remain green.
+  CHECK: bash scripts/guided-workspace-regression.sh
+  EXPECT: /guided workspace regression: PASS/
+  EVIDENCE: Ran 6 tests in 0.631s | OK

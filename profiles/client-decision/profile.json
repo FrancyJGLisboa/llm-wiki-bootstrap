@@ -1,4 +1,17 @@
 {
   "name": "client-decision",
-  "profile_version": 1
+  "profile_version": 1,
+  "artifacts": [
+    "COMPILATION.md",
+    "schemas/claim.schema.json",
+    "schemas/decision.schema.json",
+    "templates/claim.json",
+    "templates/decision.json",
+    "vocabularies/evidence-domains.json",
+    "vocabularies/ontology.json",
+    "vocabularies/predicates.json",
+    "vocabularies/relations.json",
+    "vocabularies/review-triggers.json",
+    "vocabularies/speaker-acts.json"
+  ]
 }

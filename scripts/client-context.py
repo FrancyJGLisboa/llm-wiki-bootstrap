@@ -3,8 +3,11 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
+import os
+import re
 import sys
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
@@ -26,6 +29,7 @@ MATERIAL_PREDICATES = {
     "affected-by", "assumes", "considering", "constrains", "depends-on",
     "exposed-to", "monitors", "questions", "triggers",
 }
+CLIENT_SLUG = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 def compiled_root(root: Path) -> Path:
@@ -301,22 +305,45 @@ def human(title: str, value: Any) -> None:
                 print(json.dumps(item, ensure_ascii=False, sort_keys=True))
 
 
+def save_result(root: Path, args: argparse.Namespace, result: dict[str, Any]) -> Path:
+    """Atomically save a deterministic latest/named view outside compiled state."""
+    if not CLIENT_SLUG.fullmatch(args.client):
+        raise ClaimError("client must be a kebab-case slug")
+    folder = "REVIEWS" if args.command in {"review", "lint"} else "BRIEFS"
+    suffix = args.command
+    if args.command == "delta":
+        suffix += "-since-" + re.sub(r"[^0-9A-Za-z-]", "-", args.since).strip("-")
+    elif args.command == "decisions":
+        suffix += "-as-of-" + (re.sub(r"[^0-9A-Za-z-]", "-", args.as_of).strip("-") if args.as_of else "latest")
+    elif args.command == "why":
+        suffix += "-" + hashlib.sha256(args.query.encode("utf-8")).hexdigest()[:10]
+    output = root / folder / f"{args.client}-{suffix}.json"
+    output.parent.mkdir(parents=True, exist_ok=True)
+    payload = json.dumps(result, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
+    temporary = output.with_name(f".{output.name}.tmp")
+    temporary.write_text(payload, encoding="utf-8")
+    os.replace(temporary, output)
+    return output
+
+
 def parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--root", type=Path, default=Path.cwd())
     p.add_argument("--claims", type=Path)
     sub = p.add_subparsers(dest="command", required=True)
     for name in ("brief", "assumptions", "review", "lint"):
-        command = sub.add_parser(name); command.add_argument("client"); command.add_argument("--json", action="store_true")
-    decisions = sub.add_parser("decisions"); decisions.add_argument("client"); decisions.add_argument("--as-of"); decisions.add_argument("--json", action="store_true")
-    delta = sub.add_parser("delta"); delta.add_argument("client"); delta.add_argument("--since", required=True); delta.add_argument("--json", action="store_true")
-    why = sub.add_parser("why"); why.add_argument("client"); why.add_argument("query"); why.add_argument("--json", action="store_true")
+        command = sub.add_parser(name); command.add_argument("client"); command.add_argument("--json", action="store_true"); command.add_argument("--save", action="store_true")
+    decisions = sub.add_parser("decisions"); decisions.add_argument("client"); decisions.add_argument("--as-of"); decisions.add_argument("--json", action="store_true"); decisions.add_argument("--save", action="store_true")
+    delta = sub.add_parser("delta"); delta.add_argument("client"); delta.add_argument("--since", required=True); delta.add_argument("--json", action="store_true"); delta.add_argument("--save", action="store_true")
+    why = sub.add_parser("why"); why.add_argument("client"); why.add_argument("query"); why.add_argument("--json", action="store_true"); why.add_argument("--save", action="store_true")
     return p
 
 
 def main() -> int:
     args = parser().parse_args()
     try:
+        if not CLIENT_SLUG.fullmatch(args.client):
+            raise ClaimError("client must be a kebab-case slug")
         all_claims, context = load(args.root.resolve(), args.claims)
         decisions = decisions_for(context, args.client)
         claims = client_claims(all_claims, decisions, args.client)
@@ -327,12 +354,15 @@ def main() -> int:
         elif args.command == "why": result = why_data(claims, args.query)
         elif args.command == "review": result = review_data(claims)
         else: result = lint_data(args.root.resolve(), claims, decisions)
+        saved = save_result(args.root.resolve(), args, result) if args.save else None
     except (ClaimError, ValueError) as exc:
         print(f"setup error: {exc}", file=sys.stderr); return 2
     if args.json:
         print(json.dumps(result, indent=2, ensure_ascii=False))
     else:
         human(f"CLIENT {args.client} — {args.command.upper()}", result)
+    if saved:
+        print(f"Saved: {saved.relative_to(args.root.resolve())}", file=sys.stderr if args.json else sys.stdout)
     return 0
 
 

@@ -2,6 +2,19 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-21 — Guided professional workspace
+
+- Added `START-HERE.md`, user-owned `EVIDENCE-INBOX/`, generated `BRIEFS/` and `REVIEWS/`,
+  and VS Code extension/task recommendations to fresh compilers.
+- Added `/ctx-start`, `/ctx-inbox`, and `/ctx-create-profile` with natural-language
+  routing, explicit clarification rules, and a bounded profile-generation contract.
+- Added deterministic `scripts/inbox.py` state tracking and generic
+  `scripts/profile-check.py` portable-asset validation, including path/symlink safety.
+- Client workflows now support deterministic `--save` views under `BRIEFS/` and
+  `REVIEWS/` without mutating evidence or compiled claims.
+- Added guided-workspace acceptance tests, installer/package integration, regression
+  wiring, and documentation for non-developer VS Code operators.
+
 ## 2026-08-21 — Bootstrap factory positioning
 
 - Reframed `README.md` and the GitHub Pages landing page around two distinct

@@ -1,0 +1,29 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Context: Check setup",
+      "type": "shell",
+      "command": "./scripts/preflight.sh",
+      "problemMatcher": []
+    },
+    {
+      "label": "Context: Show inbox status",
+      "type": "shell",
+      "command": "python3 scripts/inbox.py pending",
+      "problemMatcher": []
+    },
+    {
+      "label": "Context: Activate client-decision",
+      "type": "shell",
+      "command": "./scripts/use-profile.sh client-decision",
+      "problemMatcher": []
+    },
+    {
+      "label": "Context: Verify guided workspace",
+      "type": "shell",
+      "command": "./scripts/verify-guided-workspace.sh",
+      "problemMatcher": []
+    }
+  ]
+}

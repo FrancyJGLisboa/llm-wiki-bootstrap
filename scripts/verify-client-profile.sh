@@ -24,7 +24,8 @@ def load(relative):
         raise SystemExit(f"invalid JSON in {relative}: {exc}") from exc
 
 manifest = load("profile.json")
-assert manifest == {"name": "client-decision", "profile_version": 1}, manifest
+assert manifest["name"] == "client-decision", manifest
+assert manifest["profile_version"] == 1, manifest
 
 assets = [
     "schemas/claim.schema.json",
@@ -38,6 +39,7 @@ assets = [
     "templates/claim.json",
     "templates/decision.json",
 ]
+assert manifest["artifacts"] == sorted(["COMPILATION.md", *assets]), manifest["artifacts"]
 contract = (profile / "COMPILATION.md").read_text(encoding="utf-8")
 for asset in assets:
     load(asset)

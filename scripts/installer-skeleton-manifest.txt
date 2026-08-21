@@ -3,6 +3,12 @@ CLAUDE.md
 GEMINI.md
 LICENSE
 .gitignore
+START-HERE.md
+EVIDENCE-INBOX/README.md
+BRIEFS/README.md
+REVIEWS/README.md
+.vscode/extensions.json
+.vscode/tasks.json
 .claude/settings.json
 .clinerules
 .cursor/rules/context-compiler.mdc
@@ -39,6 +45,12 @@ LICENSE
 .claude/commands/rules.md
 .claude/commands/ctx-gate.md
 .claude/commands/gate.md
+.claude/commands/ctx-start.md
+.claude/commands/start.md
+.claude/commands/ctx-inbox.md
+.claude/commands/inbox.md
+.claude/commands/ctx-create-profile.md
+.claude/commands/create-profile.md
 profiles/client-decision/COMPILATION.md
 profiles/client-decision/profile.json
 profiles/client-decision/schemas/claim.schema.json
@@ -74,6 +86,8 @@ scripts/claim-delta.py
 scripts/claim-why.py
 scripts/client-context.py
 scripts/lib/claims.py
+scripts/inbox.py
+scripts/profile-check.py
 scripts/northstar-benchmark.py
 scripts/vtt-to-md.sh
 scripts/extract/segment-doc.py
@@ -101,6 +115,7 @@ scripts/verify-claim-core.sh
 scripts/verify-client-workflows.sh
 scripts/verify-decision-context-integration.sh
 scripts/verify-northstar-benchmark.sh
+scripts/verify-guided-workspace.sh
 scripts/verify-wiki-to-anki.sh
 scripts/wiki-lint-typed-relations.sh
 scripts/wiki-lint-causal.sh
@@ -160,6 +175,8 @@ tests/client-profile/invalid-speaker-act.json
 tests/client-profile/valid-claim.json
 tests/client-profile/valid-date-claim.json
 tests/client-workflows/test_client_context.py
+tests/guided-workspace/test_inbox_import.py
+tests/guided-workspace/test_profile_check.py
 tests/northstar/predictions-fixture.json
 tests/northstar/test_northstar.py
 tests/profiles/bad-manifest/context-profile.json

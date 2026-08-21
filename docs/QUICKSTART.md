@@ -2,6 +2,23 @@
 
 From `git clone` to first useful answer in 5 minutes, across the supported AI tools.
 
+## Guided VS Code path
+
+If you are comfortable opening a folder and using AI chat but do not want to learn
+the repository first:
+
+1. Open the generated compiler directory in VS Code.
+2. Open `START-HERE.md`.
+3. Run the task **Context: Activate client-decision**, or keep the generic profile.
+4. Drop evidence into `EVIDENCE-INBOX/`.
+5. Tell the AI: **Compile my inbox.**
+6. Ask for the useful view: **Prepare a brief for `<client>`**, **What changed since
+   `<date>`?**, or **Show me what needs review.**
+
+The stable command equivalents are `/ctx-start`, `/ctx-inbox`, `/client-brief`,
+`/client-delta`, and `/client-review`. Friendly language is a routing surface; it
+does not weaken provenance or validation.
+
 ## Optional Northstar decision-context demo
 
 Run `./scripts/create-context-compiler.sh /tmp/northstar-compiler`, then

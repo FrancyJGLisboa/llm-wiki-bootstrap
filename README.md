@@ -20,6 +20,23 @@ A specialized compiler turns emails, PDFs, transcripts, spreadsheets, screenshot
 
 The repository ships one complete specialization, [`profiles/client-decision/`](profiles/client-decision/), as both a working capability and a pattern for creating others. Without an activated profile, the compiler remains generic. No UI, SaaS, Obsidian, vector database, or external connector is required.
 
+## Who can use it
+
+The intended operator is a domain expert who can open a folder in VS Code, use an
+AI coding subscription, and follow a guided workflow. They do not need to write
+application code or edit schemas during daily use.
+
+```text
+EVIDENCE-INBOX/  drop new evidence here; originals are never edited
+BRIEFS/    read meeting-ready briefs, deltas, and evidence chains
+REVIEWS/   inspect only contradictions, ambiguity, and other exceptions
+```
+
+[`START-HERE.md`](START-HERE.md) maps ordinary requests such as “compile my inbox,”
+“prepare me for the Northstar meeting,” and “what changed since August 1?” to stable
+compiler workflows. [`.vscode/tasks.json`](.vscode/tasks.json) exposes setup, inbox
+status, profile activation, and verification without requiring command recall.
+
 ![/ctx-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
 > A replay of a real `/ctx-query` against the shipped demo wiki — the answer text is verbatim; terminal timing is illustrative. Reproduce it yourself with the block below (zero setup).
@@ -78,7 +95,7 @@ That is the factory behavior: the bootstrap provides the reusable machinery and 
 
 ## Operate the specialized compiler every day
 
-The user normally adds evidence and requests views. They do not hand-edit structured claims.
+The user normally adds evidence and requests views. They do not hand-edit structured claims. Drop files into `EVIDENCE-INBOX/` and say **“Compile my inbox.”** The `/ctx-inbox` workflow safely extracts only new or changed files, preserves the originals, records the explicit evidence-to-raw mapping, and then runs `/ctx-compile`.
 
 ```text
 new evidence
@@ -172,6 +189,10 @@ The compiled context package is the durable product. VS Code and the LLM are the
 This is currently a developer-oriented factory. It scaffolds a working compiler, supplies a complete reference profile, defines the profile contract, and provides deterministic claim, temporal, provenance, testing, benchmarking, and packaging machinery.
 
 It is **not yet a no-code compiler generator**. A genuinely new specialization still requires an LLM-assisted development session to define schemas, vocabularies, extraction guidance, fixtures, and acceptance tests. Daily operation currently assumes an agentic coding environment, files under `raw/`, command-driven workflows, and basic Git/filesystem familiarity.
+
+The guided surface reduces that requirement to basic folder and AI-chat use for daily
+operation. The technical substrate remains visible for auditability and customization;
+it is not hidden behind a proprietary application.
 
 > `context-compiler-bootstrap` is an LLM-assisted development kit for building specialized, evidence-grounded context compilers. Each generated compiler is then operated as a recurring evidence-to-decision-context workflow.
 
@@ -451,7 +472,12 @@ The `AGENTS.md` schema is project-agnostic — it works the same whether the wik
 ├── CLAUDE.md                       # shim → points to AGENTS.md
 ├── GEMINI.md                       # shim → points to AGENTS.md
 ├── README.md                       # this file (dev-side) — the one and only entry point
+├── START-HERE.md                   # guided first screen + natural-language routing
+├── EVIDENCE-INBOX/                 # user-owned evidence drop zone
+├── BRIEFS/                         # generated decision-ready views
+├── REVIEWS/                        # generated exception reports
 ├── log.md                          # append-only log of ingests, schema bumps, infra changes
+├── .vscode/                        # recommended AI extensions + one-click workspace tasks
 ├── .claude/
 │   └── commands/                   # Claude Code slash commands (canonical + aliases)
 │       ├── ctx-init.md
@@ -579,7 +605,7 @@ See `wiki/four-principles.md` for the full account.
 
 V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, and Codex are all in place. Real slash commands exist only for Claude Code; other tools invoke the workflows by natural language using the same prompt bodies.
 
-**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 48 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, ratchet, ctx-root-adoption, adapter-contract, and citation-floor gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
+**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 48 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, ratchet, ctx-root-adoption, adapter-contract, citation-floor, and guided-workspace gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 

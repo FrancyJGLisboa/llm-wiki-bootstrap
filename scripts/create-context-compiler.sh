@@ -142,9 +142,9 @@ cat <<EOF
 
 Next steps:
   cd "$TARGET"
-  ./scripts/preflight.sh           # confirm hard requirements + optional tools
-  # then open the directory in Claude Code (or another agentic tool) and
-  # run /ctx-extract on your first source.
+  # Open START-HERE.md in VS Code (or another agentic tool), then tell the AI:
+  # "Help me set up this context compiler."
+  ./scripts/preflight.sh           # optional: confirm requirements now
 
 Repo is git-initialized but uncommitted — review the tree, then:
   git add -A && git commit -m "initial commit"

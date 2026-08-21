@@ -48,6 +48,35 @@ Files under `context/journal/` (legacy `wiki/journal/`) are **user-owned**, not 
 
 This is the only exception to "LLM owns the compiled root". The optional `context/journal/` directory is reserved by a `.gitkeep` on fresh clones.
 
+## Guided workspace surface
+
+Generated compilers expose a low-friction surface for people who are comfortable
+opening a folder and using AI chat but do not work as software developers:
+
+- `START-HERE.md` is the first screen and natural-language router.
+- `EVIDENCE-INBOX/` is user-owned evidence. Agents must never edit or delete its contents.
+- `BRIEFS/` contains generated decision-ready views, never source evidence.
+- `REVIEWS/` contains generated exception reports, never silently corrected claims.
+- `.vscode/tasks.json` exposes setup, inbox status, activation, and verification tasks.
+
+When a user says “compile my inbox,” follow `/ctx-inbox`. When they ask to prepare
+for a meeting, show changes, explain why, reconstruct a historical state, or show
+review exceptions, route to the matching profile command in `START-HERE.md`. Ask one
+clarifying question when the subject or date is ambiguous; do not make the user
+translate ordinary language into a command name.
+
+`scripts/inbox.py` is the deterministic completion boundary for EVIDENCE-INBOX processing.
+An EVIDENCE-INBOX file counts as processed only after successful normalization into `raw/`
+and an explicit `record` call. The ledger at `context/inbox-state.json` is generated,
+Git-visible state. Never record failed or degraded extraction as successful.
+
+Profile creation follows `/ctx-create-profile`. A generated profile must stay under
+`profiles/<name>/`, declare every portable asset in `profile.json`, pass
+`scripts/profile-check.py`, and keep domain concepts out of the compiler core.
+
+These paths simplify operation; they do not change the three-layer ownership model
+or weaken provenance, temporal, citation, and deterministic validation contracts.
+
 ## The five slash commands
 
 Each command has a prefixed name (`/ctx-extract`) and a short alias (`/extract`). Both resolve to the same procedure — the short forms are aliases that delegate to the canonical `.claude/commands/ctx-*.md` files. Use whichever you prefer.
