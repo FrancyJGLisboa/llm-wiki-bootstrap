@@ -1,0 +1,141 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-compiler.local/profiles/client-decision/claim.schema.json",
+  "title": "Client Decision Claim",
+  "type": "object",
+  "required": ["profile", "claim_id", "classification", "statement", "subject", "predicate", "evidence_domain", "source"],
+  "properties": {
+    "profile": {"const": "client-decision"},
+    "claim_id": {"type": "string", "pattern": "^CLM-[A-F0-9]{12}$"},
+    "classification": {"enum": ["observation", "fact", "assumption", "inference", "derivation", "unknown"]},
+    "statement": {"type": "string", "minLength": 1},
+    "subject": {"type": "string", "minLength": 1},
+    "predicate": {
+      "enum": [
+        "affected-by",
+        "assumes",
+        "considering",
+        "constrains",
+        "depends-on",
+        "exposed-to",
+        "monitors",
+        "questions",
+        "responds-to",
+        "triggers"
+      ]
+    },
+    "object": {},
+    "valid_from": {"$ref": "#/$defs/temporal-value"},
+    "valid_to": {"$ref": "#/$defs/temporal-value"},
+    "confidence": {"type": "number", "minimum": 0, "maximum": 1},
+    "evidence_domain": {"enum": ["client", "internal-research", "external-market", "compiler-derived"]},
+    "source": {
+      "type": "object",
+      "required": ["id", "path", "type", "timestamp", "anchor", "evidence_span"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "path": {"type": "string", "pattern": "^raw/"},
+        "type": {"type": "string", "minLength": 1},
+        "timestamp": {"$ref": "#/$defs/temporal-value"},
+        "anchor": {"type": "string", "minLength": 1},
+        "evidence_span": {"type": "string", "minLength": 1},
+        "speaker": {"type": ["string", "null"]},
+        "speaker_role": {"type": ["string", "null"]},
+        "speaker_act": {"enum": ["assertion", "question", "hypothetical", "agreement", "qualified-agreement", "disagreement"]},
+        "speaker_confidence": {"type": "number", "minimum": 0, "maximum": 1}
+      },
+      "additionalProperties": false
+    },
+    "derivation": {
+      "type": "object",
+      "required": ["input_claim_ids", "operation"],
+      "properties": {
+        "input_claim_ids": {"type": "array", "minItems": 2, "items": {"type": "string"}},
+        "operation": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "unknown": {
+      "type": "object",
+      "required": ["question", "inspected_scope", "reason"],
+      "properties": {
+        "question": {"type": "string", "minLength": 1},
+        "inspected_scope": {"type": "array", "minItems": 1, "items": {"type": "string"}},
+        "reason": {"type": "string", "minLength": 1}
+      },
+      "additionalProperties": false
+    },
+    "relations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "target_claim_id"],
+        "properties": {
+          "type": {"enum": ["supersedes", "updates", "confirms", "contradicts", "narrows", "broadens"]},
+          "target_claim_id": {"type": "string"}
+        },
+        "additionalProperties": false
+      }
+    },
+    "review_triggers": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "ambiguous-speaker",
+          "contradiction",
+          "low-confidence-entity-resolution",
+          "low-confidence-speaker-resolution",
+          "material-inference",
+          "possible-supersession",
+          "unsupported-high-impact-claim"
+        ]
+      },
+      "uniqueItems": true
+    }
+  },
+  "$defs": {
+    "temporal-value": {
+      "oneOf": [
+        {"type": "null"},
+        {"const": "unknown"},
+        {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})?$"}
+      ]
+    }
+  },
+  "allOf": [
+    {"if": {"properties": {"classification": {"const": "inference"}}}, "then": {"required": ["confidence"]}},
+    {"if": {"properties": {"classification": {"const": "derivation"}}}, "then": {"required": ["derivation"]}},
+    {
+      "if": {"properties": {"classification": {"const": "unknown"}}},
+      "then": {"required": ["unknown"], "properties": {"object": false}}
+    },
+    {
+      "if": {
+        "properties": {
+          "source": {
+            "properties": {
+              "speaker_act": {"enum": ["question", "hypothetical", "agreement", "qualified-agreement"]}
+            },
+            "required": ["speaker_act"]
+          }
+        }
+      },
+      "then": {
+        "properties": {"classification": {"enum": ["observation", "unknown"]}}
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "review_triggers": {"contains": {"const": "low-confidence-speaker-resolution"}}
+        },
+        "required": ["review_triggers"]
+      },
+      "then": {
+        "properties": {"source": {"required": ["speaker_confidence"]}}
+      }
+    }
+  ],
+  "additionalProperties": false
+}

@@ -1,0 +1,13 @@
+{
+  "decision_id": "DEC-q1-soymeal-coverage",
+  "subject": "northstar-feeds",
+  "description": "Increase Q1 soymeal coverage",
+  "supporting_claim_ids": ["CLM-ABCDEF123456"],
+  "current_state": {
+    "valid_from": "2026-88-41",
+    "valid_to": "next quarter",
+    "status": "evaluating",
+    "claim_ids": ["CLM-ABCDEF123456"]
+  },
+  "historical_states": []
+}

@@ -55,11 +55,22 @@ warn() { printf '⚠ %s\n' "$1"; }
 cd "$ROOT" || exit 2
 [ -f MANIFEST ] || { echo "✗ no MANIFEST at $ROOT — not a packaged bundle (or it was removed)" >&2; exit 1; }
 
-# Reject symlinks: a packaged bundle never contains them (packaging refuses
-# them). One under the bundle root means tampering or a non-portable asset
-# that resolves to host paths — fail before trusting any hash.
-sym="$(find . -type l ! -path './.git/*' | head -10)"
-[ -z "$sym" ] || { echo "✗ symlink(s) under bundle root — not a portable bundle:" >&2; printf '%s\n' "$sym" | sed 's/^/  /' >&2; exit 1; }
+# The one sanctioned symlink shape is the compat link `wiki -> context`.
+# Anything else means tampering or an unverifiable second root.
+bad_syms=""
+while IFS= read -r link; do
+  [ -n "$link" ] || continue
+  target="$(readlink "$link")"
+  case "$link:$target" in
+    "./wiki:context") [ -d context ] || bad_syms="${bad_syms}${bad_syms:+
+}$link -> $target" ;;
+    *) bad_syms="${bad_syms}${bad_syms:+
+}$link -> $target" ;;
+  esac
+done <<EOF
+$(find . -type l ! -path './.git/*')
+EOF
+[ -z "$bad_syms" ] || { echo "✗ unsupported symlink(s) under bundle root:" >&2; printf '%s\n' "$bad_syms" | sed 's/^/  /' >&2; exit 1; }
 
 # ── B1: every manifested file exists and hashes match ───────────────────────
 b1_bad=0
@@ -117,8 +128,14 @@ fi
 # accepted permanently: bundles already delivered cannot be migrated, and a
 # buyer running this script is verifying an artifact they were given, not
 # upgrading it.
-if [ -d raw ] && { [ -d context ] || [ -d wiki ]; } && [ -f AGENTS.md ] && [ -f log.md ]; then
-  ok "B3 shape: raw/ $([ -d context ] && echo context/ || echo wiki/) AGENTS.md log.md present"
+CTXDIR=""
+if [ -d raw ] && [ -f AGENTS.md ] && [ -f log.md ] && [ -f scripts/lib/ctx-root.sh ]; then
+  # shellcheck source=lib/ctx-root.sh
+  . scripts/lib/ctx-root.sh
+  CTXDIR="$(ctx_root . || true)"
+fi
+if [ -d raw ] && [ -n "$CTXDIR" ] && [ -f AGENTS.md ] && [ -f log.md ]; then
+  ok "B3 shape: raw/ $CTXDIR/ AGENTS.md log.md present"
 else
   bad "B3 shape: not a complete wiki root"
 fi
@@ -131,17 +148,31 @@ fi
 PYBIN="$(command -v python3 || command -v python || true)"
 [ -n "$PYBIN" ] || { echo "✗ python3 not found — cannot audit citations; 'verified' would mean nothing was checked" >&2; exit 2; }
 [ -f scripts/citation-audit.py ] || { echo "✗ scripts/citation-audit.py not in bundle — cannot audit citations" >&2; exit 2; }
+[ -n "$CTXDIR" ] || { echo "✗ cannot resolve compiled root — expected context/ or wiki/" >&2; exit 2; }
 
-if "$PYBIN" scripts/citation-audit.py wiki --raw raw >/dev/null 2>&1; then
+if "$PYBIN" scripts/citation-audit.py "$CTXDIR" --raw raw >/dev/null 2>&1; then
   ok "B4 citations: every citation resolves to a real raw anchor"
 else
-  bad "B4 citations: broken citations found (run: python3 scripts/citation-audit.py wiki --raw raw)"
+  bad "B4 citations: broken citations found (run: python3 scripts/citation-audit.py $CTXDIR --raw raw)"
 fi
 
-if "$PYBIN" scripts/citation-audit.py wiki --raw raw --coverage >/dev/null 2>&1; then
+if "$PYBIN" scripts/citation-audit.py "$CTXDIR" --raw raw --coverage >/dev/null 2>&1; then
   ok "B5 coverage: every claim-bearing page carries a resolving citation"
 else
-  bad "B5 coverage: claim-bearing page(s) carry no citation (run: python3 scripts/citation-audit.py wiki --raw raw --coverage)"
+  bad "B5 coverage: claim-bearing page(s) carry no citation (run: python3 scripts/citation-audit.py $CTXDIR --raw raw --coverage)"
+fi
+
+# B6 is conditional so an unconfigured generic bundle retains its original contract.
+if [ -f context-profile.json ] || [ -d context/claims/by-source ]; then
+  if [ ! -f scripts/claim-validate.py ]; then
+    bad "B6 claims: profile present but claim validator missing"
+  elif [ ! -d context/claims/by-source ]; then
+    ok "B6 claims: profile active; no shards emitted yet"
+  elif "$PYBIN" scripts/claim-validate.py --root . context/claims/by-source >/dev/null 2>&1; then
+    ok "B6 claims: optional profile claims validate"
+  else
+    bad "B6 claims: optional profile claim validation failed"
+  fi
 fi
 
 echo

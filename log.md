@@ -2,6 +2,25 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-21 — Bootstrap factory positioning
+
+- Reframed `README.md` and the GitHub Pages landing page around two distinct
+  products: the bootstrap that creates/configures specialized compilers, and the
+  specialized compiler that continuously turns evidence into a usable context package.
+- Added concrete profile-creation, daily operation, consumed-output, and current-limit
+  sections using the shipped `client-decision` profile as the reference implementation.
+- Preserved measured site claims and explicitly states that new profile creation is
+  currently LLM-assisted development, not a no-code workflow.
+
+## 2026-08-21 — Decision-context profile integration
+
+- Added opt-in compile/lint hooks, claim-aware packaging, clean-install assets,
+  deterministic integration verification, and Northstar task preparation.
+- Generic compilation remains default; schema stays v6 because profile version 1 is
+  additive and independently versioned.
+- Task preparation is unmeasured. Only saved model predictions scored against gold are
+  reported as measured.
+
 ## 2026-08-11 — segmented-source anchors never resolved, and nothing checked
 
 **Rationale.** `AGENTS.md` tells `/ctx-compile` to cite a segmented section with

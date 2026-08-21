@@ -1,0 +1,26 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-000000000000",
+  "classification": "unknown",
+  "statement": "The available evidence does not establish the answer.",
+  "subject": "example-client",
+  "predicate": "questions",
+  "valid_from": null,
+  "valid_to": null,
+  "evidence_domain": "client",
+  "source": {
+    "id": "example-source",
+    "path": "raw/example-source.md",
+    "type": "note",
+    "timestamp": null,
+    "anchor": "relevant-section",
+    "evidence_span": "Exact source text inspected for this claim."
+  },
+  "unknown": {
+    "question": "What remains unknown?",
+    "inspected_scope": ["example-source"],
+    "reason": "The inspected evidence does not answer the question."
+  },
+  "relations": [],
+  "review_triggers": []
+}

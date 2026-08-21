@@ -1,0 +1,23 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-ABCDEF123456",
+  "classification": "unknown",
+  "statement": "Maximum acceptable exposure is unknown.",
+  "subject": "northstar-feeds",
+  "predicate": "maximum-open-exposure",
+  "object": null,
+  "evidence_domain": "client",
+  "source": {
+    "id": "email-2026-08-19",
+    "path": "raw/email-2026-08-19.md",
+    "type": "email",
+    "timestamp": "2026-08-19",
+    "anchor": "exposure",
+    "evidence_span": "No maximum exposure tolerance is stated."
+  },
+  "unknown": {
+    "question": "What is the maximum open-exposure tolerance?",
+    "inspected_scope": ["email-2026-08-19"],
+    "reason": "The inspected evidence does not state a maximum."
+  }
+}

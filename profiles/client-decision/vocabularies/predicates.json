@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "values": [
+    "affected-by",
+    "assumes",
+    "considering",
+    "constrains",
+    "depends-on",
+    "exposed-to",
+    "monitors",
+    "questions",
+    "responds-to",
+    "triggers"
+  ]
+}

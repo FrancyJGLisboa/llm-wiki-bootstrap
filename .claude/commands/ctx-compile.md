@@ -6,11 +6,48 @@ argument-hint: [<raw-file>]
 
 You are executing `/ctx-compile $ARGUMENTS` from the `context-compiler-bootstrap` system. Your job is to integrate raw sources into the wiki using the 7-step pipeline.
 
+## Resolve the optional profile first
+
+If `scripts/profile-resolve.py` exists, run `python3 scripts/profile-resolve.py --root . --json`
+before determining scope. If it exits 2, report the setup error and stop
+without writing. When it reports `"active": false`, or when the resolver script
+is absent, follow this document's generic contract exactly.
+
+When it reports `client-decision`, read the resolved manifest and
+`profiles/client-decision/COMPILATION.md` completely. In addition to generic pages, emit
+exactly one deterministic shard per processed source at
+`context/claims/by-source/<source-id>.jsonl`, then run:
+
+```bash
+python3 scripts/claim-validate.py --root . context/claims/by-source/<source-id>.jsonl
+```
+
+Claims preserve the exact raw anchor/span, source metadata, evidence class, and speaker
+attribution. Temporal replacement needs an explicit controlled relation; recency alone
+is not supersession. Questions, hypotheticals, and qualified agreements are not beliefs.
+Use UNKNOWN when evidence is absent.
+
+Update only decision JSON and Markdown projections whose supporting claim IDs changed,
+and regenerate exception review artifacts. Keep sorted deterministic output; never
+rewrite unaffected shards or decisions. A no-op validates existing claims and regenerates
+views byte-identically.
+
 ## Read first
 
 **Run from the wiki root** — the directory holding `raw/`, `wiki/`, `AGENTS.md`, and `log.md`. If `raw/` and `wiki/` are absent you are not in a wiki: tell the user to run `/ctx-init` first (or `cd` into their wiki), then stop.
 
 Read `wiki/index.md` (what already exists) and `log.md` (recent activity). You don't need to re-read all of `AGENTS.md` — the page template you'll write is inlined below; consult `AGENTS.md` → "Wiki page convention" only for edge cases.
+
+If `scripts/profile-resolve.py` exists, resolve the optional profile before you start:
+
+```bash
+python3 scripts/profile-resolve.py --json
+```
+
+- If it reports `"active": false`, continue with the generic pipeline below.
+- If it reports `"profile": "client-decision"`, read `profiles/client-decision/COMPILATION.md` before Step 1 and keep the generic pipeline intact **plus** the profile-specialized outputs in Step 4.6.
+- Never activate or switch profiles implicitly while compiling. `context-profile.json` is the opt-in boundary.
+- If the resolver script is absent, continue with the generic pipeline below; older installs remain valid no-profile compilers.
 
 ## Determine scope
 
@@ -63,6 +100,17 @@ Read the file. For binaries (image, PDF), read the sidecar `.md` instead.
 ### Step 2 — Extract key information
 
 Identify: concepts (ideas, terms, patterns), entities (people, tools, places, datasets), claims (statements that could be true or false), data points (numbers, dates, quotes).
+
+When the active profile is `client-decision`, extract the same evidence through the additional lens of `subject × decision × time`. Separate at least:
+
+- direct observations from the source
+- normalized facts strongly entailed by the source
+- subject assumptions used for planning or reasoning
+- explicit unknowns that remain unknown
+- candidate decisions, variables, triggers, constraints, risks, and questions
+- temporal change signals such as replacement, contradiction, confirmation, narrowing, or broadening
+
+Do not flatten an analyst statement, a client question, a hypothetical, or a qualified agreement into a client assumption.
 
 ### Step 2.5 — Harvest normative statements
 
@@ -194,6 +242,37 @@ constrains — ...`), and a link back from the source summary page.
 full of `must` that yields zero rules means this step was skipped, not that the
 source was permissive.
 
+### Step 4.6 — Emit profile outputs (only when a profile is active)
+
+If the resolved profile is `client-decision`, write the additional machine outputs below **without replacing** the generic wiki pages above.
+
+1. Write source-scoped claim shards to `context/claims/by-source/<source-id>.jsonl`.
+   - Use the contracts in `profiles/client-decision/COMPILATION.md` and `profiles/client-decision/schemas/claim.schema.json`.
+   - Every durable claim must preserve `source.id`, `source.type`, `source.path`, `source.timestamp`, `source.anchor`, `source.evidence_span`, and speaker fields when attributable.
+   - Claim classes are exactly `observation`, `fact`, `assumption`, `inference`, `derivation`, and `unknown`.
+   - `inference` requires numeric confidence. `unknown` is valid output and must stay explicit.
+   - Speaker attribution is load-bearing: never convert an analyst assertion, client question, hypothetical, agreement, or qualified agreement into a client belief.
+   - Use explicit temporal relations only: `supersedes`, `updates`, `confirms`, `contradicts`, `narrows`, `broadens`.
+
+2. Validate the shard mechanically before moving on:
+
+   ```bash
+   python3 scripts/claim-validate.py --root . context/claims/by-source/<source-id>.jsonl
+   ```
+
+   Fix every validation error immediately. Do not leave an invalid shard behind.
+
+3. Update decision projections under `context/decisions/<client-slug>/<decision-slug>.json` whenever the source materially changes a decision state.
+   - Use `profiles/client-decision/schemas/decision.schema.json`.
+   - The projection must reference supporting claim IDs rather than rephrasing unsupported content.
+   - Omit or leave `null` for unknown optional fields. Never complete them from judgment.
+   - Preserve history: current state and historical states must remain distinct instead of collapsing into one summary.
+
+4. Treat contradictions and possible supersession as reviewable state, not forced resolution.
+   - Contradictions stay visible in both the wiki pages and the claim graph.
+   - A newer claim does not supersede an older one unless the evidence supports that relation; recency alone is not enough.
+   - When speaker or supersession resolution is ambiguous, add the appropriate review trigger rather than guessing.
+
 ### Step 5 — Flag contradictions
 
 If a new claim from this source disagrees with an existing claim in the wiki, **flag it visibly** in both pages. Do not silently overwrite either. Use this **exact** line format (a CommonMark blockquote — `/ctx-lint` matches the literal token `CONTRADICTION FLAGGED`):
@@ -297,6 +376,17 @@ These four are **generated, not authored**: never hand-edit them, never cite the
 sources, and don't count them when deciding what to create in step 4 — they are
 overwritten on every run. If `scripts/synthesize/all.sh` is absent (older wiki), skip
 this step and tell the user to re-scaffold with `scripts/create-context-compiler.sh` to pick it up.
+
+For an active client-decision profile, finish by validating all emitted shards and
+running profile health diagnostics:
+
+```bash
+python3 scripts/claim-validate.py --root . context/claims/by-source
+python3 scripts/client-context.py --root . lint --json
+```
+
+These deterministic scripts validate authored claims; they do not call an LLM or judge
+entailment.
 
 ## What you must NOT do
 

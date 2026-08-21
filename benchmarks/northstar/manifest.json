@@ -1,0 +1,30 @@
+{
+  "benchmark": "northstar-feeds-v1",
+  "synthetic": true,
+  "sources": [
+    {"id":"email-2026-03-04","modality":"email","path":"sources/emails/email-2026-03-04.md"},
+    {"id":"email-2026-04-18","modality":"email","path":"sources/emails/email-2026-04-18.md"},
+    {"id":"email-2026-06-03","modality":"email","path":"sources/emails/email-2026-06-03.md"},
+    {"id":"email-2026-07-02","modality":"email","path":"sources/emails/email-2026-07-02.md"},
+    {"id":"email-2026-07-21","modality":"email","path":"sources/emails/email-2026-07-21.md"},
+    {"id":"email-2026-08-04","modality":"email","path":"sources/emails/email-2026-08-04.md"},
+    {"id":"email-2026-08-19","modality":"email","path":"sources/emails/email-2026-08-19.md"},
+    {"id":"email-2026-08-20","modality":"email","path":"sources/emails/email-2026-08-20.md"},
+    {"id":"meeting-2026-03-11","modality":"transcript","path":"sources/transcripts/meeting-2026-03-11.md"},
+    {"id":"meeting-2026-05-28","modality":"transcript","path":"sources/transcripts/meeting-2026-05-28.md"},
+    {"id":"meeting-2026-06-17","modality":"transcript","path":"sources/transcripts/meeting-2026-06-17.md"},
+    {"id":"meeting-2026-07-14","modality":"transcript","path":"sources/transcripts/meeting-2026-07-14.md"},
+    {"id":"meeting-2026-08-13","modality":"transcript","path":"sources/transcripts/meeting-2026-08-13.md"},
+    {"id":"research-2026-05-20","modality":"research","path":"sources/research/research-2026-05-20.md"},
+    {"id":"research-2026-06-12","modality":"research","path":"sources/research/research-2026-06-12.md"},
+    {"id":"research-2026-07-30","modality":"research","path":"sources/research/research-2026-07-30.md"},
+    {"id":"research-2026-08-18","modality":"research","path":"sources/research/research-2026-08-18.md"},
+    {"id":"sheet-2026-06-01","modality":"spreadsheet","path":"sources/spreadsheets/sheet-2026-06-01.csv.md","attachment":"sources/spreadsheets/sheet-2026-06-01.csv"},
+    {"id":"sheet-2026-07-15","modality":"spreadsheet","path":"sources/spreadsheets/sheet-2026-07-15.csv.md","attachment":"sources/spreadsheets/sheet-2026-07-15.csv"},
+    {"id":"sheet-2026-08-20","modality":"spreadsheet","path":"sources/spreadsheets/sheet-2026-08-20.csv.md","attachment":"sources/spreadsheets/sheet-2026-08-20.csv"},
+    {"id":"note-2026-05-21","modality":"analyst-note","path":"sources/notes/note-2026-05-21.md"},
+    {"id":"note-2026-06-18","modality":"analyst-note","path":"sources/notes/note-2026-06-18.md"},
+    {"id":"note-2026-07-16","modality":"analyst-note","path":"sources/notes/note-2026-07-16.md"},
+    {"id":"note-2026-08-19","modality":"analyst-note","path":"sources/notes/note-2026-08-19.md"}
+  ]
+}

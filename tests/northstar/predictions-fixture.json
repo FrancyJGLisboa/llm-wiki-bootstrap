@@ -1,0 +1,9 @@
+{
+  "arm":"compiled",
+  "model":"fixture-not-a-model-run",
+  "generated_at":"2026-08-21T00:00:00Z",
+  "answers":[
+    {"id":"fact-01","answer":"Santos basis","status":"answered","assertion_keys":["monitors-santos-basis"],"citations":[{"source_id":"meeting-2026-06-17","anchor":"procurement-variables"}]},
+    {"id":"absence-01","answer":"UNKNOWN","status":"refused","refused":true,"assertion_keys":["unknown-max-open-exposure"],"citations":[]}
+  ]
+}

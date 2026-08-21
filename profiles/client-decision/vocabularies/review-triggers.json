@@ -1,0 +1,12 @@
+{
+  "version": 1,
+  "values": [
+    "ambiguous-speaker",
+    "contradiction",
+    "low-confidence-entity-resolution",
+    "low-confidence-speaker-resolution",
+    "material-inference",
+    "possible-supersession",
+    "unsupported-high-impact-claim"
+  ]
+}

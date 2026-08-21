@@ -1,0 +1,20 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-123456789ABC",
+  "classification": "observation",
+  "statement": "Possibly.",
+  "subject": "northstar-feeds",
+  "predicate": "responded-to",
+  "evidence_domain": "client",
+  "source": {
+    "id": "call-2026-08-19",
+    "path": "raw/call-2026-08-19.md",
+    "type": "meeting-transcript",
+    "timestamp": "2026-08-19T10:00:00Z",
+    "anchor": "china-imports",
+    "evidence_span": "Possibly.",
+    "speaker": "Maria Silva",
+    "speaker_role": "client",
+    "speaker_act": "unqualified-endorsement"
+  }
+}

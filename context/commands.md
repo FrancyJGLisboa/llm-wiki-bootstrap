@@ -9,6 +9,13 @@ tags: [system, commands, spec]
 
 # The Five Slash Commands
 
+## Optional client-decision commands
+
+An explicitly active `client-decision` profile adds `/client-brief`, `/client-delta`,
+`/client-decisions`, `/client-assumptions`, `/client-why`, `/client-review`, and
+`/client-lint` plus canonical `/ctx-client-*` forms. Generic `/ctx-*` behavior remains
+unchanged when no profile is active.
+
 > **This page is `source: analysis`.** The video describes three core operations (ingest / query / lint). The five-command split below is this project's design decision, not a direct quote from the video. The mapping back to the video's operations is annotated.
 
 ## Definition / TL;DR

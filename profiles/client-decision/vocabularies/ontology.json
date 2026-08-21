@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "concepts": [
+    "asset",
+    "assumption",
+    "client",
+    "commodity",
+    "constraint",
+    "decision",
+    "exposure",
+    "geography",
+    "interaction",
+    "market-variable",
+    "objective",
+    "organization",
+    "person",
+    "question",
+    "risk-factor",
+    "scenario"
+  ]
+}

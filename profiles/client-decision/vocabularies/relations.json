@@ -1,0 +1,28 @@
+{
+  "version": 1,
+  "page_relations": [
+    "affected-by",
+    "affects",
+    "assumes",
+    "considering",
+    "constrains",
+    "consumes",
+    "depends-on",
+    "exports-to",
+    "imports-from",
+    "monitors",
+    "operates-in",
+    "produces",
+    "questions",
+    "triggers",
+    "exposed-to"
+  ],
+  "claim_relations": [
+    "broadens",
+    "confirms",
+    "contradicts",
+    "narrows",
+    "supersedes",
+    "updates"
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-BADDA7E12345",
+  "classification": "fact",
+  "statement": "Q1 soymeal coverage is under consideration.",
+  "subject": "northstar-feeds",
+  "predicate": "considering",
+  "valid_from": "2026-19-41",
+  "evidence_domain": "client",
+  "source": {
+    "id": "email-2026-08-19",
+    "path": "raw/email-2026-08-19.md",
+    "type": "email",
+    "timestamp": "August nineteenth",
+    "anchor": "q1-coverage",
+    "evidence_span": "We may bring some Q1 coverage forward."
+  }
+}

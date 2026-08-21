@@ -10,7 +10,7 @@
 #   .cursor/  .github/copilot-instructions.md            (tool shims, if present)
 #   scripts/{body-hash,preflight,verify-extract,vtt-to-md,verify-bundle}.sh
 #   scripts/citation-audit.py  scripts/lib/  scripts/synthesize/
-#   templates/                                           (runtime, if present)
+#   templates/ + profiles/                               (runtime, if present)
 #   gates/ + gates/fixtures/ + gates/baseline.tsv        (executable context)
 #   scripts/{gate-fixtures,gate-ratchet,ctx-lint-rules}.sh + gate-fixtures.tsv
 #   + generated: MANIFEST  BUYER-README.md  LICENSE (stub if none exists)
@@ -63,60 +63,51 @@ fail() { echo "✗ $1" >&2; exit "${2:-1}"; }
 ok()   { echo "✓ $1"; }
 
 # ── Setup checks ────────────────────────────────────────────────────────────
-[ -d "$ROOT/raw" ] && [ -d "$ROOT/wiki" ] && [ -f "$ROOT/AGENTS.md" ] && [ -f "$ROOT/log.md" ] \
-  || fail "$ROOT is not a wiki root (needs raw/, wiki/, AGENTS.md, log.md)" 2
 # The compiled root is `context/` from schema v5, `wiki/` before it. Resolve it
 # once rather than hardcoding either: a bundle built on a checkout without the
 # compat symlink (Windows, no core.symlinks) has context/ and no wiki/ at all,
 # and the G2-G4 gates must still find the pages.
 # shellcheck source=lib/ctx-root.sh
 . "$SCRIPT_DIR/lib/ctx-root.sh" || fail "cannot source lib/ctx-root.sh" 2
+[ -d "$ROOT/raw" ] && [ -f "$ROOT/AGENTS.md" ] && [ -f "$ROOT/log.md" ] \
+  || fail "$ROOT is not a wiki root (needs raw/, context/ or wiki/, AGENTS.md, log.md)" 2
 CTXDIR="$(ctx_root "$ROOT")" || fail "$ROOT has neither context/ nor wiki/" 2
 
 PYBIN="$(command -v python3 || command -v python || true)"
 [ -n "$PYBIN" ] || fail "python3 required — packaging will not ship unaudited citations" 2
 command -v tar >/dev/null 2>&1 || fail "tar required" 2
 
-# Refuse ESCAPING symlinks: a portable asset must not depend on host paths. A
-# symlink like raw/leak.md -> /tmp/secret resolves on the buyer's machine
-# instead of shipping its target, and cp -Rp + tar store symlinks verbatim, so
-# it has to be caught here.
+# Refuse every symlink except the exact compat link `wiki -> context`. The
+# bundle contract needs one sanctioned symlink shape to preserve old paths; any
+# other link is either a host-path dependency or a second implicit root the
+# verifier cannot safely trust.
 #
-# This was a blanket "no symlinks at all" check until schema v5. That was too
-# coarse in one specific way: the compiled root gained a committed compat
-# symlink `wiki -> context`, which is RELATIVE and points INSIDE the bundle. It
-# is not the threat — tar stores it, and it resolves on the buyer's machine to
-# the context/ directory that shipped alongside it. Rejecting it blocked
-# packaging entirely.
-#
-# So the rule is now precise rather than broad: a symlink is refused when it is
-# absolute, or when its target resolves outside $ROOT. Both of those are the
-# host-path dependency the check exists for; a relative link that stays inside
-# the tree is portable by construction.
-# Compare against the PHYSICAL root. `pwd -P` below resolves symlinks in the
-# path, and on macOS $TMPDIR lives under /var, which is itself a symlink to
-# /private/var — so an unresolved $ROOT never matches a resolved target and
-# every symlink reads as escaping.
-ROOT_P="$(cd "$ROOT" && pwd -P)"
+# Legacy wiki-only bundles remain legal because they have a real `wiki/`
+# directory and no symlink at all. Context-only checkouts remain legal because
+# they have no `wiki` entry and ctx_root() resolves `context/`.
 bad_links=""
-while IFS= read -r link; do
-  [ -n "$link" ] || continue
-  target="$(readlink "$link")"
-  case "$target" in
-    /*) bad_links="$bad_links $link->$target"; continue ;;   # absolute: host path
-  esac
-  # Resolve relative to the link's own directory and require it to stay inside
-  # ROOT. cd+pwd -P is used rather than realpath, which is not on every macOS.
-  link_dir="$(dirname "$link")"
-  resolved="$(cd "$link_dir" 2>/dev/null && cd "$(dirname "$target")" 2>/dev/null && pwd -P)/$(basename "$target")"
-  case "$resolved" in
-    "$ROOT_P"/*|"$ROOT_P") : ;;
-    *) bad_links="$bad_links $link->$target" ;;
-  esac
-done <<EOF
-$(find "$ROOT" -path "$ROOT/.git" -prune -o -type l -print)
+for rel in raw context wiki AGENTS.md log.md LICENSE CLAUDE.md GEMINI.md .clinerules \
+           .cursor .github/copilot-instructions.md .claude/commands templates \
+           profiles context-profile.json scripts/body-hash.sh scripts/preflight.sh \
+           scripts/verify-extract.sh scripts/vtt-to-md.sh scripts/verify-bundle.sh \
+           scripts/citation-audit.py scripts/claim-validate.py scripts/claim-state.py \
+           scripts/claim-delta.py scripts/claim-why.py scripts/client-context.py \
+           scripts/profile-resolve.py scripts/use-profile.sh scripts/lib \
+           scripts/synthesize gates scripts/gate-fixtures.sh scripts/gate-ratchet.sh \
+           scripts/ctx-lint-rules.sh scripts/gate-fixtures.tsv; do
+  [ -e "$ROOT/$rel" ] || continue
+  while IFS= read -r link; do
+    [ -n "$link" ] || continue
+    target="$(readlink "$link")"
+    case "$link:$target" in
+      "$ROOT/wiki:context") [ -d "$ROOT/context" ] || bad_links="$bad_links $link->$target" ;;
+      *) bad_links="$bad_links $link->$target" ;;
+    esac
+  done <<EOF
+$(find "$ROOT/$rel" -type l 2>/dev/null)
 EOF
-[ -z "$bad_links" ] || { printf '  escaping symlink: %s\n' $bad_links >&2; fail "symlink(s) point outside the bundle — a portable asset must not depend on host paths; remove them before packaging" 2; }
+done
+[ -z "$bad_links" ] || { printf '  unsupported symlink: %s\n' $bad_links >&2; fail "only the exact compat symlink 'wiki -> context' may be packaged; remove any other symlink before packaging" 2; }
 
 NAME="$(basename "$ROOT" | tr '[:upper:]' '[:lower:]' | tr -cs 'a-z0-9' '-' | sed 's/^-//; s/-$//')"
 BUNDLE="${NAME}-${VERSION}"
@@ -158,6 +149,15 @@ if ! "$PYBIN" "$SCRIPT_DIR/citation-audit.py" "$ROOT/$CTXDIR" --raw "$ROOT/raw" 
 fi
 ok "G4 coverage: every claim-bearing page carries a resolving citation"
 
+# G5 is additive and conditional: generic packages still stop after G4.
+if [ -f "$ROOT/context-profile.json" ] || [ -d "$ROOT/context/claims/by-source" ]; then
+  [ -f "$ROOT/scripts/claim-validate.py" ] || fail "G5 claims: claim validator missing"
+  if [ -d "$ROOT/context/claims/by-source" ] && ! "$PYBIN" "$ROOT/scripts/claim-validate.py" --root "$ROOT" "$ROOT/context/claims/by-source" >/dev/null; then
+    fail "G5 claims: optional profile claim validation failed"
+  fi
+  ok "G5 claims: optional profile claims validate"
+fi
+
 # ── Stage the bundle (include list only) ────────────────────────────────────
 STAGE="$(mktemp -d "${TMPDIR:-/tmp}/package-wiki.XXXXXX")"
 trap 'rm -rf "$STAGE"' EXIT
@@ -184,9 +184,13 @@ copy_if .cursor
 copy_if .github/copilot-instructions.md
 copy_if .claude/commands
 copy_if templates
-for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py; do
+copy_if profiles
+copy_if context-profile.json
+for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py claim-validate.py claim-state.py claim-delta.py claim-why.py client-context.py; do
   copy_if "scripts/$s"
 done
+copy_if scripts/profile-resolve.py
+copy_if scripts/use-profile.sh
 copy_if scripts/lib
 copy_if scripts/synthesize
 

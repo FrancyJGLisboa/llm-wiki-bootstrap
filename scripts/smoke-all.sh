@@ -578,6 +578,22 @@ else
   record_fail "R44 gate-citation-floor.sh exits non-zero — a citation names a passage that does not exist, which is the one failure this package's trustworthiness rests on"
 fi
 
+# ──── Decision-context regressions (enforced in this repo) ────
+# These verifiers are additive to the generic suite, keyless, and never execute
+# a model. They are enforced here because this repository now ships the profile.
+for check in verify-profile-resolution.sh verify-client-profile.sh verify-claim-core.sh \
+             verify-client-workflows.sh verify-decision-context-integration.sh \
+             verify-northstar-benchmark.sh; do
+  decision_log="$(mktemp)"
+  if "$SCRIPT_DIR/$check" >"$decision_log" 2>&1; then
+    ok "$check exits 0 (decision-context regression guard)"
+  else
+    record_fail "$check exits non-zero (decision-context regression)"
+    sed 's/^/  /' "$decision_log" >&2
+  fi
+  rm -f "$decision_log"
+done
+
 # ──── ADVISORY: log discipline (warn, does not fail the build) ────
 # The log is the keystone that makes every other soft rule auditable after the
 # fact. This surfaces a HEAD commit that changed wiki/ without a log.md entry —

@@ -3,8 +3,8 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <title>context-compiler-bootstrap — a context compiler for LLMs</title>
-  <meta name="description" content="Turns unstructured sources into a structured, provenance-aware, machine-navigable context package your AI tool can navigate, retrieve from, and reason over. Five slash commands, no UI, no SaaS, no vector database.">
+  <title>context-compiler-bootstrap — build specialized context compilers</title>
+  <meta name="description" content="An LLM-assisted starter kit for creating and operating specialized, evidence-grounded context compilers.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -21,83 +21,125 @@
 <main>
   <section class="wrap hero">
     <div>
-      <h1>A context compiler for&nbsp;LLMs.</h1>
-      <p class="lede">It turns unstructured sources — PDFs, articles, transcripts, spreadsheets — into a <strong>structured, provenance-aware, machine-navigable context package</strong> your AI tool can navigate, retrieve from, and reason over. You curate the sources and ask questions; the LLM does the writing, linking, and upkeep. Five slash commands in your coding agent — no UI, no SaaS, no vector database. The pattern is Andrej Karpathy&rsquo;s.</p>
+      <h1>Build the context compiler your work&nbsp;needs.</h1>
+      <p class="lede"><strong>context-compiler-bootstrap is a starter kit, not the final compiler for every domain.</strong> Use it with an agentic coding tool to create a specialized compiler. Then operate that compiler every day to turn changing evidence into current state, history, provenance, and explicit uncertainty.</p>
       <div class="actions">
-        <a class="btn-fill" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">Clone the repo</a>
-        <a class="link-cta" href="#start">Quick start ↓</a>
+        <a class="btn-fill" href="#start">Create a compiler</a>
+        <a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">View on GitHub →</a>
       </div>
     </div>
     <figure>
       <img src="demo.gif" alt="A terminal running /ctx-query and returning a cited answer from the demo wiki" width="927" height="451" fetchpriority="high">
-      <figcaption>A real <code>/ctx-query</code> against the demo wiki that ships in the repo — answer text verbatim.</figcaption>
+      <figcaption>The coding agent is the operating interface. The compiled, source-grounded context package is the durable product.</figcaption>
     </figure>
   </section>
 
-  <section class="wrap stats" aria-label="Verification numbers">
-    <p class="stat"><b>5</b><span>slash commands — the whole interface</span></p>
-    <p class="stat"><b>495</b><span>pages, and reads per answer still fell 3 → 0</span></p>
-    <p class="stat"><b>10</b><span>binary retrieval checks, no LLM grader</span></p>
-    <p class="stat"><b>47</b><span>deterministic smoke checks, wired into CI</span></p>
-  </section>
-
   <section class="wrap flow">
-    <h2>Three commands are the whole loop.</h2>
-    <p>Everything runs inside your coding agent. Sources land in an immutable <code>raw/</code> layer; the wiki is rebuilt knowledge on top; every claim cites its way back.</p>
+    <h2>One bootstrap. Two products.</h2>
+    <p>The bootstrap creates and configures a compiler. The specialized compiler continuously compiles evidence into a package people and other agents can use.</p>
     <ol class="steps">
       <li class="step">
-        <span class="stage">01 · /ctx-extract</span>
-        <h3>Acquire the source</h3>
-        <p>A URL, PDF, DOCX, spreadsheet, image, or YouTube transcript is parsed to markdown and captured in <code>raw/</code> with provenance frontmatter — publisher, date, hash. Raw files are never edited again.</p>
-        <pre class="term">/ctx-extract https://example.com/some-article</pre>
+        <span class="stage">01 · bootstrap</span>
+        <h3>Create the compiler</h3>
+        <p>Scaffold a clean repository containing the generic compiler core, profile extension contract, commands, validators, packaging, and tests.</p>
+        <pre class="term">./scripts/create-context-compiler.sh ../my-context</pre>
       </li>
       <li class="step">
-        <span class="stage">02 · /ctx-compile</span>
-        <h3>Integrate into the wiki</h3>
-        <p>A seven-step pipeline turns raw sources into interlinked pages: entities with provenance, typed relations (<code>supersedes</code>, <code>causes</code>, …), valid-time dates, and inline citations back to <code>raw/&lt;file&gt;#&lt;anchor&gt;</code>. Idempotent via body hash.</p>
-        <pre class="term">/ctx-compile</pre>
+        <span class="stage">02 · specialize</span>
+        <h3>Teach it the domain</h3>
+        <p>A profile supplies the ontology, claim classes, controlled relationships, extraction guidance, schemas, outputs, and exception rules.</p>
+        <pre class="term">./scripts/use-profile.sh client-decision</pre>
       </li>
       <li class="step">
-        <span class="stage">03 · /ctx-query</span>
-        <h3>Ask — with receipts</h3>
-        <p>Answers come from structure, not similarity: dates for point-in-time questions, a graph walk for “what replaced X”, an explicit refusal when the answer isn’t in the wiki. Every claim carries its raw citation.</p>
-        <pre class="term">/ctx-query "what changed in the April memo?"</pre>
+        <span class="stage">03 · operate</span>
+        <h3>Compile evidence repeatedly</h3>
+        <p>New evidence updates only affected state. Users request briefs, deltas, decisions, evidence chains, historical views, and review exceptions.</p>
+        <pre class="term">/ctx-compile
+/client-brief northstar-feeds</pre>
       </li>
     </ol>
-    <p style="margin-top: var(--space-xl); color: var(--color-neutral); max-width: 62ch;">Two more commands keep it healthy: <code>/ctx-lint</code> finds broken links, contradictions, and stale claims; <code>/ctx-visualize</code> renders the link graph.</p>
   </section>
 
   <section class="wrap why">
-    <h2>Why not a vector database?</h2>
+    <h2>A specialization is explicit, inspectable, and replaceable.</h2>
     <div class="col">
-      <p><strong>Embedding flattens exactly the metadata that distinguishes true from stale from out-of-scope</strong> — time, scope, succession, source. The hardest retrieval cases are the ones where the wrong chunks are the <em>most similar</em> ones: a February memo and the April memo that superseded it are near-duplicates in embedding space.</p>
-      <p>This wiki keeps that metadata as first-class structure the agent traverses with reasoning instead of cosine distance. The retrieval eval checks it, deterministically:</p>
-      <ul>
-        <li><b>Point-in-time</b> — “what did we believe in March?” answered from dated sources</li>
-        <li><b>Supersession</b> — “what replaced X?” answered by a typed-edge graph walk</li>
-        <li><b>Refusal on absence</b> — no nearest-neighbour guess when the answer isn’t there</li>
-        <li><b>Citation locus</b> — every answer resolves to a real span of a real source</li>
-        <li><b>Citation integrity</b> — a receipt that doesn’t resolve is caught, not trusted</li>
-        <li><b>Feedback loops</b> — cycles in the causal graph, classified reinforcing or balancing</li>
-      </ul>
-      <p style="margin-top: var(--space-lg);">And it holds as the wiki grows. The same eval re-run against a corpus padded to <strong>495 pages</strong> with deliberate distractors — written in the needles’ own vocabulary, for other services — scored <strong>21 / 21</strong>, up from 20 / 21 at 19 pages, while median file reads per answer <strong>fell from 3 to 0</strong>. The held-out question set, never run by default and never in CI, passed 4 / 4 at that size. Retrieval cost tracks hops, not corpus size.</p>
-      <p style="margin-top: var(--space-md);">Three tiers, each checking the one below: the wiki is written by an LLM, the eval grades it with no LLM in the grading path, and a suite of oracles grades the eval. Latest full run <strong>32 / 35</strong> (2026-07-30) — the losses were one fabricated citation anchor and one citation pointing into frontmatter instead of body text, both caught by the checks rather than by luck.</p>
+      <p>The included <code>client-decision</code> profile demonstrates the contract. It defines clients, decisions, exposures, assumptions, risks, variables, speaker attribution, temporal state, supersession, contradiction, and evidence requirements without putting commodity logic into the generic core.</p>
+      <pre class="term">profiles/client-decision/
+├── profile.json
+├── COMPILATION.md
+├── schemas/
+├── vocabularies/
+└── templates/</pre>
+      <p>To create a different compiler, ask the coding agent to add a sibling profile with its own fixtures and acceptance tests. A project-decision compiler can understand owners, alternatives, constraints, and architectural supersession. A due-diligence compiler can define a different ontology without rewriting extraction, provenance, temporal logic, linting, or packaging.</p>
+      <p><strong>The profile changes what the compiler understands. The core preserves how evidence becomes trustworthy context.</strong></p>
     </div>
   </section>
 
+  <section class="wrap flow">
+    <h2>The daily workflow starts with evidence, not configuration.</h2>
+    <p>After specialization, users normally do not edit claims or graphs. They add evidence and consume focused views.</p>
+    <ol class="steps">
+      <li class="step">
+        <span class="stage">morning</span>
+        <h3>Prepare for a meeting</h3>
+        <p>Add the latest emails, transcript, report, or spreadsheet. Compile once, then request the current decision brief.</p>
+        <pre class="term">/ctx-compile
+/client-brief northstar-feeds</pre>
+      </li>
+      <li class="step">
+        <span class="stage">after new evidence</span>
+        <h3>See meaningful change</h3>
+        <p>A semantic delta separates new, changed, superseded, unresolved, and unchanged-but-material state.</p>
+        <pre class="term">/client-delta northstar-feeds --since 2026-08-01</pre>
+      </li>
+      <li class="step">
+        <span class="stage">when challenged</span>
+        <h3>Show why</h3>
+        <p>Return the chronological evidence chain, speaker, role, source anchors, classification, confidence, and conflicting evidence.</p>
+        <pre class="term">/client-why northstar-feeds "concern about Q1 availability"</pre>
+      </li>
+    </ol>
+  </section>
+
+  <section class="wrap why">
+    <h2>People consume views. Systems consume the package.</h2>
+    <div class="col">
+      <ul>
+        <li><b>Meeting preparation</b> — a concise current-state brief</li>
+        <li><b>Change detection</b> — a semantic delta rather than a document diff</li>
+        <li><b>Accountability</b> — an evidence chain for every material conclusion</li>
+        <li><b>Historical reconstruction</b> — what was believed at a previous date</li>
+        <li><b>Maintenance</b> — exception queues for contradictions, stale assumptions, and ambiguity</li>
+        <li><b>Downstream automation</b> — structured claims, decisions, relations, and provenance for another agent</li>
+      </ul>
+      <p style="margin-top: var(--space-lg);">The package is local, Git-friendly, portable, and verifiable. Every material claim can retain its source, timestamp, speaker, evidence anchor, classification, and confidence. Unsupported questions produce explicit uncertainty instead of a nearest-neighbour guess.</p>
+    </div>
+  </section>
+
+  <section class="wrap stats" aria-label="Verification numbers">
+    <p class="stat"><b>5</b><span>slash commands — the generic lifecycle</span></p>
+    <p class="stat"><b>495</b><span>pages in the measured scale fixture</span></p>
+    <p class="stat"><b>10</b><span>binary retrieval checks, no LLM grader</span></p>
+    <p class="stat"><b>48</b><span>deterministic smoke checks, wired into CI</span></p>
+  </section>
+
   <section class="wrap start" id="start">
-    <h2>Quick start — first answer in one block</h2>
-    <p>You need one thing: an agentic AI tool on your <code>$PATH</code>. The reference path is Claude Code; Cursor, Cline, Copilot, Gemini, and Codex shims ship in the repo.</p>
-    <pre class="term">git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
-cd my-wiki &amp;&amp; claude</pre>
-    <p class="after">The repo ships with a working demo wiki, so the very first command already returns a cited answer — zero setup:</p>
-    <pre class="term">/ctx-query "what is an llm-wiki, and why not just use RAG?"</pre>
-    <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#quick-start--first-answer-in-one-block">Read the full quick start →</a></p>
+    <h2>Create your first specialized compiler.</h2>
+    <p>You need Git plus VS Code or another agentic coding environment. The included profile provides a working client-decision specialization; the generic default remains available.</p>
+    <pre class="term">git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
+./bootstrap/scripts/create-context-compiler.sh ./northstar-client-context
+cd ./northstar-client-context
+./scripts/use-profile.sh client-decision</pre>
+    <p class="after">Then open the directory in your coding agent, add evidence, and run:</p>
+    <pre class="term">/ctx-compile
+/client-brief northstar-feeds</pre>
+    <p class="after"><strong>Current boundary:</strong> this is a developer-oriented factory, not a no-code generator. Creating a new profile still requires an LLM-assisted development session. Daily operation assumes basic familiarity with files, commands, and Git.</p>
+    <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#create-a-specialized-context-compiler">Read the full factory and operating guide →</a></p>
   </section>
 </main>
 
 <footer class="wrap foot">
-  <p class="statement">You curate. The LLM writes. The citations keep it honest.</p>
+  <p class="statement">Build the compiler once. Keep compiling the changing evidence.</p>
   <p class="meta">
     <span>MIT license</span>
     <a href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">Source on GitHub</a>

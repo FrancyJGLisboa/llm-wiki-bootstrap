@@ -27,7 +27,7 @@ tool="${1:-}"
 # RUN is an array; the prompt is appended as the final argument.
 case "$tool" in
   claude)  RUN=(claude -p) ;;                 # validated reference
-  codex)   RUN=(codex exec) ;;                # best-effort
+  codex)   RUN=(codex exec --skip-git-repo-check) ;; # temp wiki is intentionally outside a trusted git checkout
   gemini)  RUN=(gemini -p) ;;                 # best-effort
   copilot) RUN=(copilot -p) ;;               # best-effort
   *) echo "unknown tool: $tool" >&2; exit 2 ;;

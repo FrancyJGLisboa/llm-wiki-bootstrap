@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://context-compiler.local/profiles/client-decision/decision.schema.json",
+  "title": "Client Decision Projection",
+  "type": "object",
+  "required": ["decision_id", "subject", "description", "supporting_claim_ids", "current_state", "historical_states"],
+  "properties": {
+    "decision_id": {"type": "string", "pattern": "^DEC-[a-z0-9-]+$"},
+    "subject": {"type": "string", "minLength": 1},
+    "description": {"type": "string", "minLength": 1},
+    "status": {"type": ["string", "null"]},
+    "owner": {"type": ["string", "null"]},
+    "decision_window": {"type": ["string", "null"]},
+    "time_horizon": {"type": ["string", "null"]},
+    "commodities": {"type": "array", "items": {"type": "string"}},
+    "geographies": {"type": "array", "items": {"type": "string"}},
+    "assets": {"type": "array", "items": {"type": "string"}},
+    "variables": {"type": "array", "items": {"type": "string"}},
+    "assumptions": {"type": "array", "items": {"type": "string"}},
+    "constraints": {"type": "array", "items": {"type": "string"}},
+    "triggers": {"type": "array", "items": {"type": "string"}},
+    "risks": {"type": "array", "items": {"type": "string"}},
+    "open_questions": {"type": "array", "items": {"type": "string"}},
+    "supporting_claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true},
+    "current_state": {"$ref": "#/$defs/state"},
+    "historical_states": {"type": "array", "items": {"$ref": "#/$defs/state"}}
+  },
+  "$defs": {
+    "temporal-value": {
+      "oneOf": [
+        {"type": "null"},
+        {"const": "unknown"},
+        {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"},
+        {"type": "string", "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})?$"}
+      ]
+    },
+    "state": {
+      "type": "object",
+      "required": ["valid_from", "claim_ids"],
+      "properties": {
+        "valid_from": {"$ref": "#/$defs/temporal-value"},
+        "valid_to": {"$ref": "#/$defs/temporal-value"},
+        "status": {"type": ["string", "null"]},
+        "claim_ids": {"type": "array", "minItems": 1, "items": {"type": "string"}, "uniqueItems": true}
+      },
+      "additionalProperties": false
+    }
+  },
+  "additionalProperties": false
+}

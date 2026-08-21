@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "values": [
+    "client",
+    "compiler-derived",
+    "external-market",
+    "internal-research"
+  ]
+}

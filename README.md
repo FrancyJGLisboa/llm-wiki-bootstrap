@@ -2,38 +2,180 @@
 
 [![CI](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**A context compiler for LLMs.** It turns unstructured sources — PDFs, articles, transcripts, spreadsheets, screenshots — into a **structured, provenance-aware, machine-navigable context package** your AI tool can navigate, retrieve from, and reason over. You curate raw sources and ask questions; the LLM does all the writing, cross-linking, and upkeep. Five slash commands, run entirely from your AI coding tool. No UI, no SaaS, no Obsidian, no vector DB. The pattern is Andrej Karpathy's; the compiler framing is spelled out in [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
+**A starter kit for creating and operating specialized context compilers.** It is not the final compiler for every domain. It gives an agentic coding tool the architecture, contracts, validation, packaging, and tests needed to create one.
+
+```text
+context-compiler-bootstrap
+        │
+        │ creates and configures
+        ▼
+specialized context compiler
+        │
+        │ continuously compiles evidence
+        ▼
+usable context package
+```
+
+A specialized compiler turns emails, PDFs, transcripts, spreadsheets, screenshots, and notes into a structured package of current state, history, relationships, provenance, and explicit uncertainty. People use the package through concise views—briefs, deltas, decision lists, evidence chains, historical state, and review queues—rather than reading its JSON or graph directly.
+
+The repository ships one complete specialization, [`profiles/client-decision/`](profiles/client-decision/), as both a working capability and a pattern for creating others. Without an activated profile, the compiler remains generic. No UI, SaaS, Obsidian, vector database, or external connector is required.
 
 ![/ctx-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
 > A replay of a real `/ctx-query` against the shipped demo wiki — the answer text is verbatim; terminal timing is illustrative. Reproduce it yourself with the block below (zero setup).
 
-## Quick start — first answer in one block
+## Create a specialized context compiler
 
-**You need one thing:** an agentic AI tool on your `$PATH`. The reference path is [Claude Code](https://docs.anthropic.com/claude/code) (`claude`); [other tools work too](#tool-support). Then:
+Create a clean compiler repository from the bootstrap:
 
 ```bash
-git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap my-wiki
-cd my-wiki && claude          # open Claude Code in the repo
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
+./bootstrap/scripts/create-context-compiler.sh ./northstar-client-context
+cd ./northstar-client-context
 ```
 
-The repo ships with a working demo wiki, so the **very first command already returns an answer — zero setup:**
+Open that directory in VS Code or another agentic coding environment. Activate the included client-decision specialization:
 
-```
-/ctx-query "what is an llm-wiki, and why not just use RAG?"   # answered from the shipped wiki
-```
-
-That's the whole pitch: you just queried a knowledge base nobody hand-wrote. Now make it yours — start building your own:
-
-```
-/ctx-extract https://example.com/some-article   # pull a source into raw/
-/ctx-compile                                       # integrate it into the wiki
-/ctx-query "what does that article say about X?"  # ask — answers now include your source
+```bash
+./scripts/use-profile.sh client-decision
 ```
 
-That's the whole loop. The wiki that ships here is *meta* — a wiki about the LLM-wiki pattern itself ([`wiki/index.md`](wiki/index.md)), there as a working example. **Make it yours:** keep adding sources alongside it, or [start from a clean slate](#starting-your-own-wiki-clean-slate).
+The profile defines what this compiler understands:
 
-> **The block above is the one and only start-here.** Not on Claude Code? [`docs/QUICKSTART.md`](docs/QUICKSTART.md) has the same loop as a command sequence for Cursor, Cline, Copilot, Gemini, and Codex — plus a [VS Code + Copilot fast path](docs/QUICKSTART.md#fastest-path-vs-code--github-copilot--mac-or-windows). **On Windows?** Do the [one-time 5-minute setup](docs/QUICKSTART.md#windows-setup-one-time--5-minutes) (Git Bash + Python) so the toolchain runs.
+- **Ontology:** client, decision, exposure, assumption, risk, and variable.
+- **Claim classes:** observation, fact, assumption, inference, derivation, and unknown.
+- **Relationships:** assumes, considering, depends-on, contradicts, and supersedes.
+- **Compilation rules:** speaker attribution, temporal resolution, evidence separation, and provenance requirements.
+- **Outputs:** briefs, deltas, decisions, assumptions, evidence chains, and health diagnostics.
+- **Review rules:** contradictions, ambiguous speakers, possible supersession, and unsupported material claims.
+
+The specialization is ordinary versioned files, not hidden configuration:
+
+```text
+profiles/client-decision/
+├── profile.json
+├── COMPILATION.md
+├── schemas/
+├── vocabularies/
+└── templates/
+```
+
+The generic compiler core still owns extraction, provenance, temporal semantics, compilation, linting, and packaging. The profile supplies the domain language and domain-specific views.
+
+### Create a different specialization
+
+Ask the coding agent to create another profile against the verified extension contract. For example:
+
+> Create a `project-decision` profile based on the existing `client-decision` profile. It must represent architectural decisions, owners, constraints, alternatives, supersession, and unresolved risks. Do not add project-specific concepts to the compiler core.
+
+The result should be a separate `profiles/project-decision/` directory with its own manifest, schemas, vocabularies, templates, fixtures, and acceptance tests. Activate it with:
+
+```bash
+./scripts/use-profile.sh project-decision
+```
+
+That is the factory behavior: the bootstrap provides the reusable machinery and one concrete reference profile, so a new compiler does not begin from an empty repository.
+
+## Operate the specialized compiler every day
+
+The user normally adds evidence and requests views. They do not hand-edit structured claims.
+
+```text
+new evidence
+    ↓
+place it in raw/ or run /ctx-extract
+    ↓
+run /ctx-compile
+    ↓
+inspect a brief, delta, decision, evidence chain, or exception
+    ↓
+use the result in a meeting, analysis, handover, or downstream agent
+```
+
+### Before a meeting
+
+Add the latest evidence:
+
+```text
+raw/
+├── client-email-2026-08-21.md
+├── procurement-call-2026-08-21.md
+└── market-update-2026-08-21.pdf
+```
+
+Then run in the coding agent:
+
+```text
+/ctx-compile
+/client-brief northstar-feeds
+```
+
+The brief answers what the client is deciding, what changed, which assumptions remain active, what is unknown, and which exact sources support the result.
+
+### After new evidence arrives
+
+```text
+/ctx-compile raw/northstar-call-2026-08-21.md
+/client-delta northstar-feeds --since 2026-08-01
+```
+
+The output separates semantically meaningful change:
+
+```text
+NEW
+Q1 soymeal coverage became an active decision.
+
+CHANGED
+Concern shifted from price downside to physical availability.
+
+SUPERSEDED
+BRL/USD 5.50 was replaced by approximately 5.70.
+
+UNRESOLVED
+Maximum acceptable open exposure remains unknown.
+```
+
+### When someone challenges a conclusion
+
+```text
+/client-why northstar-feeds "Northstar is increasingly concerned about Q1 soymeal availability"
+```
+
+The evidence chain preserves earlier and later evidence, speaker and role, exact source anchors, previous and current state, classification, confidence, and conflicts.
+
+### Weekly maintenance
+
+```text
+/client-review northstar-feeds
+/client-lint northstar-feeds
+```
+
+These commands surface exceptions such as contradictions, ambiguous attribution, possible supersession, stale assumptions, unsupported claims, and unknown owners. Humans review questionable cases—not every extracted statement.
+
+## What people actually consume
+
+| User need | Produced view |
+|---|---|
+| Prepare for a meeting | Concise current-state brief |
+| Understand recent movement | Semantic delta |
+| See active work | Decision list |
+| Challenge a conclusion | Evidence chain |
+| Reconstruct history | Point-in-time state |
+| Maintain reliability | Exception queue and lint diagnostics |
+| Feed another AI workflow | Structured claim and decision package |
+| Audit a change | Git diff and exact source anchors |
+
+The compiled context package is the durable product. VS Code and the LLM are the initial operating interface.
+
+## What “bootstrap” means today
+
+This is currently a developer-oriented factory. It scaffolds a working compiler, supplies a complete reference profile, defines the profile contract, and provides deterministic claim, temporal, provenance, testing, benchmarking, and packaging machinery.
+
+It is **not yet a no-code compiler generator**. A genuinely new specialization still requires an LLM-assisted development session to define schemas, vocabularies, extraction guidance, fixtures, and acceptance tests. Daily operation currently assumes an agentic coding environment, files under `raw/`, command-driven workflows, and basic Git/filesystem familiarity.
+
+> `context-compiler-bootstrap` is an LLM-assisted development kit for building specialized, evidence-grounded context compilers. Each generated compiler is then operated as a recurring evidence-to-decision-context workflow.
+
+For the per-tool setup sequence, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md). For the category definition, see [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
 ## Install details
 
@@ -112,6 +254,60 @@ Every command has both a prefixed form (`/ctx-extract`) and a short alias (`/ext
 | `/ctx-lint [--apply]` | `/lint` | Health-check: broken links, orphans, contradictions, stale claims, gaps. Reports by default; `--apply` writes proposed fixes. |
 
 Full spec at [`wiki/commands.md`](wiki/commands.md).
+
+## Profile workflows
+
+Profiles are optional. Without `context-profile.json`, the compiler stays generic.
+
+The first profile is `client-decision`. Activate it in a repo with:
+
+```bash
+./scripts/use-profile.sh client-decision
+```
+
+Once active, `/ctx-compile` remains the generic raw → context pipeline, but it may also emit profile outputs such as `context/claims/by-source/*.jsonl` and `context/decisions/<client>/*.json`. The read-only client workflows then become available:
+
+| Prefixed | Short | What it does |
+|---|---|---|
+| `/ctx-client-brief <client>` | `/client-brief` | Concise current-state decision brief grounded in compiled claims |
+| `/ctx-client-delta <client> --since <date>` | `/client-delta` | Deterministic change report: new, changed, superseded, unresolved, unchanged-but-material |
+| `/ctx-client-decisions <client>` | `/client-decisions` | Current or point-in-time decision projections |
+| `/ctx-client-assumptions <client>` | `/client-assumptions` | Active evidence-grounded assumptions only |
+| `/ctx-client-why <client> "<claim-id-or-text>"` | `/client-why` | Inspectable evidence and relation chain for one claim |
+| `/ctx-client-review <client>` | `/client-review` | Exception-only review queue |
+| `/ctx-client-lint <client>` | `/client-lint` | Transparent decision-context diagnostics; no aggregate AI score |
+
+The runtime is deterministic and read-only: `scripts/client-context.py` consumes compiled claim shards and decision projections, and `scripts/verify-client-workflows.sh` exercises the workflow contracts.
+
+## Northstar benchmark
+
+The repo ships a public synthetic benchmark for the first vertical demonstration: Northstar Feeds, a fictional commodities client.
+
+```bash
+./scripts/create-context-compiler.sh /tmp/northstar-demo
+./scripts/stage-northstar.sh /tmp/northstar-demo
+cd /tmp/northstar-demo
+./scripts/preflight.sh
+```
+
+Then open `/tmp/northstar-demo` in your AI tool and run:
+
+```
+/ctx-compile
+/ctx-client-brief northstar-feeds
+/ctx-client-delta northstar-feeds --since 2026-06-30
+/ctx-client-why northstar-feeds "BRL/USD approximately 5.70"
+```
+
+`benchmarks/northstar/sources/` contains the 24 synthetic inputs; `gold/` is held out from compilation and only used for scoring. Deterministic repo checks:
+
+```bash
+bash scripts/verify-northstar-benchmark.sh
+bash scripts/run-northstar-benchmark.sh instrument /tmp/bm25.json
+bash scripts/run-northstar-benchmark.sh score tests/northstar/predictions-fixture.json --out /tmp/scored.json
+```
+
+The benchmark never fabricates model results. BM25 output is explicitly labeled as a retrieval instrument, and a run becomes `MEASURED` only when an external prediction file is supplied and scored.
 
 ### Output commands
 
@@ -383,7 +579,7 @@ See `wiki/four-principles.md` for the full account.
 
 V2. Multi-tool shims for Claude Code, Cursor, Cline, Copilot CLI, Gemini CLI, and Codex are all in place. Real slash commands exist only for Claude Code; other tools invoke the workflows by natural language using the same prompt bodies.
 
-**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 47 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, ratchet, ctx-root-adoption, adapter-contract, and citation-floor gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
+**The Claude Code happy path is verified end-to-end.** Three harnesses guard it. `scripts/smoke-all.sh` — 48 deterministic checks (extract → ingest → query, body-hash idempotence, installer, the eval, monitoring, and package-quality oracles, plus the prompt-purity, raw-append-only, ratchet, ctx-root-adoption, adapter-contract, and citation-floor gates) — runs locally and is wired into [CI](.github/workflows/ci.yml) on every push (`--no-build`, no API key needed); a full local run adds the LLM build phase's own checks on top. The suite counts its passes rather than printing a literal, so losing a check moves the number. `scripts/eval-onboarding.sh` drives `claude -p` as a brand-new user through a fresh wiki and confirms they reach the correct answer from a source they just ingested. `scripts/eval-retrieval.sh` builds a fresh wiki from a generated corpus and scores retrieval against 10 binary checks — needle recall per modality, point-in-time answers, refusal on absence, citation locus, stale-evidence detection, multi-valued scoped answers, graph-traversable supersession, clarify-on-ambiguity, feedback-loop composition, and citation integrity — each graded deterministically (no LLM grader; see `tests/eval/retrieval-questions.md`), with a held-out question set (`--holdout`) as the anti-Goodhart control. Latest run: 32/35, the losses being one fabricated citation anchor and one citation pointing into frontmatter rather than body text. `scripts/eval-scale.sh` reruns that whole eval at increasing corpus sizes with deterministic distractor filler: quality held from 19 to 495 pages (20/21 → 21/21) while median file reads per answer fell from 3 to 0, and the holdout passed 4/4 at 495 pages. Every grader is itself verified with no LLM and no spend by `scripts/verify-retrieval-eval.sh` (E1–E16), `verify-scale-eval.sh` (F1–F7), and `verify-loops.sh` (L1–L6) — an eval nobody checks measures nothing. The other tools' shims (Cursor, Cline, Copilot, Gemini, Codex) ship and follow the same prompt bodies by natural language, but are not yet driven by the harness — if one misbehaves, that's a reportable bug.
 
 ## License
 

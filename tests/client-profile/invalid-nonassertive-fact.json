@@ -1,0 +1,21 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-ABCDEF123456",
+  "classification": "fact",
+  "statement": "Chinese imports will decline five percent.",
+  "subject": "northstar-feeds",
+  "predicate": "assumes",
+  "object": "china-imports-minus-five-percent",
+  "evidence_domain": "client",
+  "source": {
+    "id": "call-2026-08-19",
+    "path": "raw/call-2026-08-19.md",
+    "type": "meeting-transcript",
+    "timestamp": "2026-08-19T10:00:00Z",
+    "anchor": "china-imports",
+    "evidence_span": "Possibly.",
+    "speaker": "Maria Silva",
+    "speaker_role": "client",
+    "speaker_act": "qualified-agreement"
+  }
+}

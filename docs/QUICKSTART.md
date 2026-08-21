@@ -2,6 +2,14 @@
 
 From `git clone` to first useful answer in 5 minutes, across the supported AI tools.
 
+## Optional Northstar decision-context demo
+
+Run `./scripts/create-context-compiler.sh /tmp/northstar-compiler`, then
+`./scripts/stage-northstar.sh /tmp/northstar-compiler`. Open that directory in your agent,
+run `/ctx-compile`, then `/client-brief northstar-feeds`, `/client-delta northstar-feeds
+--since 2026-06-01`, `/client-decisions northstar-feeds --as-of 2026-06-30`,
+`/client-why "BRL 5.70"`, and `/client-lint`. Fresh scaffolds remain profile-inactive.
+
 ## Fastest path (Claude Code)
 
 ```bash

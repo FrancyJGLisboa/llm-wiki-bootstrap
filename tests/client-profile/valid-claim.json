@@ -1,0 +1,24 @@
+{
+  "profile": "client-decision",
+  "claim_id": "CLM-123456789ABC",
+  "classification": "inference",
+  "statement": "Physical availability appears increasingly material.",
+  "subject": "northstar-feeds",
+  "predicate": "monitors",
+  "object": "q1-soymeal-availability",
+  "valid_from": "2026-08-19T10:00:00Z",
+  "confidence": 0.82,
+  "evidence_domain": "client",
+  "source": {
+    "id": "call-2026-08-19",
+    "path": "raw/call-2026-08-19.md",
+    "type": "meeting-transcript",
+    "timestamp": "2026-08-19T10:00:00Z",
+    "anchor": "q1-procurement-discussion",
+    "evidence_span": "I'm more worried about securing meal than outright price now.",
+    "speaker": "Maria Silva",
+    "speaker_role": "client",
+    "speaker_act": "assertion"
+  },
+  "review_triggers": ["material-inference"]
+}

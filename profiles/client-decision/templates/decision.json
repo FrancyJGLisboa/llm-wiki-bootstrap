@@ -1,0 +1,26 @@
+{
+  "decision_id": "DEC-example",
+  "subject": "example-client",
+  "description": "Evidence-grounded decision description",
+  "status": null,
+  "owner": null,
+  "decision_window": null,
+  "time_horizon": null,
+  "commodities": [],
+  "geographies": [],
+  "assets": [],
+  "variables": [],
+  "assumptions": [],
+  "constraints": [],
+  "triggers": [],
+  "risks": [],
+  "open_questions": [],
+  "supporting_claim_ids": ["CLM-000000000000"],
+  "current_state": {
+    "valid_from": null,
+    "valid_to": null,
+    "status": null,
+    "claim_ids": ["CLM-000000000000"]
+  },
+  "historical_states": []
+}
