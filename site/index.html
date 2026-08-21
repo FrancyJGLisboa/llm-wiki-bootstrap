@@ -22,7 +22,7 @@
   <section class="wrap hero">
     <div>
       <h1>Build the context compiler your work&nbsp;needs.</h1>
-      <p class="lede"><strong>context-compiler-bootstrap is a starter kit, not the final compiler for every domain.</strong> Use it with an agentic coding tool to create a specialized compiler. Then operate that compiler every day to turn changing evidence into current state, history, provenance, and explicit uncertainty.</p>
+      <p class="lede"><strong>context-compiler-bootstrap is a starter kit, not the final compiler for every domain.</strong> Use an AI-enabled workspace to create a specialized compiler. Then work through ordinary requests while it turns changing evidence into current state, history, provenance, and explicit uncertainty.</p>
       <div class="actions">
         <a class="btn-fill" href="#start">Create a compiler</a>
         <a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">View on GitHub →</a>
@@ -30,7 +30,7 @@
     </div>
     <figure>
       <img src="demo.gif" alt="A terminal running /ctx-query and returning a cited answer from the demo wiki" width="927" height="451" fetchpriority="high">
-      <figcaption>The coding agent is the operating interface. The compiled, source-grounded context package is the durable product.</figcaption>
+      <figcaption>AI chat is the operating interface. The compiled, source-grounded context package is the durable product.</figcaption>
     </figure>
   </section>
 
@@ -53,9 +53,9 @@
       <li class="step">
         <span class="stage">03 · operate</span>
         <h3>Compile evidence repeatedly</h3>
-        <p>New evidence updates only affected state. Users request briefs, deltas, decisions, evidence chains, historical views, and review exceptions.</p>
-        <pre class="term">/ctx-compile
-/client-brief northstar-feeds</pre>
+        <p>New evidence updates only affected state. Users ask for briefs, deltas, decisions, evidence chains, historical views, and review exceptions in ordinary language.</p>
+        <pre class="term">Add this evidence and update my context.
+Prepare me for the Northstar meeting.</pre>
       </li>
     </ol>
   </section>
@@ -82,21 +82,20 @@
       <li class="step">
         <span class="stage">morning</span>
         <h3>Prepare for a meeting</h3>
-        <p>Add the latest emails, transcript, report, or spreadsheet. Compile once, then request the current decision brief.</p>
-        <pre class="term">/ctx-compile
-/client-brief northstar-feeds</pre>
+        <p>Add the latest emails, transcript, report, or spreadsheet. The workspace updates the context and saves a current decision brief.</p>
+        <pre class="term">Add these files and prepare me for the Northstar meeting.</pre>
       </li>
       <li class="step">
         <span class="stage">after new evidence</span>
         <h3>See meaningful change</h3>
         <p>A semantic delta separates new, changed, superseded, unresolved, and unchanged-but-material state.</p>
-        <pre class="term">/client-delta northstar-feeds --since 2026-08-01</pre>
+        <pre class="term">What changed for Northstar since August 1?</pre>
       </li>
       <li class="step">
         <span class="stage">when challenged</span>
         <h3>Show why</h3>
         <p>Return the chronological evidence chain, speaker, role, source anchors, classification, confidence, and conflicting evidence.</p>
-        <pre class="term">/client-why northstar-feeds "concern about Q1 availability"</pre>
+        <pre class="term">Why do we think Northstar is concerned about Q1 availability?</pre>
       </li>
     </ol>
   </section>
@@ -125,15 +124,15 @@
 
   <section class="wrap start" id="start">
     <h2>Create your first specialized compiler.</h2>
-    <p>You need Git plus VS Code or another agentic coding environment. The included profile provides a working client-decision specialization; the generic default remains available. The generated workspace opens with <code>START-HERE.md</code> and one-click VS Code tasks.</p>
+    <p>You need an AI-enabled workspace such as VS Code with an AI assistant. The included profile provides a working client-decision specialization; the generic default remains available. The generated compiler opens through a simplified workspace that hides implementation machinery.</p>
     <pre class="term">git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
 ./bootstrap/scripts/create-context-compiler.sh ./northstar-client-context
 cd ./northstar-client-context
 ./scripts/use-profile.sh client-decision</pre>
-    <p class="after">Then open <code>START-HERE.md</code>, drop evidence into <code>EVIDENCE-INBOX/</code>, and tell the AI:</p>
-    <pre class="term">Compile my inbox.
+    <p class="after">Then open <code>AI-WORKSPACE.code-workspace</code>, drop evidence into <code>EVIDENCE-INBOX/</code>, and tell the AI:</p>
+    <pre class="term">Add this evidence and update my context.
 Prepare a brief for northstar-feeds.</pre>
-    <p class="after"><strong>Current boundary:</strong> this is a developer-oriented factory, not a no-code generator. Creating a new profile still requires an LLM-assisted development session. Daily operation assumes basic familiarity with files, commands, and Git.</p>
+    <p class="after"><strong>Current boundary:</strong> this is an LLM-assisted development kit, not a no-code generator. Creating a genuinely new specialization still requires an AI-assisted development session. Daily operation uses AI chat and familiar folders; commands, schemas, and Git remain available as advanced controls.</p>
     <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#create-a-specialized-context-compiler">Read the full factory and operating guide →</a></p>
   </section>
 </main>
@@ -143,7 +142,7 @@ Prepare a brief for northstar-feeds.</pre>
   <p class="meta">
     <span>MIT license</span>
     <a href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">Source on GitHub</a>
-    <span>Built and verified with Claude Code</span>
+    <span>AI-workspace compatible and deterministically verified</span>
   </p>
 </footer>
 

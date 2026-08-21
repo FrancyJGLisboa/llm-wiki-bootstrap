@@ -22,9 +22,9 @@ The repository ships one complete specialization, [`profiles/client-decision/`](
 
 ## Who can use it
 
-The intended operator is a domain expert who can open a folder in VS Code, use an
-AI coding subscription, and follow a guided workflow. They do not need to write
-application code or edit schemas during daily use.
+The intended operator is a domain expert who can open an AI workspace and describe
+the work they need. They do not need to write application code, edit schemas, or
+remember compiler commands during daily use.
 
 ```text
 EVIDENCE-INBOX/  drop new evidence here; originals are never edited
@@ -32,10 +32,11 @@ BRIEFS/    read meeting-ready briefs, deltas, and evidence chains
 REVIEWS/   inspect only contradictions, ambiguity, and other exceptions
 ```
 
-[`START-HERE.md`](START-HERE.md) maps ordinary requests such as “compile my inbox,”
+[`START-HERE.md`](START-HERE.md) maps ordinary requests such as “add this evidence and update my context,”
 “prepare me for the Northstar meeting,” and “what changed since August 1?” to stable
-compiler workflows. [`.vscode/tasks.json`](.vscode/tasks.json) exposes setup, inbox
-status, profile activation, and verification without requiring command recall.
+compiler workflows. [`AI-WORKSPACE.code-workspace`](AI-WORKSPACE.code-workspace)
+hides implementation machinery from the daily view. [`ADVANCED.md`](ADVANCED.md)
+makes every underlying command and file available when needed.
 
 ![/ctx-query returning a cited answer from the demo wiki that ships in this repo](assets/demo.gif)
 
@@ -51,7 +52,7 @@ git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
 cd ./northstar-client-context
 ```
 
-Open that directory in VS Code or another agentic coding environment. Activate the included client-decision specialization:
+Open `AI-WORKSPACE.code-workspace` and tell the AI: **“Help me set up this workspace for my work.”** The AI can activate the included client-decision specialization. Its advanced command equivalent is:
 
 ```bash
 ./scripts/use-profile.sh client-decision
@@ -95,14 +96,14 @@ That is the factory behavior: the bootstrap provides the reusable machinery and 
 
 ## Operate the specialized compiler every day
 
-The user normally adds evidence and requests views. They do not hand-edit structured claims. Drop files into `EVIDENCE-INBOX/` and say **“Compile my inbox.”** The `/ctx-inbox` workflow safely extracts only new or changed files, preserves the originals, records the explicit evidence-to-raw mapping, and then runs `/ctx-compile`.
+The user normally adds evidence and requests views. They do not hand-edit structured claims. Open [`AI-WORKSPACE.code-workspace`](AI-WORKSPACE.code-workspace), then drag files into `EVIDENCE-INBOX/`, paste text, or give the AI a path or URL. Say **“Add this evidence and update my context.”** The `/ctx-add` workflow routes every input safely, preserves local originals, records evidence-to-raw mappings, and updates the compiled context.
 
 ```text
 new evidence
     ↓
-place it in raw/ or run /ctx-extract
+drag it in, paste it, or give the AI a path or URL
     ↓
-run /ctx-compile
+say “Add this evidence and update my context”
     ↓
 inspect a brief, delta, decision, evidence chain, or exception
     ↓
@@ -111,30 +112,27 @@ use the result in a meeting, analysis, handover, or downstream agent
 
 ### Before a meeting
 
-Add the latest evidence:
+Add the latest evidence to `EVIDENCE-INBOX/`:
 
 ```text
-raw/
+EVIDENCE-INBOX/
 ├── client-email-2026-08-21.md
 ├── procurement-call-2026-08-21.md
 └── market-update-2026-08-21.pdf
 ```
 
-Then run in the coding agent:
+Then ask in AI chat:
 
 ```text
-/ctx-compile
-/client-brief northstar-feeds
+Add this evidence and update my context.
+Prepare me for the Northstar meeting.
 ```
 
 The brief answers what the client is deciding, what changed, which assumptions remain active, what is unknown, and which exact sources support the result.
 
 ### After new evidence arrives
 
-```text
-/ctx-compile raw/northstar-call-2026-08-21.md
-/client-delta northstar-feeds --since 2026-08-01
-```
+Ask: **“Add this call and show what changed for Northstar since August 1.”**
 
 The output separates semantically meaningful change:
 
@@ -154,18 +152,13 @@ Maximum acceptable open exposure remains unknown.
 
 ### When someone challenges a conclusion
 
-```text
-/client-why northstar-feeds "Northstar is increasingly concerned about Q1 soymeal availability"
-```
+Ask: **“Why do we think Northstar is increasingly concerned about Q1 soymeal availability?”**
 
 The evidence chain preserves earlier and later evidence, speaker and role, exact source anchors, previous and current state, classification, confidence, and conflicts.
 
 ### Weekly maintenance
 
-```text
-/client-review northstar-feeds
-/client-lint northstar-feeds
-```
+Ask: **“Show me only what needs my judgment for Northstar.”**
 
 These commands surface exceptions such as contradictions, ambiguous attribution, possible supersession, stale assumptions, unsupported claims, and unknown owners. Humans review questionable cases—not every extracted statement.
 
@@ -182,13 +175,13 @@ These commands surface exceptions such as contradictions, ambiguous attribution,
 | Feed another AI workflow | Structured claim and decision package |
 | Audit a change | Git diff and exact source anchors |
 
-The compiled context package is the durable product. VS Code and the LLM are the initial operating interface.
+The compiled context package is the durable product. AI chat and familiar workspace folders are the initial operating interface.
 
 ## What “bootstrap” means today
 
-This is currently a developer-oriented factory. It scaffolds a working compiler, supplies a complete reference profile, defines the profile contract, and provides deterministic claim, temporal, provenance, testing, benchmarking, and packaging machinery.
+This is currently an LLM-assisted development kit. It scaffolds a working compiler, supplies a complete reference profile, defines the profile contract, and provides deterministic claim, temporal, provenance, testing, benchmarking, and packaging machinery.
 
-It is **not yet a no-code compiler generator**. A genuinely new specialization still requires an LLM-assisted development session to define schemas, vocabularies, extraction guidance, fixtures, and acceptance tests. Daily operation currently assumes an agentic coding environment, files under `raw/`, command-driven workflows, and basic Git/filesystem familiarity.
+It is **not yet a no-code compiler generator**. A genuinely new specialization still requires an LLM-assisted development session to define schemas, vocabularies, extraction guidance, fixtures, and acceptance tests. Daily operation uses AI chat and the visible evidence/output folders; commands, Git, and the underlying files remain optional advanced controls.
 
 The guided surface reduces that requirement to basic folder and AI-chat use for daily
 operation. The technical substrate remains visible for auditability and customization;

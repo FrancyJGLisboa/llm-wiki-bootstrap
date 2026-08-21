@@ -1,0 +1,42 @@
+{
+  "folders": [
+    {
+      "name": "My Context Workspace",
+      "path": "."
+    }
+  ],
+  "settings": {
+    "explorer.compactFolders": false,
+    "workbench.startupEditor": "none",
+    "files.exclude": {
+      "**/.git": true,
+      "**/.claude": true,
+      "**/.cursor": true,
+      "**/.github": true,
+      "**/.vscode": true,
+      "**/scripts": true,
+      "**/profiles": true,
+      "**/tests": true,
+      "**/templates": true,
+      "**/gates": true,
+      "**/benchmarks": true,
+      "**/docs": true,
+      "**/raw": true,
+      "**/context": true,
+      "**/wiki": true,
+      "**/diagrams": true,
+      "**/AGENTS.md": true,
+      "**/CLAUDE.md": true,
+      "**/GATES.md": true,
+      "**/GEMINI.md": true,
+      "**/PLAN.md": true,
+      "**/log.md": true
+    }
+  },
+  "extensions": {
+    "recommendations": [
+      "github.copilot",
+      "github.copilot-chat"
+    ]
+  }
+}

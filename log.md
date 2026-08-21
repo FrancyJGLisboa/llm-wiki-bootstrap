@@ -886,3 +886,10 @@ Initial bootstrap of `llm-wiki-bootstrap`. The repository's first wiki was produ
   - The raw file's frontmatter has been updated with `ingested_hash`, `ingested_at`, and `ingested_pages` so future `/wiki-ingest` runs skip it unless the body changes.
   - `scripts/body-hash.sh` ships as the canonical hash algorithm. The recorded `ingested_hash` was computed via this script; future `/wiki-ingest` runs must use the same script (per AGENTS.md) for idempotence.
   - **Slash command runtime is NOT yet validated.** All five `.claude/commands/wiki-*.md` files exist and are well-formed, but no command has actually been invoked. The first real-session invocation will be the smoke test. The bootstrap of the wiki itself was done by direct file writes during the planning conversation, not by `/wiki-ingest`.
+## 2026-08-21 — AI workspace and single evidence intake
+
+- Added `AI-WORKSPACE.code-workspace`, which foregrounds `START-HERE.md`, `EVIDENCE-INBOX/`, `BRIEFS/`, and `REVIEWS/` while hiding compiler internals from the daily Explorer view.
+- Added `/ctx-add` (`/add`) as the sole first-run evidence action for files, folders, URLs, pasted text, and the drop folder. Existing `/ctx-inbox`, `/ctx-extract`, and `/ctx-compile` contracts remain available as advanced controls.
+- Added a deterministic `scripts/add-evidence.py` boundary for safe, atomic local staging with recursive folders, collision handling, no-op detection, and symlink rejection.
+- Rewrote generated-workspace onboarding around ordinary work requests and automatic saved outputs. `ADVANCED.md` keeps the full compiler visible when an operator needs it.
+- Added installer, package, smoke, and regression coverage for the AI workspace assets and intake contract.

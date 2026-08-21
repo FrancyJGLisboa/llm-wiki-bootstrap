@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
 
 for path in \
-  START-HERE.md EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md \
+  START-HERE.md ADVANCED.md AI-WORKSPACE.code-workspace EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md \
   .vscode/extensions.json .vscode/tasks.json \
   .claude/commands/ctx-start.md .claude/commands/ctx-inbox.md \
   .claude/commands/ctx-create-profile.md scripts/inbox.py scripts/profile-check.py; do
@@ -28,7 +28,7 @@ assert labels == {
     "Context: Verify guided workspace",
 }
 start = (root / "START-HERE.md").read_text()
-for phrase in ("Compile my inbox", "Prepare me for", "What changed", "Why do we think", "needs review"):
+for phrase in ("Add this evidence", "Prepare me for", "What changed", "Why do we think", "needs my judgment"):
     assert phrase in start, phrase
 for folder in ("EVIDENCE-INBOX", "BRIEFS", "REVIEWS"):
     assert folder in start
@@ -44,7 +44,7 @@ if [ -x "$ROOT/scripts/create-context-compiler.sh" ]; then
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/guided-workspace.XXXXXX")
   trap 'rm -rf "$tmp"' EXIT
   bash "$ROOT/scripts/create-context-compiler.sh" "$tmp/compiler" >/dev/null
-  for path in START-HERE.md EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md .vscode/tasks.json scripts/inbox.py scripts/profile-check.py; do
+  for path in START-HERE.md ADVANCED.md AI-WORKSPACE.code-workspace EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md .vscode/tasks.json scripts/inbox.py scripts/profile-check.py; do
     [ -f "$tmp/compiler/$path" ] || { echo "fresh compiler missing: $path" >&2; exit 1; }
   done
   [ "$(python3 "$tmp/compiler/scripts/profile-resolve.py" --root "$tmp/compiler")" = generic ]

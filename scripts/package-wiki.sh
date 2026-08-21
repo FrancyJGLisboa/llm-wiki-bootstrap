@@ -176,6 +176,8 @@ copy_if context
 copy_if wiki    # the compat symlink (or, pre-v5, the real directory)
 copy_if AGENTS.md
 copy_if START-HERE.md
+copy_if ADVANCED.md
+copy_if AI-WORKSPACE.code-workspace
 copy_if EVIDENCE-INBOX
 copy_if BRIEFS
 copy_if REVIEWS
@@ -191,7 +193,7 @@ copy_if .claude/commands
 copy_if templates
 copy_if profiles
 copy_if context-profile.json
-for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py claim-validate.py claim-state.py claim-delta.py claim-why.py client-context.py inbox.py profile-check.py; do
+for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py claim-validate.py claim-state.py claim-delta.py claim-why.py client-context.py inbox.py add-evidence.py profile-check.py; do
   copy_if "scripts/$s"
 done
 copy_if scripts/profile-resolve.py
@@ -235,18 +237,16 @@ base. You query it with the AI tool you already use — no service, no account.
 
 ## Use it (2 minutes)
 
-1. Unpack this bundle anywhere and open the directory in an agentic AI tool
-   (Claude Code: \`cd\` here, run \`claude\`). Run \`./scripts/preflight.sh\`
-   to confirm your environment.
-2. Ask your first question: \`/ctx-query "<anything about this topic>"\`
+1. Unpack this bundle and open \`AI-WORKSPACE.code-workspace\`.
+2. In AI chat, ask: “What does this context say about <your question>?”
 3. Every answer cites its sources — raw material ships in \`raw/\`, claims
    link to it. Verify citation integrity (intact + citations resolve +
    every claim-bearing page is sourced) at any time:
 
        ./scripts/verify-bundle.sh
 
-4. The wiki is yours to extend: \`/ctx-extract <your-source>\` then
-   \`/ctx-compile\`. Your additions never overwrite the purchased provenance.
+4. To extend it, give the AI a file, folder, URL, or pasted text and say:
+   “Add this evidence and update my context.”
 
 Integrity: MANIFEST lists a SHA-256 for every file in this bundle.
 EOF

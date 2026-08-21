@@ -13,7 +13,8 @@ tags: [system, commands, spec]
 
 - `/ctx-start` (`/start`) — inspect setup, active profile, and pending evidence,
   then give one plain-language next action.
-- `/ctx-inbox` (`/inbox`) — safely extract new or changed `EVIDENCE-INBOX/` evidence, record
+- `/ctx-add` (`/add`) — the single user-facing intake for files, folders, URLs, and pasted text; routes safely and updates context.
+- `/ctx-inbox` (`/inbox`, advanced) — safely extract new or changed `EVIDENCE-INBOX/` evidence, record
   its raw mapping, and compile it.
 - `/ctx-create-profile` (`/create-profile`) — interview the user, generate a bounded
   profile extension, validate its portable assets, and ask before activation.

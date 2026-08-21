@@ -59,7 +59,9 @@ opening a folder and using AI chat but do not work as software developers:
 - `REVIEWS/` contains generated exception reports, never silently corrected claims.
 - `.vscode/tasks.json` exposes setup, inbox status, activation, and verification tasks.
 
-When a user says “compile my inbox,” follow `/ctx-inbox`. When they ask to prepare
+When a user says “add this evidence and update my context,” follow `/ctx-add`. This is
+the sole user-facing intake action; `/ctx-inbox`, `/ctx-extract`, and `/ctx-compile` are
+internal controls unless the user asks for them. When they ask to prepare
 for a meeting, show changes, explain why, reconstruct a historical state, or show
 review exceptions, route to the matching profile command in `START-HERE.md`. Ask one
 clarifying question when the subject or date is ambiguous; do not make the user

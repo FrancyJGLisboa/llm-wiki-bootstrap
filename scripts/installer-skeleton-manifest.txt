@@ -306,3 +306,10 @@ context/rules/discarded/.gitkeep
 gates/fixtures/.gitkeep
 README.md
 log.md
+ADVANCED.md
+AI-WORKSPACE.code-workspace
+.claude/commands/ctx-add.md
+.claude/commands/add.md
+scripts/add-evidence.py
+scripts/verify-ai-workspace.sh
+tests/ai-workspace/test_add_evidence.py

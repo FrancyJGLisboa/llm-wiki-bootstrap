@@ -142,10 +142,8 @@ cat <<EOF
 
 Next steps:
   cd "$TARGET"
-  # Open START-HERE.md in VS Code (or another agentic tool), then tell the AI:
-  # "Help me set up this context compiler."
-  ./scripts/preflight.sh           # optional: confirm requirements now
+  # Open AI-WORKSPACE.code-workspace, then tell the AI:
+  # "Help me set up this workspace for my work."
 
-Repo is git-initialized but uncommitted — review the tree, then:
-  git add -A && git commit -m "initial commit"
+The workspace is git-initialized. Git remains available under ADVANCED.md.
 EOF
