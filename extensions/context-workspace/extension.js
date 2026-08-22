@@ -5,7 +5,9 @@ const vscode = require("vscode");
 const core = require("./src/core");
 
 const ACTIONS = [
-  ["Add Evidence", "Files, folders, text, URL, or inbox", "contextWorkspace.addEvidence", "add"],
+  ["Add Evidence", "Choose any files or folder — or drop them here", "contextWorkspace.addEvidence", "add"],
+  ["Paste or Add Links", "Use clipboard text or one or many URLs", "contextWorkspace.addClipboard", "clippy"],
+  ["Process Inbox", "Update context from files already dropped in", "contextWorkspace.processInbox", "inbox"],
   ["Prepare Brief", "Current decisions, changes, assumptions, and unknowns", "contextWorkspace.prepareBrief", "preview"],
   ["Show Changes", "Meaningful movement since a date", "contextWorkspace.showChanges", "diff"],
   ["Explain Why", "Inspect a conclusion's evidence chain", "contextWorkspace.explainWhy", "references"],
@@ -55,7 +57,14 @@ function activate(context) {
     return undefined;
   };
   const provider = new ActionProvider(workspaceRoot);
-  context.subscriptions.push(output, vscode.window.registerTreeDataProvider("contextWorkspace.actions", provider));
+  let handleEvidenceDrop = async () => {};
+  const dragAndDropController = {
+    dragMimeTypes: [],
+    dropMimeTypes: ["text/uri-list", "files"],
+    async handleDrop(_target, transfer) { await handleEvidenceDrop(transfer); }
+  };
+  const tree = vscode.window.createTreeView("contextWorkspace.actions", { treeDataProvider: provider, dragAndDropController });
+  context.subscriptions.push(output, tree);
 
   const register = (name, handler) => context.subscriptions.push(vscode.commands.registerCommand(name, async (...args) => {
     try {
@@ -156,18 +165,22 @@ function activate(context) {
       output.info(`Evidence staged: ${summary.staged.length}; unchanged: ${summary.unchanged.length}`);
     });
     await openChat(core.workflowPrompt("compile"));
-    await vscode.window.showInformationMessage("Evidence is preserved in the inbox. Complete the update in AI chat.");
+    await vscode.window.showInformationMessage("Evidence is preserved. Extraction has not completed until AI chat reports added, unchanged, degraded, or failed for each source.");
   };
 
-  register("contextWorkspace.addEvidence", async () => {
-    const kind = await vscode.window.showQuickPick([
-      { label: "Files or folder", description: "Choose local evidence", command: "contextWorkspace.addLocalEvidence" },
-      { label: "Paste text", description: "Give the text a source title", command: "contextWorkspace.addPastedText" },
-      { label: "URL", description: "Acquire a web source with confirmation", command: "contextWorkspace.addUrl" },
-      { label: "Evidence inbox", description: "Process files already dropped into EVIDENCE-INBOX", command: "contextWorkspace.processInbox" }
-    ], { title: "Add Evidence" });
-    if (kind) await vscode.commands.executeCommand(kind.command);
-  });
+  handleEvidenceDrop = async (transfer) => {
+    const dropped = new Set();
+    const uriList = transfer.get("text/uri-list");
+    if (uriList) for (const file of core.parseUriList(await uriList.asString())) dropped.add(file);
+    for (const [, entry] of transfer) {
+      const file = entry.asFile?.();
+      if (file?.uri?.scheme === "file") dropped.add(file.uri.fsPath);
+    }
+    if (dropped.size === 0) throw new Error("No local files were found in that drop. Use Paste or Add Links for clipboard content and URLs.");
+    await stageAndCompile(core.evidenceArgs("paths", [...dropped]));
+  };
+
+  register("contextWorkspace.addEvidence", addLocalEvidence);
   register("contextWorkspace.addLocalEvidence", async () => {
     const picked = await vscode.window.showOpenDialog({ title: "Choose evidence", canSelectFiles: true, canSelectFolders: true, canSelectMany: true });
     if (picked?.length) await stageAndCompile(core.evidenceArgs("paths", picked.map((uri) => uri.fsPath)));
@@ -178,14 +191,24 @@ function activate(context) {
     const text = await vscode.window.showInputBox({ title: "Paste evidence", prompt: "The text stays local and is passed through standard input.", ignoreFocusOut: true });
     if (text) await stageAndCompile(core.evidenceArgs("text", { title, text }));
   });
+  const acquireUrls = async (urls) => {
+    const hosts = [...new Set(urls.map((url) => new URL(url).hostname))];
+    const consent = await vscode.window.showWarningMessage(`Acquire ${urls.length} source${urls.length === 1 ? "" : "s"} from ${hosts.join(", ")}? Each source will be fetched over the network and preserved locally.`, { modal: true }, "Acquire");
+    if (consent === "Acquire") await openChat(`Add these URLs as evidence and update my context:\n${urls.join("\n")}\nPreserve every fetched source locally. Report added, unchanged, degraded, and failed separately.`);
+  };
+  register("contextWorkspace.addClipboard", async () => {
+    const clipboard = core.classifyClipboard(await vscode.env.clipboard.readText());
+    if (clipboard.kind === "urls") return acquireUrls(clipboard.urls);
+    const title = await vscode.window.showInputBox({ title: "Title this clipboard evidence", placeHolder: "Procurement call — August 22" });
+    if (title) await stageAndCompile(core.evidenceArgs("text", { title, text: clipboard.text }));
+  });
   register("contextWorkspace.addUrl", async () => {
     const root = await requireRoot();
     if (!root) return;
     const value = await vscode.window.showInputBox({ title: "Evidence URL", placeHolder: "https://example.com/report.pdf", validateInput: (input) => validationMessage(core.validateUrl, input) });
     if (!value) return;
     const url = core.validateUrl(value);
-    const consent = await vscode.window.showWarningMessage(`Acquire evidence from ${new URL(url).hostname}? The source will be fetched over the network and preserved locally.`, { modal: true }, "Acquire");
-    if (consent === "Acquire") await openChat(`Add this URL as evidence and update my context: ${url}. Preserve the fetched source locally and report acquisition failures explicitly.`);
+    await acquireUrls([url]);
   });
   register("contextWorkspace.processInbox", () => runWorkflow("compile", {}, ["BRIEFS", "REVIEWS"]));
   register("contextWorkspace.prepareBrief", async () => { const subject = await askSubject(); if (subject) await runWorkflow("brief", { subject }, ["BRIEFS"]); });

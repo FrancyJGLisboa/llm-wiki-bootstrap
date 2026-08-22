@@ -79,6 +79,11 @@ Profile creation follows `/ctx-create-profile`. A generated profile must stay un
 These paths simplify operation; they do not change the three-layer ownership model
 or weaken provenance, temporal, citation, and deterministic validation contracts.
 
+After a successful mutating workflow and deterministic validation, run
+`scripts/checkpoint-context.sh`. It creates a local rollback point from compiler-owned
+paths only. Never ask an ordinary user to stage or commit those paths manually, and never
+substitute `git add -A`, which can capture unrelated workspace files.
+
 ## The five slash commands
 
 Each command has a prefixed name (`/ctx-extract`) and a short alias (`/extract`). Both resolve to the same procedure — the short forms are aliases that delegate to the canonical `.claude/commands/ctx-*.md` files. Use whichever you prefer.

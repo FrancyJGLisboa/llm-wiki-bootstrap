@@ -75,6 +75,12 @@ def main() -> None:
             "Meeting Pack/nested/notes.txt",
         ]
 
+        unknown = sources / "evidence.unknown-binary"
+        unknown.write_bytes(b"\x00\x01opaque evidence")
+        arbitrary = run(root, str(unknown))
+        assert arbitrary["staged"] == ["evidence.unknown-binary"]
+        assert (inbox / "evidence.unknown-binary").read_bytes() == unknown.read_bytes()
+
         text = run(root, "--text", "Price concern moved to availability.", "--title", "August Call Notes")
         assert text["staged"] == ["august-call-notes.md"]
         assert (inbox / "august-call-notes.md").read_text() == "Price concern moved to availability.\n"

@@ -311,5 +311,6 @@ AI-WORKSPACE.code-workspace
 .claude/commands/ctx-add.md
 .claude/commands/add.md
 scripts/add-evidence.py
+scripts/checkpoint-context.sh
 scripts/verify-ai-workspace.sh
 tests/ai-workspace/test_add_evidence.py

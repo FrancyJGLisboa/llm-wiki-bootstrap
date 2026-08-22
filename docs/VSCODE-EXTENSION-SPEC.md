@@ -17,8 +17,8 @@ operation.
 
 1. **Create:** choose a destination and specialization, scaffold a compiler, open its
    friendly workspace, and receive one concrete next action.
-2. **Add evidence:** select files or a folder, paste titled text, enter a URL, or process
-   the drop folder through one `Add Evidence` experience.
+2. **Add evidence:** choose files or folders directly, drop them on the sidebar, paste
+   titled text, paste one or many URLs, or process the inbox through one experience.
 3. **Prepare:** choose a client and produce a saved meeting brief.
 4. **Understand change:** choose a client and temporal boundary and produce a saved delta.
 5. **Inspect trust:** ask why, open the evidence chain, and jump to cited local evidence.
@@ -33,6 +33,11 @@ operation.
 - The extension detects the active profile and available outputs instead of asking users
   to understand schemas.
 - Every action shows progress, success, degraded results, or a specific recovery action.
+- Every regular local file is preserved before extraction. Universal intake must never
+  be described as universal extraction; unsupported content remains inspectable and is
+  reported as needing attention.
+- Successful validated mutations create a scoped local checkpoint without including
+  unrelated staged work. The extension and compiler never push automatically.
 - Destructive operations are absent from the initial extension.
 - Advanced controls remain available through `ADVANCED.md` and the command palette.
 

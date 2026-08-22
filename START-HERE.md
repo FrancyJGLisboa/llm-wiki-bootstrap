@@ -17,17 +17,23 @@ check the workspace, and give you one small next action.
 
 Use whichever action is easiest:
 
-- Drag files into `EVIDENCE-INBOX/`.
+- Choose files or folders with **Add Evidence**.
+- Drop files or folders on the Context Workspace sidebar.
 - Give the assistant a local file or folder path.
-- Give the assistant a URL.
-- Paste text and give it a title.
+- Paste text, or paste one or many URLs.
+- Drag files into `EVIDENCE-INBOX/`.
 
 Then say:
 
 > Add this evidence and update my context.
 
-That is the only intake concept you need. The workspace identifies what is new,
-preserves your originals, records the source, and updates only affected context.
+That is the only intake concept you need. Any regular file is preserved before
+extraction. Common formats are compiled directly; an unfamiliar binary is retained and
+reported as needing attention rather than discarded or falsely marked complete. The
+workspace reports added, unchanged, degraded, and failed items separately.
+
+After successful validation, the compiler creates a scoped local checkpoint. You do not
+run Git during daily use, and the compiler never pushes automatically.
 
 ## Ask for work, not files
 

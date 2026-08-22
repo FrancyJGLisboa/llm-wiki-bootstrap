@@ -46,6 +46,7 @@
       { "command": "contextWorkspace.openCompiler", "title": "Context Workspace: Open Compiler" },
       { "command": "contextWorkspace.addEvidence", "title": "Context Workspace: Add Evidence" },
       { "command": "contextWorkspace.addLocalEvidence", "title": "Context Workspace: Add Local Evidence" },
+      { "command": "contextWorkspace.addClipboard", "title": "Context Workspace: Add Clipboard Evidence or Links" },
       { "command": "contextWorkspace.addPastedText", "title": "Context Workspace: Add Pasted Text" },
       { "command": "contextWorkspace.addUrl", "title": "Context Workspace: Add Evidence from URL" },
       { "command": "contextWorkspace.processInbox", "title": "Context Workspace: Process Evidence Inbox" },

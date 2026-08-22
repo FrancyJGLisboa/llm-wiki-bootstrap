@@ -388,6 +388,17 @@ python3 scripts/client-context.py --root . lint --json
 These deterministic scripts validate authored claims; they do not call an LLM or judge
 entailment.
 
+After synthesis and every applicable validation succeeds, create the local rollback point:
+
+```bash
+bash scripts/checkpoint-context.sh --message "compile: <source title or batch>"
+```
+
+Report `checkpoint: created …` in ordinary language. A checkpoint warning does not erase
+the successful compilation, but it must remain visible with the one recovery action the
+script prints. Never replace this with `git add -A`; unrelated workspace files are outside
+the compiler-owned scope.
+
 ## What you must NOT do
 
 - Edit anything in `raw/` other than the frontmatter fields `ingested_hash`, `ingested_at`, `ingested_pages`.

@@ -18,12 +18,6 @@ set -uo pipefail
 ROOT="$(git rev-parse --show-toplevel 2>/dev/null)" || exit 0
 cd "$ROOT" || exit 0
 
-# Only act when the wiki layers actually changed (cheap; pure-conversation turns
-# exit here).
-if [ -z "$(git status --porcelain -- raw wiki log.md 2>/dev/null)" ]; then
-  exit 0
-fi
-
 # Commit message: newest '## ' header in log.md (the operation that just ran),
 # else a generic snapshot. Strip quotes defensively.
 msg=""
@@ -57,9 +51,19 @@ if [ -x scripts/gate-raw-append-only.sh ]; then
   fi
 fi
 
-git add -A
-# -c commit.gpgsign=false: a Stop hook can't answer a GPG passphrase prompt;
-# an unsigned auto-snapshot is the right trade for never hanging the turn.
-git -c commit.gpgsign=false commit -q -m "auto: $msg" >/dev/null 2>&1 || true
+if [ -x scripts/checkpoint-context.sh ]; then
+  scripts/checkpoint-context.sh --message "$msg" >/dev/null 2>&1 || true
+else
+  # Compatibility fallback for compiler repositories created before scoped
+  # checkpoints shipped.
+  changed=()
+  for candidate in raw wiki log.md; do
+    [ -n "$(git status --porcelain -- "$candidate" 2>/dev/null)" ] && changed+=("$candidate")
+  done
+  if [ "${#changed[@]}" -gt 0 ]; then
+    git add -A -- "${changed[@]}"
+    git -c commit.gpgsign=false commit -q -m "auto: $msg" -- "${changed[@]}" >/dev/null 2>&1 || true
+  fi
+fi
 
 exit 0

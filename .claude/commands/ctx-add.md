@@ -21,8 +21,11 @@ successfully acquired evidence immediately.
    combined result. One source failing must not make successful sources disappear.
 6. If `$ARGUMENTS` contains `--no-compile`, acquire/stage only and say clearly that the
    context was not updated. Otherwise compilation is the default.
-7. Report in ordinary language: added, unchanged, needs attention, and what context
-   changed. Do not expose internal command names unless the user asks for technical detail.
+7. Preserve every regular local file even when no dedicated extractor exists. In that
+   case report it as degraded/needs attention; universal intake is not universal extraction.
+8. Report in ordinary language: added, unchanged, degraded, failed, and what context
+   changed. Include whether the compiler-owned checkpoint was created. Do not expose
+   internal command names unless the user asks for technical detail.
 
 Never edit or delete a user original. Never mark degraded or failed acquisition as
 successful. Preserve exact source provenance and use UNKNOWN when evidence is insufficient.

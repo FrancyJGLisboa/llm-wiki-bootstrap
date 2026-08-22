@@ -37,7 +37,7 @@ assert manifest["capabilities"]["virtualWorkspaces"]["supported"] is False
 declared = {item["command"] for item in manifest["contributes"]["commands"]}
 registered = set(re.findall(r'register\("([^"]+)"', source))
 assert declared == registered, f"command mismatch declared-only={declared-registered} registered-only={registered-declared}"
-for command in ("addEvidence", "prepareBrief", "showChanges", "explainWhy", "historicalState", "reviewExceptions", "checkHealth"):
+for command in ("addEvidence", "addClipboard", "prepareBrief", "showChanges", "explainWhy", "historicalState", "reviewExceptions", "checkHealth"):
     assert f"contextWorkspace.{command}" in declared, command
 
 combined = source + core
@@ -46,10 +46,28 @@ for forbidden in ("axios", "fetch(", "https.request", "telemetry", "apiKey", "ac
 assert "shell: false" in core
 assert "showWarningMessage" in source and "modal: true" in source
 assert "--text-stdin" in core
+assert 'dropMimeTypes: ["text/uri-list", "files"]' in source
+assert "classifyClipboard" in core and "parseUriList" in core
+assert 'register("contextWorkspace.addEvidence", addLocalEvidence)' in source
+assert "added, unchanged, degraded, and failed" in source
 assert "code --install-extension" in guide and "Intune" in guide and "Jamf" in guide
+readme = (root / "README.md").read_text()
+start = (root / "START-HERE.md").read_text()
+fresh = (root / "templates/README-fresh.md").read_text()
+site = (root / "site/index.html").read_text()
+assert "universal intake, not a claim" in readme
+assert "unfamiliar binary" in readme
+assert "scoped local checkpoint" in readme
+assert "Any regular file is preserved" in start
+assert "Any regular file is preserved" in fresh
+assert "one universal intake" in site
+assert "nothing is pushed" in site
 print("specification: PASS")
 print("daily workflows: PASS")
 print("security boundary: PASS")
+print("universal intake: PASS")
+print("arbitrary preservation: PASS")
+print("intake guidance: PASS")
 PY
 
 bash "$ROOT/scripts/package-vscode-extension.sh"

@@ -899,3 +899,10 @@ Initial bootstrap of `llm-wiki-bootstrap`. The repository's first wiki was produ
 - Pasted evidence now supports `--text-stdin`, keeping evidence bodies out of process argument lists while preserving the original `/ctx-add` contract.
 - Added a versioned product/security specification, enterprise VSIX deployment guide, locked packaging dependency, VSIX content verifier, CI artifact build, and extension regression suite.
 - The extension stores no credentials, emits no telemetry, requires workspace trust, asks before URL acquisition, and never replaces deterministic compiler validation with model judgment.
+
+## 2026-08-22 — Universal evidence intake and compiler-owned checkpoints
+
+- Made Add Evidence open the file/folder chooser directly and added sidebar drop plus clipboard text or URL-batch intake.
+- Any regular local file is preserved before extraction; unfamiliar binaries remain available and are reported as degraded instead of silently discarded.
+- Added `scripts/checkpoint-context.sh`, which commits only compiler-owned state after successful validation, leaves unrelated staged work untouched, never pushes, and degrades safely when Git is unavailable.
+- Reframed README, quickstart, generated guidance, extension documentation, and the GitHub page around one daily intake action and outcome-oriented views. `/ctx-extract`, `/ctx-compile`, and manual Git remain advanced controls.

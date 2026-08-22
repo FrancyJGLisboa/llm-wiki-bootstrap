@@ -35,6 +35,23 @@ test("builds safe local evidence arguments for paths and pasted text", () => {
   assert.throws(() => core.evidenceArgs("text", { title: "", text: "Evidence" }));
 });
 
+test("classifies clipboard text and URL batches without treating mixed prose as links", () => {
+  assert.deepEqual(core.classifyClipboard("https://example.com/a\nhttps://example.com/b"), {
+    kind: "urls",
+    urls: ["https://example.com/a", "https://example.com/b"]
+  });
+  assert.deepEqual(core.classifyClipboard("Market note\nhttps://example.com/source"), {
+    kind: "text",
+    text: "Market note\nhttps://example.com/source"
+  });
+  assert.throws(() => core.classifyClipboard("  "), /empty/);
+});
+
+test("parses unique local file URI drops and ignores comments and remote schemes", () => {
+  const value = "# comment\r\nfile:///tmp/report.pdf\r\nhttps://example.com/report\r\nfile:///tmp/report.pdf";
+  assert.deepEqual(core.parseUriList(value), ["/tmp/report.pdf"]);
+});
+
 test("generates outcome-oriented prompts with evidence discipline", () => {
   assert.match(core.workflowPrompt("brief", { subject: "northstar-feeds" }), /Prepare and save/);
   assert.match(core.workflowPrompt("delta", { subject: "northstar-feeds", since: "2026-08-01" }), /superseded/);

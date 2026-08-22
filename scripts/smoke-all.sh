@@ -584,7 +584,8 @@ fi
 for check in verify-profile-resolution.sh verify-client-profile.sh verify-claim-core.sh \
              verify-client-workflows.sh verify-decision-context-integration.sh \
              verify-northstar-benchmark.sh verify-guided-workspace.sh \
-             verify-ai-workspace.sh verify-vscode-extension.sh; do
+             verify-ai-workspace.sh verify-vscode-extension.sh \
+             verify-checkpoint-context.sh; do
   decision_log="$(mktemp)"
   if "$SCRIPT_DIR/$check" >"$decision_log" 2>&1; then
     ok "$check exits 0 (decision-context regression guard)"

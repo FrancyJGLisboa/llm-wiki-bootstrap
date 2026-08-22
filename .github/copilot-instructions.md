@@ -12,7 +12,14 @@ This repository is an `context-compiler-bootstrap` instance — a **context comp
 - `wiki/` — LLM-owned markdown. **You are the sole writer.**
 - `AGENTS.md` + `log.md` — the schema and audit log, co-owned.
 
-## The five workflows
+## Daily user flow
+
+When the user adds evidence, follow `.claude/commands/ctx-add.md`. Preserve every regular
+file first, compile supported content, report degraded or failed extraction explicitly,
+and finish successful validation with `scripts/checkpoint-context.sh`. Do not ask the user
+to run Git commands and never use `git add -A` for a compiler checkpoint.
+
+## Advanced compiler workflows
 
 Defined as Claude Code slash commands at `.claude/commands/ctx-*.md`. From Copilot, the user invokes them by natural language ("ingest the latest raw," "ask the wiki about X"); follow the corresponding command file's prompt body step-by-step.
 
@@ -30,9 +37,11 @@ Plus two **output workflows** that render/export an already-built wiki (read-onl
 
 A blank wiki can be scaffolded with `scripts/create-context-compiler.sh <target-dir>` (the installer; verified by `scripts/verify-create-context-compiler.sh`). To start fresh **without** the bash installer, scaffold in place by following `.claude/commands/ctx-init.md` — pure file creation, no shell needed.
 
-## First run (help the user reach their first source)
+## First run (help the user reach their first result)
 
-Shortest path to value: scaffold (`ctx-init`) → acquire one source (`ctx-extract <url>`) → integrate (`ctx-compile`) → ask (`ctx-query`). `ctx-init` and a URL `ctx-extract` need **no shell scripts** — do them directly. When a new user arrives with a URL or file, offer to run `ctx-init` + `ctx-extract` in one go.
+Shortest path to value: create/open the workspace → add any evidence through `ctx-add` →
+prepare the requested brief or answer. Translate this into internal workflows yourself;
+do not make a daily user choose between extract, compile, and checkpoint steps.
 
 ## Shell requirement (matters on Windows)
 

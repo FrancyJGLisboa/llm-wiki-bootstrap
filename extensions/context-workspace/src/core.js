@@ -3,6 +3,7 @@
 const fs = require("node:fs");
 const path = require("node:path");
 const { spawn } = require("node:child_process");
+const { fileURLToPath } = require("node:url");
 
 const SUBJECT_PATTERN = /^[a-z0-9][a-z0-9-]{0,79}$/;
 const WORKSPACE_PATTERN = /^[A-Za-z0-9][A-Za-z0-9 _-]{0,79}$/;
@@ -57,6 +58,30 @@ function validateUrl(value) {
   return parsed.toString();
 }
 
+function classifyClipboard(value) {
+  const text = String(value || "").trim();
+  if (!text) throw new Error("The clipboard is empty.");
+  const lines = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  try {
+    const urls = lines.map(validateUrl);
+    return { kind: "urls", urls };
+  } catch {
+    return { kind: "text", text };
+  }
+}
+
+function parseUriList(value) {
+  const paths = [];
+  for (const line of String(value || "").split(/\r?\n/)) {
+    const item = line.trim();
+    if (!item || item.startsWith("#")) continue;
+    let uri;
+    try { uri = new URL(item); } catch { continue; }
+    if (uri.protocol === "file:") paths.push(fileURLToPath(uri));
+  }
+  return [...new Set(paths)];
+}
+
 function evidenceArgs(kind, payload) {
   if (kind === "paths") {
     if (!Array.isArray(payload) || payload.length === 0) throw new Error("Choose at least one file or folder.");
@@ -75,7 +100,7 @@ function workflowPrompt(kind, values = {}) {
   const subject = values.subject ? validateSubject(values.subject) : undefined;
   switch (kind) {
     case "compile":
-      return "Process all waiting evidence and update my context. Report per-source failures without claiming success for them.";
+      return "Process all waiting evidence and update my context. Report each source as added, unchanged, degraded, or failed without claiming success for unsupported extraction. After validation succeeds, create the scoped compiler-owned checkpoint.";
     case "brief":
       return `Prepare and save a concise meeting brief for ${subject}. Include current decisions, recent change, active assumptions, unknowns, contradictions, and exact evidence.`;
     case "delta":
@@ -177,10 +202,12 @@ function copyCompilerTemplate(template, destination) {
 
 module.exports = {
   citationLine,
+  classifyClipboard,
   copyCompilerTemplate,
   evidenceArgs,
   isCompilerRoot,
   latestMarkdown,
+  parseUriList,
   resolveCitation,
   runProcess,
   validateDate,

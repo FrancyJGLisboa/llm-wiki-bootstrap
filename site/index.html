@@ -119,10 +119,11 @@ Prepare me for the Northstar meeting.</pre>
     <h2>Use it as an AI workspace, not an IDE project.</h2>
     <div class="col">
       <p>The optional <strong>Context Workspace</strong> VS Code extension gives managed laptops a local sidebar for creating a compiler, adding evidence, preparing briefs, showing changes, explaining conclusions, reviewing exceptions, and opening exact evidence citations.</p>
+      <p><strong>Add Evidence is one universal intake.</strong> Choose files or folders, drop them on the sidebar, paste text, paste one or many links, or use the inbox. Every regular file is preserved first. Known formats are extracted; unfamiliar content is retained and reported as needing attention rather than silently lost or falsely completed.</p>
       <p>It uses the organization's existing GitHub Copilot chat surface. It stores no credentials, emits no telemetry, and keeps the evidence and compiled package in the selected local workspace.</p>
       <pre class="term">./scripts/package-vscode-extension.sh
 code --install-extension dist/context-workspace-0.1.0.vsix</pre>
-      <p><strong>The extension is optional.</strong> The filesystem compiler remains portable and works through AI chat, terminal workflows, CI, or another supported agentic environment.</p>
+      <p><strong>The extension is optional.</strong> The filesystem compiler remains portable and works through AI chat, terminal workflows, CI, or another supported agentic environment. Successful validated updates create a scoped local Git checkpoint automatically; unrelated work is excluded and nothing is pushed.</p>
     </div>
   </section>
 
@@ -140,11 +141,11 @@ code --install-extension dist/context-workspace-0.1.0.vsix</pre>
 ./bootstrap/scripts/create-context-compiler.sh ./northstar-client-context
 cd ./northstar-client-context
 ./scripts/use-profile.sh client-decision</pre>
-    <p class="after">Then open <code>AI-WORKSPACE.code-workspace</code>, drop evidence into <code>EVIDENCE-INBOX/</code>, and tell the AI:</p>
+    <p class="after">Then open <code>AI-WORKSPACE.code-workspace</code>. Choose, drop, paste, link, or inbox your evidence, and tell the AI:</p>
     <pre class="term">Add this evidence and update my context.
 Prepare a brief for northstar-feeds.</pre>
     <p class="after"><strong>Current boundary:</strong> this is an LLM-assisted development kit, not a no-code generator. Creating a genuinely new specialization still requires an AI-assisted development session. Daily operation uses AI chat and familiar folders; commands, schemas, and Git remain available as advanced controls.</p>
-    <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#create-a-specialized-context-compiler">Read the full factory and operating guide →</a></p>
+    <p class="after"><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap#how-the-factory-works">Read the full factory and operating guide →</a></p>
   </section>
 </main>
 

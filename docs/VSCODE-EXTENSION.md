@@ -24,6 +24,12 @@ code --install-extension dist/context-workspace-0.1.0.vsix
 Alternatively, use **Extensions: Install from VSIX…** in VS Code. After installation,
 open the **Context Workspace** icon and select **Create Compiler**.
 
+For daily intake, select **Add Evidence** to open the file/folder chooser immediately,
+drop files or folders on the sidebar, or use **Paste or Add Links** for clipboard text
+and URL batches. The inbox remains available for watch-folder-style use. Any regular
+file is preserved; formats without a reliable extractor are reported as needing
+attention. Successful validated updates create a scoped local checkpoint, never a push.
+
 The user still needs the organization's GitHub Copilot extension and entitlement for AI
 chat. Context Workspace itself stores no GitHub token and calls no independent model API.
 
