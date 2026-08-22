@@ -144,6 +144,7 @@ Next steps:
   cd "$TARGET"
   # Open AI-WORKSPACE.code-workspace, then tell the AI:
   # "Help me set up this workspace for my work."
+  # If Context Workspace is installed, open its sidebar instead.
 
 The workspace is git-initialized. Git remains available under ADVANCED.md.
 EOF

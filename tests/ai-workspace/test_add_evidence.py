@@ -27,6 +27,18 @@ def run(root: Path, *args: str, ok: bool = True) -> dict:
     return json.loads(result.stdout) if result.stdout.strip() else {}
 
 
+def run_stdin(root: Path, value: str, *args: str) -> dict:
+    result = subprocess.run(
+        ["python3", str(CLI), "--root", str(root), "--json", *args],
+        text=True,
+        input=value,
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise AssertionError(result.stderr or result.stdout)
+    return json.loads(result.stdout)
+
+
 def main() -> None:
     with tempfile.TemporaryDirectory() as td:
         root = Path(td) / "workspace"
@@ -67,6 +79,8 @@ def main() -> None:
         assert text["staged"] == ["august-call-notes.md"]
         assert (inbox / "august-call-notes.md").read_text() == "Price concern moved to availability.\n"
         assert run(root, "--text", "Price concern moved to availability.", "--title", "August Call Notes")["unchanged"] == ["august-call-notes.md"]
+        stdin_text = run_stdin(root, "Sensitive meeting note", "--text-stdin", "--title", "Secure Note")
+        assert stdin_text["staged"] == ["secure-note.md"]
 
         run(root, str(sources / "missing.docx"), ok=False)
         run(root, "--text", "missing title", ok=False)

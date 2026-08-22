@@ -20,6 +20,12 @@ A specialized compiler turns emails, PDFs, transcripts, spreadsheets, screenshot
 
 The repository ships one complete specialization, [`profiles/client-decision/`](profiles/client-decision/), as both a working capability and a pattern for creating others. Without an activated profile, the compiler remains generic. No UI, SaaS, Obsidian, vector database, or external connector is required.
 
+For managed laptops, the optional [`Context Workspace` VS Code extension](docs/VSCODE-EXTENSION.md)
+turns the same compiler into a local sidebar experience: create a compiler, add evidence,
+prepare briefs, inspect changes, explain conclusions, review exceptions, and open exact
+evidence citations without memorizing commands. It uses the existing Copilot chat surface,
+stores no credentials, and emits no telemetry.
+
 ## Who can use it
 
 The intended operator is a domain expert who can open an AI workspace and describe
@@ -192,6 +198,18 @@ it is not hidden behind a proprietary application.
 For the per-tool setup sequence, see [`docs/QUICKSTART.md`](docs/QUICKSTART.md). For the category definition, see [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md).
 
 ## Install details
+
+### Managed VS Code extension
+
+Build the locally installable VSIX:
+
+```bash
+./scripts/package-vscode-extension.sh
+code --install-extension dist/context-workspace-0.1.0.vsix
+```
+
+The VSIX embeds a clean compiler template. Enterprise rollout, privacy boundaries, updates,
+and rollback are documented in [`docs/VSCODE-EXTENSION.md`](docs/VSCODE-EXTENSION.md).
 
 ### Starting your own wiki (clean slate)
 

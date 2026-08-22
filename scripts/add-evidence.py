@@ -155,11 +155,15 @@ def main() -> int:
     parser.add_argument("--root", default=".")
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--text")
+    parser.add_argument("--text-stdin", action="store_true")
     parser.add_argument("--title")
     parser.add_argument("sources", nargs="*")
     args = parser.parse_args()
+    if args.text is not None and args.text_stdin:
+        parser.error("use either --text or --text-stdin")
+    text = sys.stdin.read() if args.text_stdin else args.text
     try:
-        result = execute(Path(args.root).resolve(), args.sources, args.text, args.title)
+        result = execute(Path(args.root).resolve(), args.sources, text, args.title)
     except AddError as exc:
         if args.json:
             print(json.dumps({"error": str(exc), "staged": [], "unchanged": []}, sort_keys=True))

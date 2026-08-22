@@ -1,0 +1,152 @@
+{
+  "name": "context-workspace",
+  "displayName": "Context Workspace",
+  "description": "Create and operate local, evidence-grounded context compilers from VS Code.",
+  "version": "0.1.0",
+  "publisher": "context-compiler",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/FrancyJGLisboa/context-compiler-bootstrap.git"
+  },
+  "license": "MIT",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": [
+    "AI",
+    "Other"
+  ],
+  "keywords": [
+    "context",
+    "evidence",
+    "copilot",
+    "decision intelligence"
+  ],
+  "main": "./extension.js",
+  "activationEvents": [
+    "onView:contextWorkspace.actions"
+  ],
+  "extensionKind": [
+    "workspace"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "The extension invokes local compiler scripts and therefore requires workspace trust."
+    },
+    "virtualWorkspaces": {
+      "supported": false,
+      "description": "Context compilers require a local filesystem."
+    }
+  },
+  "contributes": {
+    "commands": [
+      { "command": "contextWorkspace.getStarted", "title": "Context Workspace: Get Started" },
+      { "command": "contextWorkspace.createCompiler", "title": "Context Workspace: Create Compiler" },
+      { "command": "contextWorkspace.openCompiler", "title": "Context Workspace: Open Compiler" },
+      { "command": "contextWorkspace.addEvidence", "title": "Context Workspace: Add Evidence" },
+      { "command": "contextWorkspace.addLocalEvidence", "title": "Context Workspace: Add Local Evidence" },
+      { "command": "contextWorkspace.addPastedText", "title": "Context Workspace: Add Pasted Text" },
+      { "command": "contextWorkspace.addUrl", "title": "Context Workspace: Add Evidence from URL" },
+      { "command": "contextWorkspace.processInbox", "title": "Context Workspace: Process Evidence Inbox" },
+      { "command": "contextWorkspace.prepareBrief", "title": "Context Workspace: Prepare Brief" },
+      { "command": "contextWorkspace.showChanges", "title": "Context Workspace: Show Changes" },
+      { "command": "contextWorkspace.explainWhy", "title": "Context Workspace: Explain Why" },
+      { "command": "contextWorkspace.historicalState", "title": "Context Workspace: Reconstruct Historical State" },
+      { "command": "contextWorkspace.reviewExceptions", "title": "Context Workspace: Review Exceptions" },
+      { "command": "contextWorkspace.checkHealth", "title": "Context Workspace: Check Health" },
+      { "command": "contextWorkspace.openCitation", "title": "Context Workspace: Open Evidence Citation" },
+      { "command": "contextWorkspace.openAdvanced", "title": "Context Workspace: Open Advanced Controls" },
+      { "command": "contextWorkspace.refresh", "title": "Context Workspace: Refresh" }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "contextWorkspace",
+          "title": "Context Workspace",
+          "icon": "media/context.svg"
+        }
+      ]
+    },
+    "views": {
+      "contextWorkspace": [
+        {
+          "id": "contextWorkspace.actions",
+          "name": "Work with Context"
+        }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "contextWorkspace.actions",
+        "contents": "Create or open a context compiler to begin.\n[Create Compiler](command:contextWorkspace.createCompiler)\n[Open Compiler](command:contextWorkspace.openCompiler)"
+      }
+    ],
+    "menus": {
+      "view/title": [
+        {
+          "command": "contextWorkspace.refresh",
+          "when": "view == contextWorkspace.actions",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Context Workspace",
+      "properties": {
+        "contextWorkspace.bootstrapPath": {
+          "type": "string",
+          "default": "",
+          "description": "Optional development override for the bootstrap repository. Packaged extensions use their embedded compiler template."
+        },
+        "contextWorkspace.pythonPath": {
+          "type": "string",
+          "default": "python3",
+          "description": "Python executable used by deterministic compiler scripts."
+        }
+      }
+    },
+    "walkthroughs": [
+      {
+        "id": "contextWorkspace.onboarding",
+        "title": "Start Your Context Workspace",
+        "description": "Create a compiler, add evidence, and produce your first useful view.",
+        "steps": [
+          {
+            "id": "create",
+            "title": "Create or open a compiler",
+            "description": "[Create a compiler](command:contextWorkspace.createCompiler) or [open an existing one](command:contextWorkspace.openCompiler).",
+            "media": { "markdown": "media/walkthrough-create.md" }
+          },
+          {
+            "id": "evidence",
+            "title": "Add evidence",
+            "description": "[Add files, a folder, text, or a URL](command:contextWorkspace.addEvidence).",
+            "media": { "markdown": "media/walkthrough-evidence.md" }
+          },
+          {
+            "id": "brief",
+            "title": "Ask for a work product",
+            "description": "[Prepare a meeting brief](command:contextWorkspace.prepareBrief), inspect changes, or review exceptions.",
+            "media": { "markdown": "media/walkthrough-brief.md" }
+          }
+        ]
+      }
+    ]
+  },
+  "scripts": {
+    "test": "node --test ../../tests/vscode-extension/*.test.js",
+    "package": "bash ../../scripts/package-vscode-extension.sh"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "3.9.2"
+  },
+  "files": [
+    "extension.js",
+    "src/**",
+    "media/**",
+    "resources/compiler-template/**",
+    "README.md",
+    "LICENSE"
+  ]
+}

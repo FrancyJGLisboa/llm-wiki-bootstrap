@@ -1,5 +1,6 @@
 {
   "recommendations": [
+    "context-compiler.context-workspace",
     "github.copilot",
     "github.copilot-chat"
   ]

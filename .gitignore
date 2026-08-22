@@ -26,6 +26,9 @@ dist/
 
 # Unattended-ingest staging (transient; sources land in raw/ after extract)
 inbox/
+dist/
+extensions/context-workspace/node_modules/
+extensions/context-workspace/resources/compiler-template/
 .auto-ingest.log
 
 # Generated output artifacts (regenerate via slash commands; not source)

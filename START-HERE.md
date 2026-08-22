@@ -3,6 +3,9 @@
 Work here as if you were collaborating with a research assistant. You do not need to
 learn the files behind it or memorize commands.
 
+If the optional **Context Workspace** VS Code extension is installed, use its sidebar
+for every action below. Without it, the same workflow works directly through AI chat.
+
 Start the AI chat and say:
 
 > Help me set up this workspace for my work.

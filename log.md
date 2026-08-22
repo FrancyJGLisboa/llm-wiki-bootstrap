@@ -893,3 +893,9 @@ Initial bootstrap of `llm-wiki-bootstrap`. The repository's first wiki was produ
 - Added a deterministic `scripts/add-evidence.py` boundary for safe, atomic local staging with recursive folders, collision handling, no-op detection, and symlink rejection.
 - Rewrote generated-workspace onboarding around ordinary work requests and automatic saved outputs. `ADVANCED.md` keeps the full compiler visible when an operator needs it.
 - Added installer, package, smoke, and regression coverage for the AI workspace assets and intake contract.
+## 2026-08-22 — Local VS Code Context Workspace extension
+
+- Added a local-first VS Code extension that embeds a clean compiler template and exposes creation, one evidence intake, briefs, deltas, evidence chains, historical state, exception review, health checks, and exact citation navigation.
+- Pasted evidence now supports `--text-stdin`, keeping evidence bodies out of process argument lists while preserving the original `/ctx-add` contract.
+- Added a versioned product/security specification, enterprise VSIX deployment guide, locked packaging dependency, VSIX content verifier, CI artifact build, and extension regression suite.
+- The extension stores no credentials, emits no telemetry, requires workspace trust, asks before URL acquisition, and never replaces deterministic compiler validation with model judgment.
