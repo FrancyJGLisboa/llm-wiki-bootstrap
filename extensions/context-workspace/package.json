@@ -50,6 +50,7 @@
       { "command": "contextWorkspace.addPastedText", "title": "Context Workspace: Add Pasted Text" },
       { "command": "contextWorkspace.addUrl", "title": "Context Workspace: Add Evidence from URL" },
       { "command": "contextWorkspace.processInbox", "title": "Context Workspace: Process Evidence Inbox" },
+      { "command": "contextWorkspace.askContext", "title": "Context Workspace: Ask Anything" },
       { "command": "contextWorkspace.createSpecialization", "title": "Context Workspace: Create Specialization" },
       { "command": "contextWorkspace.checkSpecialization", "title": "Context Workspace: Check Specialization Readiness" },
       { "command": "contextWorkspace.prepareBrief", "title": "Context Workspace: Prepare Brief" },

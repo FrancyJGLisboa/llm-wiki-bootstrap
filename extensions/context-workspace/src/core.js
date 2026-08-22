@@ -101,6 +101,11 @@ function workflowPrompt(kind, values = {}) {
   switch (kind) {
     case "compile":
       return "Process all waiting evidence and update my context. Report each source as added, unchanged, degraded, or failed without claiming success for unsupported extraction. After validation succeeds, create the scoped compiler-owned checkpoint.";
+    case "query": {
+      const question = String(values.question || "").trim();
+      if (!question || question.length > 2000) throw new Error("Enter one natural-language question about the compiled context.");
+      return `Answer this question from the compiled context: ${question}\nCite exact local evidence for every material claim, distinguish current from historical state, label inference, and answer UNKNOWN when the evidence is insufficient. Do not search the web or add new evidence unless I explicitly ask.`;
+    }
     case "brief":
       return `Prepare and save a concise meeting brief for ${subject}. Include current decisions, recent change, active assumptions, unknowns, contradictions, and exact evidence.`;
     case "delta":

@@ -4,20 +4,33 @@ const path = require("node:path");
 const vscode = require("vscode");
 const core = require("./src/core");
 
-const ACTIONS = [
-  ["Add Evidence", "Choose any files or folder — or drop them here", "contextWorkspace.addEvidence", "add"],
-  ["Paste or Add Links", "Use clipboard text or one or many URLs", "contextWorkspace.addClipboard", "clippy"],
-  ["Process Inbox", "Update context from files already dropped in", "contextWorkspace.processInbox", "inbox"],
-  ["Create Specialization", "Teach this workspace another kind of work", "contextWorkspace.createSpecialization", "sparkle"],
-  ["Check Specialization", "See whether examples are ready for approval", "contextWorkspace.checkSpecialization", "checklist"],
-  ["Prepare Brief", "Current decisions, changes, assumptions, and unknowns", "contextWorkspace.prepareBrief", "preview"],
-  ["Show Changes", "Meaningful movement since a date", "contextWorkspace.showChanges", "diff"],
-  ["Explain Why", "Inspect a conclusion's evidence chain", "contextWorkspace.explainWhy", "references"],
-  ["Historical State", "Reconstruct what was believed on a date", "contextWorkspace.historicalState", "history"],
-  ["Review Exceptions", "Only items needing human judgment", "contextWorkspace.reviewExceptions", "issues"],
-  ["Check Health", "Citation, temporal, stale, and unknown diagnostics", "contextWorkspace.checkHealth", "shield"],
-  ["Open Evidence", "Jump to a cited local source and anchor", "contextWorkspace.openCitation", "link-external"],
-  ["Advanced Controls", "Inspect the compiler underneath", "contextWorkspace.openAdvanced", "tools"]
+const JOURNEY = [
+  ["1 · SET UP", "Create or teach a compiler", "rocket", [
+    ["Create New Compiler", "Start a clean context workspace", "contextWorkspace.createCompiler", "new-folder"],
+    ["Open Another Compiler", "Switch to an existing context workspace", "contextWorkspace.openCompiler", "folder-opened"],
+    ["Create Specialization", "Teach it another kind of work", "contextWorkspace.createSpecialization", "sparkle"],
+    ["Check Specialization", "Validate examples before activation", "contextWorkspace.checkSpecialization", "checklist"]
+  ]],
+  ["2 · ADD & UPDATE", "Point at evidence; the agent compiles it", "files", [
+    ["Add Files or Folder", "Choose or drop evidence here", "contextWorkspace.addEvidence", "add"],
+    ["Paste Text or Links", "Use clipboard text or URLs", "contextWorkspace.addClipboard", "clippy"],
+    ["Process Evidence Inbox", "Compile files already waiting", "contextWorkspace.processInbox", "inbox"]
+  ]],
+  ["3 · ASK & USE", "Query the ready context in natural language", "comment-discussion", [
+    ["Ask Anything", "Ask a natural-language question", "contextWorkspace.askContext", "comment"],
+    ["Prepare Brief", "Current decisions, changes, assumptions, unknowns", "contextWorkspace.prepareBrief", "preview"],
+    ["Show Changes", "Meaningful movement since a date", "contextWorkspace.showChanges", "diff"],
+    ["Explain Why", "Inspect a conclusion's evidence chain", "contextWorkspace.explainWhy", "references"],
+    ["Historical State", "Reconstruct what was believed on a date", "contextWorkspace.historicalState", "history"]
+  ]],
+  ["4 · REVIEW TRUST", "Inspect exceptions and source evidence", "verified", [
+    ["Review Exceptions", "Only items needing human judgment", "contextWorkspace.reviewExceptions", "issues"],
+    ["Check Context Health", "Citation, temporal, stale, unknown diagnostics", "contextWorkspace.checkHealth", "shield"],
+    ["Open Source Evidence", "Jump to a cited local source", "contextWorkspace.openCitation", "link-external"]
+  ]],
+  ["5 · ADVANCED", "Inspect the machinery only when needed", "tools", [
+    ["Open Advanced Controls", "Commands, files, automation, packaging", "contextWorkspace.openAdvanced", "settings-gear"]
+  ]]
 ];
 
 class ActionProvider {
@@ -28,20 +41,28 @@ class ActionProvider {
   }
   refresh() { this.changed.fire(); }
   getTreeItem(value) { return value; }
-  getChildren() {
+  getChildren(parent) {
     if (!this.getRoot()) {
       return [
         treeItem("Create Compiler", "Start a new local context workspace", "contextWorkspace.createCompiler", "new-folder"),
         treeItem("Open Compiler", "Use an existing context workspace", "contextWorkspace.openCompiler", "folder-opened")
       ];
     }
-    return ACTIONS.map((value) => treeItem(...value));
+    if (parent?.children) return parent.children.map((value) => treeItem(...value));
+    return JOURNEY.map(([label, description, icon, children]) => groupItem(label, description, icon, children));
   }
+}
+
+function groupItem(label, description, icon, children) {
+  const value = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.Expanded);
+  value.tooltip = `${label} — ${description}`;
+  value.iconPath = new vscode.ThemeIcon(icon);
+  value.children = children;
+  return value;
 }
 
 function treeItem(label, description, command, icon) {
   const value = new vscode.TreeItem(label, vscode.TreeItemCollapsibleState.None);
-  value.description = description;
   value.tooltip = `${label} — ${description}`;
   value.iconPath = new vscode.ThemeIcon(icon);
   value.command = { command, title: label };
@@ -182,11 +203,12 @@ function activate(context) {
     await stageAndCompile(core.evidenceArgs("paths", [...dropped]));
   };
 
-  register("contextWorkspace.addEvidence", addLocalEvidence);
-  register("contextWorkspace.addLocalEvidence", async () => {
+  const addLocalEvidence = async () => {
     const picked = await vscode.window.showOpenDialog({ title: "Choose evidence", canSelectFiles: true, canSelectFolders: true, canSelectMany: true });
     if (picked?.length) await stageAndCompile(core.evidenceArgs("paths", picked.map((uri) => uri.fsPath)));
-  });
+  };
+  register("contextWorkspace.addEvidence", addLocalEvidence);
+  register("contextWorkspace.addLocalEvidence", addLocalEvidence);
   register("contextWorkspace.addPastedText", async () => {
     const title = await vscode.window.showInputBox({ title: "Evidence title", placeHolder: "Procurement call — August 22" });
     if (!title) return;
@@ -213,6 +235,15 @@ function activate(context) {
     await acquireUrls([url]);
   });
   register("contextWorkspace.processInbox", () => runWorkflow("compile", {}, ["BRIEFS", "REVIEWS"]));
+  register("contextWorkspace.askContext", async () => {
+    const question = await vscode.window.showInputBox({
+      title: "Ask your compiled context",
+      prompt: "Ask naturally. Answers must cite local evidence and say UNKNOWN when unsupported.",
+      placeHolder: "What changed, what is currently believed, and why?",
+      ignoreFocusOut: true
+    });
+    if (question) await runWorkflow("query", { question }, ["BRIEFS"]);
+  });
   register("contextWorkspace.createSpecialization", async () => {
     const goal = await vscode.window.showInputBox({
       title: "What should this workspace help people understand and decide?",

@@ -53,6 +53,8 @@ test("parses unique local file URI drops and ignores comments and remote schemes
 });
 
 test("generates outcome-oriented prompts with evidence discipline", () => {
+  assert.match(core.workflowPrompt("query", { question: "What is current?" }), /UNKNOWN/);
+  assert.match(core.workflowPrompt("query", { question: "What is current?" }), /Do not search the web/);
   assert.match(core.workflowPrompt("brief", { subject: "northstar-feeds" }), /Prepare and save/);
   assert.match(core.workflowPrompt("delta", { subject: "northstar-feeds", since: "2026-08-01" }), /superseded/);
   assert.match(core.workflowPrompt("why", { subject: "northstar-feeds", claim: "availability matters" }), /UNKNOWN/);
