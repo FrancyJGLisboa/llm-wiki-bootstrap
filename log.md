@@ -906,3 +906,10 @@ Initial bootstrap of `llm-wiki-bootstrap`. The repository's first wiki was produ
 - Any regular local file is preserved before extraction; unfamiliar binaries remain available and are reported as degraded instead of silently discarded.
 - Added `scripts/checkpoint-context.sh`, which commits only compiler-owned state after successful validation, leaves unrelated staged work untouched, never pushes, and degrades safely when Git is unavailable.
 - Reframed README, quickstart, generated guidance, extension documentation, and the GitHub page around one daily intake action and outcome-oriented views. `/ctx-extract`, `/ctx-compile`, and manual Git remain advanced controls.
+
+## 2026-08-22 — Self-service specialization builder
+
+- Added a conversational `/ctx-create-profile` lifecycle that interviews for domain meaning, scaffolds safely, customizes from synthetic examples, validates, previews behavior, records explicit approval, activates, checkpoints, and ends at Add Evidence.
+- Added deterministic profile scaffolding and readiness tools. Readiness exposes technical validity, behavioral coverage, and domain-owner approval separately; self-service profiles cannot activate until all three pass.
+- Added Context Workspace actions for Create Specialization and Check Specialization, keeping schemas, tests, commands, and Git behind the AI-chat surface.
+- Added fresh-compiler end-to-end coverage for scaffold → behavioral examples → approval → activation → first evidence, plus distribution and documentation assertions.

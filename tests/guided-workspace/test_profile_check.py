@@ -59,6 +59,10 @@ def main() -> None:
         )
         assert json.loads(run(root, "project-decision").stdout)["artifact_count"] == 2
 
+        (root / "profiles" / "project-decision" / "undeclared.md").write_text("not in manifest")
+        run(root, "project-decision", ok=False)
+        (root / "profiles" / "project-decision" / "undeclared.md").unlink()
+
         (root / "profiles" / "project-decision" / "schemas" / "decision.schema.json").unlink()
         run(root, "project-decision", ok=False)
 

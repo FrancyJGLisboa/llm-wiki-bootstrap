@@ -193,11 +193,12 @@ copy_if .claude/commands
 copy_if templates
 copy_if profiles
 copy_if context-profile.json
-for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py claim-validate.py claim-state.py claim-delta.py claim-why.py client-context.py inbox.py add-evidence.py profile-check.py; do
+for s in body-hash.sh preflight.sh verify-extract.sh vtt-to-md.sh verify-bundle.sh citation-audit.py claim-validate.py claim-state.py claim-delta.py claim-why.py client-context.py inbox.py add-evidence.py profile-check.py profile-scaffold.py profile-readiness.py; do
   copy_if "scripts/$s"
 done
 copy_if scripts/profile-resolve.py
 copy_if scripts/use-profile.sh
+copy_if scripts/checkpoint-context.sh
 copy_if scripts/lib
 copy_if scripts/synthesize
 

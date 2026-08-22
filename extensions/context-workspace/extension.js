@@ -8,6 +8,8 @@ const ACTIONS = [
   ["Add Evidence", "Choose any files or folder — or drop them here", "contextWorkspace.addEvidence", "add"],
   ["Paste or Add Links", "Use clipboard text or one or many URLs", "contextWorkspace.addClipboard", "clippy"],
   ["Process Inbox", "Update context from files already dropped in", "contextWorkspace.processInbox", "inbox"],
+  ["Create Specialization", "Teach this workspace another kind of work", "contextWorkspace.createSpecialization", "sparkle"],
+  ["Check Specialization", "See whether examples are ready for approval", "contextWorkspace.checkSpecialization", "checklist"],
   ["Prepare Brief", "Current decisions, changes, assumptions, and unknowns", "contextWorkspace.prepareBrief", "preview"],
   ["Show Changes", "Meaningful movement since a date", "contextWorkspace.showChanges", "diff"],
   ["Explain Why", "Inspect a conclusion's evidence chain", "contextWorkspace.explainWhy", "references"],
@@ -211,6 +213,23 @@ function activate(context) {
     await acquireUrls([url]);
   });
   register("contextWorkspace.processInbox", () => runWorkflow("compile", {}, ["BRIEFS", "REVIEWS"]));
+  register("contextWorkspace.createSpecialization", async () => {
+    const goal = await vscode.window.showInputBox({
+      title: "What should this workspace help people understand and decide?",
+      prompt: "Describe the work in ordinary language. The AI will ask only for missing domain meaning.",
+      placeHolder: "Track project decisions, alternatives, owners, constraints, and unresolved risks",
+      ignoreFocusOut: true
+    });
+    if (goal) await runWorkflow("createProfile", { goal }, ["REVIEWS"]);
+  });
+  register("contextWorkspace.checkSpecialization", async () => {
+    const profile = await vscode.window.showInputBox({
+      title: "Which specialization should be checked?",
+      placeHolder: "project-decision",
+      validateInput: (value) => validationMessage(core.validateSubject, value)
+    });
+    if (profile) await runWorkflow("profileReadiness", { profile }, ["REVIEWS"]);
+  });
   register("contextWorkspace.prepareBrief", async () => { const subject = await askSubject(); if (subject) await runWorkflow("brief", { subject }, ["BRIEFS"]); });
   register("contextWorkspace.showChanges", async () => { const subject = await askSubject(); if (!subject) return; const since = await askDate("Show changes since"); if (since) await runWorkflow("delta", { subject, since }, ["BRIEFS"]); });
   register("contextWorkspace.explainWhy", async () => { const subject = await askSubject(); if (!subject) return; const claim = await vscode.window.showInputBox({ title: "Which conclusion should be explained?", placeHolder: "Q1 availability is becoming a concern" }); if (claim) await runWorkflow("why", { subject, claim }, ["BRIEFS"]); });

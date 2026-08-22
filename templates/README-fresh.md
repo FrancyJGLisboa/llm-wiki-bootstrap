@@ -24,6 +24,12 @@ Add this evidence and update my context.
 
 4. Ask for the work product you need: “Prepare me for the Northstar meeting,” “What changed since August 1?”, or “Show me only what needs my judgment.” Useful outputs are saved under `BRIEFS/` and `REVIEWS/`.
 
+If the included specialization does not match your work, choose **Create Specialization**
+and describe the desired decisions, evidence, outputs, and review exceptions in ordinary
+language. The AI builds the technical files and shows behavioral examples. You approve
+the examples; you do not edit schemas, tests, or Git. Activation is blocked until the
+package, behavioral coverage, and explicit approval are ready.
+
 You do not need to memorize commands or edit generated claims. [`START-HERE.md`](START-HERE.md) is the short operating guide. [`ADVANCED.md`](ADVANCED.md) exposes the underlying commands and customization surface when needed.
 
 ## What you use
@@ -93,7 +99,8 @@ Two more commands render or export an **already-built** wiki (read-only on `raw/
 ## Reliability — automatic scoped checkpoints
 
 Every successful validated update runs `scripts/checkpoint-context.sh`. It commits only
-compiler-owned paths (`raw/`, `context/`, `BRIEFS/`, `REVIEWS/`, and `log.md`), leaves
+compiler-owned paths (`raw/`, `context/`, `profiles/`, activation state, generated
+briefs/reviews, and `log.md`), leaves
 unrelated staged work alone, and treats an unchanged update as a no-op. A Claude Stop
 hook remains as a compatibility fallback; checkpointing belongs to the compiler workflow.
 

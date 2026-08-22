@@ -30,8 +30,9 @@ code --install-extension dist/context-workspace-0.1.0.vsix
 Then use the Context Workspace sidebar:
 
 1. **Create Compiler** — choose a local folder and optional profile.
-2. **Add Evidence** — choose files or folders, drop them on the sidebar, paste text, paste one or many links, or put files in `EVIDENCE-INBOX/`.
-3. Ask for the outcome: **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
+2. **Create Specialization** — if the included profile does not fit, describe your work in ordinary language and review behavioral examples.
+3. **Add Evidence** — choose files or folders, drop them on the sidebar, paste text, paste one or many links, or put files in `EVIDENCE-INBOX/`.
+4. Ask for the outcome: **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
 
 No daily Git commands are required. After a successful validated update, the compiler creates a scoped local checkpoint containing only compiler-owned paths. It never pushes automatically.
 
@@ -98,7 +99,26 @@ When someone challenges a conclusion, ask: **“Why do we think Northstar is inc
 
 The durable product is the local, portable context package. VS Code and AI chat are its operating interface, not its storage layer.
 
-## How the factory works
+## Create a specialization through conversation
+
+Choose **Create Specialization** and describe the work:
+
+> Track project decisions, alternatives, owners, constraints, supersession, and unresolved risks.
+
+The AI asks at most five short questions about evidence, important concepts and changes,
+useful outputs, and exceptions needing judgment. It then owns the technical work:
+
+1. Safely scaffold the profile without modifying the generic core.
+2. Create realistic, clearly labelled synthetic examples and separate gold expectations.
+3. Test current state, provenance, temporal supersession, contradiction, absence refusal, and no-op behavior.
+4. Show observable example outputs and apply the domain expert's corrections.
+5. Record explicit approval, activate the specialization, checkpoint it locally, and end at **Add Evidence**.
+
+Readiness is not a mysterious score. It separately reports technical package validity,
+behavioral coverage, and domain-owner approval. The AI cannot declare the domain semantics
+correct by itself; approval belongs to the person who understands the work.
+
+## How the factory works underneath
 
 ```bash
 git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
@@ -120,15 +140,17 @@ profiles/client-decision/
 
 The client-decision profile defines ontology, evidence classes, controlled relations, speaker rules, temporal resolution, outputs, and exception-based review. The generic core continues to own extraction, provenance, compilation, linting, packaging, and incrementality.
 
-To create another specialization, ask the agent:
+The conversational builder performs the equivalent of asking the agent:
 
 > Create a `project-decision` profile based on `client-decision`. Represent architectural decisions, owners, constraints, alternatives, supersession, and unresolved risks. Keep project concepts out of the compiler core. Add fixtures and acceptance tests.
 
-This is an LLM-assisted development kit, not yet a no-code profile generator. Creating a new domain still requires defining and testing its contract. Operating an existing compiler is deliberately simpler.
+This is an agent-assisted self-service builder, not a magical domain-discovery system.
+The domain expert describes meaning, corrects examples, and approves behavior; the agent
+handles schemas, vocabularies, fixtures, tests, validation, activation, and Git.
 
 ## Automatic rollback without Git chores
 
-Successful mutating workflows run `./scripts/checkpoint-context.sh`. The checkpoint includes only `raw/`, `context/`, `BRIEFS/`, `REVIEWS/`, and `log.md`. It leaves unrelated staged work alone, treats a no-change update as a no-op, and warns without erasing compiled output if Git identity is unavailable. It commits locally only—review and push remain deliberate actions.
+Successful mutating workflows run `./scripts/checkpoint-context.sh`. The checkpoint includes only compiler-owned evidence, compiled context, profiles and activation state, generated briefs/reviews, and `log.md`. It leaves unrelated staged work alone, treats a no-change update as a no-op, and warns without erasing compiled output if Git identity is unavailable. It commits locally only—review and push remain deliberate actions.
 
 ## Advanced controls
 

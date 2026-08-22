@@ -17,12 +17,14 @@ operation.
 
 1. **Create:** choose a destination and specialization, scaffold a compiler, open its
    friendly workspace, and receive one concrete next action.
-2. **Add evidence:** choose files or folders directly, drop them on the sidebar, paste
+2. **Specialize:** describe another kind of work in ordinary language, answer at most five
+   domain questions, inspect behavioral examples, and explicitly approve before activation.
+3. **Add evidence:** choose files or folders directly, drop them on the sidebar, paste
    titled text, paste one or many URLs, or process the inbox through one experience.
-3. **Prepare:** choose a client and produce a saved meeting brief.
-4. **Understand change:** choose a client and temporal boundary and produce a saved delta.
-5. **Inspect trust:** ask why, open the evidence chain, and jump to cited local evidence.
-6. **Review:** show only contradictions, ambiguous attribution, possible supersession,
+4. **Prepare:** choose a client and produce a saved meeting brief.
+5. **Understand change:** choose a client and temporal boundary and produce a saved delta.
+6. **Inspect trust:** ask why, open the evidence chain, and jump to cited local evidence.
+7. **Review:** show only contradictions, ambiguous attribution, possible supersession,
    stale assumptions, unsupported claims, and unknown owners.
 
 ## Usability contract
@@ -40,6 +42,8 @@ operation.
   unrelated staged work. The extension and compiler never push automatically.
 - Destructive operations are absent from the initial extension.
 - Advanced controls remain available through `ADVANCED.md` and the command palette.
+- Specialization readiness exposes technical validity, behavioral coverage, and human
+  approval separately. An agent cannot approve its own domain examples.
 
 ## Architecture and trust boundary
 

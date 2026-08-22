@@ -37,7 +37,7 @@ assert manifest["capabilities"]["virtualWorkspaces"]["supported"] is False
 declared = {item["command"] for item in manifest["contributes"]["commands"]}
 registered = set(re.findall(r'register\("([^"]+)"', source))
 assert declared == registered, f"command mismatch declared-only={declared-registered} registered-only={registered-declared}"
-for command in ("addEvidence", "addClipboard", "prepareBrief", "showChanges", "explainWhy", "historicalState", "reviewExceptions", "checkHealth"):
+for command in ("addEvidence", "addClipboard", "createSpecialization", "checkSpecialization", "prepareBrief", "showChanges", "explainWhy", "historicalState", "reviewExceptions", "checkHealth"):
     assert f"contextWorkspace.{command}" in declared, command
 
 combined = source + core

@@ -58,6 +58,9 @@ test("generates outcome-oriented prompts with evidence discipline", () => {
   assert.match(core.workflowPrompt("why", { subject: "northstar-feeds", claim: "availability matters" }), /UNKNOWN/);
   assert.match(core.workflowPrompt("history", { subject: "northstar-feeds", asOf: "2026-06-30" }), /historical and current/);
   assert.match(core.workflowPrompt("review", { subject: "northstar-feeds" }), /human judgment/);
+  assert.match(core.workflowPrompt("createProfile", { goal: "Track project decisions" }), /guided specialization builder/);
+  assert.match(core.workflowPrompt("createProfile", { goal: "Track project decisions" }), /observable examples/);
+  assert.match(core.workflowPrompt("profileReadiness", { profile: "project-decision" }), /technical validation/);
 });
 
 test("copies an embedded compiler only into an empty destination", () => {

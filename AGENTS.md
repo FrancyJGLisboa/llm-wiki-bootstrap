@@ -75,6 +75,11 @@ Git-visible state. Never record failed or degraded extraction as successful.
 Profile creation follows `/ctx-create-profile`. A generated profile must stay under
 `profiles/<name>/`, declare every portable asset in `profile.json`, pass
 `scripts/profile-check.py`, and keep domain concepts out of the compiler core.
+Start it with `scripts/profile-scaffold.py`, then replace all acceptance placeholders
+with realistic observable behaviors. `scripts/profile-readiness.py` must separately pass
+technical validity and behavioral coverage, and record explicit domain-owner approval,
+before `scripts/use-profile.sh` will activate a self-service profile. The agent owns files,
+tests, activation, and checkpointing; the user supplies domain meaning and approves examples.
 
 These paths simplify operation; they do not change the three-layer ownership model
 or weaken provenance, temporal, citation, and deterministic validation contracts.

@@ -13,6 +13,17 @@ Start the AI chat and say:
 The assistant will ask what you are trying to keep current, choose the closest starter,
 check the workspace, and give you one small next action.
 
+## Teach the workspace another kind of work
+
+If the included specialization does not fit, choose **Create Specialization** and describe
+the work in ordinary language. The assistant asks only for missing domain meaning, builds
+and tests the technical package, then shows examples such as a supported conclusion,
+supersession, contradiction, and UNKNOWN response.
+
+You approve those observable examples—not schemas or code. Activation is blocked until
+technical validation, behavioral coverage, and explicit domain-owner approval all pass.
+After activation, the next action is **Add Evidence**.
+
 ## Add evidence
 
 Use whichever action is easiest:

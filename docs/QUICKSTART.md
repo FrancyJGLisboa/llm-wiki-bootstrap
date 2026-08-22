@@ -12,8 +12,9 @@ The first useful action is **Add Evidence**. You do not need to learn extraction
    ```
 
 2. Open the **Context Workspace** sidebar and choose **Create Compiler**, or open an existing generated compiler.
-3. Choose **Add Evidence**. Select files or folders, drop them on the sidebar, paste text, paste one or many links, or use `EVIDENCE-INBOX/`.
-4. Choose **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
+3. Choose the included specialization, or select **Create Specialization** and describe your work in ordinary language. Review and approve the example behavior.
+4. Choose **Add Evidence**. Select files or folders, drop them on the sidebar, paste text, paste one or many links, or use `EVIDENCE-INBOX/`.
+5. Choose **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
 
 The extension delegates reasoning to AI chat already available in VS Code. It does not request a second API key or upload evidence by itself.
 
@@ -34,6 +35,14 @@ Provide a path, folder, pasted text, URL, or files already placed in `EVIDENCE-I
 > Prepare me for the Northstar meeting.
 
 The stable workflow behind that sentence is `/ctx-add`; `/ctx-extract` and `/ctx-compile` are advanced internal controls.
+
+To teach the workspace a new domain, say:
+
+> Create a specialization for tracking project decisions, alternatives, owners, constraints, supersession, and unresolved risks.
+
+The agent asks at most five domain questions, builds and tests the profile, previews
+observable results, and requests explicit approval before activation. It never asks the
+operator to edit schemas, run tests, or use Git.
 
 ## What happens automatically
 

@@ -50,6 +50,8 @@
       { "command": "contextWorkspace.addPastedText", "title": "Context Workspace: Add Pasted Text" },
       { "command": "contextWorkspace.addUrl", "title": "Context Workspace: Add Evidence from URL" },
       { "command": "contextWorkspace.processInbox", "title": "Context Workspace: Process Evidence Inbox" },
+      { "command": "contextWorkspace.createSpecialization", "title": "Context Workspace: Create Specialization" },
+      { "command": "contextWorkspace.checkSpecialization", "title": "Context Workspace: Check Specialization Readiness" },
       { "command": "contextWorkspace.prepareBrief", "title": "Context Workspace: Prepare Brief" },
       { "command": "contextWorkspace.showChanges", "title": "Context Workspace: Show Changes" },
       { "command": "contextWorkspace.explainWhy", "title": "Context Workspace: Explain Why" },
@@ -111,12 +113,18 @@
       {
         "id": "contextWorkspace.onboarding",
         "title": "Start Your Context Workspace",
-        "description": "Create a compiler, add evidence, and produce your first useful view.",
+        "description": "Create or specialize a compiler, add evidence, and produce your first useful view.",
         "steps": [
           {
             "id": "create",
             "title": "Create or open a compiler",
             "description": "[Create a compiler](command:contextWorkspace.createCompiler) or [open an existing one](command:contextWorkspace.openCompiler).",
+            "media": { "markdown": "media/walkthrough-create.md" }
+          },
+          {
+            "id": "specialize",
+            "title": "Teach the workspace another kind of work",
+            "description": "[Create a specialization](command:contextWorkspace.createSpecialization) through a guided AI conversation and approve observable examples before activation.",
             "media": { "markdown": "media/walkthrough-create.md" }
           },
           {

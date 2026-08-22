@@ -30,6 +30,13 @@ and URL batches. The inbox remains available for watch-folder-style use. Any reg
 file is preserved; formats without a reliable extractor are reported as needing
 attention. Successful validated updates create a scoped local checkpoint, never a push.
 
+If the bundled specialization does not fit, select **Create Specialization**. Describe
+the recurring work in ordinary language; Copilot Agent Mode conducts the short interview,
+creates and tests the profile, and previews observable behavior. **Check Specialization**
+opens the readiness path. Activation requires technical validity, behavioral coverage,
+and explicit domain-owner approval; the extension does not ask users to edit implementation
+files or operate Git.
+
 The user still needs the organization's GitHub Copilot extension and entitlement for AI
 chat. Context Workspace itself stores no GitHub token and calls no independent model API.
 

@@ -88,6 +88,8 @@ scripts/client-context.py
 scripts/lib/claims.py
 scripts/inbox.py
 scripts/profile-check.py
+scripts/profile-scaffold.py
+scripts/profile-readiness.py
 scripts/northstar-benchmark.py
 scripts/vtt-to-md.sh
 scripts/extract/segment-doc.py

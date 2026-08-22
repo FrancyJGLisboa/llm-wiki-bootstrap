@@ -17,7 +17,7 @@ fi
 [ "$#" -eq 0 ] || { echo "checkpoint: warning (unexpected arguments)" >&2; exit 0; }
 
 owned=()
-for candidate in raw context BRIEFS REVIEWS log.md; do
+for candidate in raw context profiles BRIEFS REVIEWS context-profile.json log.md; do
   [ -e "$candidate" ] || [ -L "$candidate" ] || continue
   owned+=("$candidate")
 done

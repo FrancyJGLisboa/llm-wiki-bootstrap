@@ -65,6 +65,19 @@ def validate(root: Path, requested: str) -> dict:
                 errors.append(f"invalid JSON artifact {value}: {exc}")
         elif path.stat().st_size == 0:
             errors.append(f"artifact is empty: {value}")
+    discovered = sorted(
+        path.relative_to(base).as_posix()
+        for path in base.rglob("*")
+        if path.is_file() and not path.is_symlink() and path.name != "profile.json"
+    )
+    declared = sorted(artifacts)
+    if declared != discovered:
+        undeclared = sorted(set(discovered) - set(declared))
+        omitted = sorted(set(declared) - set(discovered))
+        if undeclared:
+            errors.append(f"artifacts list omits portable files: {', '.join(undeclared)}")
+        if omitted:
+            errors.append(f"artifacts list names missing files: {', '.join(omitted)}")
     return {"profile": requested, "valid": not errors, "artifact_count": checked, "errors": errors}
 
 

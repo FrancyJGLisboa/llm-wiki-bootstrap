@@ -6,6 +6,7 @@ cd "$ROOT"
 
 bash scripts/verify-vscode-extension.sh
 bash scripts/verify-ai-workspace.sh
+bash scripts/verify-self-service-profile.sh
 bash scripts/verify-create-context-compiler.sh
 bash scripts/smoke-all.sh --no-build --ci
 

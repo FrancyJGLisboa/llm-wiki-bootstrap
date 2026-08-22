@@ -7,7 +7,8 @@ for path in \
   START-HERE.md ADVANCED.md AI-WORKSPACE.code-workspace EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md \
   .vscode/extensions.json .vscode/tasks.json \
   .claude/commands/ctx-start.md .claude/commands/ctx-inbox.md \
-  .claude/commands/ctx-create-profile.md scripts/inbox.py scripts/profile-check.py; do
+  .claude/commands/ctx-create-profile.md scripts/inbox.py scripts/profile-check.py \
+  scripts/profile-scaffold.py scripts/profile-readiness.py; do
   [ -f "$ROOT/$path" ] || { echo "missing guided workspace asset: $path" >&2; exit 1; }
 done
 
@@ -37,6 +38,8 @@ PY
 
 python3 "$ROOT/tests/guided-workspace/test_inbox_import.py"
 python3 "$ROOT/tests/guided-workspace/test_profile_check.py"
+python3 "$ROOT/tests/guided-workspace/test_profile_scaffold.py"
+python3 "$ROOT/tests/guided-workspace/test_profile_readiness.py"
 python3 "$ROOT/scripts/profile-check.py" --root "$ROOT" --profile client-decision >/dev/null
 bash "$ROOT/scripts/gate-command-aliases.sh" >/dev/null
 
@@ -44,7 +47,7 @@ if [ -x "$ROOT/scripts/create-context-compiler.sh" ]; then
   tmp=$(mktemp -d "${TMPDIR:-/tmp}/guided-workspace.XXXXXX")
   trap 'rm -rf "$tmp"' EXIT
   bash "$ROOT/scripts/create-context-compiler.sh" "$tmp/compiler" >/dev/null
-  for path in START-HERE.md ADVANCED.md AI-WORKSPACE.code-workspace EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md .vscode/tasks.json scripts/inbox.py scripts/profile-check.py; do
+  for path in START-HERE.md ADVANCED.md AI-WORKSPACE.code-workspace EVIDENCE-INBOX/README.md BRIEFS/README.md REVIEWS/README.md .vscode/tasks.json scripts/inbox.py scripts/profile-check.py scripts/profile-scaffold.py scripts/profile-readiness.py; do
     [ -f "$tmp/compiler/$path" ] || { echo "fresh compiler missing: $path" >&2; exit 1; }
   done
   [ "$(python3 "$tmp/compiler/scripts/profile-resolve.py" --root "$tmp/compiler")" = generic ]

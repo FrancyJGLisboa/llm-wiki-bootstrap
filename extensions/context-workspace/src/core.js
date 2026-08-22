@@ -116,6 +116,15 @@ function workflowPrompt(kind, values = {}) {
       return `Show and save only the exceptions that need human judgment for ${subject}: contradictions, ambiguous attribution, possible supersession, stale assumptions, unsupported material claims, and unknown owners.`;
     case "health":
       return `Run the decision-context health checks for ${subject} and save the diagnostic output. Do not invent an aggregate score.`;
+    case "createProfile": {
+      const goal = String(values.goal || "").trim();
+      if (!goal || goal.length > 1000) throw new Error("Describe the kind of work this specialization should support.");
+      return `Run the complete guided specialization builder in /ctx-create-profile for this goal: ${goal}. Ask only for missing domain meaning. Scaffold the profile with the deterministic tool, customize it from realistic synthetic examples, run technical and behavioral checks, show observable examples in ordinary language, and request explicit approval before activation. Do not ask me to edit schemas, tests, or Git. End with Add Evidence.`;
+    }
+    case "profileReadiness": {
+      const profile = validateSubject(values.profile);
+      return `Check specialization readiness for ${profile}. Run deterministic technical validation and behavioral coverage, save the readiness report, and explain only what needs attention. Do not activate unless a domain owner explicitly approved the observable examples.`;
+    }
     default:
       throw new Error(`Unsupported workflow: ${kind}`);
   }
