@@ -44,7 +44,7 @@ Show me only what needs review.
 ```
 
 Northstar Feeds is fictional — every person, number, and event is synthetic. See
-[`benchmarks/northstar/README.md`](benchmarks/northstar/README.md). To reset,
+[`benchmarks/northstar/README.md`](../benchmarks/northstar/README.md). To reset,
 delete what it staged under `raw/` and `context/`.
 
 ## 2. Your own work
@@ -118,5 +118,5 @@ The `wiki -> context` compatibility symlink may not be created on Windows; use
 ## Going further
 
 For the full command surface, automation, packaging, visualization, and MCP
-access, open [`ADVANCED.md`](ADVANCED.md). The canonical schema is
-[`AGENTS.md`](AGENTS.md) — you do not need it for the workflow above.
+access, open [`ADVANCED.md`](../ADVANCED.md). The canonical schema is
+[`AGENTS.md`](../AGENTS.md) — you do not need it for the workflow above.
