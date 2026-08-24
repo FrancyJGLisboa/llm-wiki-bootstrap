@@ -63,10 +63,17 @@ jobs:
   locale-invariant:
     name: LOCALE-INVARIANT (both locales agree)
     needs: smoke
+    if: always()   # see below — divergence matters MOST when a leg is red
     runs-on: ubuntu-latest
     # `needs: smoke` already fails the build if either locale goes red. This job
     # closes the remaining hole: both legs green but with DIFFERENT pass counts,
     # which is the same locale bug wearing a green tick.
+    #
+    # `if: always()` because until 2026-08-24 the smoke step swallowed its exit
+    # status through `| tee`, so both legs ALWAYS reported success and this job
+    # always ran. With the status now propagating, a single red leg would skip
+    # this comparison — losing the tally diff at the exact moment one locale
+    # disagrees with the other, which is the case it exists to describe.
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -75,8 +82,16 @@ jobs:
       - name: Compare pass tallies
         run: |
           set -euo pipefail
-          a=$(grep -oE 'All [0-9]+ checks green' smoke-C.log | grep -oE '[0-9]+')
-          b=$(grep -oE 'All [0-9]+ checks green' smoke-C.UTF-8.log | grep -oE '[0-9]+')
+          # A clean run prints "All N checks green"; a failing one never does. Fall
+          # back to counting pass marks so the comparison still works on a red
+          # run — otherwise this job dies on an empty grep and says nothing.
+          tally() {
+            grep -oE 'All [0-9]+ checks green' "$1" 2>/dev/null | grep -oE '[0-9]+' \
+              || grep -c '^✓' "$1" 2>/dev/null \
+              || echo 0
+          }
+          a=$(tally smoke-C.log | head -1)
+          b=$(tally smoke-C.UTF-8.log | head -1)
           echo "LC_ALL=C: $a passes / LC_ALL=C.UTF-8: $b passes"
           if [ "$a" != "$b" ]; then
             echo "LOCALE-INVARIANT: the suite counts a different number of passes per locale." >&2

@@ -418,14 +418,33 @@ else
   record_fail "R32 verify-scale-eval.sh exits non-zero (scale-eval oracle regression)"
 fi
 
+# gate_diag <captured-output-file> <gate-name>
+# Replay a failed gate's own diagnostics. `>/dev/null 2>&1` on a gate is free
+# while green and useless while red: on 2026-08-24 R33 and R36 went red on the
+# ubuntu C.UTF-8 leg and the log said only "exits non-zero", with the one thing
+# needed to fix it — which oracle, which count — discarded by that redirect.
+#
+# Print-only, deliberately. An earlier version of this helper also called ok/
+# record_fail, which folded four literal `ok "…"` call sites into one and broke
+# the invariant scripts/verify-site-claims.sh S1 depends on: the static tally of
+# those call sites must equal the runtime pass count.
+gate_diag() {
+  printf '    ---- %s diagnostics ----\n' "$2" >&2
+  sed 's/^/    /' "$1" >&2
+  printf '    ---- end ----\n' >&2
+}
+
 # R33 — no orphan oracles. An unwired gate reads as coverage and never fires,
 # which is how most broken gates are born. Transitive reachability from the CI
 # workflows; declared standalones are printed as suppressions, never silent.
-if "$SCRIPT_DIR/gate-reachable.sh" >/dev/null 2>&1; then
+_gd="$(mktemp "${TMPDIR:-/tmp}/smoke-gate.XXXXXX")"
+if "$SCRIPT_DIR/gate-reachable.sh" >"$_gd" 2>&1; then
   ok "R33 gate-reachable.sh exits 0 (every verify-*/gate-* oracle is reachable from CI)"
 else
   record_fail "R33 gate-reachable.sh exits non-zero (an oracle exists that nothing runs)"
+  gate_diag "$_gd" "gate-reachable.sh"
 fi
+rm -f "$_gd"
 
 # R34 — structural numbers stated in prose are recomputed, not typed. README
 # described the suite as running "R1–R4 regression guards" for the two dozen
@@ -456,11 +475,14 @@ fi
 # is a gate nobody turns on. This also makes suppressions cost something:
 # gate-reachable.sh already counted its declared standalones and printed them,
 # but nothing consumed the number, so silencing an orphan oracle was free.
-if "$SCRIPT_DIR/gate-ratchet.sh" >/dev/null 2>&1; then
+_gd="$(mktemp "${TMPDIR:-/tmp}/smoke-gate.XXXXXX")"
+if "$SCRIPT_DIR/gate-ratchet.sh" >"$_gd" 2>&1; then
   ok "R36 gate-ratchet.sh exits 0 (no gate's violations or suppressions exceed gates/baseline.tsv)"
 else
   record_fail "R36 gate-ratchet.sh exits non-zero (a gate's violation or suppression count went up, or a gate has no baseline row)"
+  gate_diag "$_gd" "gate-ratchet.sh"
 fi
+rm -f "$_gd"
 
 # R37 — command aliases resolve. .claude/commands/ now holds three naming
 # generations (canonical ctx-*, short aliases, deprecated wiki-* forwarders);
@@ -587,11 +609,14 @@ fi
 # it was guaranteed to fail in every generated compiler while reading green from
 # the dev repo, where the script is present. gate-doc-claims.sh already stopped a
 # NUMBER in prose from rotting; nothing did the same for a PATH.
-if "$SCRIPT_DIR/gate-doc-paths.sh" >/dev/null 2>&1; then
+_gd="$(mktemp "${TMPDIR:-/tmp}/smoke-gate.XXXXXX")"
+if "$SCRIPT_DIR/gate-doc-paths.sh" >"$_gd" 2>&1; then
   ok "R45 gate-doc-paths.sh exits 0 (every path named in a doc resolves; shipped docs name only shipped scripts)"
 else
   record_fail "R45 gate-doc-paths.sh exits non-zero — a doc names a path that does not exist, or a shipped doc names a script that does not ship"
+  gate_diag "$_gd" "gate-doc-paths.sh"
 fi
+rm -f "$_gd"
 
 # R46 — every shipped command is in the operator reference.
 #
@@ -600,11 +625,14 @@ fi
 # to run first. Nothing was broken, which is exactly why it survived: an
 # undocumented command fails silently and permanently. gate-command-aliases.sh
 # proves an alias RESOLVES; it says nothing about whether a human can find it.
-if "$SCRIPT_DIR/gate-command-documented.sh" >/dev/null 2>&1; then
+_gd="$(mktemp "${TMPDIR:-/tmp}/smoke-gate.XXXXXX")"
+if "$SCRIPT_DIR/gate-command-documented.sh" >"$_gd" 2>&1; then
   ok "R46 gate-command-documented.sh exits 0 (every shipped command is in ADVANCED.md)"
 else
   record_fail "R46 gate-command-documented.sh exits non-zero — a shipped command is documented nowhere, or the reference names a command that does not exist"
+  gate_diag "$_gd" "gate-command-documented.sh"
 fi
+rm -f "$_gd"
 
 # ──── Decision-context regressions (enforced in this repo) ────
 # These verifiers are additive to the generic suite, keyless, and never execute
