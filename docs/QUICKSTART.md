@@ -59,7 +59,8 @@ the above — it is the schema, written for the AI tool.
 ## 4. Specializations
 
 One ships: `client-decision` (activated for you by step 2). To teach the workspace a
-different kind of work, say:
+different kind of work, choose **Create Specialization** in the Context Workspace
+sidebar, or just say:
 
 > Create a specialization for tracking project decisions, alternatives, owners,
 > constraints, supersession, and unresolved risks.

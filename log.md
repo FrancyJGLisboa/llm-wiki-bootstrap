@@ -2,6 +2,32 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-24 — CI tells the truth, and the suite is green
+
+Two defects, one of which had been hiding the other.
+
+- **`ci.yml:50` masked every smoke failure.** `bash scripts/smoke-all.sh --no-build | tee
+  …` takes its exit status from `tee`, which is always 0, so a red suite reported the job
+  green. Only the downstream `LOCALE-INVARIANT` job noticed anything was wrong, and only
+  indirectly — it greps for the `All N checks green` line, which a failing run never
+  prints. Fixed with `shell: bash` (GitHub's `-eo pipefail`). Added `if: always()` to the
+  tally upload, because with the status now propagating a failing suite would skip the
+  artifact and leave `LOCALE-INVARIANT` with nothing to compare — the tally is most
+  needed exactly when the suite failed.
+- **The copy drift that kept the suite red.** `extensions/context-workspace/extension.js`
+  labelled the action "Teach it another kind of work"; `verify-self-service-profile.sh`
+  asserted "Teach this workspace another kind of work". Three phrasings existed across
+  the repo. Settled on the verifier's: "it" is ambiguous in a sidebar, and the longer
+  form matches `START-HERE.md`. Fixing it advanced the verifier to a second assertion my
+  own QUICKSTART rewrite had broken — the doc no longer named the **Create
+  Specialization** action, which all six user-facing surfaces are required to mention.
+  Restored, and audited all six rather than only the one that failed.
+
+`scripts/verify-self-service-profile.sh` passes for the first time in this session, and
+with it the whole suite: **65/0 under both `LC_ALL=C` and `C.UTF-8`, exit 0, identical**.
+The `All N checks green` line is present in both logs, so `LOCALE-INVARIANT` has what it
+needs. The CI step name still said `R1–R44`; corrected to `R1–R46`.
+
 ## 2026-08-24 — Complete operator reference, and a gate that keeps it complete
 
 An inventory found **seven of twenty-two commands documented nowhere at all** — not in

@@ -44,11 +44,17 @@ jobs:
           python3 --version
           awk --version 2>/dev/null | head -1 || awk -W version 2>&1 | head -1
           locale
-      - name: Run the deterministic checks (C1–C5 + R1–R44) under LC_ALL=${{ matrix.locale }}
+      - name: Run the deterministic checks (C1–C5 + R1–R46) under LC_ALL=${{ matrix.locale }}
         env:
           LC_ALL: ${{ matrix.locale }}
+        # shell: bash gives GitHub's `bash --noprofile --norc -eo pipefail`. Without
+        # pipefail the exit status of `smoke-all.sh | tee` is TEE's, which is always 0
+        # — so a red suite reported this job green, and only the LOCALE-INVARIANT job
+        # (which needs the "All N checks green" line) noticed anything was wrong.
+        shell: bash
         run: bash scripts/smoke-all.sh --no-build | tee "smoke-${{ matrix.locale }}.log"
       - name: Upload pass tally
+        if: always()   # the tally is most needed when the suite FAILED
         uses: actions/upload-artifact@v4
         with:
           name: smoke-tally-${{ matrix.locale }}

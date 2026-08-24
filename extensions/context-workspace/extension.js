@@ -8,7 +8,7 @@ const JOURNEY = [
   ["1 · SET UP", "Create or teach a compiler", "rocket", [
     ["Create New Compiler", "Start a clean context workspace", "contextWorkspace.createCompiler", "new-folder"],
     ["Open Another Compiler", "Switch to an existing context workspace", "contextWorkspace.openCompiler", "folder-opened"],
-    ["Create Specialization", "Teach it another kind of work", "contextWorkspace.createSpecialization", "sparkle"],
+    ["Create Specialization", "Teach this workspace another kind of work", "contextWorkspace.createSpecialization", "sparkle"],
     ["Check Specialization", "Validate examples before activation", "contextWorkspace.checkSpecialization", "checklist"]
   ]],
   ["2 · ADD & UPDATE", "Point at evidence; the agent compiles it", "files", [
