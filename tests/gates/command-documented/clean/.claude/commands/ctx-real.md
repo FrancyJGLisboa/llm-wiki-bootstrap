@@ -1,0 +1,4 @@
+---
+description: Real command.
+---
+Body.

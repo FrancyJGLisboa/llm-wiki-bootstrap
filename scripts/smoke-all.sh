@@ -593,6 +593,19 @@ else
   record_fail "R45 gate-doc-paths.sh exits non-zero — a doc names a path that does not exist, or a shipped doc names a script that does not ship"
 fi
 
+# R46 — every shipped command is in the operator reference.
+#
+# Absent until 2026-08-24, and its absence left SEVEN of twenty-two commands
+# documented nowhere — including /ctx-start, the entry point a newcomer is meant
+# to run first. Nothing was broken, which is exactly why it survived: an
+# undocumented command fails silently and permanently. gate-command-aliases.sh
+# proves an alias RESOLVES; it says nothing about whether a human can find it.
+if "$SCRIPT_DIR/gate-command-documented.sh" >/dev/null 2>&1; then
+  ok "R46 gate-command-documented.sh exits 0 (every shipped command is in ADVANCED.md)"
+else
+  record_fail "R46 gate-command-documented.sh exits non-zero — a shipped command is documented nowhere, or the reference names a command that does not exist"
+fi
+
 # ──── Decision-context regressions (enforced in this repo) ────
 # These verifiers are additive to the generic suite, keyless, and never execute
 # a model. They are enforced here because this repository now ships the profile.

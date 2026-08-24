@@ -52,3 +52,4 @@ CTX-ROOT-ADOPTION	scripts/gate-ctx-root.sh	80	0	2026-08-08	AGENTS.md:24 says new
 ADAPTER-CONTRACT	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean	0	0	2026-08-10	no corpus.json in this repo (it generates compilers, it is not one) — ratcheted against the fixture so the gate stays exercised
 CITATION-FLOOR	scripts/gate-citation-floor.sh	0	0	2026-08-11	meta-wiki: 38 paginas, toda ancora resolve
 DOC-PATH-RESOLVES	scripts/gate-doc-paths.sh	0	0	2026-08-24	clean at introduction: the 5 violations it found on arrival were fixed rather than baselined, so the number starts where it should stay
+COMMAND-DOCUMENTED	scripts/gate-command-documented.sh	0	0	2026-08-24	clean at introduction: the 7 undocumented commands it found on arrival were documented rather than baselined

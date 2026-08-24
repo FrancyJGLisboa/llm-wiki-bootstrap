@@ -27,3 +27,4 @@ scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/g
 scripts/gate-adapter-contract.sh	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/dirty-slug	scripts/gate-adapter-contract.sh --repo tests/gates/adapter-contract/clean
 scripts/gate-citation-floor.sh	scripts/gate-citation-floor.sh --repo tests/gates/citation-floor/dirty	scripts/gate-citation-floor.sh --repo tests/gates/citation-floor/clean
 scripts/gate-doc-paths.sh	scripts/gate-doc-paths.sh --repo tests/gates/doc-paths/dirty	scripts/gate-doc-paths.sh --repo tests/gates/doc-paths/clean
+scripts/gate-command-documented.sh	scripts/gate-command-documented.sh --repo tests/gates/command-documented/dirty	scripts/gate-command-documented.sh --repo tests/gates/command-documented/clean

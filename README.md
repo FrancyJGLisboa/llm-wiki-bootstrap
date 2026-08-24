@@ -210,20 +210,31 @@ Successful mutating workflows run `./scripts/checkpoint-context.sh`. The checkpo
 
 ## Advanced controls
 
-Ordinary users do not need these. They remain stable controls for automation and customization.
+Ordinary users do not need these — say *"Add this evidence and update my context"* and
+ask for what you need. They remain stable controls for automation and customization.
+
+**[`ADVANCED.md`](ADVANCED.md) is the complete operator reference:** all 22 commands and
+every script, grouped by what you are trying to do — bootstrap a new compiler, manage
+specializations, run the demo, get evidence in, ask for work, render and export, and
+(bootstrap repo only) maintain the suite and its gates. It ships with every generated
+compiler, so it is available where the work happens. A gate (`COMMAND-DOCUMENTED`, R46)
+fails CI if a shipped command is missing from it.
+
+The ones you are most likely to want:
 
 | Command | Purpose |
 |---|---|
+| `/ctx-start` | Entry point — checks setup, resolves the specialization, gives one next action |
 | `/ctx-add <evidence>` | Preserve, normalize, compile, validate, checkpoint |
-| `/ctx-extract <source>` | Acquisition-only internal control |
-| `/ctx-compile [source]` | Compilation-only internal control |
 | `/ctx-query <question>` | Generic cited query |
 | `/ctx-lint` | Generic semantic health check |
+| `/ctx-create-profile` | Build a new specialization through a guided interview |
 | `/client-brief <client>` | Current decision-ready view |
 | `/client-delta <client> --since <date>` | Meaningful temporal change |
 | `/client-why <claim>` | Inspectable evidence chain |
 
-The old `/wiki-*` names remain backward-compatible forwarders. Existing generic-context workflows continue to work.
+Every command has a prefixed name and a short alias (`/ctx-query` = `/query`). The old
+`/wiki-*` names remain backward-compatible forwarders; existing workflows keep working.
 
 ## Evidence and decision semantics
 
@@ -245,7 +256,7 @@ The synthetic Northstar Feeds corpus and independent gold answers exercise prove
 Open `/tmp/northstar-compiler/AI-WORKSPACE.code-workspace` and ask for a brief. The
 first three commands need no API key and no LLM.
 
-`smoke-all.sh` — 49 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R45<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
+`smoke-all.sh` — 50 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R46<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
 
 ## Boundaries
 

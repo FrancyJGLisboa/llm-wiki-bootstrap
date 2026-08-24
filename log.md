@@ -2,6 +2,54 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-24 — Complete operator reference, and a gate that keeps it complete
+
+An inventory found **seven of twenty-two commands documented nowhere at all** — not in
+`README.md`, `ADVANCED.md`, `START-HERE.md`, `docs/QUICKSTART.md`, or the generated
+workspace's own README: `/ctx-start`, `/ctx-gate`, `/ctx-discover`,
+`/ctx-client-assumptions`, `/ctx-client-decisions`, `/ctx-client-lint`,
+`/ctx-client-review`. `/ctx-start` is the entry point — the one command a newcomer is
+meant to run first appeared in no document a newcomer would read. Four maintainer
+scripts (`gate-fixtures.sh`, `new-gate.sh`, `new-corpus.sh`, `auto-ingest.sh`) were
+undocumented too.
+
+Nothing was broken, which is why it survived: an undocumented command fails silently and
+permanently. The operator never learns the capability exists, and no test can notice one
+nobody invoked. `gate-command-aliases.sh` already proved every alias RESOLVES; that says
+nothing about whether a human can find what it resolves to.
+
+- **`ADVANCED.md` is now the complete operator reference** (30 → 166 lines), split by
+  audience because it ships into every generated compiler: §1–5 operate a compiler
+  (bootstrap, specializations, demo, evidence in, asking for work, render/export), §6–8
+  maintain the bootstrap repo (suite, evals, gates, ratchet), explicitly marked as not
+  shipped. Descriptions are taken from each command's own `description:` field rather
+  than written fresh, so the reference cannot drift from the contract on day one.
+- **`README.md`** points at it and lists the eight commands worth reaching for, now
+  including `/ctx-start`.
+- **`site/index.html`** had three defects: the `5 slash commands` stat read as a total
+  (it is pinned by `verify-site-claims.sh` S3 to the five CORE lifecycle commands by
+  design — reworded to say so, keeping the pin's literal intact), the example query had
+  drifted from the one every entry doc now shares, and the CTA anchor
+  `#how-the-factory-works` did not match the heading `#how-the-factory-works-underneath`.
+  Added the operator-reference link the landing page never had.
+
+**New gate R46 — `COMMAND-DOCUMENTED` (`scripts/gate-command-documented.sh`).** Every
+shipped command must be named in `ADVANCED.md`, and every command the reference names
+must exist so a typo cannot invent one. The reverse check is anchored to the backtick
+form because commands are written `` `/ctx-foo` `` while scripts are written
+`scripts/wiki-metrics.sh` — without the anchor the slash inside a path matches and the
+gate reports a command nobody claimed. Honest limits recorded in the header: it proves a
+command is NAMED, not that the description is accurate; alias files are skipped
+deliberately; and the reference path is fixed to `ADVANCED.md`, because one canonical
+reference is the point.
+
+Verification: 64/1 under both `LC_ALL=C` and `C.UTF-8`, identical; ratchet clean at 14
+gates; fixtures discriminate at 19; installer verifier 10/10; `shellcheck -S error`
+clean repo-wide; and a freshly generated compiler ships the reference with 0 of its 22
+commands missing. Negative control on the new gate: removing `/ctx-start`'s row makes it
+fire on exactly that command. The one remaining suite failure is the pre-existing
+`verify-self-service-profile.sh` / `extension.js` copy drift, untouched.
+
 ## 2026-08-24 — Bootstrap path made survivable for a stranger
 
 The machinery was production-grade; the on-ramp was not. Five dead ends on the
