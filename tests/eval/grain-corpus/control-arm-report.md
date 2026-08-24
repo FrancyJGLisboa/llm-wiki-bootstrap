@@ -1,7 +1,7 @@
 
 # corpus eval — control
 
-Wiki: `/Users/francylisboacharuto/grain-wiki-control` (1 pages)
+Wiki: `/Users/<user>/grain-wiki-control` (1 pages)
 Questions: `tests/eval/grain-corpus/gold-questions.md` (66)
 
 ## control arm — empty wiki

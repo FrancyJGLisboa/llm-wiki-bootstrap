@@ -110,8 +110,13 @@ for f in open-questions-dashboard.md tensions.md decision-timeline.md knowledge-
 done
 
 # ---- determinism: hash, re-run, hash again ---------------------------------
+# openssl, not shasum: this script SHIPS, and shasum is a Perl script — present on
+# macOS and ubuntu-latest, absent on Alpine, debian-slim, and any perl-less
+# container. openssl is already a hard requirement (preflight.sh) and is what
+# scripts/body-hash.sh uses, so this keeps one hashing dependency, not two.
 hash_all() { cat "$tmp/wiki/open-questions-dashboard.md" "$tmp/wiki/tensions.md" \
-                 "$tmp/wiki/decision-timeline.md" "$tmp/wiki/knowledge-graph.json" | shasum -a 256 | cut -d' ' -f1; }
+                 "$tmp/wiki/decision-timeline.md" "$tmp/wiki/knowledge-graph.json" \
+             | openssl dgst -sha256 | awk '{print $NF}'; }
 h1="$(hash_all)"
 "$SCRIPT_DIR/synthesize/all.sh" "$tmp" >/dev/null 2>&1
 h2="$(hash_all)"

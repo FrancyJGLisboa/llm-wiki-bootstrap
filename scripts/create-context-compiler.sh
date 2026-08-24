@@ -6,6 +6,7 @@
 # paths are sourced from FRESH templates:
 #   wiki/index.md  ←  context/index-FRESH.md
 #   README.md      ←  templates/README-fresh.md
+#   docs/QUICKSTART.md ←  templates/QUICKSTART-fresh.md
 #   log.md         ←  hard-coded 3-line stub
 #
 # What ships and what doesn't is governed entirely by the manifest. No spot-lists
@@ -67,6 +68,15 @@ while IFS= read -r p; do
       ;;
     README.md)
       source_path="$SRC/templates/README-fresh.md"
+      ;;
+    docs/QUICKSTART.md)
+      # The dev repo's quickstart opens with the VS Code extension build and the
+      # `git clone` + create-context-compiler.sh flow — both correct for someone
+      # standing in the bootstrap repo, both dead ends inside a generated
+      # compiler (package-vscode-extension.sh, vscode-extension-regression.sh
+      # and create-context-compiler.sh do not ship). The installed copy names
+      # only shipped scripts.
+      source_path="$SRC/templates/QUICKSTART-fresh.md"
       ;;
     gates/baseline.tsv)
       # Seeded at zero for the shipped gates. Without it gate-ratchet arrives

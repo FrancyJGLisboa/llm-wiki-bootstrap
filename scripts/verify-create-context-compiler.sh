@@ -102,7 +102,12 @@ fi
 #  in the fresh skeleton. The smoke-specific leakage scenarios "karpathy" was meant
 #  to catch (dev README.md or wiki/index.md leaking into target) are now caught
 #  more directly by I4(d) — template substitution byte-match below.)
-tripwire="$(grep -r -l -E 'Quortex|Phase Coherence' "$TGT" 2>/dev/null || true)"
+# This verifier now ships (so a generated compiler can spawn another), and it
+# carries the two needles below as literals. Exclude itself from its own scan —
+# otherwise the tripwire fires on the search pattern rather than on leaked
+# content. Any OTHER file matching is still a real failure.
+tripwire="$(grep -r -l -E 'Quortex|Phase Coherence' "$TGT" 2>/dev/null \
+            | grep -v '/scripts/verify-create-context-compiler\.sh$' || true)"
 if [ -z "$tripwire" ]; then
   ok "I4(b) no Quortex/Phase Coherence (smoke-specific) strings in target"
 else

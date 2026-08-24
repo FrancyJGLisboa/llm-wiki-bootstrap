@@ -4,9 +4,9 @@ This project is a **context compiler**: it turns unstructured sources into a str
 
 This project's canonical schema is **`AGENTS.md`** in the same directory. Some Gemini CLI versions load `GEMINI.md` only; this file exists as a shim for those.
 
-**Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the five named workflows.
+**Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the named workflows.
 
-The five workflows are defined at `.claude/commands/ctx-*.md` (named for Claude Code's slash command location, but the prompt bodies are tool-agnostic — read them as workflow definitions). The user invokes them in Gemini by natural language ("ingest raw," "ask the wiki about X").
+The workflows are defined at `.claude/commands/ctx-*.md` (named for Claude Code's slash command location, but the prompt bodies are tool-agnostic — read them as workflow definitions). The user invokes them in Gemini by natural language ("ingest raw," "ask the wiki about X").
 
 - `ctx-init` — scaffold structure (idempotent)
 - `ctx-extract <source>` — acquire URL / file / image into `raw/`

@@ -1,4 +1,4 @@
-[treatment-v3] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=8 control=0
+[treatment-v3] wiki=/Users/<user>/grain-wiki-assessment pages=82 questions=8 control=0
 [treatment-v3] A1-T1-china-shift-to-brazil-timing — cached, regrading
 [treatment-v3] A1-T2-fund-corn-length-characterization — cached, regrading
 [treatment-v3] A1-T7-recession-versus-labor-market — cached, regrading
@@ -10,7 +10,7 @@
 
 # corpus eval — treatment-v3
 
-Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
+Wiki: `/Users/<user>/grain-wiki-assessment` (82 pages)
 Questions: `tests/eval/grain-corpus/runs/pilot-8.md` (8)
 
 ## scores

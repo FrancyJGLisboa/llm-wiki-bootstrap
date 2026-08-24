@@ -19,7 +19,11 @@ set -uo pipefail
 
 R="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO="$(cd "$R/../../../.." && pwd)"
-WIKI=/Users/francylisboacharuto/grain-wiki-assessment
+# Overridable; the default is only a convention, not this machine's layout.
+# Was an absolute path under one developer's home directory, which made the
+# script unrunnable for anyone else and leaked a local username into a public
+# repository. Set WIKI=... to point it anywhere.
+WIKI="${WIKI:-$HOME/grain-wiki-assessment}"
 G="$REPO/tests/eval/grain-corpus"
 
 log() { echo "$(date +%H:%M:%S) $*" >> "$R/remeasure.log"; }

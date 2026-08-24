@@ -1,4 +1,4 @@
-[holdout-fixed] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=7 control=0
+[holdout-fixed] wiki=/Users/<user>/grain-wiki-assessment pages=82 questions=7 control=0
 [holdout-fixed] H-reownership-2020
 [holdout-fixed] H-cancellation-cushion-2021
 [holdout-fixed] H-ballgame-2021
@@ -9,8 +9,8 @@
 
 # corpus eval — holdout-fixed
 
-Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
-Questions: `/Users/francylisboacharuto/llm-wiki-bootstrap/tests/eval/grain-corpus/holdout-scoreable.md` (7)
+Wiki: `/Users/<user>/grain-wiki-assessment` (82 pages)
+Questions: `/Users/<user>/llm-wiki-bootstrap/tests/eval/grain-corpus/holdout-scoreable.md` (7)
 
 ## scores
 

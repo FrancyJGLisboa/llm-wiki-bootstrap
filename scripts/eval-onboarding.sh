@@ -9,9 +9,9 @@
 #
 # Loss function — 5 binary checks (approved):
 #   C1  reaches a correct first answer following the README        [behavioural]
-#   C2  one unambiguous "start here" across README/QUICKSTART/FRESH [doc-judge]
+#   C2  one unambiguous "start here" across the entry docs        [doc-judge]
 #   C3  zero dead-ends on the happy path (no error tool-results)    [behavioural]
-#   C4  discoverable without opening AGENTS.md (295-line schema)    [behavioural]
+#   C4  discoverable without opening AGENTS.md (568-line schema)    [behavioural]
 #   C5  <= 2 new concepts required before first value               [doc-judge]
 #
 # ease score = passed / 5, plus a ranked friction list (action count, dead-ends,
@@ -132,6 +132,8 @@ judge() {  # $1 = check description; echoes PASS|FAIL + reason
   local q="$1" out
   local docs="===README.md===
 $(cat README.md 2>/dev/null)
+===START-HERE.md (the one-page operating guide the installer ships, and the file /ctx-start reads)===
+$(cat START-HERE.md 2>/dev/null)
 ===QUICKSTART.md===
 $(sed -n '1,80p' docs/QUICKSTART.md 2>/dev/null)
 ===templates/README-fresh.md (NOT a repo entry point — the installer ships this as the README INSIDE a freshly-created clean wiki, which has no demo to query; it is never read from the bootstrap repo root)===
@@ -154,7 +156,7 @@ $docs"
 }
 
 info "doc-judge scoring C2 (one start-here) and C5 (<=2 concepts) ..."
-C2="$(judge "Is there ONE unambiguous 'start here' first command + example query that README, QUICKSTART, and README-FRESH agree on — with no contradictory demo queries and no decision a newcomer must resolve before their first answer?")"
+C2="$(judge "Is there ONE unambiguous 'start here' first command + example query that README, START-HERE, QUICKSTART, and README-FRESH agree on — with no contradictory demo queries and no decision a newcomer must resolve before their first answer?")"
 C5="$(judge "Can a newcomer reach their FIRST useful answer while holding at most TWO new concepts — i.e. the happy path does NOT require understanding the frontmatter spec, slug rules, typed relations, or citation anchors up front?")"
 C2_V="${C2%%|*}"; C2_R="${C2#*|}"
 C5_V="${C5%%|*}"; C5_R="${C5#*|}"
@@ -175,7 +177,7 @@ fi
 [ "${DEAD_ENDS:-0}" -eq 0 ] && { ok "C3 zero dead-ends on the happy path";    score=$((score+1)); } \
                         || no "C3 hit ${DEAD_ENDS} dead-end(s) / error tool-result(s)"
 [ "${READ_AGENTS:-1}" -eq 0 ] && { ok "C4 done without opening AGENTS.md";    score=$((score+1)); } \
-                        || no "C4 had to open AGENTS.md (295-line schema) to proceed"
+                        || no "C4 had to open AGENTS.md (568-line schema) to proceed"
 [ "$C5_V" = PASS ]      && { ok "C5 <=2 concepts to first value";             score=$((score+1)); } \
                         || no "C5 too many concepts up front — $C5_R"
 

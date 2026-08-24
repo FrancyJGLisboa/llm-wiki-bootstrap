@@ -103,14 +103,19 @@ that accepts any non-zero would read that as a successful catch.
   means the rule holds from here on without demanding the past be fixed first.
 - Add the fixture invocations to `scripts/gate-fixtures.tsv`, or leave them at
   `gates/fixtures/<RULE-ID>/` for the convention-based discovery.
-- Wire into `scripts/smoke-all.sh` as the next `R<n>` so `gate-reachable.sh`
-  stays green — an unwired gate reads as coverage and never fires.
+- Wire the gate into CI so it actually fires — an unwired gate reads as coverage
+  and never does anything. In the bootstrap repo that means adding it to
+  `scripts/smoke-all.sh` as the next `R<n>`; `scripts/gate-reachable.sh` is what
+  proves it. Neither script ships to a generated compiler, so in a generated
+  compiler wire the gate into whatever runs your checks and skip the reachability
+  proof — do not report this step as done when the scripts are absent.
 - Verify the whole set still holds:
 
 ```bash
 bash scripts/gate-fixtures.sh    # every gate still discriminates
 bash scripts/gate-ratchet.sh     # nothing went up; this gate is registered
-bash scripts/gate-reachable.sh   # this gate is reachable from CI
+# bootstrap repo only — absent in a generated compiler:
+[ -f scripts/gate-reachable.sh ] && bash scripts/gate-reachable.sh
 ```
 
 ## Step 5 — Close the loop on the rule page

@@ -4,7 +4,7 @@ This repository is an `context-compiler-bootstrap` instance — a **context comp
 
 ## Read first
 
-**`AGENTS.md`** at the project root is the canonical schema. Read it before any work in this repo. It defines the three-layer model (raw / wiki / schema), page conventions, link convention (`[[kebab-case]]`), raw source frontmatter, and the five named workflows.
+**`AGENTS.md`** at the project root is the canonical schema. Read it before any work in this repo. It defines the three-layer model (raw / wiki / schema), page conventions, link convention (`[[kebab-case]]`), raw source frontmatter, and the named workflows.
 
 ## Three-layer model (one-line summary)
 

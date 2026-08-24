@@ -1,4 +1,4 @@
-[gold-fixed] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=28 control=0
+[gold-fixed] wiki=/Users/<user>/grain-wiki-assessment pages=82 questions=28 control=0
 [gold-fixed] A1-2020-wet-blanket
 [gold-fixed] A1-2020-stocks-use-2005
 [gold-fixed] A1-2020-fund-combined-long
@@ -30,8 +30,8 @@
 
 # corpus eval — gold-fixed
 
-Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
-Questions: `/Users/francylisboacharuto/llm-wiki-bootstrap/tests/eval/grain-corpus/gold-questions-scoreable.md` (28)
+Wiki: `/Users/<user>/grain-wiki-assessment` (82 pages)
+Questions: `/Users/<user>/llm-wiki-bootstrap/tests/eval/grain-corpus/gold-questions-scoreable.md` (28)
 
 ## scores
 

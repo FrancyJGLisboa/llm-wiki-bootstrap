@@ -1,5 +1,10 @@
 # EXPLAIN — `context-compiler-bootstrap` for a dev who just cloned it
 
+> This document describes the bootstrap repository and its test suite. If you are
+> reading it inside a generated compiler, some scripts it names — `smoke-all.sh`
+> and the CI oracles — are not shipped here. The concepts apply; those commands
+> run in the bootstrap clone.
+
 For developers. If you've used `git`, `make` / `npm run build`, and `eslint`, every novel concept here maps onto something you already do. This file is the missing 5-minute "what *is* this and why is it shaped this way" — `README.md` tells you what it does, [`QUICKSTART.md`](QUICKSTART.md) tells you which commands to type in which tool, and [`../AGENTS.md`](../AGENTS.md) is the spec. None of those tell you the mental model. This does.
 
 ---
@@ -153,7 +158,7 @@ The payoff property is step 4: **one source touches 10–15 wiki pages, not one.
 
 ### Status of this pipeline (updated 2026-05-26)
 
-The 7 steps are now **demonstrated end-to-end**. `./scripts/smoke-all.sh` drives `claude -p` to run `/ctx-compile` + `/ctx-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 13 binary checks (5 smoke C1–C5 + 8 regression R1–R8) gate the demonstration; passing them is what "the pipeline works" means.
+The 7 steps are now **demonstrated end-to-end**. The `smoke-all.sh` suite in the bootstrap repo (it is not shipped into a generated compiler) drives `claude -p` to run `/ctx-compile` + `/ctx-query` against a fictitious technical fixture (committed in this repo under `tests/smoke/`); the resulting 4 wiki pages (one summary + concept and entity pages), the `log.md` entry, and the populated `ingested_*` frontmatter on the ingested raw file are all committed as empirical proof. 13 binary checks (5 smoke C1–C5 + 8 regression R1–R8) gate the demonstration; passing them is what "the pipeline works" means.
 
 On a fresh real source, the most common failure modes remain step 5 (contradiction-flagging skipped) and step 3 (summary page skipped). [`QUICKSTART.md`](QUICKSTART.md) has the exact re-prompts. The per-tool parity for Cursor / Copilot / Gemini / Codex paths is **still undemonstrated** — they likely work via the natural-language shims but haven't been observed.
 
@@ -217,7 +222,7 @@ The `[[kebab-case]]` link syntax you'll see throughout `wiki/` is resolved by st
 
 ## Status, post-2026-05-26 (replaces the prior "untested" caveat)
 
-The 7-step `/ctx-compile` pipeline is **demonstrated** via `./scripts/smoke-all.sh`. The full chain — `/ctx-compile raw/smoke-source.md` → 4 new wiki pages with the fictitious anchors → `log.md` entry → `/ctx-query` recalling the fact + citing the source — runs green on Claude Code (`claude -p`). The artifacts are committed; the smoke is reproducible.
+The 7-step `/ctx-compile` pipeline is **demonstrated** via the bootstrap repo's `smoke-all.sh` suite (not shipped into a generated compiler). The full chain — `/ctx-compile raw/smoke-source.md` → 4 new wiki pages with the fictitious anchors → `log.md` entry → `/ctx-query` recalling the fact + citing the source — runs green on Claude Code (`claude -p`). The artifacts are committed; the smoke is reproducible.
 
 What's still observational, not proven:
 

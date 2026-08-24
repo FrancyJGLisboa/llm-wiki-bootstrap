@@ -2,6 +2,75 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-24 — Bootstrap path made survivable for a stranger
+
+The machinery was production-grade; the on-ramp was not. Five dead ends on the
+documented path, each verified against a freshly generated compiler.
+
+- **`preflight.sh` called `python3` optional.** False: `/ctx-start`, `/ctx-add`,
+  `/ctx-compile`, `use-profile.sh` and every `/client-*` command invoke it by that exact
+  name. A user without it got "Ready." then failed on their first action. Now a hard
+  requirement, checked by name (a `python` that is not also `python3` fails).
+- **`README.md` advertised two demo scripts that never existed** and linked two docs
+  never written. Repointed at `stage-northstar.sh` / `run-northstar-benchmark.sh`,
+  `profiles/client-decision/COMPILATION.md` and `benchmarks/northstar/README.md`.
+- **`docs/QUICKSTART.md` SHIPS and named scripts that do not ship** — including its own
+  "Verify installation" step. Split: `templates/QUICKSTART-fresh.md` is the installed
+  copy, sourced the same way `README.md` ← `templates/README-fresh.md` already was.
+- **`verify-guided-workspace.sh` SHIPS and ran four `tests/guided-workspace/` tests;
+  two were missing from the manifest.** The documented verification step and the VS Code
+  task both died in every generated compiler while passing here.
+- **"Start here" was not the first step** — it opened with a VS Code extension build,
+  impossible before cloning, while the clone appeared 100 lines down under "How the
+  factory works underneath". The extension path also needs Node, npm, network and the
+  `code` CLI, declared only in a doc that does not ship.
+
+**The installer now ships itself** (`create-context-compiler.sh`, its verifier, the
+manifest and the six FRESH template sources). That removed seven dangling references at
+once — cheaper than rewording seven documents — and generated compilers are now
+self-replicating: gen1 → gen2 produce byte-identical 345-file trees, and a generated
+compiler passes its own installer verifier.
+
+**New gate R45 — `DOC-PATH-RESOLVES` (`scripts/gate-doc-paths.sh`).** `gate-doc-claims.sh`
+already stopped a NUMBER in prose from rotting; nothing did the same for a PATH, and
+every defect above is that one uncovered rule. Two sub-rules: a path named in a tracked
+doc must resolve, and a `scripts/`-or-`tests/` asset that a SHIPPED doc or SHIPPED script
+depends on must itself ship. The second is what a dev-repo-only check structurally cannot
+see. Scoped deliberately: prose mentions are exempt (rewriting accurate prose about this
+repo's own CI would make the docs worse — the three shipped docs carrying such mentions
+got an honest header note instead), `log.md` and `LEARNINGS.md` are exempt as dated
+history, and a guarded invocation (`[ -f x ] && bash x`) is recognised as correct rather
+than suppressed — proven by a mutation in the dirty fixture where a guard naming a
+different file does not launder the command.
+
+**Onboarding eval.** C2 ("one unambiguous start-here") went red → red → red → green
+across four runs, each red a genuinely different cause: no canonical path, then colliding
+literal dates between demo and own-work examples, then README's first query differing
+from the other three. All five entry surfaces now carry a byte-identical first query and
+follow-up block; own-work examples use `<your date>` so no two literal dates compete.
+Score stayed 3/5. C4 is **not** an onboarding-doc defect and was deliberately not chased:
+all four shipped agent shims instruct "read `AGENTS.md` before any work" and
+`/ctx-compile` genuinely needs the schema — passing C4 would mean degrading compilation
+to move a metric. C3 flipped red once after three clean runs; treated as the variance
+already recorded, not as a regression.
+
+Also: `verify-synthesize.sh` ships and used `shasum` (Perl, absent on Alpine/debian-slim)
+→ `openssl dgst -sha256`, matching `body-hash.sh`. Two `tests/eval/grain-corpus/runs/`
+scripts hardcoded an absolute home-directory path, unrunnable for anyone else → `$HOME`
+default. 18 occurrences of a local username redacted to `/Users/<user>/…` across eight
+committed files, log-line shape preserved. `AGENTS.md`, `CLAUDE.md`, `GEMINI.md`,
+`.cursor/rules` and `copilot-instructions.md` all still said "five slash commands"; there
+are 22. `AGENTS.md` gained a "you do not need this to start" banner above its five-version
+changelog. `verify-ai-workspace.sh` pinned the literal date the C2 fix removed — loosened
+to the assertion's intent (a delta-shaped request exists), not reverted.
+
+Verification: 63/1 under both `LC_ALL=C` and `C.UTF-8`, identical (locale-invariant);
+ratchet clean at 13 gates; fixtures discriminate at 18; installer verifier 10/10.
+The single remaining failure is pre-existing and untouched —
+`verify-self-service-profile.sh` asserts `extension.js` says "Teach this workspace
+another kind of work"; it says "Teach it another kind of work". That is a product-copy
+decision, not a gate to loosen.
+
 ## 2026-08-21 — Guided professional workspace
 
 - Added `START-HERE.md`, user-owned `EVIDENCE-INBOX/`, generated `BRIEFS/` and `REVIEWS/`,

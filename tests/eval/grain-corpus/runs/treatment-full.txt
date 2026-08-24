@@ -1,4 +1,4 @@
-[treatment-full] wiki=/Users/francylisboacharuto/grain-wiki-assessment pages=82 questions=30 control=0
+[treatment-full] wiki=/Users/<user>/grain-wiki-assessment pages=82 questions=30 control=0
 [treatment-full] A1-T1-china-shift-to-brazil-timing — cached, regrading
 [treatment-full] A1-T2-fund-corn-length-characterization — cached, regrading
 [treatment-full] A1-T3-brazil-record-crop-confidence
@@ -32,8 +32,8 @@
 
 # corpus eval — treatment-full
 
-Wiki: `/Users/francylisboacharuto/grain-wiki-assessment` (82 pages)
-Questions: `/Users/francylisboacharuto/llm-wiki-bootstrap/tests/eval/grain-corpus/temporal-questions.md` (30)
+Wiki: `/Users/<user>/grain-wiki-assessment` (82 pages)
+Questions: `/Users/<user>/llm-wiki-bootstrap/tests/eval/grain-corpus/temporal-questions.md` (30)
 
 ## scores
 

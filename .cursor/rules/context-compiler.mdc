@@ -6,11 +6,11 @@ alwaysApply: true
 
 # context-compiler-bootstrap (Cursor rules)
 
-This project is an `context-compiler-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over. Operated via five named workflows.
+This project is an `context-compiler-bootstrap` instance — a **context compiler**: it turns unstructured sources into a structured, provenance-aware, machine-navigable context package LLMs can navigate, retrieve from, and reason over. Operated via named workflows.
 
 ## Read this first
 
-**`AGENTS.md`** at the project root is the canonical schema. It defines the three-layer model (raw / wiki / schema), page conventions, link convention, raw source frontmatter spec, and the five workflows. Read it before doing any work in this directory.
+**`AGENTS.md`** at the project root is the canonical schema. It defines the three-layer model (raw / wiki / schema), page conventions, link convention, raw source frontmatter spec, and the workflows. Read it before doing any work in this directory.
 
 ## Three-layer model
 

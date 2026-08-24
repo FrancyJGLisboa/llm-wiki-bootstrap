@@ -34,7 +34,7 @@ views byte-identically.
 
 ## Read first
 
-**Run from the wiki root** — the directory holding `raw/`, `wiki/`, `AGENTS.md`, and `log.md`. If `raw/` and `wiki/` are absent you are not in a wiki: tell the user to run `/ctx-init` first (or `cd` into their wiki), then stop.
+**Run from the package root** — the directory holding `raw/`, the compiled root, `AGENTS.md`, and `log.md`. The compiled root is `context/`; `wiki/` is a compatibility symlink to it and may be absent (the installer cannot always create it on Windows), so treat `context/` as authoritative and `wiki/` as optional. If `raw/` and `context/` are both absent you are not in a package: tell the user to run `/ctx-init` first (or `cd` into their workspace), then stop.
 
 Read `wiki/index.md` (what already exists) and `log.md` (recent activity). You don't need to re-read all of `AGENTS.md` — the page template you'll write is inlined below; consult `AGENTS.md` → "Wiki page convention" only for edge cases.
 

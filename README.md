@@ -20,27 +20,83 @@ The repository includes one reusable specialization: [`profiles/client-decision/
 
 ## Start here
 
-The friendliest path is the local **Context Workspace** extension for VS Code. It works with the GitHub Copilot subscription already available in VS Code; it stores no credentials, sends no telemetry, and does not call a separate model API.
+**Prerequisites:** `git`, `bash`, `awk`, `openssl`, and `python3` on PATH under that
+exact name, plus an AI coding agent pointed at the folder — Claude Code, or VS Code
+with GitHub Copilot. Nothing here compiles evidence on its own; the compile step is a
+prompt the agent runs. There is no API key of its own and no telemetry.
 
 ```bash
-./scripts/package-vscode-extension.sh
-code --install-extension dist/context-workspace-0.1.0.vsix
+git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
+./bootstrap/scripts/create-context-compiler.sh ./my-context
+cd ./my-context
+./scripts/preflight.sh          # must print "Ready." before you go further
 ```
 
-Then use the Context Workspace sidebar:
+Keep the `bootstrap` clone if you want to generate more compilers later — though a
+generated compiler ships the installer too, so it can create the next one itself.
 
-1. **Create Compiler** — choose a local folder and optional profile.
-2. **Create Specialization** — if the included profile does not fit, describe your work in ordinary language and review behavioral examples.
-3. **Add Evidence** — choose files or folders, drop them on the sidebar, paste text, paste one or many links, or put files in `EVIDENCE-INBOX/`.
-4. Ask for the outcome: **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
+### See it work in two minutes, before supplying your own material
 
-No daily Git commands are required. After a successful validated update, the compiler creates a scoped local checkpoint containing only compiler-owned paths. It never pushes automatically.
+A complete synthetic corpus ships with every generated compiler, so you can reach a
+real answer before you have any evidence of your own:
 
-Without the extension, open [`AI-WORKSPACE.code-workspace`](AI-WORKSPACE.code-workspace) and tell the AI:
+```bash
+./scripts/stage-northstar.sh .
+```
+
+Open `AI-WORKSPACE.code-workspace` and ask the AI:
+
+```text
+Update my context, then prepare a brief for Northstar Feeds.
+```
+
+Then, to see the rest of the surface:
+
+```text
+What changed since June 1?
+Why is BRL/USD 5.70 the current assumption?
+What did we believe on June 30?
+Show me only what needs review.
+```
+
+Northstar Feeds is fictional — every person, number, and event is synthetic
+([`benchmarks/northstar/README.md`](benchmarks/northstar/README.md)).
+
+### Then your own work
+
+Open the workspace and tell the AI:
 
 > Add this evidence and update my context.
 
-[`START-HERE.md`](START-HERE.md) is the one-page operating guide. [`ADVANCED.md`](ADVANCED.md) exposes compiler internals only when you want them.
+Provide a path, folder, pasted text, URL, or files already placed in
+`EVIDENCE-INBOX/`. Then ask for the outcome: **Prepare Brief**, **Show Changes**,
+**Explain Why**, **Historical State**, or **Review Exceptions**.
+
+No daily Git commands are required. After a successful validated update, the compiler
+creates a scoped local checkpoint containing only compiler-owned paths. It never pushes
+automatically. Checkpoints stay silent until `git config user.name` and
+`git config user.email` are set in the generated repo.
+
+You do not need `AGENTS.md` for any of the above — it is the canonical schema, written
+for the AI tool rather than for you. [`START-HERE.md`](START-HERE.md) is the one-page
+operating guide; [`ADVANCED.md`](ADVANCED.md) exposes compiler internals only when you
+want them; [`docs/QUICKSTART.md`](docs/QUICKSTART.md) is this same path in more detail.
+
+### Optional — the Context Workspace VS Code extension
+
+A local sidebar for the same actions. It works with the GitHub Copilot subscription
+already available in VS Code; it stores no credentials, sends no telemetry, and does
+not call a separate model API. **It is not on the Marketplace — you build the VSIX
+yourself, which additionally needs Node 20+, npm, network access, and the `code` CLI:**
+
+```bash
+./scripts/package-vscode-extension.sh                          # in the bootstrap clone
+code --install-extension dist/context-workspace-0.1.0.vsix
+```
+
+Then use the sidebar: **Create Compiler** → **Create Specialization** (only if the
+included profile does not fit) → **Add Evidence** → ask for the outcome. See
+[`docs/VSCODE-EXTENSION.md`](docs/VSCODE-EXTENSION.md).
 
 ## Evidence can arrive in any file
 
@@ -64,7 +120,7 @@ automatic local checkpoint
 brief / delta / why / history / review
 ```
 
-Before a meeting, add the latest evidence and ask: **“Prepare me for the Northstar meeting.”** After new evidence arrives, ask: **“Add this call and show what changed for Northstar since August 1.”**
+Before a meeting, add the latest evidence and ask: **“Prepare me for the Northstar meeting.”** After new evidence arrives, ask: **“Add this call and show what changed for Northstar since <your date>.”**
 
 A decision-context delta separates meaningful change:
 
@@ -180,12 +236,16 @@ Historical claims are not averaged away. Relations such as `updates`, `supersede
 The synthetic Northstar Feeds corpus and independent gold answers exercise provenance, current and historical state, supersession, contradiction, decisions, assumptions, speaker attribution, absence refusal, multi-hop reasoning, and decision-context reconstruction.
 
 ```bash
-./scripts/run-client-decision-demo.sh
-./scripts/run-client-decision-benchmark.sh
-./scripts/vscode-extension-regression.sh
+./scripts/create-context-compiler.sh /tmp/northstar-compiler   # generate a clean compiler
+./scripts/stage-northstar.sh /tmp/northstar-compiler           # stage the synthetic corpus
+./scripts/run-northstar-benchmark.sh instrument                # keyless BM25 retrieval instrument
+./scripts/vscode-extension-regression.sh                       # extension surface (needs Node + npm)
 ```
 
-`smoke-all.sh` — 48 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R44<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
+Open `/tmp/northstar-compiler/AI-WORKSPACE.code-workspace` and ask for a brief. The
+first three commands need no API key and no LLM.
+
+`smoke-all.sh` — 49 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R45<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
 
 ## Boundaries
 
@@ -196,8 +256,8 @@ This phase does not build a CRM, SaaS dashboard, vector-database rewrite, Outloo
 - [`docs/QUICKSTART.md`](docs/QUICKSTART.md) — current first-use path.
 - [`docs/VSCODE-EXTENSION.md`](docs/VSCODE-EXTENSION.md) — local and enterprise VSIX installation.
 - [`docs/CONTEXT-COMPILER.md`](docs/CONTEXT-COMPILER.md) — category and architecture.
-- [`docs/CLIENT-DECISION-PROFILE.md`](docs/CLIENT-DECISION-PROFILE.md) — specialization contract.
-- [`docs/BENCHMARK.md`](docs/BENCHMARK.md) — benchmark methodology and results.
+- [`profiles/client-decision/COMPILATION.md`](profiles/client-decision/COMPILATION.md) — specialization contract.
+- [`benchmarks/northstar/README.md`](benchmarks/northstar/README.md) — benchmark corpus and methodology.
 - [`ADVANCED.md`](ADVANCED.md) — implementation controls.
 
 ## License

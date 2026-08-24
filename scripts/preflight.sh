@@ -80,6 +80,23 @@ else fail "openssl" "missing — required by scripts/body-hash.sh (install: ${IN
 if have git; then ok "git" "present"
 else fail "git" "missing — required (install: ${INSTALL_CMD} git)"; fi
 
+# python3 — HARD. Every intake and compile path shells out to it by that exact
+# name: /ctx-start runs scripts/inbox.py, /ctx-add runs scripts/add-evidence.py,
+# /ctx-compile runs profile-resolve.py + claim-validate.py, use-profile.sh runs
+# profile-resolve.py, and all seven /client-* commands resolve the profile the
+# same way. A `python` that is not also `python3` does not satisfy them, so this
+# checks the name the scripts actually invoke rather than any interpreter.
+if have python3; then
+  PYBIN="$(command -v python3)"
+  ok "python3" "present"
+elif have python; then
+  PYBIN="$(command -v python)"
+  fail "python3" "found \`python\` but not \`python3\` — the compiler invokes \`python3\` by name (scripts/inbox.py, add-evidence.py, profile-resolve.py, claim-validate.py). Expose it as python3 (install: ${INSTALL_CMD} python3, or symlink it onto PATH)"
+else
+  PYBIN=""
+  fail "python3" "missing — required by /ctx-start, /ctx-add, /ctx-compile, use-profile.sh, and every /client-* command (install: ${INSTALL_CMD} python3)"
+fi
+
 # raw/ permissions
 if [ -d "$REPO_ROOT/raw" ]; then
   if [ -w "$REPO_ROOT/raw" ]; then ok "raw/ write" "OK"
@@ -115,13 +132,9 @@ else warn "xlsx2csv" "missing — XLSX will try openpyxl, then fail (install: pi
 if have yt-dlp; then ok "yt-dlp" "present — YouTube transcript handler (keep it updated; YouTube changes break old versions)"; have_ytdlp=yes
 else warn "yt-dlp" "missing — YouTube URLs will produce extraction_status: failed sidecars (install: ${INSTALL_CMD} yt-dlp, or pip install yt-dlp)"; fi
 
-# python interpreter + modules. Windows' python.org build ships `python`, not
-# `python3`; accept either. Python is optional for the core text loop
-# (ingest/query/lint) but required for the synthesis dashboards, the
-# knowledge-graph.json, /ctx-visualize, and the DOCX/XLSX extract fallbacks.
-PYBIN="$(command -v python3 || command -v python || true)"
+# Optional python modules. The interpreter itself is a hard requirement checked
+# above; these two only widen format coverage for the DOCX/XLSX extract paths.
 if [ -n "$PYBIN" ]; then
-  ok "python" "present (${PYBIN##*/})"
   if "$PYBIN" -c "import docx" >/dev/null 2>&1; then
     ok "python-docx" "present — DOCX fallback ready"; have_python_docx=yes
   else
@@ -132,8 +145,6 @@ if [ -n "$PYBIN" ]; then
   else
     warn "openpyxl" "missing (install: pip install openpyxl)"
   fi
-else
-  warn "python" "missing — synthesis dashboards, knowledge-graph.json, /ctx-visualize, and DOCX/XLSX fallbacks unavailable; the text loop still works (install: ${INSTALL_CMD} python3)"
 fi
 
 # npx — only needed for the optional MCP server (scripts/mcp-server.sh).
@@ -155,7 +166,7 @@ echo
 
 # Exit on hard failures before printing the summary.
 if [ "$hard_failures" -gt 0 ]; then
-  printf "%sNot ready.%s %d hard requirement(s) missing. Install them before running any /wiki-* command.\n" \
+  printf "%sNot ready.%s %d hard requirement(s) missing. Install them before running any /ctx-* command.\n" \
     "$RED" "$RESET" "$hard_failures"
   exit 1
 fi

@@ -4,9 +4,9 @@ This project is a **context compiler**: it turns unstructured sources into a str
 
 This project's canonical schema is **`AGENTS.md`** in the same directory. Modern Claude Code loads `AGENTS.md` automatically; this file exists for older Claude Code versions that only load `CLAUDE.md`.
 
-**Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the five slash commands.
+**Read `AGENTS.md`** for all conventions: three-layer model (raw / wiki / schema), page template, link convention `[[kebab-case]]`, raw source frontmatter spec, and the slash commands.
 
-The five slash commands live at `.claude/commands/ctx-*.md`:
+The slash commands live at `.claude/commands/ctx-*.md`:
 
 - `/ctx-init` — scaffold structure (idempotent)
 - `/ctx-extract <source>` — acquire URL / file / image into `raw/`

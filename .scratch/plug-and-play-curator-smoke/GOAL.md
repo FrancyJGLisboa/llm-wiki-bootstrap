@@ -101,7 +101,7 @@ All new scripts must start with `#!/usr/bin/env bash` and `set -euo pipefail`. A
      Exit 0 only if both claude invocations exited 0
 ```
 
-**Exact `claude` CLI invocation:** the local install is at `/Users/francylisboacharuto/.local/bin/claude` v2.1.150. Use `claude -p '<prompt>'` (printer / non-interactive mode). The `-p`/`--print` flag is documented in `claude --help`. The prompt string IS the slash command exactly as a user would type it (e.g., `'/wiki-ingest raw/smoke-source.md'`). The prompt body those slash commands resolve to lives in `.claude/commands/wiki-ingest.md` and `.claude/commands/wiki-query.md` — modify those files (within K=3) if C2/C3/C4 misbehave.
+**Exact `claude` CLI invocation:** the local install is at `/Users/<user>/.local/bin/claude` v2.1.150. Use `claude -p '<prompt>'` (printer / non-interactive mode). The `-p`/`--print` flag is documented in `claude --help`. The prompt string IS the slash command exactly as a user would type it (e.g., `'/wiki-ingest raw/smoke-source.md'`). The prompt body those slash commands resolve to lives in `.claude/commands/wiki-ingest.md` and `.claude/commands/wiki-query.md` — modify those files (within K=3) if C2/C3/C4 misbehave.
 
 ## §6 Iteration loop (per-step cadence)
 

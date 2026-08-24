@@ -1,5 +1,10 @@
 # Deterministic Gates
 
+> Gate-authoring doctrine. Examples cite the bootstrap repository's own gates and
+> CI wiring (`smoke-all.sh`, `corpus-health.py`); those are not shipped into a
+> generated compiler. The rules hold either way — wire your gates into whatever
+> runs your checks.
+
 Doctrine for making coding agents produce reliable deterministic gates.
 Project-agnostic; this copy is the one context-compiler-bootstrap agents follow.
 

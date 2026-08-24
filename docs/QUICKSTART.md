@@ -1,48 +1,72 @@
 # Quickstart
 
-The first useful action is **Add Evidence**. You do not need to learn extraction, compilation, or Git before using the workspace.
+One path. Follow it top to bottom; it is the same path `README.md`, `START-HERE.md`,
+and a generated workspace's own README describe.
 
-## VS Code + GitHub Copilot
+## 1. Generate a compiler
 
-1. Build and install the local extension:
-
-   ```bash
-   ./scripts/package-vscode-extension.sh
-   code --install-extension dist/context-workspace-0.1.0.vsix
-   ```
-
-2. Open the **Context Workspace** sidebar and choose **Create Compiler**, or open an existing generated compiler.
-3. Choose the included specialization, or select **Create Specialization** and describe your work in ordinary language. Review and approve the example behavior.
-4. Choose **Add Evidence**. Select files or folders, drop them on the sidebar, paste text, paste one or many links, or use `EVIDENCE-INBOX/`.
-5. Choose **Prepare Brief**, **Show Changes**, **Explain Why**, **Historical State**, or **Review Exceptions**.
-
-The extension delegates reasoning to AI chat already available in VS Code. It does not request a second API key or upload evidence by itself.
-
-## AI chat without the extension
+**Prerequisites:** `git`, `bash`, `awk`, `openssl`, and `python3` on PATH under that
+exact name, plus an AI coding agent — Claude Code, or VS Code with GitHub Copilot.
+Nothing here compiles evidence on its own; the compile step is a prompt the agent runs.
+No API key of its own, no telemetry.
 
 ```bash
 git clone https://github.com/FrancyJGLisboa/context-compiler-bootstrap bootstrap
 ./bootstrap/scripts/create-context-compiler.sh ./my-context
-code ./my-context/AI-WORKSPACE.code-workspace
+cd ./my-context
+./scripts/preflight.sh          # must print "Ready." before you go further
 ```
 
-Tell the agent:
+## 2. See it work, before supplying anything of your own
+
+```bash
+./scripts/stage-northstar.sh .
+```
+
+Open `AI-WORKSPACE.code-workspace` and ask the AI:
+
+```text
+Update my context, then prepare a brief for Northstar Feeds.
+```
+
+Then, to see the rest of the surface:
+
+```text
+What changed since June 1?
+Why is BRL/USD 5.70 the current assumption?
+What did we believe on June 30?
+Show me only what needs review.
+```
+
+Northstar Feeds is fictional — every person, number, and event is synthetic
+([`../benchmarks/northstar/README.md`](../benchmarks/northstar/README.md)).
+
+## 3. Your own work
+
+Add evidence however is easiest — choose files or folders, paste text, paste one or
+many links, or drop files into `EVIDENCE-INBOX/` — then say:
 
 > Add this evidence and update my context.
 
-Provide a path, folder, pasted text, URL, or files already placed in `EVIDENCE-INBOX/`. Then ask for the work product:
+Then ask for the work product: **Prepare me for the Northstar meeting**, **What changed
+since <your date>?**, **Why do we think X?**, **What did we believe on <your date>?**, **Show
+me only what needs my judgment.** Results are saved under `BRIEFS/` and `REVIEWS/`.
 
-> Prepare me for the Northstar meeting.
+The stable workflow behind those sentences is `/ctx-add`; `/ctx-extract` and
+`/ctx-compile` are advanced internal controls. You do not need `AGENTS.md` for any of
+the above — it is the schema, written for the AI tool.
 
-The stable workflow behind that sentence is `/ctx-add`; `/ctx-extract` and `/ctx-compile` are advanced internal controls.
+## 4. Specializations
 
-To teach the workspace a new domain, say:
+One ships: `client-decision` (activated for you by step 2). To teach the workspace a
+different kind of work, say:
 
-> Create a specialization for tracking project decisions, alternatives, owners, constraints, supersession, and unresolved risks.
+> Create a specialization for tracking project decisions, alternatives, owners,
+> constraints, supersession, and unresolved risks.
 
 The agent asks at most five domain questions, builds and tests the profile, previews
-observable results, and requests explicit approval before activation. It never asks the
-operator to edit schemas, run tests, or use Git.
+observable results, and requests explicit approval before activation. It never asks you
+to edit schemas, run tests, or use Git.
 
 ## What happens automatically
 
@@ -52,36 +76,42 @@ operator to edit schemas, run tests, or use Git.
 4. Provenance, temporal state, and profile rules are validated.
 5. A scoped local Git checkpoint is created for compiler-owned paths only.
 
-No automatic push occurs. A failed checkpoint never discards successfully compiled local output.
+No automatic push occurs. A failed checkpoint never discards successfully compiled
+local output. Checkpoints stay silent until `git config user.name` and
+`git config user.email` are set in the generated repo.
 
-## Try the Northstar demo
-
-```bash
-./scripts/create-context-compiler.sh /tmp/northstar-compiler
-./scripts/stage-northstar.sh /tmp/northstar-compiler
-code /tmp/northstar-compiler/AI-WORKSPACE.code-workspace
-```
-
-Ask the AI:
-
-```text
-Update my context from the evidence inbox.
-Prepare a brief for Northstar Feeds.
-What changed since June 1?
-Why is BRL/USD 5.70 the current assumption?
-What did we believe on June 30?
-Show me only what needs review.
-```
-
-## Windows
-
-Install [Git for Windows](https://git-scm.com/download/win) for Git Bash, `git`, `bash`, `awk`, and `openssl`. Install Python 3 for synthesis and verification. Open the generated `.code-workspace` in VS Code; compiler scripts run through Git Bash.
-
-## Verify installation
+## Verify an installation
 
 ```bash
 ./scripts/preflight.sh
-./scripts/vscode-extension-regression.sh
+./scripts/verify-guided-workspace.sh
 ```
 
-For commands, automation, packaging, visualization, and MCP access, open [`../ADVANCED.md`](../ADVANCED.md).
+Both are also on the VS Code Command Palette under **Tasks: Run Task**.
+
+## Windows
+
+Install [Git for Windows](https://git-scm.com/download/win) for Git Bash, `git`,
+`bash`, `awk`, and `openssl`. Install Python 3 and make sure it is on PATH as `python3`
+— the compiler invokes that exact name. Open the generated `.code-workspace` in VS
+Code; compiler scripts run through Git Bash. The `wiki -> context` compatibility
+symlink may not be created on Windows; use `context/` directly if `wiki/` is missing.
+
+## Optional — the Context Workspace VS Code extension
+
+A local sidebar for the same actions, using the GitHub Copilot subscription already in
+VS Code. It stores no credentials, sends no telemetry, and does not call a separate
+model API. **It is not on the Marketplace — you build the VSIX yourself, which
+additionally needs Node 20+, npm, network access, and the `code` CLI:**
+
+```bash
+./scripts/package-vscode-extension.sh                          # in the bootstrap clone
+code --install-extension dist/context-workspace-0.1.0.vsix
+```
+
+See [`VSCODE-EXTENSION.md`](VSCODE-EXTENSION.md).
+
+## Going further
+
+For automation, packaging, visualization, and MCP access, open
+[`../ADVANCED.md`](../ADVANCED.md).

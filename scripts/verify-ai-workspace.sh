@@ -31,7 +31,12 @@ start = (root / "START-HERE.md").read_text()
 for phrase in (
     "Add this evidence and update my context",
     "Prepare me for the Northstar meeting",
-    "What changed since August 1",
+    # Was "What changed since August 1". Pinned a literal date, which collided
+    # with the demo corpus's own June dates and made the onboarding eval's C2
+    # ("one unambiguous start-here") fail on contradictory example queries. The
+    # check's intent is that the guide shows a DELTA-shaped request, not which
+    # date it names — START-HERE now says "since <your date>".
+    "What changed since",
     "Show me only what needs my judgment",
     "UNKNOWN",
 ):

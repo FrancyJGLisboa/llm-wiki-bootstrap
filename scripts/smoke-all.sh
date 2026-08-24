@@ -578,6 +578,21 @@ else
   record_fail "R44 gate-citation-floor.sh exits non-zero — a citation names a passage that does not exist, which is the one failure this package's trustworthiness rests on"
 fi
 
+# R45 — a path named in prose exists, and a script named in a shipped doc ships.
+#
+# Absent until 2026-08-24. Its absence shipped four dead references on the exact
+# surface a stranger meets first: README.md advertised two demo scripts that
+# never existed, linked two docs that were never written, and docs/QUICKSTART.md
+# — which SHIPS — opened with a command absent from the installer manifest, so
+# it was guaranteed to fail in every generated compiler while reading green from
+# the dev repo, where the script is present. gate-doc-claims.sh already stopped a
+# NUMBER in prose from rotting; nothing did the same for a PATH.
+if "$SCRIPT_DIR/gate-doc-paths.sh" >/dev/null 2>&1; then
+  ok "R45 gate-doc-paths.sh exits 0 (every path named in a doc resolves; shipped docs name only shipped scripts)"
+else
+  record_fail "R45 gate-doc-paths.sh exits non-zero — a doc names a path that does not exist, or a shipped doc names a script that does not ship"
+fi
+
 # ──── Decision-context regressions (enforced in this repo) ────
 # These verifiers are additive to the generic suite, keyless, and never execute
 # a model. They are enforced here because this repository now ships the profile.
