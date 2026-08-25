@@ -1,7 +1,12 @@
 # Your AI context workspace
 
+A context compiler turns a pile of documents into a set of dated, sourced statements — so you can ask what is true now, what was true then, and how we know. Documents record events; they do not hold a view — so when someone asks "why do we
+think that?", the answer normally gets rebuilt by hand from twenty files. This workspace
+does that work once, as each source arrives.
+
 Work here as if you were collaborating with a research assistant. You do not need to
-learn the files behind it or memorize commands.
+learn the files behind it or memorize commands. If you want the longer explanation
+first, read [`docs/WHAT-IS-THIS.md`](docs/WHAT-IS-THIS.md).
 
 If the optional **Context Workspace** VS Code extension is installed, use its sidebar
 for every action below. Without it, the same workflow works directly through AI chat.

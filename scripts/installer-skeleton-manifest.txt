@@ -156,6 +156,8 @@ templates/QUICKSTART-fresh.md
 templates/baseline-fresh.tsv
 templates/gate-fixtures-fresh.tsv
 templates/wiki-settings.json
+docs/WHAT-IS-THIS.md
+docs/CONTEXT-COMPILER.md
 docs/QUICKSTART.md
 docs/SELLING.md
 docs/EXPLAIN.md

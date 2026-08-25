@@ -2,7 +2,18 @@
 
 [![CI](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml/badge.svg)](https://github.com/FrancyJGLisboa/context-compiler-bootstrap/actions/workflows/ci.yml) [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**An AI-workspace starter kit for creating and operating specialized, evidence-grounded context compilers.**
+**A context compiler turns a pile of documents into a set of dated, sourced statements — so you can ask what is true now, what was true then, and how we know.**
+
+This repository is the kit. What it produces is a context compiler of your own.
+
+**Why you would want one.** Documents record events; they do not hold a view. When
+someone asks "why do we think that?", the answer is spread across twenty files and has
+changed over time — so the view gets rebuilt by hand, slightly differently, every time.
+Search answers "where is this mentioned?", not "what do we believe now, and what
+replaced what?", and it starts from nothing on every question. A compiler does the work
+once, when each source arrives, because sources arrive far less often than questions.
+
+[**What this is, in plain language →**](docs/WHAT-IS-THIS.md)
 
 ```text
 context-compiler-bootstrap
@@ -14,7 +25,7 @@ specialized context compiler
 usable context package
 ```
 
-It is a factory, not the final compiler for every domain. A generated compiler turns changing evidence into current state, history, relationships, provenance, and explicit uncertainty. People consume briefs, semantic deltas, decisions, evidence chains, historical views, and review exceptions—not raw graph data.
+The kit is not the final compiler for every domain. A generated compiler turns changing evidence into current state, history, relationships, provenance (which exact passage each statement rests on), and explicit uncertainty. People consume briefs, semantic deltas (what changed in meaning, not which bytes changed), decisions, evidence chains, historical views, and review exceptions—not raw graph data.
 
 The repository includes one reusable specialization: [`profiles/client-decision/`](profiles/client-decision/). Without an activated profile, the compiler remains generic.
 
@@ -256,7 +267,7 @@ The synthetic Northstar Feeds corpus and independent gold answers exercise prove
 Open `/tmp/northstar-compiler/AI-WORKSPACE.code-workspace` and ask for a brief. The
 first three commands need no API key and no LLM.
 
-`smoke-all.sh` — 50 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R46<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
+`smoke-all.sh` — 51 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R47<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
 
 ## Boundaries
 

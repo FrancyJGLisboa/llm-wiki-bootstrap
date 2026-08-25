@@ -634,6 +634,24 @@ else
 fi
 rm -f "$_gd"
 
+# R47 — the project describes itself the same way everywhere.
+#
+# Absent until 2026-08-25, and its absence let SIX competing framings coexist:
+# context compiler, build system, factory, AI workspace, second brain, LLM-wiki
+# knowledge base. docs/SELLING.md was titled "the productized second brain" while
+# docs/CONTEXT-COMPILER.md carried a section headed "Not a second brain", and
+# AGENTS.md contradicted itself two sentences apart. Prose that disagrees with
+# prose produces no red — the same gap gate-doc-claims.sh closed for numbers and
+# gate-doc-paths.sh for paths.
+_gd="$(mktemp "${TMPDIR:-/tmp}/smoke-gate.XXXXXX")"
+if "$SCRIPT_DIR/gate-definition-consistent.sh" >"$_gd" 2>&1; then
+  ok "R47 gate-definition-consistent.sh exits 0 (one definition, carried by every primary surface)"
+else
+  record_fail "R47 gate-definition-consistent.sh exits non-zero — a surface dropped the canonical definition, or reintroduced a denied label"
+  gate_diag "$_gd" "gate-definition-consistent.sh"
+fi
+rm -f "$_gd"
+
 # ──── Decision-context regressions (enforced in this repo) ────
 # These verifiers are additive to the generic suite, keyless, and never execute
 # a model. They are enforced here because this repository now ships the profile.

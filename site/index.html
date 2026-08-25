@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>context-compiler-bootstrap — build specialized context compilers</title>
-  <meta name="description" content="An LLM-assisted starter kit for creating and operating specialized, evidence-grounded context compilers.">
+  <meta name="description" content="A context compiler turns a pile of documents into a set of dated, sourced statements — so you can ask what is true now, what was true then, and how we know. This is the kit for building one.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@700&family=IBM+Plex+Sans:wght@400;600&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
@@ -22,9 +22,10 @@
   <section class="wrap hero">
     <div>
       <h1>Build the context compiler your work&nbsp;needs.</h1>
-      <p class="lede"><strong>context-compiler-bootstrap is a starter kit, not the final compiler for every domain.</strong> Use an AI-enabled workspace to create a specialized compiler. Then work through ordinary requests while it turns changing evidence into current state, history, provenance, and explicit uncertainty.</p>
+      <p class="lede"><strong>A context compiler turns a pile of documents into a set of dated, sourced statements — so you can ask what is true now, what was true then, and how we know.</strong> This repository is the kit; what it produces is a compiler of your own. Documents record events, they do not hold a view &mdash; so the answer to &ldquo;why do we think that?&rdquo; normally gets rebuilt by hand, every time. A compiler does that work once, as each source arrives.</p>
       <div class="actions">
         <a class="btn-fill" href="#start">Create a compiler</a>
+        <a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap/blob/main/docs/WHAT-IS-THIS.md">What this is, in plain language →</a>
         <a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap">View on GitHub →</a>
       </div>
     </div>
@@ -132,7 +133,7 @@ code --install-extension dist/context-workspace-0.1.0.vsix</pre>
     <p class="stat"><b>5</b><span>core slash commands — the generic lifecycle; 22 in all</span></p>
     <p class="stat"><b>495</b><span>pages in the measured scale fixture</span></p>
     <p class="stat"><b>10</b><span>binary retrieval checks, no LLM grader</span></p>
-    <p class="stat"><b>50</b><span>deterministic smoke checks, wired into CI</span></p>
+    <p class="stat"><b>51</b><span>deterministic smoke checks, wired into CI</span></p>
   </section>
 
   <section class="wrap start" id="start">

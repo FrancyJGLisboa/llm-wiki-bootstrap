@@ -2,6 +2,64 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-25 — One definition, one linear explanation, and a gate for both
+
+An audit of every explanation surface found **six competing framings** of what this
+project is — context compiler, build system, factory, AI workspace, second brain,
+LLM-wiki knowledge base — two of them contradictory. `docs/SELLING.md` was titled
+"the productized second brain" while `docs/CONTEXT-COMPILER.md` carries a section
+headed "Not a second brain". `AGENTS.md:27` said compiler and `AGENTS.md:29` said
+knowledge base, two sentences apart. Nothing was broken: prose that disagrees with
+prose produces no red.
+
+Worse, the three surfaces a newcomer meets first — `README.md`, `START-HERE.md`,
+`site/index.html` — contained **no why at all**. README reached `git clone` by line 29
+without stating a problem. The genuine why-sentences existed but each appeared exactly
+once, buried: `docs/CONTEXT-COMPILER.md:368` ("sources arrive far less often than
+questions"), `:365` (the RAG contrast, at line 365 of 478), `docs/EXPLAIN.md:22-25`.
+
+- **`docs/WHAT-IS-THIS.md`** — one canonical linear explanation for a non-specialist,
+  146 lines, each step depending on the last: the problem, why filing and search fall
+  short, the move, the unit, what it buys you, why "compiler", what it is not. It ships,
+  so a generated compiler carries it. `docs/CONTEXT-COMPILER.md` ships alongside it now,
+  because the new doc links it and that link must resolve in a generated compiler.
+- **Four representations**, each grounded in a tested artifact rather than invented for
+  a pitch: the **five questions every statement carries** (from the real claim schema —
+  what, how we know, when, how sure, what it replaced); the **capability ladder** drawn
+  from the twelve independently-scored cases in `benchmarks/northstar/gold/cases.json`;
+  **one question answered three ways** (folder, search, compiler); and the **cost line**
+  that justifies the architecture.
+- **Six framings reduced to one**, carried verbatim by all five primary surfaces.
+  `docs/SELLING.md` retitled, killing the contradiction. `AGENTS.md` no longer defines
+  itself twice. `README.md:188` "How the factory works underneath" was deliberately
+  kept — the site CTA anchors to it, and there "factory" names a mechanism, not the
+  product's identity.
+
+**New gate R47 — `DEFINITION-CONSISTENT`.** The canonical sentence must appear verbatim
+on every primary surface, and no tracked file may call the product a "second brain"
+except the two that explicitly deny the label. Negative controls both ways: dropping the
+sentence from README fires one violation; reintroducing the label fires one. `log.md` and
+`LEARNINGS.md` are exempt as dated history, the same carve-out `gate-doc-paths.sh` makes
+and for the same reason — rewriting an accurate record of what the project used to call
+itself would be falsifying it.
+
+**On whether this made the system easier to use: it did not, and the measurement says so.**
+`eval-onboarding.sh` scored 3/5 before and 3/5 after, failing the same pair (C3, C4). The
+honest reading is that this work targeted a check with no headroom — C5 ("at most two new
+concepts to first value") was already green in all five runs of this session. C4 fires when
+the agent opens `AGENTS.md`, which all four shipped shims instruct it to do and which
+`/ctx-compile` genuinely needs; it is structurally unpassable without degrading
+compilation. Tool actions also rose (32 → 31 → 45 → 35 → 76) — one data point, direction
+noted, cause unseparated between variance and longer docs. The docs are more correct and
+now mutually consistent; measured ease is unchanged. The next useful work is fixing the
+instrument, not writing more prose: C4 measures whether an *agent* read the schema, not
+whether a *human* could start.
+
+Verification: 66/0 under both `LC_ALL=C` and `C.UTF-8`, identical, "All 61 checks green"
+in both logs; ratchet clean; fixtures discriminate at 20; reachability 57 oracles;
+installer verifier 10/10; `shellcheck -S error` clean; `verify-ai-workspace`,
+`verify-self-service-profile` and `verify-site-claims` all green after the surface edits.
+
 ## 2026-08-24 — CI tells the truth, and the suite is green
 
 Two defects, one of which had been hiding the other.

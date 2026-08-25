@@ -1,5 +1,9 @@
 # The context compiler
 
+> Looking for the short version? [`WHAT-IS-THIS.md`](WHAT-IS-THIS.md) explains this
+> in plain language, for anyone. This file is the full argument, written for a
+> reader who wants to know where the compiler analogy holds and where it breaks.
+
 > **A context compiler transforms unstructured source material into a
 > structured, provenance-aware, machine-navigable context package that LLMs can
 > navigate, retrieve from, and reason over.**

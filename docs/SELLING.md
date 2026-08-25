@@ -1,4 +1,4 @@
-# Selling a wiki — the productized second brain
+# Selling a compiled context package
 
 A wiki built here is a folder of pure CommonMark with provenance. That makes it
 a *transferable asset*: you can package it, version it, and sell it to someone
