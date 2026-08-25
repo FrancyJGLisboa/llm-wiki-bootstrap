@@ -86,6 +86,11 @@ done
 # The label the essay explicitly denies. Three exemptions, each for a reason:
 #   - the two docs that DENY the label are supposed to contain it;
 #   - this gate names it to search for it;
+#   - tests/gates/ fixtures deliberately CONTAIN the violation, so scanning them
+#     makes the gate fire on its own test data. This was not caught locally
+#     because the fixtures were untracked when the gate was first run and the
+#     scan prefers `git ls-files` — it fired the moment they were committed,
+#     exactly as templates/QUICKSTART-fresh.md did to gate-doc-paths.sh;
 #   - log.md and LEARNINGS.md are dated history, and rewriting an accurate record
 #     of what the project used to call itself would be falsifying it. Same carve-out
 #     scripts/gate-doc-paths.sh makes, for the same reason.
@@ -95,6 +100,7 @@ allowed() {
     docs/CONTEXT-COMPILER.md|docs/WHAT-IS-THIS.md) return 0 ;;
     scripts/gate-definition-consistent.sh)         return 0 ;;
     log.md|LEARNINGS.md)                           return 0 ;;
+    tests/gates/*)                                 return 0 ;;
   esac
   return 1
 }

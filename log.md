@@ -2,6 +2,49 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-25 — The reachability gate was failing on fork pressure, not logic
+
+CI went red on `affef57` with R33 (`gate-reachable`), R36 (`gate-ratchet`, purely a
+consequence) and R47 (`gate-definition-consistent`). Both were legible immediately
+because `gate_diag` now replays a failed gate's own output — the change that landed
+the day before precisely so this would not require guessing.
+
+**R47 fired on its own test fixture.** `tests/gates/definition-consistent/dirty/docs/
+SELLING.md` deliberately contains "second brain"; the scan prefers `git ls-files`, the
+fixtures were untracked when the gate was first run, so it passed locally and broke the
+moment they were committed. The identical trap `templates/QUICKSTART-fresh.md` set for
+`gate-doc-paths.sh` a day earlier. `tests/gates/*` is now exempt, with the reason
+recorded in the gate header.
+
+**R33 was never the locale bug it was assumed to be.** It failed on *both* legs this
+time. The sixteen oracles it called unreachable are all wired correctly. The cause was
+the fixed-point loop: one `grep` per (candidate x reached-file) pair, ~n^2 per pass over
+~150 scripts — 86 seconds locally and tens of thousands of forks. A `grep` that fails
+transiently under CI load is indistinguishable from "basename not present", so it marks
+a correctly wired oracle unreachable. That explains every observation that made no sense
+before: green locally and in a clean clone, intermittent on CI, and **a different set of
+oracles each run** (three on the C leg, two on C.UTF-8, none reproducible). Adding one
+script in `affef57` made it worse by widening the loop.
+
+Collapsed to a single pattern-file `grep` per pass: build the comment-stripped corpus of
+everything reached, collect every pending basename into one pattern file, and match once.
+**Same verdict — 57 oracles, 0 standalone — verified by running the old and new
+implementations back to back. 86s to 15s.** Fixtures still discriminate, the
+comment-strip still holds (a script named only in a comment stays an orphan), `--count`
+unchanged.
+
+Honest about confidence: fork pressure *fits* all the evidence but was not reproduced on
+Linux, and no Docker daemon was available to try. What is certain is that the fork storm
+is gone and the verdict is identical, so the failure mode cannot recur whichever theory
+was right.
+
+Also corrected: a claim in this session that `smoke-all.sh` contained NUL bytes. That was
+a shell-quoting artifact — `$'\0'` collapses to an empty pattern that matches every
+line. The file has zero NULs and is valid UTF-8; the binary-file theory was wrong.
+
+Verification: 66/0 under both `LC_ALL=C` and `C.UTF-8`, identical; ratchet clean at 15
+gates; fixtures discriminate at 20; `shellcheck -S error` clean.
+
 ## 2026-08-25 — One definition, one linear explanation, and a gate for both
 
 An audit of every explanation surface found **six competing framings** of what this

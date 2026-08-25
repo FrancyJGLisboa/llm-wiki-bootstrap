@@ -89,32 +89,57 @@ find scripts -type f \( -name '*.sh' -o -name '*.py' \) 2>/dev/null | sort > "$t
 
 # ── fixed point ──
 # Bounded by the number of scripts: each pass either adds one or terminates.
+#
+# One grep per pass, not one per (candidate x reached-file) pair. The nested-loop
+# version ran ~n^2 greps per pass over ~150 scripts — 86 seconds locally, and tens
+# of thousands of forks. On 2026-08-24/25 this gate failed on CI three times with a
+# DIFFERENT set of "unreachable" oracles each run (3 on the C leg, 2 on C.UTF-8,
+# none reproducible locally or in a clean clone), which is the signature of
+# individual greps failing transiently under load rather than of a logic error:
+# a failed `grep -qF` is indistinguishable from "basename not present", and marks
+# a perfectly wired oracle unreachable. Collapsing to a single pattern-file grep
+# removes the fork storm and makes the verdict deterministic. Same semantics:
+# comment lines are still stripped before matching.
 max_passes=$(wc -l < "$tmp/all")
 pass=0
 while [ "$pass" -le "$max_passes" ]; do
   pass=$((pass + 1))
   before=$(wc -l < "$tmp/reached")
+
+  # Comment-stripped corpus of everything reached so far. Whole-line comments go
+  # first: both `.sh` and `.yml` use `#`, and a script named only in a comment is
+  # described, not run. Without this strip a header comment like "calls
+  # verify-beta.sh" keeps an orphan alive — which is how the fixtures for this
+  # gate first passed for the wrong reason.
+  : > "$tmp/corpus"
+  while IFS= read -r reached_file; do
+    [ -f "$reached_file" ] || continue
+    grep -v '^[[:space:]]*#' "$reached_file" 2>/dev/null >> "$tmp/corpus"
+  done < "$tmp/reached"
+
+  # Every not-yet-reached candidate's basename, as a fixed-string pattern file.
+  : > "$tmp/pending"
+  : > "$tmp/patterns"
   while IFS= read -r cand; do
     grep -qxF "$cand" "$tmp/reached" && continue
-    base="$(basename "$cand")"
-    # Is this basename INVOKED anywhere in the already-reached set? Whole-line
-    # comments are stripped first: both `.sh` and `.yml` use `#`, and a script
-    # named only in a comment is described, not run. Without this strip a
-    # header comment like "calls verify-beta.sh" keeps an orphan alive — which
-    # is how the fixtures for this gate first passed for the wrong reason.
-    found=0
-    while IFS= read -r reached_file; do
-      [ -f "$reached_file" ] || continue
-      if grep -v '^[[:space:]]*#' "$reached_file" 2>/dev/null | grep -qF -- "$base"; then
-        found=1; break
-      fi
-    done < "$tmp/reached"
-    [ "$found" = 1 ] && echo "$cand" >> "$tmp/reached"
+    printf '%s\n' "$cand" >> "$tmp/pending"
+    basename "$cand" >> "$tmp/patterns"
   done < "$tmp/all"
+  [ -s "$tmp/pending" ] || break
+
+  # ONE grep: which of those basenames appear anywhere in the corpus.
+  sort -u "$tmp/patterns" > "$tmp/patterns.u"
+  grep -oFf "$tmp/patterns.u" "$tmp/corpus" 2>/dev/null | sort -u > "$tmp/present" || :
+
+  while IFS= read -r cand; do
+    if grep -qxF "$(basename "$cand")" "$tmp/present"; then
+      echo "$cand" >> "$tmp/reached"
+    fi
+  done < "$tmp/pending"
+
   after=$(wc -l < "$tmp/reached")
   [ "$before" = "$after" ] && break
 done
-[ "$pass" -gt "$max_passes" ] && die2 "reachability did not converge in $max_passes passes"
 
 # ── declared standalones ──
 : > "$tmp/standalone"
