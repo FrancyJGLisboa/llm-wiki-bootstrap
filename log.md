@@ -2,6 +2,69 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-25 — The decision benchmark was run for the first time, and the docs were aligned to it
+
+`benchmarks/northstar/runs/` was empty. The benchmark had never been executed, so every
+claim about compiled context was `UNMEASURED` by the project's own definition — while 61
+CI checks and 20 gates guarded whether the machinery ran. Results are recorded in
+`benchmarks/northstar/RESULTS.md` and transcribed there because `runs/` is git-ignored.
+
+**At the shipped corpus size (24 sources, 28 files, ~3,537 tokens):** compiled 1.00
+content recall / 0.92 refusal / **0.75 claim resolution**, 52.3s per question, after ~25
+minutes of compilation. long-context 1.00 / 0.92, 39.0s. bm25 0.73 / 0.83, 25.0s. The
+compiled arm is slower than an agent reading `raw/`, no more accurate, and a quarter of
+the `CLM-*` IDs it cited did not resolve — resolvable provenance being its differentiator.
+
+**At 48× corpus (828 files, ~172,000 tokens):** long-context fell only 1.00 → 0.97, and
+the point-in-time, supersession and contradiction cases — the rungs the product thesis
+rests on — held at 1.00. Cost grew 1.4× for 48× the data, because the agent greps and
+opens a handful of files rather than reading everything. That is what "do the work once,
+then queries are cheap reading" was meant to buy, arriving with no build step. The
+compiled arm was not run at that size: the decision rule was fixed beforehand — if
+long-context held, compiling at scale would pay hours to tie. It held.
+
+**Three of seven metrics are defective** and return 0.0 for every arm at every size:
+`status` (model returns `ANSWERED`, scorer wants `answered`, the prompt never states the
+allowed values), `citation_*` (model returns `#anchor`, gold stores `anchor`), and
+`assertion_score`, which asks the model for a label vocabulary it is never given and
+which cannot be supplied without leaking `forbidden_assertion_keys`. Consequence: the
+axis where a compiled package should win produced no signal in either direction, and the
+tie on `content_recall` is a ceiling effect rather than evidence of equivalence.
+
+**A structural observation:** compiling 24 sources (~3,537 tokens) produced 83 files
+(~39,058 tokens) — 11× the material it was built from — and the benchmark then feeds 26
+of them back per question against long-context's 28. There is no context reduction at
+this size; per-source overhead dominates.
+
+New: `tests/eval/northstar-scale/gen-northstar-filler.sh`, a deterministic distractor
+generator reusing the design of `gen-scale-filler.sh` but emitting raw sources, which is
+what the competing arms read. Byte-identical across runs, blocklist-enforced against
+every discriminative needle term, negative-control tested. Two defects were found in the
+verification itself before it was trusted: the blocklist first matched the workspace
+directory name `scale-ws` and flagged every real source as contaminated, and an exit code
+was read through a pipe to `head`, turning a correct failure into an apparent pass.
+
+**Documents aligned to what is demonstrated.** `docs/WHAT-IS-THIS.md` was written earlier
+the same day, before the measurement, and its capability ladder implied the compiler was
+required for the temporal and supersession rungs; it now separates what a compiled
+package is built to answer from what has been shown, and its comparison gained a fourth
+option — an agent with the folder — which is the strong alternative rather than a
+strawman. `docs/CONTEXT-COMPILER.md` keeps the "Not RAG" argument, which survives against
+BM25, and adds a dated note that it does not survive against an agent; "beats a fleet of
+specialized agents" became "should beat", never having been tested. `site/index.html`
+gained a section separating machinery numbers from answer quality. `docs/SELLING.md`
+separates the provenance property, which is checkable, from a quality advantage, which is
+not established. `README.md` now cites evidence where it previously relied on modesty.
+`AGENTS.md` needed no change: its line 526 already scoped its guarantee and excluded
+semantic entailment.
+
+`RESULTS.md` and the scale generator ship into generated compilers, so a user receives
+the evidence and can re-run the comparison rather than taking it on trust.
+
+Verification: 66/0 under both `LC_ALL=C` and `C.UTF-8`; ratchet clean at 15 gates;
+installer verifier 10/10; doc-paths, doc-claims, site-claims and definition-consistent
+all green.
+
 ## 2026-08-25 — The reachability gate was failing on fork pressure, not logic
 
 CI went red on `affef57` with R33 (`gate-reachable`), R36 (`gate-ratchet`, purely a

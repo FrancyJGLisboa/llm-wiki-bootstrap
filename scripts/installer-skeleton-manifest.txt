@@ -261,6 +261,8 @@ tests/gates/ctx-lint-rules/dirty/wiki/rules/deterministic/RULE-0002-missing-gate
 tests/gates/ctx-lint-rules/dirty/wiki/rules/deterministic/RULE-0003-no-exit2.md
 tests/gates/ctx-lint-rules/dirty/wiki/rules/discarded/RULE-0004-no-reason.md
 benchmarks/northstar/README.md
+benchmarks/northstar/RESULTS.md
+tests/eval/northstar-scale/gen-northstar-filler.sh
 benchmarks/northstar/baselines/README.md
 benchmarks/northstar/gold/cases.json
 benchmarks/northstar/holdout/reserved-metadata.json

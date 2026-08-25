@@ -136,6 +136,15 @@ code --install-extension dist/context-workspace-0.1.0.vsix</pre>
     <p class="stat"><b>51</b><span>deterministic smoke checks, wired into CI</span></p>
   </section>
 
+  <section class="wrap why">
+    <h2>What is measured, and what is not.</h2>
+    <div class="col">
+      <p>Those numbers describe the machinery: that the pipeline runs, that citations resolve to real anchors, that a gate fails when they stop doing so. They are not a claim about answer quality.</p>
+      <p>The decision benchmark was executed for the first time on 2026-08-25. Against BM25 retrieval the compiled package answered more of the twelve graded cases. Against a capable agent given the raw folder it did not — at 24 sources or at 828. Provenance precision is currently unscoreable: three of the seven metrics are defective and return zero for every arm.</p>
+      <p><a class="link-cta" href="https://github.com/FrancyJGLisboa/context-compiler-bootstrap/blob/main/benchmarks/northstar/RESULTS.md">Read the measured results &rarr;</a></p>
+    </div>
+  </section>
+
   <section class="wrap start" id="start">
     <h2>Create your first specialized compiler.</h2>
     <p>You need an AI-enabled workspace such as VS Code with an AI assistant. The included profile provides a working client-decision specialization; the generic default remains available. The generated compiler opens through a simplified workspace that hides implementation machinery.</p>

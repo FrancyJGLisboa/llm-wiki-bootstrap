@@ -267,7 +267,7 @@ The synthetic Northstar Feeds corpus and independent gold answers exercise prove
 Open `/tmp/northstar-compiler/AI-WORKSPACE.code-workspace` and ask for a brief. The
 first three commands need no API key and no LLM.
 
-`smoke-all.sh` — 51 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R47<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG.
+`smoke-all.sh` — 51 deterministic checks wired into CI, including regression guards <!-- claim:smoke-guard-range -->R1–R47<!-- /claim -->. The retrieval evaluation compares against 10 binary checks without an LLM grader. Metrics and failures remain visible; the project does not claim universal superiority over RAG — and as of 2026-08-25 that is a measured statement, not a modest one: see [`benchmarks/northstar/RESULTS.md`](benchmarks/northstar/RESULTS.md), where the compiled arm did not beat an agent reading the raw folder at either corpus size tested.
 
 ## Boundaries
 

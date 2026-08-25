@@ -64,7 +64,7 @@ claim out loud:
 | **Statement** | What do we believe? |
 | **Source** | How do we know? — the exact passage it came from, not just "a document" |
 | **Time** | When was this true? From when, until when |
-| **Certainty** | How sure? — an observation, a fact, an assumption, an inference, or an honest *unknown* |
+| **Certainty** | How sure? — an observation, a fact, an assumption, an inference, or an explicit *unknown* |
 | **Relations** | What did it replace? — this one supersedes, updates, confirms or contradicts that one |
 
 Notes and search give you the first row. A context compiler gives you all five.
@@ -87,24 +87,39 @@ find a fact
               say "unknown" instead of guessing
 ```
 
-Ordinary search stops at the first line. Filing stops before it.
+Keyword search stops at the first line. Filing stops before it.
 
-This is not a wish list. Those eight are drawn from the twelve test cases in
+Those eight are drawn from the twelve test cases in
 [`../benchmarks/northstar/README.md`](../benchmarks/northstar/README.md), each
 scored against an answer key written independently of the system.
 
-## 6. One question, three answers
+**What the measurement shows so far.** On 2026-08-25 those twelve cases were run
+for the first time, at 24 sources and again at 828. A capable AI agent given the
+raw folder answered them as well as the compiled package did — including the
+temporal and supersession cases — while BM25 retrieval did not. So the ladder
+describes what a compiled package is *built to* answer; it does not currently
+describe an advantage over an agent that can read your files directly. Full
+numbers and limits: [`../benchmarks/northstar/RESULTS.md`](../benchmarks/northstar/RESULTS.md).
+
+## 6. One question, four answers
 
 *Why is 5.70 the current exchange-rate assumption?*
 
-- **A folder of documents.** You find the email that says 5.70. You cannot tell
+- **A folder of documents, read by a person.** You find the email that says 5.70. You cannot tell
   whether it still holds, or what it replaced.
-- **Search or AI chat over your files.** You get passages mentioning the exchange
+- **Keyword search over your files.** You get passages mentioning the exchange
   rate, ranked by resemblance to your question. You still have to read them and
-  decide which is current.
-- **A context compiler.** You get the statement, the exact sentence it came from,
-  who said it and when, the fact that it replaced an earlier 5.50, and what other
-  conclusions currently rest on it.
+  decide which is current. Measured: this arm missed which assumption had been
+  replaced.
+- **An AI agent with access to the folder.** It reads what it needs and answers.
+  Measured: at 24 and at 828 sources it got the current value, the superseded
+  one, and the date boundary right. This is the strong alternative, not a
+  strawman.
+- **A context compiler.** You get the same answer as a structured record: the
+  statement, the exact sentence, who said it and when, that it replaced 5.50, and
+  what rests on it — without re-deriving any of it per question. Whether that
+  record is worth its build cost is the open question; see
+  [`../benchmarks/northstar/RESULTS.md`](../benchmarks/northstar/RESULTS.md).
 
 ## 7. Why it is called a compiler
 
@@ -114,7 +129,7 @@ is broken. This does the same thing with documents: sources in, a defined
 transformation, a checked result, a build that fails when a statement loses the
 passage it rests on.
 
-Being honest about where the comparison stops:
+Where the comparison stops:
 
 > **There is no AST, and the transform is not reproducible.** [...] Run it twice on
 > the same input and you get two defensible outputs, not identical bytes.

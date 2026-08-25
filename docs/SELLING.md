@@ -20,8 +20,12 @@ Not the markdown — markdown is trivially copied, like an ebook. They are buyin
    that each cited passage truly supports its claim. That C3 check needs an LLM
    and is a write-time guarantee the seller attests to, not reproduced offline.)
    No PDF course or Notion template ships verifiable provenance.
-3. **The update stream** — your wiki keeps compounding; theirs goes stale.
-   Recurring revenue lives here, not in the artifact (see "Distribution").
+3. **The update stream** — you keep compiling new evidence; a static export does
+   not. Recurring revenue lives here, not in the artifact (see "Distribution").
+   Note what is and is not demonstrated: the package's provenance is mechanically
+   checkable, while any advantage in answer quality over a competent agent reading
+   the same sources is not currently established — see
+   [`../benchmarks/northstar/RESULTS.md`](../benchmarks/northstar/RESULTS.md).
 
 Price on reputation and updates. Do not bother with DRM; the moat is you.
 
@@ -69,7 +73,7 @@ Why these fields earn their keep:
   the model they use, this quarter — instead of discovering staleness in
   production. `/ctx-lint` already hunts stale claims; dated fields give it
   teeth.
-- `status` makes honesty cheap. A page marked `broken-since-2026-05` is more
+- `status` makes disclosure cheap. A page marked `broken-since-2026-05` is more
   credible than a catalog where everything silently "works".
 - Evidence beats assertion: keep the actual transcript/output of the prompt
   *working* as a raw source, and cite it —

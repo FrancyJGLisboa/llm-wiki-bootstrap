@@ -214,7 +214,7 @@ four ways, and asserts each tamper is caught.
 **Not part of the definition.** A system with the five properties above is a
 context compiler whether or not it has this one. Enforcement is listed here
 because it is the axis along which a context compiler stops being a very good
-filing system, and because leaving it out of the five is the honest position:
+filing system, and because leaving it out of the five is the accurate position:
 plenty of useful compiled context is purely descriptive.
 
 **The question.** When a source states a *rule* rather than a fact, does the
@@ -373,6 +373,13 @@ not guessing. The cost moves from every query to every source — which is the
 right place for it, because sources arrive far less often than questions.
 (See `wiki/problem-with-naive-rag.md`.)
 
+*Measured, 2026-08-25:* against BM25 retrieval this holds — that arm scored 0.73
+content recall and missed which assumption had been superseded. Against a capable
+agent given the raw folder it does not: that arm matched the compiled package at
+24 sources and at 828, because it navigates rather than similarity-matches, and
+its cost grew 1.4× for 48× the corpus. RAG is the weaker comparison; the agent is
+the one to beat. See [`../benchmarks/northstar/RESULTS.md`](../benchmarks/northstar/RESULTS.md).
+
 **Not a second brain.** A second brain is hand-authored: you write the notes,
 you maintain the links, you notice the contradictions. A context compiler has
 an input language and a build step. You curate *sources*; the build produces
@@ -382,8 +389,8 @@ stop being true.
 **Not an agent framework.** It sits *below* agents and emits what they consume.
 The seam is deliberate and already implemented: `docs/MCP.md` exposes the
 package read-only to Claude Code, Claude Desktop, Cursor, or any MCP client.
-One capable model reading a well-compiled package beats a fleet of specialized
-agents reading a badly organized one — but that is an argument about runtimes,
+One capable model reading a well-compiled package should beat a fleet of
+specialized agents reading a badly organized one — but that is an argument about runtimes,
 and this is the layer underneath.
 
 ## Where it sits

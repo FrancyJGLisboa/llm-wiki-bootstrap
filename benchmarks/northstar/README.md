@@ -4,6 +4,10 @@ Northstar Feeds is fictional. Every person, organization, message, number, and
 event in this corpus is synthetic and exists only to test decision-context
 behavior.
 
+**First measured run: [`RESULTS.md`](RESULTS.md) (2026-08-25).** Read it before
+citing this benchmark: three of its seven metrics are currently broken, and the
+compiled arm did not beat an agent with the raw folder at either size tested.
+
 `sources/` contains the 24 inputs visible to a compiler. `gold/` contains the
 independent scoring key and must never enter a compilation workspace.
 `holdout/` contains reserved metadata used only by the leakage verifier.
