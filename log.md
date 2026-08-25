@@ -2,6 +2,42 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-25 — The attribution advantage widens with corpus size
+
+`citation_doc_f1` — the only metric whose gap exceeded its own noise — was
+re-measured at 48× corpus (828 files, ~172,000 tokens, 800 deterministic
+distractors, blocklist re-verified before the run).
+
+Gap against compiled: **−0.056 at 24 sources, −0.091 at 828.** Long-context fell
+from 0.491 to 0.455, a drop of 0.036 against a within-arm swing of 0.011, while its
+answers stayed perfect at 1.00 content recall. It answers as well as ever and
+attributes worse.
+
+The mechanism is legible. Gold lists 1.5 evidence documents per case. The compiled
+arm offers 6.3 citations across 4.2 distinct documents — several precise anchors
+inside a tight set. The agent offers roughly one citation per document, 4.8
+distinct at 24 sources and 5.1 at 828: it widens as the haystack grows. The
+advantage is not finding the right document, since both do that; it is not
+dragging in extra ones, and tightening rather than loosening with scale.
+
+This reframes the defensible claim. Not "better answers than an agent" — measured
+false at both sizes, twice. Rather: when a conclusion is challenged, the compiled
+package points at a tighter set of sources, and stays tight as the corpus grows.
+Narrower, and the one the evidence carries.
+
+Read as an upper bound, not a result: the compiled package holds only the 24
+needle sources, so this compares a perfectly curated index against an agent facing
+noise rather than two systems on one corpus. Decisive in one direction only — had
+compiled failed to win under conditions this favourable it would not win at all.
+Compiling all 828 and repeating is the experiment that would settle it, now
+justified by a signal rather than a hope. Single run at scale, n=12, one model.
+
+`citation_resolvable` stayed 1.00 at 828 as at 24. Nothing fabricated a citation
+at either size. Any pitch resting on "agents invent sources" has now failed
+measurement twice.
+
+Verification: 66/0, doc-paths clean.
+
 ## 2026-08-25 — The benchmark's broken metrics were repaired, and auditability was measured
 
 Four defects fixed, the comparison repeated twice under the corrected contract.

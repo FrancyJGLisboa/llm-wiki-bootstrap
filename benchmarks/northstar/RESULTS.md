@@ -129,6 +129,47 @@ one model cannot size a 0.05 effect; it can only show the ordering did not
 collapse. bm25's third run aborted on a transient CLI failure and is reported as
 two arms rather than three.
 
+## The document-citation advantage widens with corpus size
+
+`citation_doc_f1`, the one metric whose gap exceeded its noise, was re-measured
+with the corpus grown 48× (828 files, ~172,000 tokens; 800 deterministic
+distractors, blocklist verified).
+
+| | doc_f1 | resolvable | content_recall |
+|---|---|---|---|
+| compiled, 24 sources (mean of 2 runs) | **0.547** | 1.00 | 1.00 |
+| long-context, 24 sources (mean of 2 runs) | 0.491 | 1.00 | 0.99 |
+| long-context, **828 sources** | **0.455** | 1.00 | 1.00 |
+
+Gap against compiled: **−0.056 at 24 sources, −0.091 at 828.** Long-context's
+document-citation quality fell 0.036 — three times its own run-to-run swing of
+0.011 — while its answers stayed perfect at 1.00 content recall.
+
+**The mechanism.** Gold lists 1.5 evidence documents per case.
+
+| | citations per question | distinct documents cited |
+|---|---|---|
+| compiled, 24 sources | 6.3 | **4.2** |
+| long-context, 24 sources | 5.0 | 4.8 |
+| long-context, 828 sources | 5.1 | **5.1** |
+
+The compiled arm concentrates: more citations across fewer documents, several
+precise anchors inside a tight set. The agent offers roughly one citation per
+document and widens as the corpus grows, from 4.8 to 5.1 distinct documents. The
+advantage is not "finds the right document" — both do — it is "does not drag in
+extra ones, and tightens rather than loosens as the corpus grows."
+
+**Read this as an upper bound, not a result.** The compiled package contains only
+the 24 needle sources; the 800 distractors were never compiled. This compares a
+perfectly curated index against an agent facing noise, not two systems on the same
+corpus. It is decisive in one direction only: had the compiled arm failed to win
+under conditions this favourable, it would not win at all. To make it a result,
+compile all 828 sources and repeat — which the widening gap now justifies, where
+before there was no signal worth the compute.
+
+Also unchanged at scale: `citation_resolvable` stayed 1.00. Nothing fabricated a
+citation at 828 sources either. Single run at scale, n=12, one model.
+
 ## Three metrics do not work
 
 `assertion_score`, `citation_precision/recall/f1` and `status_correct` returned
