@@ -30,8 +30,16 @@ the *material* differs:
 | bm25 | 0.73 | 0.83 | — | 300s | 25.0s | 5 |
 
 **The compiled arm is slower than long-context, no more accurate, and required
-~25 minutes of compilation first.** A quarter of the `CLM-*` claim IDs it cited
-did not resolve — and resolvable provenance is its differentiator.
+~25 minutes of compilation first.**
+
+The 0.75 claim-resolution figure was initially described here as a quarter of
+cited IDs failing to resolve. That was wrong, and the corrected reading is worse
+for a different reason. Every `CLM-*` ID the arm cited resolved: 65 catalog IDs,
+all well-formed, zero fabrications. The 0.75 is 9 of 12 cases scoring 1.0, because
+**three answerable cases supplied no claim IDs at all** — `current-01`, `pit-01`
+and `super-01`. Those are the current-state, point-in-time and supersession cases:
+the compiled arm answered them correctly and attached no auditable identifier to
+the answer, which is the one thing the compiled arm exists to provide.
 
 `bm25` is the only arm that clearly loses. It failed `super-01` outright
 (`UNKNOWN`): retrieval never surfaced both documents. Naive retrieval is a real
@@ -59,6 +67,67 @@ build step.
 The compiled arm was **not** run at 828 files. The decision rule was fixed before
 the scale run: if long-context held, compiling at scale would pay hours up front
 to tie. It held.
+
+## Update, same day: the metrics were repaired and the arms re-run
+
+Four defects were fixed and the comparison repeated twice under the corrected
+contract. `runs/*-v2-*` and `*-v3-*` hold the artifacts.
+
+**What was fixed**
+
+- `status` — the prompt now states the allowed values (`answered` / `refused`) and
+  the scorer compares case-insensitively. Re-scoring the *existing* predictions,
+  with no new model calls, moved it 0.0 → 0.83 / 0.75 / 0.67.
+- `citations` — anchors are compared as bare slugs. More importantly the metric
+  itself was replaced: see below.
+- `assertion_keys` — every task now carries the same 20-key label space, allowed
+  and forbidden mixed, so selecting between `assumes-brl-usd-5.50-as-of-june` and
+  `...-5.70-as-of-june` remains a real discrimination while the metric becomes
+  answerable at all.
+- **claim resolution 0.75 → 1.00.** The defect was in the contract, not the
+  compiler: the prompt never asked for `claim_ids`, so three answerable cases
+  omitted them. Stated explicitly, all twelve now supply resolvable ids. Stable
+  across both runs.
+
+**Two metrics replace anchor-exact matching**
+
+`citation_doc_f1` scores whether the right *source document* was cited,
+independent of addressing scheme. `citation_resolvable` scores whether a reader
+can follow each pointer to real text — a heading slug, a frontmatter anchor, or an
+in-range line — and is negative-controlled against fabricated sources, invented
+slugs and out-of-range lines.
+
+This mattered: the compiled arm's anchor-exact precision and recall are exactly
+**0.00**, because it addresses evidence only by line range (`L23-L24`), which can
+never string-match gold's section slugs. The old metric rewarded vocabulary
+agreement. Anchor-exact numbers are retained in the output for continuity and
+should not be read as provenance quality.
+
+**Result, two runs at 24 sources**
+
+| metric | compiled (v2/v3) | long-context (v2/v3) | gap | within-arm swing |
+|---|---|---|---|---|
+| `citation_doc_f1` | 0.552 / 0.541 | 0.492 / 0.490 | **+0.060 / +0.051** | 0.011 |
+| `assertion_score` | 0.599 / 0.548 | 0.529 / 0.510 | +0.071 / +0.038 | 0.051 |
+| `content_recall` | 1.000 / 1.000 | 0.972 / 1.000 | +0.028 / 0.000 | 0.028 |
+| claim resolution | 1.000 / 1.000 | — | — | 0.000 |
+
+`citation_doc_f1` is the only gap that exceeds its own noise — roughly 5× — and it
+held in both runs. **The compiled package cites the right source documents better
+than an agent reading the folder.** That is the first measured advantage for the
+compiled arm recorded here.
+
+`assertion_score` moves the same way but its gap is the size of its swing; it is
+not established. `content_recall` shows no difference.
+
+**What this still does not establish.** The advantage is one axis, ~0.05, at a
+corpus size where the compiled arm remains slower per question and costs ~25
+minutes of compilation up front. `citation_resolvable` was 1.00 for every arm in
+every run: at this scale nothing fabricated a citation, so the premise that an
+agent invents provenance did not hold. Two runs of twelve cases on one corpus with
+one model cannot size a 0.05 effect; it can only show the ordering did not
+collapse. bm25's third run aborted on a transient CLI failure and is reported as
+two arms rather than three.
 
 ## Three metrics do not work
 

@@ -2,6 +2,56 @@
 
 Append-only log of every `/ctx-compile`, `/ctx-query` promotion, and `/ctx-lint --apply` operation. Newest at top. (Entries below 2026-08-08 use the old `/wiki-*` command names — they are history and are left as written.)
 
+## 2026-08-25 — The benchmark's broken metrics were repaired, and auditability was measured
+
+Four defects fixed, the comparison repeated twice under the corrected contract.
+
+**`status`** never stated its allowed values, so the scorer compared `ANSWERED`
+against `answered` and reported a formatting mismatch as a capability score. The
+prompt now states them and the scorer normalises. Re-scoring the *existing*
+predictions with no new model calls moved it 0.0 → 0.83 / 0.75 / 0.67.
+
+**`assertion_keys`** asked for a vocabulary the model was never given. Every task
+now carries the same 20-key label space with allowed and forbidden keys mixed, so
+choosing between `assumes-brl-usd-5.50-as-of-june` and `...-5.70-as-of-june` stays
+a real discrimination while the metric becomes answerable.
+
+**`citations`** was worse than a `#` prefix. Both arms cite the correct source
+document and differ only in addressing scheme: the compiled arm uses line ranges
+(`L23-L24`), gold uses section slugs, and exact matching gave the *more precise*
+scheme a score of exactly 0.00 on both precision and recall. Replaced by
+`citation_doc_f1` (right source, scheme-independent) and `citation_resolvable`
+(can a reader follow the pointer to real text — heading slug, frontmatter anchor,
+or in-range line), the latter negative-controlled against fabricated sources,
+invented slugs and out-of-range lines. Anchor-exact numbers stay in the output for
+continuity and are not provenance quality.
+
+**Claim resolution 0.75 → 1.00.** The earlier reading of that figure was wrong and
+is corrected above: no `CLM-*` id was ever unresolvable — 65 catalog ids, zero
+fabrications. Three answerable cases supplied no ids at all, because the contract
+never asked for them. Stated explicitly, all twelve now supply resolvable ids,
+stable across both runs. A contract defect, not a compiler defect.
+
+**Measured result, two runs at 24 sources.** `citation_doc_f1` compiled
+0.552 / 0.541 against long-context 0.492 / 0.490 — a gap of +0.060 / +0.051 with a
+within-arm swing of 0.011, so roughly five times its own noise, and the ordering
+held in both runs. **The compiled package cites the right source documents better
+than an agent reading the folder.** That is the first measured advantage for the
+compiled arm recorded in this repository. `assertion_score` moves the same way
+(+0.071 / +0.038) but its gap is the size of its swing (0.051) and is not
+established. `content_recall` shows no difference.
+
+Weight it accordingly: one axis, about 0.05, at a corpus size where the compiled
+arm is still slower per question and costs ~25 minutes of compilation first.
+`citation_resolvable` was 1.00 for every arm in every run — nothing fabricated a
+citation, so the premise that an agent invents provenance did not hold here. Two
+runs of twelve cases on one corpus with one model cannot size a 0.05 effect; they
+can only show the ordering did not collapse. bm25's third run aborted on a
+transient CLI failure and is reported as two arms rather than three.
+
+Verification: 66/0 under both locales; `verify-northstar-benchmark.sh` green after
+the scorer's output shape changed; doc-paths and doc-claims clean.
+
 ## 2026-08-25 — The decision benchmark was run for the first time, and the docs were aligned to it
 
 `benchmarks/northstar/runs/` was empty. The benchmark had never been executed, so every
@@ -12,8 +62,11 @@ CI checks and 20 gates guarded whether the machinery ran. Results are recorded i
 **At the shipped corpus size (24 sources, 28 files, ~3,537 tokens):** compiled 1.00
 content recall / 0.92 refusal / **0.75 claim resolution**, 52.3s per question, after ~25
 minutes of compilation. long-context 1.00 / 0.92, 39.0s. bm25 0.73 / 0.83, 25.0s. The
-compiled arm is slower than an agent reading `raw/`, no more accurate, and a quarter of
-the `CLM-*` IDs it cited did not resolve — resolvable provenance being its differentiator.
+compiled arm is slower than an agent reading `raw/` and no more accurate. (Correction,
+same day: the 0.75 was first read as a quarter of cited IDs failing to resolve. Every
+cited ID resolved — 65 catalog IDs, zero fabrications. Three answerable cases supplied
+no claim IDs at all: `current-01`, `pit-01`, `super-01`, the temporal and supersession
+cases where an auditable identifier matters most.)
 
 **At 48× corpus (828 files, ~172,000 tokens):** long-context fell only 1.00 → 0.97, and
 the point-in-time, supersession and contradiction cases — the rungs the product thesis
